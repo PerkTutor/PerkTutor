@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>qSlicerTransformRecorderModule</class>
+ <widget class="qSlicerWidget" name="qSlicerTransformRecorderModule">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>525</width>
+    <height>319</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="2">
+    <widget class="ctkCollapsibleButton" name="CTKCollapsibleButton">
+     <property name="text">
+      <string>Display</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QGroupBox" name="gridGroupBox">
+        <property name="title">
+         <string>Input</string>
+        </property>
+        <widget class="QLabel" name="IGTConnectorLabel">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>49</y>
+           <width>74</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>IGT Connector:</string>
+         </property>
+        </widget>
+        <widget class="qMRMLNodeComboBox" name="IGTConnectorNodeComboBox">
+         <property name="geometry">
+          <rect>
+           <x>90</x>
+           <y>49</y>
+           <width>291</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="nodeTypes">
+          <stringlist>
+           <string>vtkMRMLIGTLConnectorNode</string>
+          </stringlist>
+         </property>
+        </widget>
+        <widget class="qMRMLNodeComboBox" name="ModuleNodeComboBox">
+         <property name="geometry">
+          <rect>
+           <x>90</x>
+           <y>23</y>
+           <width>291</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="nodeTypes">
+          <stringlist>
+           <string>vtkMRMLTransformRecorderNode</string>
+          </stringlist>
+         </property>
+        </widget>
+        <widget class="QLabel" name="moduleNameLabel">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>23</y>
+           <width>65</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="text">
+          <string>Module node:</string>
+         </property>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>qMRMLNodeComboBox</class>
+   <extends>QWidget</extends>
+   <header>qMRMLNodeComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qSlicerWidget</class>
+   <extends>QWidget</extends>
+   <header>qSlicerWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkCollapsibleButton</class>
+   <extends>QWidget</extends>
+   <header>ctkCollapsibleButton.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
