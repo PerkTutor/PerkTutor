@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>525</width>
-    <height>319</height>
+    <width>435</width>
+    <height>576</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,7 +21,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="QGroupBox" name="gridGroupBox">
+       <widget class="QGroupBox" name="InputGroupBox">
         <property name="title">
          <string>Input</string>
         </property>
@@ -84,6 +84,27 @@
           <string>Module node:</string>
          </property>
         </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="OutputGroupBox">
+        <property name="title">
+         <string>Output</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="ControlsGroupBox">
+        <property name="title">
+         <string>Controls</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="AnnotationsGroupBox">
+        <property name="title">
+         <string>Annotations</string>
+        </property>
        </widget>
       </item>
      </layout>
