@@ -6,105 +6,322 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
-    <height>576</height>
+    <width>544</width>
+    <height>743</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
+   <item row="0" column="1">
     <widget class="ctkCollapsibleButton" name="CTKCollapsibleButton">
      <property name="text">
       <string>Display</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QGroupBox" name="InputGroupBox">
-        <property name="title">
-         <string>Input</string>
-        </property>
-        <widget class="QLabel" name="IGTConnectorLabel">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>49</y>
-           <width>74</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>IGT Connector:</string>
-         </property>
-        </widget>
-        <widget class="qMRMLNodeComboBox" name="IGTConnectorNodeComboBox">
-         <property name="geometry">
-          <rect>
-           <x>90</x>
-           <y>49</y>
-           <width>291</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="nodeTypes">
-          <stringlist>
-           <string>vtkMRMLIGTLConnectorNode</string>
-          </stringlist>
-         </property>
-        </widget>
-        <widget class="qMRMLNodeComboBox" name="ModuleNodeComboBox">
-         <property name="geometry">
-          <rect>
-           <x>90</x>
-           <y>23</y>
-           <width>291</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="nodeTypes">
-          <stringlist>
-           <string>vtkMRMLTransformRecorderNode</string>
-          </stringlist>
-         </property>
-        </widget>
-        <widget class="QLabel" name="moduleNameLabel">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>23</y>
-           <width>65</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
-         </property>
-         <property name="text">
-          <string>Module node:</string>
-         </property>
-        </widget>
-       </widget>
-      </item>
-      <item>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="1" column="0">
        <widget class="QGroupBox" name="OutputGroupBox">
+        <property name="minimumSize">
+         <size>
+          <width>399</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="title">
          <string>Output</string>
         </property>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Tracking Record File:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_3">
+           <property name="text">
+            <string>Select Log File</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item>
+      <item row="2" column="0">
        <widget class="QGroupBox" name="ControlsGroupBox">
+        <property name="minimumSize">
+         <size>
+          <width>399</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="title">
          <string>Controls</string>
         </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="StartButton">
+           <property name="text">
+            <string>Start</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="StopButton">
+           <property name="text">
+            <string>Stop</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="3">
+          <widget class="QPushButton" name="ClearBufferButton">
+           <property name="text">
+            <string>Clear Buffer</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="StatusLabel">
+           <property name="text">
+            <string>Status:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabel" name="NumRecordsLabel">
+           <property name="text">
+            <string>Number of Records:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="TotalTimeLabel">
+           <property name="text">
+            <string>Total Time (s):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QLabel" name="TotalNeedlePathLabel">
+           <property name="text">
+            <string>Total Needle Path (mm):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QLabel" name="InsideNeedlePathLabel">
+           <property name="text">
+            <string>Inside Needle Path (mm):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QLabel" name="TotaNeedlelPathResultsLabel">
+           <property name="text">
+            <string>0.00</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QLabel" name="InsideNeedlePathResultsLabel">
+           <property name="text">
+            <string>0.00</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLabel" name="TotalTimeResultsLabel">
+           <property name="text">
+            <string>0.00</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="StatusResultLabel">
+           <property name="text">
+            <string>Waiting</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="NumRecordsResultLabel">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item>
+      <item row="3" column="0">
        <widget class="QGroupBox" name="AnnotationsGroupBox">
         <property name="title">
          <string>Annotations</string>
         </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QLabel" name="QuickAnnotationsLabel">
+           <property name="text">
+            <string>Number of Quick Annotations:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit"/>
+         </item>
+         <item row="0" column="2">
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>118</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="3">
+          <widget class="QPushButton" name="pushButton_2">
+           <property name="text">
+            <string>Update</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="3">
+          <widget class="QLineEdit" name="lineEdit_2"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QPushButton" name="pushButton">
+           <property name="text">
+            <string>Insert</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="InputGroupBox">
+        <property name="title">
+         <string>Input</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QLabel" name="ModuleNodeLabel">
+           <property name="text">
+            <string>Module Node:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="qMRMLNodeComboBox" name="ModuleComboBox">
+           <property name="nodeTypes">
+            <stringlist>
+             <string>vtkMRMLTransformRecorderNode</string>
+            </stringlist>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>198</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="IGTConnectorLabel">
+           <property name="text">
+            <string>IGT Connector:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="qMRMLNodeComboBox" name="IGTComboBox">
+           <property name="nodeTypes">
+            <stringlist>
+             <string>vtkMRMLIGTLConnectorNode</string>
+            </stringlist>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>198</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="2" column="0" colspan="3">
+          <widget class="QTableWidget" name="RecordedTransformTable">
+           <column>
+            <property name="text">
+             <string>Record</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Transform</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
