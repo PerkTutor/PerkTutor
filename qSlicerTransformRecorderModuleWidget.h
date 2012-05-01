@@ -25,6 +25,7 @@
 
 class qSlicerTransformRecorderModuleWidgetPrivate;
 class vtkMRMLNode;
+class vtkMRMLTransformRecorderNode;
 
 /// \ingroup Slicer_QtModules_TransformRecorder
 class Q_SLICER_QTMODULES_TRANSFORMRECORDER_EXPORT qSlicerTransformRecorderModuleWidget :
@@ -45,10 +46,22 @@ protected:
   QScopedPointer<qSlicerTransformRecorderModuleWidgetPrivate> d_ptr;
   
   virtual void setup();
+  virtual void enter();
+
+protected slots:
+
+  void onConnectorSelected();
+  void onModuleNodeSelected();
+//  void onProbeTransformSelected();
+//  void onNeedleTransformSelected();
+  void updateWidget();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerTransformRecorderModuleWidget);
   Q_DISABLE_COPY(qSlicerTransformRecorderModuleWidget);
+
+
+
 };
 
 #endif

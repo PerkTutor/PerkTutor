@@ -17,8 +17,11 @@
 
 // TransformRecorder includes
 #include "vtkSlicerTransformRecorderLogic.h"
+#include "vtkMRMLTransformRecorderNode.h"
 
 // MRML includes
+#include "vtkMRMLIGTLConnectorNode.h"
+#include "vtkMRMLViewNode.h"
 
 // VTK includes
 #include <vtkNew.h>
@@ -32,11 +35,17 @@ vtkStandardNewMacro(vtkSlicerTransformRecorderLogic);
 //----------------------------------------------------------------------------
 vtkSlicerTransformRecorderLogic::vtkSlicerTransformRecorderLogic()
 {
+  this->ModuleNode = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerTransformRecorderLogic::~vtkSlicerTransformRecorderLogic()
 {
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->Delete();
+    this->ModuleNode = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -55,10 +64,29 @@ void vtkSlicerTransformRecorderLogic::InitializeEventListeners()
   this->SetAndObserveMRMLSceneEventsInternal(this->GetMRMLScene(), events.GetPointer());
 }
 
+//---------------------------------------------------------------------------
+void vtkSlicerTransformRecorderLogic::SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node )
+{
+  if ( this->GetModuleNode() != NULL )
+  {
+    this->GetModuleNode()->SetAndObserveObservedConnectorNodeID( node->GetID() );
+  }
+}
+
+
 //-----------------------------------------------------------------------------
 void vtkSlicerTransformRecorderLogic::RegisterNodes()
 {
   assert(this->GetMRMLScene() != 0);
+  
+  if( ! this->GetMRMLScene() )
+  {
+    return;
+  }
+  vtkMRMLTransformRecorderNode* pNode = vtkMRMLTransformRecorderNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( pNode );
+  pNode->Delete(); 
+  
 }
 
 //---------------------------------------------------------------------------
@@ -71,11 +99,21 @@ void vtkSlicerTransformRecorderLogic::UpdateFromMRMLScene()
 void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeAdded(vtkMRMLNode* vtkNotUsed(node))
 {
+
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
+	assert(this->GetMRMLScene() != 0);
 }
+
+void vtkSlicerTransformRecorderLogic
+::SetModuleNode( vtkMRMLTransformRecorderNode* node )
+{
+  vtkSetMRMLNodeMacro( this->ModuleNode, node );
+  this->Modified();
+}
+
 

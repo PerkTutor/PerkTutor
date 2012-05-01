@@ -21,21 +21,50 @@
 #include "qSlicerTransformRecorderModuleWidget.h"
 #include "ui_qSlicerTransformRecorderModule.h"
 
+#include "vtkMRMLTransformRecorderNode.h"
+
+#include "qMRMLNodeComboBox.h"
+#include "vtkMRMLViewNode.h"
+#include "vtkSlicerTransformRecorderLogic.h"
+
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_TransformRecorder
 class qSlicerTransformRecorderModuleWidgetPrivate: public Ui_qSlicerTransformRecorderModule
 {
+  Q_DECLARE_PUBLIC( qSlicerTransformRecorderModuleWidget ); 
+
+protected:
+  qSlicerTransformRecorderModuleWidget* const q_ptr;
 public:
-  qSlicerTransformRecorderModuleWidgetPrivate();
+  qSlicerTransformRecorderModuleWidgetPrivate( qSlicerTransformRecorderModuleWidget& object );
+  ~qSlicerTransformRecorderModuleWidgetPrivate();
+
+  vtkSlicerTransformRecorderLogic* logic() const;
 };
 
 //-----------------------------------------------------------------------------
 // qSlicerTransformRecorderModuleWidgetPrivate methods
 
-//-----------------------------------------------------------------------------
-qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidgetPrivate()
+
+
+qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidgetPrivate( qSlicerTransformRecorderModuleWidget& object ) : q_ptr(&object)
 {
 }
+
+//-----------------------------------------------------------------------------
+
+qSlicerTransformRecorderModuleWidgetPrivate::~qSlicerTransformRecorderModuleWidgetPrivate()
+{
+}
+
+
+vtkSlicerTransformRecorderLogic* qSlicerTransformRecorderModuleWidgetPrivate::logic() const
+{
+  Q_Q( const qSlicerTransformRecorderModuleWidget );
+  return vtkSlicerTransformRecorderLogic::SafeDownCast( q->logic() );
+}
+
 
 //-----------------------------------------------------------------------------
 // qSlicerTransformRecorderModuleWidget methods
@@ -43,7 +72,7 @@ qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidge
 //-----------------------------------------------------------------------------
 qSlicerTransformRecorderModuleWidget::qSlicerTransformRecorderModuleWidget(QWidget* _parent)
   : Superclass( _parent )
-  , d_ptr( new qSlicerTransformRecorderModuleWidgetPrivate )
+  , d_ptr( new qSlicerTransformRecorderModuleWidgetPrivate( *this ) )
 {
 }
 
@@ -58,5 +87,36 @@ void qSlicerTransformRecorderModuleWidget::setup()
   Q_D(qSlicerTransformRecorderModuleWidget);
   d->setupUi(this);
   this->Superclass::setup();
+
+
 }
 
+void qSlicerTransformRecorderModuleWidget::enter()
+{
+  this->updateWidget();
+}
+
+
+void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+  
+
+}
+
+
+
+void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+  
+ 
+  this->updateWidget();
+}
+
+
+void qSlicerTransformRecorderModuleWidget::updateWidget()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+  
+}

@@ -26,27 +26,48 @@
 
 // Slicer includes
 #include "vtkSlicerModuleLogic.h"
+#include "vtkMRML.h"
+#include "vtkMRMLNode.h"
+#include "vtkMRMLScene.h"
+#include "vtkObjectFactory.h"
+
+#include "vtkSmartPointer.h"
 
 // MRML includes
+class vtkMRMLIGTLConnectorNode;
+class vtkMRMLViewNode;
 
 // STD includes
 #include <cstdlib>
 
 #include "vtkSlicerTransformRecorderModuleLogicExport.h"
 
+class vtkMRMLTransformRecorderNode;
 
 /// \ingroup Slicer_QtModules_TransformRecorder
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_LOGIC_EXPORT vtkSlicerTransformRecorderLogic :
   public vtkSlicerModuleLogic
 {
 public:
-  
+
+
+   //BTX
+  enum {  // Events
+    //LocatorUpdateEvent      = 50000,
+    StatusUpdateEvent       = 50001,
+  };
+  //ETX
+
   static vtkSlicerTransformRecorderLogic *New();
   vtkTypeMacro(vtkSlicerTransformRecorderLogic,vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   /// Initialize listening to MRML events
   void InitializeEventListeners();
+    
+  void SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node );
+  //void SetProgressViewNode( vtkMRMLViewNode* node );
+  //void SetBullsEyeViewNode( vtkMRMLViewNode* node );
 
 protected:
   vtkSlicerTransformRecorderLogic();
@@ -61,6 +82,14 @@ private:
 
   vtkSlicerTransformRecorderLogic(const vtkSlicerTransformRecorderLogic&); // Not implemented
   void operator=(const vtkSlicerTransformRecorderLogic&);               // Not implemented
+  // Reference to the module MRML node.
+
+private:
+  vtkMRMLTransformRecorderNode* ModuleNode;
+public:
+  vtkGetObjectMacro( ModuleNode, vtkMRMLTransformRecorderNode );
+  void SetModuleNode( vtkMRMLTransformRecorderNode* node );
+
 };
 
 #endif
