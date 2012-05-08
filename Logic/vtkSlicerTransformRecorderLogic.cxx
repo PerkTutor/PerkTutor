@@ -69,7 +69,7 @@ void vtkSlicerTransformRecorderLogic::SetOpenIGTLConnectorNode( vtkMRMLIGTLConne
 {
   if ( this->GetModuleNode() != NULL )
   {
-    this->GetModuleNode()->SetAndObserveObservedConnectorNodeID( node->GetID() );
+    this->GetModuleNode()->SetAndObserveConnectorNodeID( node->GetID() );
   }
 }
 
@@ -77,7 +77,7 @@ void vtkSlicerTransformRecorderLogic::SetOpenIGTLConnectorNode( vtkMRMLIGTLConne
 //-----------------------------------------------------------------------------
 void vtkSlicerTransformRecorderLogic::RegisterNodes()
 {
-  assert(this->GetMRMLScene() != 0);
+  //assert(this->GetMRMLScene() != 0);
   
   if( ! this->GetMRMLScene() )
   {

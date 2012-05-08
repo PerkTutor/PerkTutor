@@ -14,7 +14,7 @@
   limitations under the License.
 
 ==============================================================================*/
-
+#include <iostream>
 // Qt includes
 
 // SlicerQt includes
@@ -87,8 +87,10 @@ void qSlicerTransformRecorderModuleWidget::setup()
   Q_D(qSlicerTransformRecorderModuleWidget);
   d->setupUi(this);
   this->Superclass::setup();
-
-
+  d->IGTComboBox->setNoneEnabled( true );
+  d->ModuleComboBox->setNoneEnabled( true );
+  connect( d->IGTComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onConnectorSelected() ) );
+  connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
 }
 
 void qSlicerTransformRecorderModuleWidget::enter()
@@ -96,12 +98,21 @@ void qSlicerTransformRecorderModuleWidget::enter()
   this->updateWidget();
 }
 
-
 void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
+ 
+  if( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }
   
-
+  vtkMRMLNode* node = d->IGTComboBox->currentNode();
+  
+  if( node != NULL )
+  {
+    d->logic()->GetModuleNode()->SetAndObserveConnectorNodeID( node->GetID() );
+  }
 }
 
 
@@ -109,8 +120,17 @@ void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
 void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
-  
  
+  vtkMRMLNode* currentNode = d->ModuleComboBox->currentNode();
+  std::cout << "Current node pointer: " << currentNode << std::endl;
+  
+  vtkMRMLTransformRecorderNode* TRNode = vtkMRMLTransformRecorderNode::SafeDownCast( currentNode );
+  if ( TRNode != NULL )
+  {
+    
+  }
+  
+  d->logic()->SetModuleNode( TRNode );
   this->updateWidget();
 }
 
@@ -118,5 +138,46 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
 void qSlicerTransformRecorderModuleWidget::updateWidget()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
+      // Disableing node selector widgets if there is no module node to reference input nodes.
+    
+  if ( d->logic()->GetModuleNode() == NULL )
+  {
+    d->IGTComboBox->setEnabled( false );
+    
+  }
+  else
+  {
+    d->IGTComboBox->setEnabled( true );
+   
+  }
+  
+  
+    // Check if node selection has changed.
+  
+  if(    d->logic()->GetModuleNode() != NULL
+      && d->IGTComboBox->currentNode() != NULL )
+  {
+    char* selectedID = d->IGTComboBox->currentNode()->GetID();
+    char* nodeID = d->logic()->GetModuleNode()->GetConnectorNodeID();
+    if ( strcmp( selectedID, nodeID ) != NULL )
+    {
+      this->onConnectorSelected();
+    }
+  }
+  else if (    d->logic()->GetModuleNode() != NULL
+            && d->logic()->GetModuleNode()->GetConnectorNode() != NULL
+            && d->IGTComboBox->currentNode() == NULL )
+  {
+    this->onConnectorSelected();
+  }
+  
+  
+    // Update selector widgets if selected nodes have changed.
+  
+  if ( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }
+  
   
 }

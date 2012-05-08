@@ -36,13 +36,13 @@
 // MRML includes
 class vtkMRMLIGTLConnectorNode;
 class vtkMRMLViewNode;
-
+#include "vtkMRMLTransformRecorderNode.h"
 // STD includes
 #include <cstdlib>
 
 #include "vtkSlicerTransformRecorderModuleLogicExport.h"
 
-class vtkMRMLTransformRecorderNode;
+
 
 /// \ingroup Slicer_QtModules_TransformRecorder
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_LOGIC_EXPORT vtkSlicerTransformRecorderLogic :

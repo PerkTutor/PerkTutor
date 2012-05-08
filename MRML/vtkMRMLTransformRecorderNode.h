@@ -90,24 +90,27 @@ public:
   static vtkMRMLTransformRecorderNode *New();
   vtkTypeMacro( vtkMRMLTransformRecorderNode, vtkMRMLNode );
   virtual vtkMRMLNode* CreateNodeInstance();
-  virtual const char* GetNodeTagName() { return "vtkMRMLTransformRecorderNode"; };
+  virtual const char* GetNodeTagName() { return "TransformRecorder"; };
   void PrintSelf( ostream& os, vtkIndent indent );
   virtual void ReadXMLAttributes( const char** atts );
   virtual void WriteXML( ostream& of, int indent );
   virtual void Copy( vtkMRMLNode *node );
   virtual void UpdateScene( vtkMRMLScene * );
+  void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+  
   virtual void UpdateReferenceID( const char *oldID, const char *newID );
   void UpdateReferences();
-  
-  
+  void StartReceiveServer();
+  void StopReceiveServer();
     // Public interface
   
-
-  
-
-  
-  
 protected:
+
+
+
+
+
+
 
     // Constructor/desctructor
 
@@ -116,30 +119,26 @@ protected:
   vtkMRMLTransformRecorderNode ( const vtkMRMLTransformRecorderNode& );
   void operator=( const vtkMRMLTransformRecorderNode& );
 
-  void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+ 
   void RemoveMRMLObservers();
   
   
     // Protected member variables
     
-
-  
-
   // Reference to the OpenIGTLink connection node.
 
 public:
-  vtkGetStringMacro( ObservedConnectorNodeID  );
-  vtkMRMLIGTLConnectorNode* GetObservedConnectorNode();
-  void SetAndObserveObservedConnectorNodeID( const char* ObservedConnectorNodeRef );
+  vtkGetStringMacro( ConnectorNodeID  );
+  vtkMRMLIGTLConnectorNode* GetConnectorNode();
+  void SetAndObserveConnectorNodeID( const char* ConnectorNodeRef );
 protected:
-  vtkSetReferenceStringMacro( ObservedTransformNodeID );
-  char* ObservedTransformNodeID;
-  vtkMRMLTransformNode* ObservedTransformNode;
+  vtkSetReferenceStringMacro( TransformNodeID );
+  char* TransformNodeID;
+  vtkMRMLTransformNode* TransformNode;
   
-  vtkSetReferenceStringMacro( ObservedConnectorNodeID );
-  char* ObservedConnectorNodeID;
-  vtkMRMLIGTLConnectorNode* ObservedConnectorNode; 
-
+  vtkSetReferenceStringMacro( ConnectorNodeID );
+  char* ConnectorNodeID;
+  vtkMRMLIGTLConnectorNode* ConnectorNode; 
 
 public:
   unsigned int GetTransformsBufferSize();
@@ -165,7 +164,7 @@ protected:
   void AddNewTransform( int index );
   
   //BTX
-  std::vector< vtkMRMLTransformNode* > ObservedTransformNodes;
+  std::vector< vtkMRMLTransformNode* > TransformNodes;
   // std::vector< char* >                 ObservedTransformNodeIDs;
   //ETX
   
@@ -194,6 +193,7 @@ protected:
   double TotalNeedlePathInside;
   vtkTransform* LastNeedleTransform;
   double LastNeedleTime;
+  bool Active;
   
 };  
 

@@ -14,7 +14,6 @@ Version:   $Revision: 1.3 $
 #include <vtkExtractSelectedPolyDataIds.h>
 #include <vtkIdTypeArray.h>
 #include <vtkInformation.h>
-#include <vtkObjectFactory.h>
 #include <vtkPlanes.h>
 #include <vtkSelection.h>
 #include <vtkSelectionNode.h>
@@ -27,7 +26,6 @@ Version:   $Revision: 1.3 $
 
 // TransformRecorder MRML includes
 #include "vtkMRMLTransformRecorderNode.h"
-
 
 // MRML includes
 #include <vtkMRMLDiffusionTensorDisplayPropertiesNode.h>
@@ -128,7 +126,21 @@ vtkMRMLNode* vtkMRMLTransformRecorderNode
 }
 
 
+void
+vtkMRMLTransformRecorderNode
+::StartReceiveServer()
+{
+  this->Active = true;
+}
 
+
+
+void
+vtkMRMLTransformRecorderNode
+::StopReceiveServer()
+{
+  this->Active = false;
+}
 
 void
 vtkMRMLTransformRecorderNode
@@ -143,7 +155,6 @@ vtkMRMLTransformRecorderNode
     }
   
   output << "<TransformRecorderLog>" << std::endl;
-  
   
     // Save transforms.
   
@@ -204,19 +215,21 @@ vtkMRMLTransformRecorderNode
 vtkMRMLTransformRecorderNode
 ::vtkMRMLTransformRecorderNode()
 {
-  this->SetHideFromEditors( false );
-  this->ObservedTransformNodeID = NULL;
-  this->ObservedTransformNode   = NULL;
+  this->HideFromEditorsOff();
+  this->SetSaveWithScene( true );
+  this->SetModifiedSinceRead( true );
   
-  this->ObservedConnectorNodeID = NULL;
-  this->ObservedConnectorNode   = NULL;
+  this->TransformNodeID = NULL;
+  this->TransformNode   = NULL;
+  
+  this->ConnectorNodeID = NULL;
+  this->ConnectorNode   = NULL;
   
   this->Recording = false;
   
   this->LogFileName = "";
   
-  this->SetSaveWithScene( true );
-  this->SetModifiedSinceRead( true );
+  this->Active = true;
   
   // Initialize zero time point.
   this->Clock0 = clock();
@@ -236,13 +249,13 @@ vtkMRMLTransformRecorderNode
 vtkMRMLTransformRecorderNode
 ::~vtkMRMLTransformRecorderNode()
 {
-  this->RemoveMRMLObservers();
+
   
-  this->SetAndObserveObservedConnectorNodeID( NULL );
+  this->SetAndObserveConnectorNodeID( NULL );
   
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
+  for ( unsigned int i = 0; i < this->TransformNodes.size(); ++ i )
   {
-    vtkSetAndObserveMRMLObjectMacro( this->ObservedTransformNodes[ i ], NULL );
+    vtkSetAndObserveMRMLObjectMacro( this->TransformNodes[ i ], NULL );
   }
   
   if ( this->LastNeedleTransform != NULL )
@@ -266,10 +279,10 @@ void vtkMRMLTransformRecorderNode::WriteXML( ostream& of, int nIndent )
 
   vtkIndent indent(nIndent);
   
-  if (this->ObservedTransformNodeID != NULL) 
+  if (this->TransformNodeID != NULL) 
     {
-    of << indent << " ObservedTransformNodeRef=\""
-       << this->ObservedTransformNodeID << "\"";
+    of << indent << " TransformNodeRef=\""
+       << this->TransformNodeID << "\"";
     }
   
   of << indent << " Recording=\"" << this->Recording << "\"";
@@ -314,14 +327,19 @@ void vtkMRMLTransformRecorderNode::Copy( vtkMRMLNode *anode )
 
     // Observers must be removed here, otherwise MRML updates would activate nodes on the undo stack
   
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
+  for ( unsigned int i = 0; i < this->TransformNodes.size(); ++ i )
     {
-    this->ObservedTransformNodes[ i ]->RemoveObservers(
+    this->TransformNodes[ i ]->RemoveObservers(
         vtkMRMLTransformNode::TransformModifiedEvent );
     }
   
   this->SetRecording( node->GetRecording() );
   this->SetLogFileName( node->GetLogFileName() );
+  
+  this->SetAndObserveConnectorNodeID( NULL );
+  this->SetConnectorNodeID( node->ConnectorNodeID );
+  
+
 }
 
 
@@ -329,9 +347,18 @@ void vtkMRMLTransformRecorderNode::Copy( vtkMRMLNode *anode )
 void vtkMRMLTransformRecorderNode::UpdateReferences()
 {
   Superclass::UpdateReferences();
-  
-    // MRML node ID's should be checked. If Scene->GetNodeByID( id ) returns NULL,
+      // MRML node ID's should be checked. If Scene->GetNodeByID( id ) returns NULL,
     // the reference should be deleted (set to NULL).
+    if ( this->ConnectorNodeID != NULL && this->Scene->GetNodeByID( this->ConnectorNodeID ) == NULL )
+    {
+    this->SetConnectorNodeID( NULL );
+    }
+	
+	  if ( this->TransformNodeID != NULL && this->Scene->GetNodeByID( this->TransformNodeID ) == NULL )
+    {
+    this->SetTransformNodeID( NULL );
+    }
+
 }
 
 
@@ -340,13 +367,13 @@ void vtkMRMLTransformRecorderNode::UpdateReferenceID( const char *oldID, const c
 {
   Superclass::UpdateReferenceID( oldID, newID );
   
-  /*
-  if (    this->ObservedTransformNodeID
-       && ! strcmp( oldID, this->ObservedTransformNodeID ) )
+    
+  if ( this->ConnectorNodeID && !strcmp( oldID, this->ConnectorNodeID ) )
     {
-    this->SetAndObserveObservedTransformNodeID( newID );
+    this->SetAndObserveConnectorNodeID( newID );
     }
-  */
+  
+  
 }
 
 
@@ -354,8 +381,8 @@ void vtkMRMLTransformRecorderNode::UpdateReferenceID( const char *oldID, const c
 void vtkMRMLTransformRecorderNode::UpdateScene( vtkMRMLScene *scene )
 {
    Superclass::UpdateScene( scene );
-   
-   // this->SetAndObserveObservedTransformNodeID( this->ObservedTransformNodeID );
+     this->SetAndObserveConnectorNodeID( this->ConnectorNodeID );
+
 }
 
 
@@ -363,20 +390,20 @@ void vtkMRMLTransformRecorderNode::UpdateScene( vtkMRMLScene *scene )
 void vtkMRMLTransformRecorderNode::PrintSelf( ostream& os, vtkIndent indent )
 {
   vtkMRMLNode::PrintSelf(os,indent);
-
-  os << indent << "ObservedTransformNodeID: " <<
-    (this->ObservedTransformNodeID? this->ObservedTransformNodeID: "(none)") << "\n";
+  os << indent << "ConnectorNodeID: " << ( this->ConnectorNodeID ? this->ConnectorNodeID : "(none)" ) << "\n";
+  os << indent << "TransformNodeID: " << (this->TransformNodeID? this->TransformNodeID: "(none)") << "\n";
   os << indent << "LogFileName: " << this->LogFileName << "\n";
+  
 }
 
 
 
-void vtkMRMLTransformRecorderNode::SetAndObserveObservedConnectorNodeID( const char* ConnectorNodeRef )
+void vtkMRMLTransformRecorderNode::SetAndObserveConnectorNodeID( const char* ConnectorNodeRef )
 {
-  vtkSetAndObserveMRMLObjectMacro( this->ObservedConnectorNode, NULL );
-  this->SetObservedConnectorNodeID( ConnectorNodeRef );
-  vtkMRMLIGTLConnectorNode* cnode = this->GetObservedConnectorNode();
-  vtkSetAndObserveMRMLObjectMacro( this->ObservedConnectorNode, cnode );
+  vtkSetAndObserveMRMLObjectMacro( this->ConnectorNode, NULL );
+  this->SetConnectorNodeID( ConnectorNodeRef );
+  vtkMRMLIGTLConnectorNode* cnode = this->GetConnectorNode();
+  vtkSetAndObserveMRMLObjectMacro( this->ConnectorNode, cnode );
   if ( cnode )
     {
     cnode->AddObserver( vtkMRMLIGTLConnectorNode::ReceiveEvent, (vtkCommand*)this->MRMLCallbackCommand );
@@ -386,13 +413,13 @@ void vtkMRMLTransformRecorderNode::SetAndObserveObservedConnectorNodeID( const c
 
 
 vtkMRMLIGTLConnectorNode* vtkMRMLTransformRecorderNode
-::GetObservedConnectorNode()
+::GetConnectorNode()
 {
   vtkMRMLIGTLConnectorNode* node = NULL;
   if (    this->GetScene()
-       && this->ObservedConnectorNodeID != NULL )
+       && this->ConnectorNodeID != NULL )
     {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID( this->ObservedConnectorNodeID );
+    vtkMRMLNode* snode = this->GetScene()->GetNodeByID( this->ConnectorNodeID );
     node = vtkMRMLIGTLConnectorNode::SafeDownCast( snode );
     }
   return node;
@@ -403,15 +430,16 @@ vtkMRMLIGTLConnectorNode* vtkMRMLTransformRecorderNode
 void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData )
 {
     // Handle IGT Connector events.
+  if ( ! this->Active ) return;
   
-  if ( this->ObservedConnectorNode == vtkMRMLIGTLConnectorNode::SafeDownCast( caller )
+  if ( this->ConnectorNode == vtkMRMLIGTLConnectorNode::SafeDownCast( caller )
        && event == vtkMRMLIGTLConnectorNode::ReceiveEvent )
     {
-    int numIncomingNodes = this->ObservedConnectorNode->GetNumberOfIncomingMRMLNodes();
+    int numIncomingNodes = this->ConnectorNode->GetNumberOfIncomingMRMLNodes();
     std::vector< vtkMRMLLinearTransformNode* > transformNodes;
     for ( int nodeIndex = 0; nodeIndex < numIncomingNodes; ++ nodeIndex )
       {
-      vtkMRMLNode* node = this->ObservedConnectorNode->GetIncomingMRMLNode( nodeIndex );
+      vtkMRMLNode* node = this->ConnectorNode->GetIncomingMRMLNode( nodeIndex );
       vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( node );
       if ( transformNode != NULL )
         {
@@ -422,7 +450,7 @@ void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsign
       // Update the vector of observed transform nodes.
     
     bool updateTransforms = false;
-    if ( this->ObservedTransformNodes.size() != transformNodes.size() )
+    if ( this->TransformNodes.size() != transformNodes.size() )
       {
       updateTransforms = true;
       }
@@ -430,7 +458,7 @@ void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsign
       {
       for ( unsigned int i = 0; i < transformNodes.size(); ++ i )
         {
-        if ( strcmp( transformNodes[ i ]->GetID(), this->ObservedTransformNodes[ i ]->GetID() ) != 0 )
+        if ( strcmp( transformNodes[ i ]->GetID(), this->TransformNodes[ i ]->GetID() ) != 0 )
           {
           updateTransforms = true;
           }
@@ -443,19 +471,19 @@ void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsign
     if ( updateTransforms )
       {
       
-      for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
+      for ( unsigned int i = 0; i < this->TransformNodes.size(); ++ i )
         {
-        this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent );
-        vtkSetAndObserveMRMLObjectMacro( this->ObservedTransformNodes[ i ], NULL );
+        this->TransformNodes[ i ]->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent );
+        vtkSetAndObserveMRMLObjectMacro( this->TransformNodes[ i ], NULL );
         }
       
-      this->ObservedTransformNodes.clear();
+      this->TransformNodes.clear();
       
       for ( unsigned int i = 0; i < transformNodes.size(); ++ i )
         {
-        this->ObservedTransformNodes.push_back( NULL );
-        vtkSetAndObserveMRMLObjectMacro( this->ObservedTransformNodes[ i ], transformNodes[ i ] );
-        this->ObservedTransformNodes[ i ]->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*)this->MRMLCallbackCommand );
+        this->TransformNodes.push_back( NULL );
+        vtkSetAndObserveMRMLObjectMacro( this->TransformNodes[ i ], transformNodes[ i ] );
+        this->TransformNodes[ i ]->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*)this->MRMLCallbackCommand );
         }
       }
     }
@@ -463,9 +491,9 @@ void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsign
   
     // Handle modified event of any observed transform node.
   
-  for ( unsigned int tIndex = 0; tIndex < this->ObservedTransformNodes.size(); ++ tIndex )
+  for ( unsigned int tIndex = 0; tIndex < this->TransformNodes.size(); ++ tIndex )
   {
-    if (    this->ObservedTransformNodes[ tIndex ] == vtkMRMLTransformNode::SafeDownCast( caller )
+    if (    this->TransformNodes[ tIndex ] == vtkMRMLTransformNode::SafeDownCast( caller )
          && event == vtkMRMLTransformNode::TransformModifiedEvent
          && this->Recording == true )
     {
@@ -478,20 +506,20 @@ void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsign
 
 void vtkMRMLTransformRecorderNode::RemoveMRMLObservers()
 {
-  if ( this->ObservedTransformNode )
+  if ( this->TransformNode )
   {
-    this->ObservedTransformNode->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent );
+    this->TransformNode->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent );
   }
   
-  if ( this->ObservedConnectorNode )
+  if ( this->ConnectorNode )
   {
-    this->ObservedConnectorNode->RemoveObservers( vtkMRMLIGTLConnectorNode::ReceiveEvent );
+    this->ConnectorNode->RemoveObservers( vtkMRMLIGTLConnectorNode::ReceiveEvent );
   }
   
   
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
+  for ( unsigned int i = 0; i < this->TransformNodes.size(); ++ i )
   {
-    this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent );
+    this->TransformNodes[ i ]->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent );
   }
 }
 
@@ -640,7 +668,7 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( int index )
     // If we don't, record every transform.
   
   bool recordAll = false;
-  if ( this->TransformSelections.size() != this->ObservedTransformNodes.size() )
+  if ( this->TransformSelections.size() != this->TransformNodes.size() )
   {
     recordAll = true;
   }
@@ -651,12 +679,12 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( int index )
   vtkSmartPointer< vtkMatrix4x4 > m = vtkSmartPointer< vtkMatrix4x4 >::New();
   std::string deviceName;
   
-  this->ObservedConnectorNode->LockIncomingMRMLNode( this->ObservedTransformNodes[ index ] );
+  this->ConnectorNode->LockIncomingMRMLNode( this->TransformNodes[ index ] );
   
   
     // Compute the timestamp.
   
-  this->ObservedConnectorNode->GetIGTLTimeStamp( this->ObservedTransformNodes[ index ], sec, nsec );
+  this->ConnectorNode->GetIGTLTimeStamp( this->TransformNodes[ index ], sec, nsec );
   
   if ( sec == 0 && nsec == 0 )  // No IGTL time received. Use clock instead.
   {
@@ -687,7 +715,7 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( int index )
   
     // Get the new transform matrix.
   
-  vtkMRMLLinearTransformNode* ltn = vtkMRMLLinearTransformNode::SafeDownCast( this->ObservedTransformNodes[ index ] );
+  vtkMRMLLinearTransformNode* ltn = vtkMRMLLinearTransformNode::SafeDownCast( this->TransformNodes[ index ] );
   
   if ( ltn != NULL )
   {
@@ -701,10 +729,10 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( int index )
     
     // Get the device name for the new transform.
   
-  deviceName = std::string( this->ObservedTransformNodes[ index ]->GetName() );
+  deviceName = std::string( this->TransformNodes[ index ]->GetName() );
   
   
-  this->ObservedConnectorNode->UnlockIncomingMRMLNode( this->ObservedTransformNodes[ index ] );
+  this->ConnectorNode->UnlockIncomingMRMLNode( this->TransformNodes[ index ] );
   
   
     // Determine if this device has to be recorded or not.
