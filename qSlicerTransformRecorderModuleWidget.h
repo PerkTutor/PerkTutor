@@ -40,7 +40,7 @@ public:
   virtual ~qSlicerTransformRecorderModuleWidget();
 
 public slots:
-
+  void loadLogFile();
 
 protected:
   QScopedPointer<qSlicerTransformRecorderModuleWidgetPrivate> d_ptr;

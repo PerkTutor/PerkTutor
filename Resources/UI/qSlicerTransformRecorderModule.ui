@@ -6,41 +6,105 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>544</width>
-    <height>743</height>
+    <width>345</width>
+    <height>700</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>345</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1">
+   <item row="0" column="0">
     <widget class="ctkCollapsibleButton" name="CTKCollapsibleButton">
      <property name="text">
       <string>Display</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_5">
-      <item row="1" column="0">
-       <widget class="QGroupBox" name="OutputGroupBox">
-        <property name="minimumSize">
-         <size>
-          <width>399</width>
-          <height>0</height>
-         </size>
+     <property name="collapsed">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QGroupBox" name="InputGroupBox">
+        <property name="title">
+         <string>Input</string>
         </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QLabel" name="ModuleNodeLabel">
+           <property name="text">
+            <string>Module Node:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="qMRMLNodeComboBox" name="ModuleComboBox">
+           <property name="nodeTypes">
+            <stringlist>
+             <string>vtkMRMLTransformRecorderNode</string>
+            </stringlist>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="IGTConnectorLabel">
+           <property name="text">
+            <string>IGT Connector:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="qMRMLNodeComboBox" name="IGTComboBox">
+           <property name="nodeTypes">
+            <stringlist>
+             <string>vtkMRMLIGTLConnectorNode</string>
+            </stringlist>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="3">
+          <widget class="QTableWidget" name="RecordedTransformTable">
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="cornerButtonEnabled">
+            <bool>true</bool>
+           </property>
+           <column>
+            <property name="text">
+             <string>Record</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Transform</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="OutputGroupBox">
         <property name="title">
          <string>Output</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="trackingRecordLabel">
            <property name="text">
             <string>Tracking Record File:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="LoadLogButton">
            <property name="text">
             <string>Select Log File</string>
            </property>
@@ -62,14 +126,8 @@
         </layout>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item>
        <widget class="QGroupBox" name="ControlsGroupBox">
-        <property name="minimumSize">
-         <size>
-          <width>399</width>
-          <height>0</height>
-         </size>
-        </property>
         <property name="title">
          <string>Controls</string>
         </property>
@@ -181,7 +239,7 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item>
        <widget class="QGroupBox" name="AnnotationsGroupBox">
         <property name="title">
          <string>Annotations</string>
@@ -230,7 +288,7 @@
         </layout>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -242,61 +300,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item row="0" column="0">
-       <widget class="QGroupBox" name="InputGroupBox">
-        <property name="title">
-         <string>Input</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="0">
-          <widget class="QLabel" name="ModuleNodeLabel">
-           <property name="text">
-            <string>Module Node:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="qMRMLNodeComboBox" name="ModuleComboBox">
-           <property name="nodeTypes">
-            <stringlist>
-             <string>vtkMRMLTransformRecorderNode</string>
-            </stringlist>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="IGTConnectorLabel">
-           <property name="text">
-            <string>IGT Connector:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="qMRMLNodeComboBox" name="IGTComboBox">
-           <property name="nodeTypes">
-            <stringlist>
-             <string>vtkMRMLIGTLConnectorNode</string>
-            </stringlist>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QTableWidget" name="RecordedTransformTable">
-           <column>
-            <property name="text">
-             <string>Record</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Transform</string>
-            </property>
-           </column>
-          </widget>
-         </item>
-        </layout>
-       </widget>
       </item>
      </layout>
     </widget>

@@ -20,6 +20,10 @@
 // SlicerQt includes
 #include "qSlicerTransformRecorderModuleWidget.h"
 #include "ui_qSlicerTransformRecorderModule.h"
+#include "qSlicerIO.h"
+#include "qSlicerIOManager.h"
+#include "qSlicerApplication.h"
+#include <QtGui>
 
 #include "vtkMRMLTransformRecorderNode.h"
 
@@ -91,7 +95,26 @@ void qSlicerTransformRecorderModuleWidget::setup()
   d->ModuleComboBox->setNoneEnabled( true );
   connect( d->IGTComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onConnectorSelected() ) );
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
+  connect(d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile()));
 }
+
+
+//-----------------------------------------------------------------------------
+void qSlicerTransformRecorderModuleWidget::loadLogFile()
+{
+
+
+      QString path;
+    
+    path = QFileDialog::getOpenFileName(
+        this,
+        "Choose a file to open",
+        QString::null,
+        QString::null);
+ 
+   // lineEdit->setText( path );
+}
+
 
 void qSlicerTransformRecorderModuleWidget::enter()
 {
