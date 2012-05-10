@@ -38,6 +38,7 @@ public:
   typedef qSlicerAbstractModuleWidget Superclass;
   qSlicerTransformRecorderModuleWidget(QWidget *parent=0);
   virtual ~qSlicerTransformRecorderModuleWidget();
+  void OnTransformsListUpdate(int row, int col, char * str);
 
 public slots:
   void loadLogFile();

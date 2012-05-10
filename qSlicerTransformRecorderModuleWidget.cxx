@@ -102,18 +102,36 @@ void qSlicerTransformRecorderModuleWidget::setup()
 //-----------------------------------------------------------------------------
 void qSlicerTransformRecorderModuleWidget::loadLogFile()
 {
-
-
-      QString path;
+  Q_D( qSlicerTransformRecorderModuleWidget );
+  QString path;
     
-    path = QFileDialog::getOpenFileName(
-        this,
-        "Choose a file to open",
-        QString::null,
-        QString::null);
+  path = QFileDialog::getOpenFileName(this,"Choose a file to open",QString::null,QString::null);
+
+  d->logic()->GetModuleNode()->SaveIntoFile(  path.toStdString() );
  
-   // lineEdit->setText( path );
+  
 }
+
+// Communicate to the MRML node, which transforms should be saved.
+void qSlicerTransformRecorderModuleWidget::OnTransformsListUpdate( int row, int col, char * str )
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+    
+  
+  std::vector< int > transformSelections;
+
+  for ( int row = 0; row < d->RecordedTransformTable->rowCount(); ++ row ){
+    
+	  transformSelections.push_back( d->RecordedTransformTable->item( row, 0 )->text().toInt() );
+
+  }
+  
+  d->logic()->GetModuleNode()->SetTransformSelections( transformSelections );
+  
+  this->updateWidget();
+  
+}
+
 
 
 void qSlicerTransformRecorderModuleWidget::enter()
