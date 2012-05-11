@@ -106,12 +106,6 @@ public:
   
 protected:
 
-
-
-
-
-
-
     // Constructor/desctructor
 
   vtkMRMLTransformRecorderNode();

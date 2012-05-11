@@ -26,6 +26,8 @@
 #include <QtGui>
 
 #include "vtkMRMLTransformRecorderNode.h"
+#include "vtkMRMLIGTLConnectorNode.h"
+#include "vtkMRMLLinearTransformNode.h"
 
 #include "qMRMLNodeComboBox.h"
 #include "vtkMRMLViewNode.h"
@@ -126,9 +128,9 @@ void qSlicerTransformRecorderModuleWidget::onTransformsListUpdate( int row, int 
   for ( int row = 0; row < d->RecordedTransformTable->rowCount(); ++ row ){
     
 	  transformSelections.push_back( d->RecordedTransformTable->item( row, 0 )->text().toInt() );
-
+	  
   }
-  
+
   d->logic()->GetModuleNode()->SetTransformSelections( transformSelections );
   
   this->updateWidget();
@@ -258,8 +260,56 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   {
     d->StatusResultLabel->setText( "Waiting" );
   }
-
-
-
+  
+      // Get the transform nodes and fill the list with them.
+    // Proceed only with valid Connector Node.
+    
+  vtkMRMLIGTLConnectorNode* connectorNode = d->logic()->GetModuleNode()->GetConnectorNode();
+  if ( connectorNode == NULL )
+    {
+    return;
+    }
+  
+  int numOutNodes = connectorNode->GetNumberOfIncomingMRMLNodes();
+  
+  
+  std::vector< vtkMRMLLinearTransformNode* > txformNodes;
+  for ( int i = 0; i < numOutNodes; ++ i )
+    {
+    vtkMRMLNode* node = connectorNode->GetIncomingMRMLNode( i );
+    vtkMRMLLinearTransformNode* txformNode = vtkMRMLLinearTransformNode::SafeDownCast( node );
+    if ( txformNode != NULL )
+      {
+      txformNodes.push_back( txformNode );
+      }
+    }
+  
+  
+  // debug
+  // Get all transforms from the scene.
+  //std::vector< vtkMRMLNode* > transformNodes;
+  //scene->GetNodesByClass( "vtkMRMLLinearTransformNode", transformNodes );
+  
+  
+  
+  int numTransforms = txformNodes.size();
+  
+  bool delRows = false;
+  if ( numTransforms != d->RecordedTransformTable->rowCount() )
+    {
+    delRows = true;
+    }
+  
+  for ( int row = 0; row < numTransforms; ++ row )
+    {
+    if ( delRows )
+      {
+    //  d->RecordedTransformTable->insertRow(row);
+      //d->RecordedTransformTable->SetCellWindowCommandToCheckButton( row, 0 );
+	  //connect ( d->RecordedTransformTable->horizontalHeader(), SIGNAL(sectionClicked(row)), this, SLOT(slotSectionClicked(row)));
+      }
+    
+    //d->RecordedTransformTable->item( row, 1)->setText(txformNodes[ row ]->GetName() );
+    }
   
 }

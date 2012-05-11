@@ -17,6 +17,7 @@ set(qt_module_include_directories
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_BINARY_DIR}/MRML
+  ${OpenIGTLinkIF_SOURCE_DIR}/MRML
   )
 
 # Source files
@@ -42,6 +43,9 @@ set(qt_module_UI_SRCS
 set(qt_module_target_libraries
   vtkSlicerTransformRecorderModuleLogic
   vtkSlicerTransformRecorderModuleMRML
+  ${OpenIGTLink_LIBRARIES}
+  ${MRML_LIBRARIES}
+
   )
 
 # Resources
