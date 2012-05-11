@@ -38,7 +38,8 @@ public:
   typedef qSlicerAbstractModuleWidget Superclass;
   qSlicerTransformRecorderModuleWidget(QWidget *parent=0);
   virtual ~qSlicerTransformRecorderModuleWidget();
-  void OnTransformsListUpdate(int row, int col, char * str);
+  
+
 
 public slots:
   void loadLogFile();
@@ -50,7 +51,9 @@ protected:
   virtual void enter();
 
 protected slots:
-
+  void onTransformsListUpdate( int row, int col, char * str );
+  void onStopButtonPressed();
+  void onStartButtonPressed();
   void onConnectorSelected();
   void onModuleNodeSelected();
 //  void onProbeTransformSelected();

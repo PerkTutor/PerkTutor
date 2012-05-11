@@ -89,13 +89,16 @@ qSlicerTransformRecorderModuleWidget::~qSlicerTransformRecorderModuleWidget()
 void qSlicerTransformRecorderModuleWidget::setup()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
+  d->StatusResultLabel= NULL;
   d->setupUi(this);
   this->Superclass::setup();
   d->IGTComboBox->setNoneEnabled( true );
   d->ModuleComboBox->setNoneEnabled( true );
   connect( d->IGTComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onConnectorSelected() ) );
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
-  connect(d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile()));
+  connect( d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile() ) );
+  connect( d->StartButton, SIGNAL(pressed()),this,SLOT(onStartButtonPressed() ) );
+  connect( d->StopButton, SIGNAL(pressed()),this,SLOT(onStopButtonPressed() ) );
 }
 
 
@@ -113,7 +116,7 @@ void qSlicerTransformRecorderModuleWidget::loadLogFile()
 }
 
 // Communicate to the MRML node, which transforms should be saved.
-void qSlicerTransformRecorderModuleWidget::OnTransformsListUpdate( int row, int col, char * str )
+void qSlicerTransformRecorderModuleWidget::onTransformsListUpdate( int row, int col, char * str )
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
     
@@ -154,6 +157,7 @@ void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
   {
     d->logic()->GetModuleNode()->SetAndObserveConnectorNodeID( node->GetID() );
   }
+
 }
 
 
@@ -175,6 +179,34 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
   this->updateWidget();
 }
 
+void qSlicerTransformRecorderModuleWidget::onStartButtonPressed()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+
+  if( d->logic()->GetModuleNode() != NULL && d->IGTComboBox->currentNode() != NULL  )
+  {
+    d->logic()->GetModuleNode()->SetRecording( true );
+  }
+   
+  
+ 
+  this->updateWidget();
+  
+}
+
+void qSlicerTransformRecorderModuleWidget::onStopButtonPressed()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+
+  if( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }
+
+  d->logic()->GetModuleNode()->SetRecording( false );
+   
+  this->updateWidget();
+}
 
 void qSlicerTransformRecorderModuleWidget::updateWidget()
 {
@@ -192,11 +224,9 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
    
   }
   
+  // Check if node selection has changed.
   
-    // Check if node selection has changed.
-  
-  if(    d->logic()->GetModuleNode() != NULL
-      && d->IGTComboBox->currentNode() != NULL )
+  if( d->logic()->GetModuleNode() != NULL && d->IGTComboBox->currentNode() != NULL )
   {
     char* selectedID = d->IGTComboBox->currentNode()->GetID();
     char* nodeID = d->logic()->GetModuleNode()->GetConnectorNodeID();
@@ -220,5 +250,16 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
     return;
   }
   
+  if ( d->logic()->GetModuleNode()->GetRecording() )
+  {
+    d->StatusResultLabel->setText( "Recording" );
+  }
+  else
+  {
+    d->StatusResultLabel->setText( "Waiting" );
+  }
+
+
+
   
 }
