@@ -17,7 +17,7 @@ set(qt_module_include_directories
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_BINARY_DIR}/MRML
-  ${OpenIGTLinkIF_SOURCE_DIR}/MRML
+  #${OpenIGTLinkIF_SOURCE_DIR}/MRML
   )
 
 # Source files

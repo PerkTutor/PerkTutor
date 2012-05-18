@@ -51,7 +51,9 @@ protected:
   virtual void enter();
 
 protected slots:
-  void onTransformsListUpdate( int row, int col, char * str );
+  void onTransformsNodeSelected(vtkMRMLNode* node);
+  void onMRMLTransformNodeModified(vtkObject* caller);
+  void onTransformsListUpdate();
   void onStopButtonPressed();
   void onStartButtonPressed();
   void onConnectorSelected();

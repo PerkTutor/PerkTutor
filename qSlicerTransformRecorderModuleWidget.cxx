@@ -25,15 +25,17 @@
 #include "qSlicerApplication.h"
 #include <QtGui>
 
+// MRMLWidgets includes
+#include <qMRMLUtils.h>
+
+
 #include "vtkMRMLTransformRecorderNode.h"
-#include "vtkMRMLIGTLConnectorNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 
 #include "qMRMLNodeComboBox.h"
 #include "vtkMRMLViewNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
-
-
+#include "vtkMRMLTransformRecorderNode.h"
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_TransformRecorder
 class qSlicerTransformRecorderModuleWidgetPrivate: public Ui_qSlicerTransformRecorderModule
@@ -47,6 +49,7 @@ public:
   ~qSlicerTransformRecorderModuleWidgetPrivate();
 
   vtkSlicerTransformRecorderLogic* logic() const;
+  vtkMRMLLinearTransformNode*   MRMLTransformNode;
 };
 
 //-----------------------------------------------------------------------------
@@ -56,6 +59,7 @@ public:
 
 qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidgetPrivate( qSlicerTransformRecorderModuleWidget& object ) : q_ptr(&object)
 {
+  this->MRMLTransformNode = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -101,8 +105,45 @@ void qSlicerTransformRecorderModuleWidget::setup()
   connect( d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile() ) );
   connect( d->StartButton, SIGNAL(pressed()),this,SLOT(onStartButtonPressed() ) );
   connect( d->StopButton, SIGNAL(pressed()),this,SLOT(onStopButtonPressed() ) );
+  
+  // Connect node selector with module itself
+  connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),this, SLOT(onTransformsNodeSelected(vtkMRMLNode*)));
+  onTransformsNodeSelected(0);
+
 }
 
+//-----------------------------------------------------------------------------
+void qSlicerTransformRecorderModuleWidget::onTransformsNodeSelected(vtkMRMLNode* node)
+{
+  Q_D(qSlicerTransformRecorderModuleWidget);
+  
+  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(node);
+
+
+  // Listen for Transform node changes
+  this->qvtkReconnect(d->MRMLTransformNode, transformNode,
+    vtkMRMLTransformableNode::TransformModifiedEvent,
+    this, SLOT(onMRMLTransformNodeModified(vtkObject*)));
+ 
+  d->MRMLTransformNode = transformNode;
+
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified(vtkObject* caller)
+{
+  Q_D(qSlicerTransformRecorderModuleWidget);
+  
+  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(caller);
+  if (!transformNode) { return; }
+
+
+
+
+  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+ 
+  
+}
 
 //-----------------------------------------------------------------------------
 void qSlicerTransformRecorderModuleWidget::loadLogFile()
@@ -118,10 +159,11 @@ void qSlicerTransformRecorderModuleWidget::loadLogFile()
 }
 
 // Communicate to the MRML node, which transforms should be saved.
-void qSlicerTransformRecorderModuleWidget::onTransformsListUpdate( int row, int col, char * str )
+void qSlicerTransformRecorderModuleWidget::onTransformsListUpdate()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
-    
+
+  /* 
   
   std::vector< int > transformSelections;
 
@@ -132,8 +174,7 @@ void qSlicerTransformRecorderModuleWidget::onTransformsListUpdate( int row, int 
   }
 
   d->logic()->GetModuleNode()->SetTransformSelections( transformSelections );
-  
-  this->updateWidget();
+  */
   
 }
 
@@ -189,9 +230,7 @@ void qSlicerTransformRecorderModuleWidget::onStartButtonPressed()
   {
     d->logic()->GetModuleNode()->SetRecording( true );
   }
-   
-  
- 
+
   this->updateWidget();
   
 }
@@ -236,12 +275,20 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
     {
       this->onConnectorSelected();
     }
+
+
+	//QTableWidgetItem* newItem = new QTableWidgetItem("blaa");
+	//d->RecordedTransformTable->insertRow(0);
+    //d->RecordedTransformTable->setItem(0, 0, newItem);
+	onTransformsListUpdate();
+
   }
   else if (    d->logic()->GetModuleNode() != NULL
             && d->logic()->GetModuleNode()->GetConnectorNode() != NULL
             && d->IGTComboBox->currentNode() == NULL )
   {
     this->onConnectorSelected();
+
   }
   
   
@@ -260,56 +307,8 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   {
     d->StatusResultLabel->setText( "Waiting" );
   }
+
+
   
-      // Get the transform nodes and fill the list with them.
-    // Proceed only with valid Connector Node.
-    
-  vtkMRMLIGTLConnectorNode* connectorNode = d->logic()->GetModuleNode()->GetConnectorNode();
-  if ( connectorNode == NULL )
-    {
-    return;
-    }
-  
-  int numOutNodes = connectorNode->GetNumberOfIncomingMRMLNodes();
-  
-  
-  std::vector< vtkMRMLLinearTransformNode* > txformNodes;
-  for ( int i = 0; i < numOutNodes; ++ i )
-    {
-    vtkMRMLNode* node = connectorNode->GetIncomingMRMLNode( i );
-    vtkMRMLLinearTransformNode* txformNode = vtkMRMLLinearTransformNode::SafeDownCast( node );
-    if ( txformNode != NULL )
-      {
-      txformNodes.push_back( txformNode );
-      }
-    }
-  
-  
-  // debug
-  // Get all transforms from the scene.
-  //std::vector< vtkMRMLNode* > transformNodes;
-  //scene->GetNodesByClass( "vtkMRMLLinearTransformNode", transformNodes );
-  
-  
-  
-  int numTransforms = txformNodes.size();
-  
-  bool delRows = false;
-  if ( numTransforms != d->RecordedTransformTable->rowCount() )
-    {
-    delRows = true;
-    }
-  
-  for ( int row = 0; row < numTransforms; ++ row )
-    {
-    if ( delRows )
-      {
-    //  d->RecordedTransformTable->insertRow(row);
-      //d->RecordedTransformTable->SetCellWindowCommandToCheckButton( row, 0 );
-	  //connect ( d->RecordedTransformTable->horizontalHeader(), SIGNAL(sectionClicked(row)), this, SLOT(slotSectionClicked(row)));
-      }
-    
-    //d->RecordedTransformTable->item( row, 1)->setText(txformNodes[ row ]->GetName() );
-    }
   
 }
