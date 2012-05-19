@@ -538,6 +538,8 @@ void vtkMRMLTransformRecorderNode::SetTransformSelections( std::vector< int > se
   {
     this->TransformSelections.push_back( selections[ i ] );
   }
+
+
 }
 
 
@@ -552,7 +554,8 @@ void vtkMRMLTransformRecorderNode::SetLogFileName( std::string fileName )
 void vtkMRMLTransformRecorderNode::SaveIntoFile( std::string fileName )
 {
   this->LogFileName = fileName;
-  this->UpdateFileFromBuffer();
+  //this->UpdateFileFromBuffer();
+
 }
 
 
@@ -809,9 +812,11 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( int index )
     
     if ( this->Recording )
     {
+
       this->TransformsBuffer.push_back( rec );
       this->InvokeEvent( this->TransformChangedEvent, NULL );
     }
+
     
   } // if ( record )
 }

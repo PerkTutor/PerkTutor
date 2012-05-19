@@ -53,13 +53,10 @@ protected:
 protected slots:
   void onTransformsNodeSelected(vtkMRMLNode* node);
   void onMRMLTransformNodeModified(vtkObject* caller);
-  void onTransformsListUpdate();
   void onStopButtonPressed();
   void onStartButtonPressed();
   void onConnectorSelected();
   void onModuleNodeSelected();
-//  void onProbeTransformSelected();
-//  void onNeedleTransformSelected();
   void updateWidget();
 
 private:

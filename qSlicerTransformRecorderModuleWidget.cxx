@@ -127,6 +127,8 @@ void qSlicerTransformRecorderModuleWidget::onTransformsNodeSelected(vtkMRMLNode*
  
   d->MRMLTransformNode = transformNode;
 
+
+
 }
 
 //-----------------------------------------------------------------------------
@@ -136,8 +138,7 @@ void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified(vtkObject
   
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(caller);
   if (!transformNode) { return; }
-
-
+  
 
 
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
@@ -149,34 +150,27 @@ void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified(vtkObject
 void qSlicerTransformRecorderModuleWidget::loadLogFile()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
+
+  QFileDialog dialog(this);
+  dialog.setFileMode(QFileDialog::AnyFile);
+
+  dialog.setViewMode(QFileDialog::Detail);
+  QStringList filenames;
   QString path;
-    
-  path = QFileDialog::getOpenFileName(this,"Choose a file to open",QString::null,QString::null);
+  if (dialog.exec()){
+     filenames = dialog.selectedFiles();
+	 path = filenames[0];
+  }  
 
   d->logic()->GetModuleNode()->SaveIntoFile(  path.toStdString() );
- 
-  
+  d->LoadLogButton->setText(path);
+
+  this->updateWidget();
+
 }
 
-// Communicate to the MRML node, which transforms should be saved.
-void qSlicerTransformRecorderModuleWidget::onTransformsListUpdate()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
 
-  /* 
-  
-  std::vector< int > transformSelections;
 
-  for ( int row = 0; row < d->RecordedTransformTable->rowCount(); ++ row ){
-    
-	  transformSelections.push_back( d->RecordedTransformTable->item( row, 0 )->text().toInt() );
-	  
-  }
-
-  d->logic()->GetModuleNode()->SetTransformSelections( transformSelections );
-  */
-  
-}
 
 
 
@@ -226,6 +220,27 @@ void qSlicerTransformRecorderModuleWidget::onStartButtonPressed()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
+      // Go through transform types (ie ProbeToReference, StylusTipToReference,etc) 
+  // Save selected state as 1 and unselected state as 0 of each transform type in transformSelections vector.
+  
+  std::vector< int > transformSelections;
+  int unselected = 0;
+  int selected = 1;
+
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++){
+	if(d->TransformCheckableComboBox->checkState(d->TransformCheckableComboBox->nodeFromIndex(i)) == Qt::Checked  ){
+	  transformSelections.push_back(selected);
+	}
+	else{
+	  transformSelections.push_back(unselected);
+	}
+	  
+  }
+
+  // Communicate to the MRML node, which transforms should be saved.
+  d->logic()->GetModuleNode()->SetTransformSelections( transformSelections );
+
+
   if( d->logic()->GetModuleNode() != NULL && d->IGTComboBox->currentNode() != NULL  )
   {
     d->logic()->GetModuleNode()->SetRecording( true );
@@ -245,6 +260,7 @@ void qSlicerTransformRecorderModuleWidget::onStopButtonPressed()
   }
 
   d->logic()->GetModuleNode()->SetRecording( false );
+  d->logic()->GetModuleNode()->UpdateFileFromBuffer();
    
   this->updateWidget();
 }
@@ -276,12 +292,6 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
       this->onConnectorSelected();
     }
 
-
-	//QTableWidgetItem* newItem = new QTableWidgetItem("blaa");
-	//d->RecordedTransformTable->insertRow(0);
-    //d->RecordedTransformTable->setItem(0, 0, newItem);
-	onTransformsListUpdate();
-
   }
   else if (    d->logic()->GetModuleNode() != NULL
             && d->logic()->GetModuleNode()->GetConnectorNode() != NULL
@@ -303,6 +313,8 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   {
     d->StatusResultLabel->setText( "Recording" );
   }
+
+ 
   else
   {
     d->StatusResultLabel->setText( "Waiting" );
