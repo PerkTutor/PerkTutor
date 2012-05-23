@@ -186,7 +186,6 @@ vtkMRMLTransformRecorderNode
   output << "</TransformRecorderLog>" << std::endl;
   output.close();
   
-  this->ClearBuffer();
 }
 
 
@@ -554,7 +553,7 @@ void vtkMRMLTransformRecorderNode::SetLogFileName( std::string fileName )
 void vtkMRMLTransformRecorderNode::SaveIntoFile( std::string fileName )
 {
   this->LogFileName = fileName;
-  //this->UpdateFileFromBuffer();
+ // this->UpdateFileFromBuffer();
 
 }
 
@@ -600,6 +599,7 @@ void vtkMRMLTransformRecorderNode::CustomMessage( std::string message )
 unsigned int vtkMRMLTransformRecorderNode::GetTransformsBufferSize()
 {
   return this->TransformsBuffer.size();
+
 }
 
 

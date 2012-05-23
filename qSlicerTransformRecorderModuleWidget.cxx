@@ -96,6 +96,10 @@ void qSlicerTransformRecorderModuleWidget::setup()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
   d->StatusResultLabel= NULL;
+  d->NumRecordsResultLabel=NULL;
+  d->TotalTimeResultsLabel=NULL;
+  d->TotaNeedlelPathResultsLabel=NULL;
+  d->InsideNeedlePathResultsLabel=NULL;
   d->setupUi(this);
   this->Superclass::setup();
   d->IGTComboBox->setNoneEnabled( true );
@@ -105,6 +109,12 @@ void qSlicerTransformRecorderModuleWidget::setup()
   connect( d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile() ) );
   connect( d->StartButton, SIGNAL(pressed()),this,SLOT(onStartButtonPressed() ) );
   connect( d->StopButton, SIGNAL(pressed()),this,SLOT(onStopButtonPressed() ) );
+  connect( d->ClearBufferButton, SIGNAL(pressed()),this,SLOT(onClearBufferButtonPressed() ) );
+
+  // GUI refresh: updates every 10ms
+  QTimer *t = new QTimer( this );
+  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
+  t->start(10); 
   
   // Connect node selector with module itself
   connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),this, SLOT(onTransformsNodeSelected(vtkMRMLNode*)));
@@ -119,13 +129,12 @@ void qSlicerTransformRecorderModuleWidget::onTransformsNodeSelected(vtkMRMLNode*
   
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(node);
 
-
   // Listen for Transform node changes
   this->qvtkReconnect(d->MRMLTransformNode, transformNode,
     vtkMRMLTransformableNode::TransformModifiedEvent,
     this, SLOT(onMRMLTransformNodeModified(vtkObject*)));
  
-  d->MRMLTransformNode = transformNode;
+ // d->MRMLTransformNode = transformNode;
 
 
 
@@ -142,7 +151,7 @@ void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified(vtkObject
 
 
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
- 
+
   
 }
 
@@ -194,7 +203,7 @@ void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
   {
     d->logic()->GetModuleNode()->SetAndObserveConnectorNodeID( node->GetID() );
   }
-
+  this->updateWidget();
 }
 
 
@@ -245,7 +254,7 @@ void qSlicerTransformRecorderModuleWidget::onStartButtonPressed()
   {
     d->logic()->GetModuleNode()->SetRecording( true );
   }
-
+ 
   this->updateWidget();
   
 }
@@ -264,6 +273,21 @@ void qSlicerTransformRecorderModuleWidget::onStopButtonPressed()
    
   this->updateWidget();
 }
+
+void qSlicerTransformRecorderModuleWidget::onClearBufferButtonPressed() 
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+
+  if( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }
+
+  d->logic()->GetModuleNode()->ClearBuffer();
+   
+  this->updateWidget();
+}
+
 
 void qSlicerTransformRecorderModuleWidget::updateWidget()
 {
@@ -312,6 +336,7 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   if ( d->logic()->GetModuleNode()->GetRecording() )
   {
     d->StatusResultLabel->setText( "Recording" );
+
   }
 
  
@@ -319,7 +344,29 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   {
     d->StatusResultLabel->setText( "Waiting" );
   }
+ 
+  int numRec = d->logic()->GetModuleNode()->GetTransformsBufferSize() + d->logic()->GetModuleNode()->GetMessagesBufferSize();
+  std::stringstream ss;
+  ss << numRec;
+  d->NumRecordsResultLabel->setText( QString::fromStdString(ss.str()) );
+  
+  ss.str( "" );
+  ss.precision( 2 );
+  ss << std::fixed << d->logic()->GetModuleNode()->GetTotalTime();
+  d->TotalTimeResultsLabel->setText( ss.str().c_str() );
+  
+  ss.str( "" );
+  ss.precision( 2 );
+  ss << std::fixed << d->logic()->GetModuleNode()->GetTotalPath();
+  d->TotaNeedlelPathResultsLabel->setText( ss.str().c_str() );
+  
+  ss.str( "" );
+  ss.precision( 2 );
+  ss << std::fixed << d->logic()->GetModuleNode()->GetTotalPathInside();
+  d->InsideNeedlePathResultsLabel->setText( ss.str().c_str() );
+  
 
+  
 
   
   

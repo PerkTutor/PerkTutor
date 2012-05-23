@@ -55,6 +55,7 @@ protected slots:
   void onMRMLTransformNodeModified(vtkObject* caller);
   void onStopButtonPressed();
   void onStartButtonPressed();
+  void onClearBufferButtonPressed();
   void onConnectorSelected();
   void onModuleNodeSelected();
   void updateWidget();
