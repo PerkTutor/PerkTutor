@@ -95,21 +95,26 @@ qSlicerTransformRecorderModuleWidget::~qSlicerTransformRecorderModuleWidget()
 void qSlicerTransformRecorderModuleWidget::setup()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
+
   d->StatusResultLabel= NULL;
   d->NumRecordsResultLabel=NULL;
   d->TotalTimeResultsLabel=NULL;
   d->TotaNeedlelPathResultsLabel=NULL;
   d->InsideNeedlePathResultsLabel=NULL;
+
   d->setupUi(this);
   this->Superclass::setup();
+
   d->IGTComboBox->setNoneEnabled( true );
   d->ModuleComboBox->setNoneEnabled( true );
+
   connect( d->IGTComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onConnectorSelected() ) );
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
   connect( d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile() ) );
   connect( d->StartButton, SIGNAL(pressed()),this,SLOT(onStartButtonPressed() ) );
   connect( d->StopButton, SIGNAL(pressed()),this,SLOT(onStopButtonPressed() ) );
   connect( d->ClearBufferButton, SIGNAL(pressed()),this,SLOT(onClearBufferButtonPressed() ) );
+ 
 
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
@@ -119,6 +124,14 @@ void qSlicerTransformRecorderModuleWidget::setup()
   // Connect node selector with module itself
   connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),this, SLOT(onTransformsNodeSelected(vtkMRMLNode*)));
   onTransformsNodeSelected(0);
+
+  //Annotations
+
+
+    d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+
+	connect(d->InsertAnnotationButton, SIGNAL(pressed()), this, SLOT(insertItem()));
+	connect(d->ClearAnnotationButton, SIGNAL(pressed()), this, SLOT(clearItems()));
 
 }
 
@@ -289,6 +302,47 @@ void qSlicerTransformRecorderModuleWidget::onClearBufferButtonPressed()
 }
 
 
+void qSlicerTransformRecorderModuleWidget::insertItem()
+{
+	Q_D( qSlicerTransformRecorderModuleWidget );
+
+
+    QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
+        tr("Input text for the new annotation:"));
+
+    if (itemText.isNull())
+        return;
+
+
+    QListWidgetItem *newItem = new QListWidgetItem;
+    newItem->setText(itemText);
+
+    int row = d->AnnotationListWidget->row(d->AnnotationListWidget->currentItem());
+
+  
+
+    QString toolTipText = tr("Tooltip:") + itemText;
+    QString statusTipText = tr("Status tip:") + itemText;
+    QString whatsThisText = tr("What's This?:") + itemText;
+
+    newItem->setToolTip(toolTipText);
+    newItem->setStatusTip(toolTipText);
+    newItem->setWhatsThis(whatsThisText);
+
+	d->AnnotationListWidget->insertItem(row, newItem);
+	std::string annotation = itemText.toStdString();
+	d->logic()->GetModuleNode()->CustomMessage( annotation );
+
+}
+
+void qSlicerTransformRecorderModuleWidget::clearItems()
+{
+	Q_D( qSlicerTransformRecorderModuleWidget );
+
+	d->AnnotationListWidget->clear();
+}
+
+
 void qSlicerTransformRecorderModuleWidget::updateWidget()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
@@ -338,9 +392,7 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
     d->StatusResultLabel->setText( "Recording" );
 
   }
-
- 
-  else
+ else
   {
     d->StatusResultLabel->setText( "Waiting" );
   }

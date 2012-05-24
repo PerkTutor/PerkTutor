@@ -20,12 +20,13 @@
 
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
-
+#include <QtGui>
 #include "qSlicerTransformRecorderModuleExport.h"
 
 class qSlicerTransformRecorderModuleWidgetPrivate;
 class vtkMRMLNode;
 class vtkMRMLTransformRecorderNode;
+
 
 /// \ingroup Slicer_QtModules_TransformRecorder
 class Q_SLICER_QTMODULES_TRANSFORMRECORDER_EXPORT qSlicerTransformRecorderModuleWidget :
@@ -56,6 +57,8 @@ protected slots:
   void onStopButtonPressed();
   void onStartButtonPressed();
   void onClearBufferButtonPressed();
+  void insertItem();
+  void clearItems();
   void onConnectorSelected();
   void onModuleNodeSelected();
   void updateWidget();
@@ -63,9 +66,6 @@ protected slots:
 private:
   Q_DECLARE_PRIVATE(qSlicerTransformRecorderModuleWidget);
   Q_DISABLE_COPY(qSlicerTransformRecorderModuleWidget);
-
-
-
 };
 
 #endif
