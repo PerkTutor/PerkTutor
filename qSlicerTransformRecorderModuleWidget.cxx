@@ -1,3 +1,5 @@
+
+
 /*==============================================================================
 
   Program: 3D Slicer
@@ -198,6 +200,7 @@ void qSlicerTransformRecorderModuleWidget::loadLogFile()
 
 void qSlicerTransformRecorderModuleWidget::enter()
 {
+  this->Superclass::enter();
   this->updateWidget();
 }
 
