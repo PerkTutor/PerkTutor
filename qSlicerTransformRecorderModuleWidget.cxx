@@ -130,10 +130,10 @@ void qSlicerTransformRecorderModuleWidget::setup()
   //Annotations
 
 
-    d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+  d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
 
-	connect(d->InsertAnnotationButton, SIGNAL(pressed()), this, SLOT(insertItem()));
-	connect(d->ClearAnnotationButton, SIGNAL(pressed()), this, SLOT(clearItems()));
+  connect(d->InsertAnnotationButton, SIGNAL(pressed()), this, SLOT(insertItem()));
+  connect(d->ClearAnnotationButton, SIGNAL(pressed()), this, SLOT(clearItems()));
 
 }
 
@@ -208,7 +208,7 @@ void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
  
-  if( d->logic()->GetModuleNode() == NULL )
+  if( d->logic()->GetModuleNode() == NULL || d->IGTComboBox->currentNode() == NULL )
   {
     return;
   }
@@ -320,7 +320,6 @@ void qSlicerTransformRecorderModuleWidget::insertItem()
     QListWidgetItem *newItem = new QListWidgetItem;
     newItem->setText(itemText);
 
-    int row = d->AnnotationListWidget->row(d->AnnotationListWidget->currentItem());
 
   
 
@@ -332,7 +331,7 @@ void qSlicerTransformRecorderModuleWidget::insertItem()
     newItem->setStatusTip(toolTipText);
     newItem->setWhatsThis(whatsThisText);
 
-	d->AnnotationListWidget->insertItem(row, newItem);
+	d->AnnotationListWidget->addItem(newItem);
 	std::string annotation = itemText.toStdString();
 	d->logic()->GetModuleNode()->CustomMessage( annotation );
 
