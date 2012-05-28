@@ -185,6 +185,7 @@ vtkMRMLTransformRecorderNode
   
   output << "</TransformRecorderLog>" << std::endl;
   output.close();
+  this->ClearBuffer();
   
 }
 
@@ -553,7 +554,7 @@ void vtkMRMLTransformRecorderNode::SetLogFileName( std::string fileName )
 void vtkMRMLTransformRecorderNode::SaveIntoFile( std::string fileName )
 {
   this->LogFileName = fileName;
- // this->UpdateFileFromBuffer();
+  this->UpdateFileFromBuffer();
 
 }
 
@@ -568,11 +569,41 @@ std::string vtkMRMLTransformRecorderNode::GetLogFileName()
 
 void vtkMRMLTransformRecorderNode::CustomMessage( std::string message )
 {
-  clock_t clock1 = clock();
-  double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+  int sec = 0;
+  int nsec = 0;
+
+    // Compute the timestamp.
   
-  long int sec = floor( seconds );
-  int nsec = ( seconds - sec ) * 1e9;
+  this->ConnectorNode->GetIGTLTimeStamp( this->TransformNodes[ this->TransformNodes.size()-1 ], sec, nsec );
+  
+  if ( sec == 0 && nsec == 0 )  // No IGTL time received. Use clock instead.
+  {
+    clock_t clock1 = clock();
+    double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+    sec = floor( seconds );
+    nsec = ( seconds - sec ) * 1e9;
+  }
+  else   // If the IGTL time was used.
+  {
+    if ( ! this->IGTLTimeSynchronized )  // First time to receive IGTL time. Need to synchronize.
+    {
+      clock_t clock1 = clock();
+      double clockSeconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+      double igtlSeconds = sec + nsec * 1e-9;
+      this->IGTLTimeOffsetSeconds = clockSeconds - igtlSeconds;
+      this->IGTLTimeSynchronized = true;
+    }
+    
+      // Apply IGTL time offset.
+    
+    double igtlSeconds = sec + nsec * 1e-9;
+    double fixedSeconds = igtlSeconds + this->IGTLTimeOffsetSeconds;
+    sec = floor( fixedSeconds );
+    nsec = ( fixedSeconds - sec ) * 1e9;
+  }
+  
+  this->ConnectorNode->UnlockIncomingMRMLNode( this->TransformNodes[ this->TransformNodes.size()-1  ] );
+
   
   MessageRecord rec;
     rec.Message = message;
@@ -671,8 +702,13 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( int index )
     // If we don't, record every transform.
   
   bool recordAll = false;
-  if ( this->TransformSelections.size() != this->TransformNodes.size() )
-  {
+
+  int total = 0;
+  for (int i=0; i <TransformSelections.size(); i++){
+    total = total + TransformSelections[i];
+  }
+
+  if ( total == 0 ){
     recordAll = true;
   }
   

@@ -188,7 +188,7 @@ void qSlicerTransformRecorderModuleWidget::loadLogFile()
 
   d->logic()->GetModuleNode()->SaveIntoFile(  path.toStdString() );
   d->LoadLogButton->setText(path);
-
+  d->AnnotationListWidget->clear();
   this->updateWidget();
 
 }
@@ -285,7 +285,7 @@ void qSlicerTransformRecorderModuleWidget::onStopButtonPressed()
   }
 
   d->logic()->GetModuleNode()->SetRecording( false );
-  d->logic()->GetModuleNode()->UpdateFileFromBuffer();
+  //d->logic()->GetModuleNode()->UpdateFileFromBuffer();
    
   this->updateWidget();
 }
