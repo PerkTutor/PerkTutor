@@ -4,8 +4,8 @@ set(qt_module_name "TransformRecorder")
 set(qt_module_title "Transform Recorder")
 
 # Build module sub libraries
-add_subdirectory(Logic)
 add_subdirectory(MRML)
+add_subdirectory(Logic)
 
 set(qt_module_export_directive "Q_SLICER_QTMODULES_TRANSFORMRECORDER_EXPORT")
 
@@ -45,7 +45,6 @@ set(qt_module_target_libraries
   vtkSlicerTransformRecorderModuleMRML
   ${OpenIGTLink_LIBRARIES}
   ${MRML_LIBRARIES}
-
   )
 
 # Resources
