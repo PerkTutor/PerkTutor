@@ -65,7 +65,7 @@ QString qSlicerTransformRecorderModule::category()const
 
 QStringList qSlicerTransformRecorderModule::categories() const
 {
-  return QStringList() << "";
+  return QStringList() << "" << "IGT";
 }
 //-----------------------------------------------------------------------------
 qSlicerTransformRecorderModule::~qSlicerTransformRecorderModule()
