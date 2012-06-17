@@ -217,7 +217,7 @@ vtkMRMLTransformRecorderNode
 {
   this->HideFromEditorsOff();
   this->SetSaveWithScene( true );
-  this->SetModifiedSinceRead( true );
+  // this->SetModifiedSinceRead( true );
   
   this->TransformNodeID = NULL;
   this->TransformNode   = NULL;
