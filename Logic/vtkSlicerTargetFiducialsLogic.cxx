@@ -79,6 +79,32 @@ void vtkSlicerTargetFiducialsLogic::SetAnnotationHierarchyNode( vtkMRMLAnnotatio
 }
 
 
+void vtkSlicerTargetFiducialsLogic::GetFiducialCoords()
+{
+  if (this->TransformNode == NULL ||  this->AnnotationHierarchyNode == NULL)
+  {
+    return;
+  }
+  
+  vtkMatrix4x4* transformToWorld = vtkMatrix4x4::New();
+  this->TransformNode->GetMatrixTransformToWorld( transformToWorld );
+  
+  vtkMRMLAnnotationFiducialNode * fiducialNode = vtkMRMLAnnotationFiducialNode::New();
+  
+  double stylusCoord[ 3 ] = { transformToWorld->GetElement( 0, 3 ), transformToWorld->GetElement( 1, 3 ), transformToWorld->GetElement( 2, 3 ) };
+  
+  double fiducialCoord[ 3 ] = {0,0,0};
+  bool gotFiducialCoord = fiducialNode->GetFiducialCoordinates(fiducialCoord);
+
+  // fnode->SetControlPoint( 0, coord );
+  
+  //this->GetMRMLScene()->AddNode( fnode );
+
+  fiducialNode->Delete();
+  transformToWorld->Delete();
+}
+
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerTargetFiducialsLogic::SetMRMLSceneInternal(vtkMRMLScene * newScene)

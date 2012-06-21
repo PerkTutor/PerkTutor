@@ -81,34 +81,6 @@ void qSlicerTargetFiducialsModuleWidget::setup()
   connect( d->TransformComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformNodeSelected() ) );
 }
 
-/*
-void qSlicerTargetFiducialsModuleWidget::enter()
-{
-  Q_D( qSlicerTargetFiducialsModuleWidget );
-
-  this->Superclass::enter();
-
-  this->updateWidget();
-}
-*/
-
-/*
-void qSlicerTargetFiducialsModuleWidget::onModuleNodeSelected()
-{
-  Q_D( qSlicerTargetFiducialsModuleWidget );
-  
-  vtkMRMLNode* currentNode = d->ModuleNodeComboBox->currentNode();
-  
-  vtkMRMLTargetFiducialsNode* node = vtkMRMLTargetFiducialsNode::SafeDownCast( currentNode );
-  if ( node != NULL )
-  {
-      d->logic()->SetModuleNode( node );
-  }
-  this->updateWidget();
-}
-*/
-
-
 void qSlicerTargetFiducialsModuleWidget::onFiducialListSelected()
 {
   Q_D( qSlicerTargetFiducialsModuleWidget );
@@ -120,6 +92,7 @@ void qSlicerTargetFiducialsModuleWidget::onFiducialListSelected()
   {
     d->logic()->SetAnnotationHierarchyNode( aNode );
   }
+  d->logic()->GetFiducialCoords();
   
 }
 

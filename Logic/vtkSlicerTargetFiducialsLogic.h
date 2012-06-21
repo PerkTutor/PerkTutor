@@ -54,6 +54,7 @@ public:
 public:
   vtkGetObjectMacro( TransformNode, vtkMRMLLinearTransformNode );
   void SetTransformNode( vtkMRMLLinearTransformNode *node );
+  void GetFiducialCoords();
 
 private:
   vtkMRMLLinearTransformNode *TransformNode;
