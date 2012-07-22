@@ -163,34 +163,24 @@ void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified(vtkObject
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(caller);
   if (!transformNode) { return; }
   
-
-
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-
-  
 }
 
-//-----------------------------------------------------------------------------
+
+
 void qSlicerTransformRecorderModuleWidget::loadLogFile()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
-
-  QFileDialog dialog(this);
-  dialog.setFileMode(QFileDialog::AnyFile);
-
-  dialog.setViewMode(QFileDialog::Detail);
-  QStringList filenames;
-  QString path;
-  if (dialog.exec()){
-     filenames = dialog.selectedFiles();
-	 path = filenames[0];
-  }  
-
-  d->logic()->GetModuleNode()->SaveIntoFile(  path.toStdString() );
-  d->LoadLogButton->setText(path);
-  d->AnnotationListWidget->clear();
+  
+  QString filename = QFileDialog::getSaveFileName( this, tr("Save record"), "", tr("XML Files (*.xml)") );
+  
+  if ( filename.isEmpty() == false )
+  {
+    d->logic()->GetModuleNode()->SaveIntoFile( filename.toStdString() );
+    d->AnnotationListWidget->clear();
+  }
+  
   this->updateWidget();
-
 }
 
 
