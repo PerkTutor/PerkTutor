@@ -65,7 +65,7 @@ public:
   /// Initialize listening to MRML events
   void InitializeEventListeners();
     
-  void SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node );
+  // void SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node );
   //void SetProgressViewNode( vtkMRMLViewNode* node );
   //void SetBullsEyeViewNode( vtkMRMLViewNode* node );
 

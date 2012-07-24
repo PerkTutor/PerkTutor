@@ -413,9 +413,9 @@ void vtkMRMLTransformRecorderNode
     if ( strcmp( TransformNodeID, (*nodeIt)->GetID() ) == 0 )
     {
       (*nodeIt)->RemoveObserver( (vtkCommand*)this->MRMLCallbackCommand );
+      vtkSetAndObserveMRMLObjectMacro( *nodeIt, NULL );
+      this->ObservedTransformNodes.erase( nodeIt );
     }
-    vtkSetAndObserveMRMLObjectMacro( *nodeIt, NULL );
-    this->ObservedTransformNodes.erase( nodeIt );
   }
   
   
