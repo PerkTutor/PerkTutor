@@ -44,7 +44,7 @@ class vtkMRMLModelNode;
 class vtkMRMLViewNode;
 class vtkMRMLVolumeNode;
 
-  /**
+/**
  * Struct to store a recorded transform.
  */
 class TransformRecord
@@ -52,7 +52,7 @@ class TransformRecord
 public:
   std::string DeviceName;
   std::string Transform;
-  long int TimeStampSec; // UNIX time, rounded down. Seconds from 1970 Jan 1 00:00, UTC.
+  long int TimeStampSec; 
   int TimeStampNSec;     // Nanoseconds from TimeStampSec to the real timestamp.
 };
 
@@ -175,6 +175,7 @@ protected:
   
   double IGTLTimeOffsetSeconds;  // Adding this to the IGTL timestamp synchronizes it with the clock.
   bool IGTLTimeSynchronized;
+  
   
   double TotalNeedlePath;
   double TotalNeedlePathInside;

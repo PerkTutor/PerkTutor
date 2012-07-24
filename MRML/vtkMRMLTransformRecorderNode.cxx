@@ -485,7 +485,7 @@ void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsign
         tIt != this->ObservedTransformNodes.end();
         tIt ++ )
   {
-    if ( *tIt == vtkMRMLTransformNode::SafeDownCast( caller )
+    if ( *tIt == vtkMRMLLinearTransformNode::SafeDownCast( caller )
          && event == vtkMRMLLinearTransformNode::TransformModifiedEvent )
     {
       vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
@@ -773,9 +773,33 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( const char* TransformNodeID 
     rec.TimeStampNSec = nsec;
     rec.Transform = mss.str();
   
-  if ( this->Recording )
+  if ( this->Recording == false )
+  {
+    return;
+  }
+  
+  
+    // Look for the most recent value of this transform.
+    // If the value hasn't changed, we don't record.
+  
+  std::vector< TransformRecord >::iterator trIt;
+  trIt = this->TransformsBuffer.end();
+  bool duplicate = false;
+  while ( trIt != this->TransformsBuffer.begin() )
+  {
+    trIt --;
+    if ( rec.DeviceName.compare( (*trIt).DeviceName ) == 0 )
+    {
+      if ( rec.Transform.compare( (*trIt).Transform ) == 0 )
+      {
+        duplicate = true;
+      }
+      break;
+    }
+  }
+  
+  if ( duplicate == false )
   {
     this->TransformsBuffer.push_back( rec );
-    // this->InvokeEvent( this->TransformChangedEvent, NULL );
   }
 }
