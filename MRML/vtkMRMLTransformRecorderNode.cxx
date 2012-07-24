@@ -203,6 +203,17 @@ vtkMRMLTransformRecorderNode
 
 
 
+void vtkMRMLTransformRecorderNode
+::GetTimestamp( int &sec, int &nsec )
+{
+  clock_t clock1 = clock();
+  double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+  sec = floor( seconds );
+  nsec = ( seconds - sec ) * 1e9;    
+}
+
+
+
 vtkMRMLTransformRecorderNode
 ::vtkMRMLTransformRecorderNode()
 {
@@ -551,40 +562,12 @@ std::string vtkMRMLTransformRecorderNode::GetLogFileName()
 
 
 
-void vtkMRMLTransformRecorderNode::CustomMessage( std::string message )
+void vtkMRMLTransformRecorderNode::CustomMessage( std::string message, int sec, int nsec )
 {
-  int sec = 0;
-  int nsec = 0;
-
-  
-    // Compute the timestamp.
-  
-  if ( sec == 0 && nsec == 0 )  // No IGTL time received. Use clock instead.
+  if ( sec == -1  &&  nsec == -1 )
   {
-    clock_t clock1 = clock();
-    double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-    sec = floor( seconds );
-    nsec = ( seconds - sec ) * 1e9;
+    this->GetTimestamp( sec, nsec );
   }
-  else   // If the IGTL time was used.
-  {
-    if ( ! this->IGTLTimeSynchronized )  // First time to receive IGTL time. Need to synchronize.
-    {
-      clock_t clock1 = clock();
-      double clockSeconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-      double igtlSeconds = sec + nsec * 1e-9;
-      this->IGTLTimeOffsetSeconds = clockSeconds - igtlSeconds;
-      this->IGTLTimeSynchronized = true;
-    }
-    
-      // Apply IGTL time offset.
-    
-    double igtlSeconds = sec + nsec * 1e-9;
-    double fixedSeconds = igtlSeconds + this->IGTLTimeOffsetSeconds;
-    sec = floor( fixedSeconds );
-    nsec = ( fixedSeconds - sec ) * 1e9;
-  }
-  
   
   MessageRecord rec;
     rec.Message = message;
@@ -681,13 +664,7 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( const char* TransformNodeID 
   vtkSmartPointer< vtkMatrix4x4 > m = vtkSmartPointer< vtkMatrix4x4 >::New();
   std::string deviceName;
   
-  
-    // Compute the timestamp.
-  
-  clock_t clock1 = clock();
-  double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-  sec = floor( seconds );
-  nsec = ( seconds - sec ) * 1e9;
+  this->GetTimestamp( sec, nsec );
   
   
     // Get the new transform matrix.

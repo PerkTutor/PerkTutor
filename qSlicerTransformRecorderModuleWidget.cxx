@@ -299,14 +299,30 @@ void qSlicerTransformRecorderModuleWidget
 void qSlicerTransformRecorderModuleWidget::insertItem()
 {
 	Q_D( qSlicerTransformRecorderModuleWidget );
-
+  
+  vtkMRMLTransformRecorderNode* moduleNode = d->logic()->GetModuleNode();
+  if ( moduleNode == NULL )
+  {
+    return;
+  }
+  
+  
+  int sec = 0;
+  int nsec = 0;
+  
+  moduleNode->GetTimestamp( sec, nsec );
+  
+  
+    // Get the timestamp for this annotation.
+  
+  
   QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
       tr("Input text for the new annotation:"));
 
   if (itemText.isNull())
       return;
-
-
+  
+  
   QListWidgetItem *newItem = new QListWidgetItem;
   newItem->setText(itemText);
   
@@ -320,7 +336,7 @@ void qSlicerTransformRecorderModuleWidget::insertItem()
 
 	d->AnnotationListWidget->addItem(newItem);
 	std::string annotation = itemText.toStdString();
-	d->logic()->GetModuleNode()->CustomMessage( annotation );
+	moduleNode->CustomMessage( annotation, sec, nsec );
 
 }
 

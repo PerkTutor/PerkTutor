@@ -144,11 +144,13 @@ public:
   void SetLogFileName( std::string fileName );
   void SaveIntoFile( std::string fileName );
   std::string GetLogFileName();
-  void CustomMessage( std::string message );
+  void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
   //ETX
   
   void UpdateFileFromBuffer();
   void ClearBuffer();
+  
+  void GetTimestamp( int &sec, int &nsec );
   
   
 protected:
