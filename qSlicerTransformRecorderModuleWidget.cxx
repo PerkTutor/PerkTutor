@@ -88,12 +88,14 @@ qSlicerTransformRecorderModuleWidget::qSlicerTransformRecorderModuleWidget(QWidg
 {
 }
 
-//-----------------------------------------------------------------------------
+
+
 qSlicerTransformRecorderModuleWidget::~qSlicerTransformRecorderModuleWidget()
 {
 }
 
-//-----------------------------------------------------------------------------
+
+
 void qSlicerTransformRecorderModuleWidget::setup()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
@@ -107,25 +109,23 @@ void qSlicerTransformRecorderModuleWidget::setup()
   d->setupUi(this);
   this->Superclass::setup();
 
-  d->IGTComboBox->setNoneEnabled( true );
   d->ModuleComboBox->setNoneEnabled( true );
 
-  connect( d->IGTComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onConnectorSelected() ) );
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
   connect( d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile() ) );
   connect( d->StartButton, SIGNAL(pressed()),this,SLOT(onStartButtonPressed() ) );
   connect( d->StopButton, SIGNAL(pressed()),this,SLOT(onStopButtonPressed() ) );
   connect( d->ClearBufferButton, SIGNAL(pressed()),this,SLOT(onClearBufferButtonPressed() ) );
- 
-
+  connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),
+           this,                          SLOT( onTransformsNodeSelected(vtkMRMLNode*) ) );
+  
+  
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
   connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
   t->start(10); 
   
-  // Connect node selector with module itself
-  connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),this, SLOT(onTransformsNodeSelected(vtkMRMLNode*)));
-  onTransformsNodeSelected(0);
+  // onTransformsNodeSelected( 0 );
 
   //Annotations
 
@@ -137,33 +137,43 @@ void qSlicerTransformRecorderModuleWidget::setup()
 
 }
 
-//-----------------------------------------------------------------------------
-void qSlicerTransformRecorderModuleWidget::onTransformsNodeSelected(vtkMRMLNode* node)
+
+
+void qSlicerTransformRecorderModuleWidget
+::onTransformsNodeSelected( vtkMRMLNode* node )
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
+  /*
+  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( node );
   
-  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(node);
-
-  // Listen for Transform node changes
-  this->qvtkReconnect(d->MRMLTransformNode, transformNode,
-    vtkMRMLTransformableNode::TransformModifiedEvent,
-    this, SLOT(onMRMLTransformNodeModified(vtkObject*)));
- 
- // d->MRMLTransformNode = transformNode;
-
-
-
+  if ( transformNode != NULL
+       && d->logic()->GetModuleNode() != NULL )
+  {
+    d->logic()->GetModuleNode()->AddObservedTransformNode( node->GetID() );
+  }
+  */
+  
+    // TODO: Why was this here?
+    // Listen for Transform node changes
+  /*
+  this->qvtkReconnect( d->MRMLTransformNode, transformNode, vtkMRMLTransformableNode::TransformModifiedEvent,
+                       this, SLOT( onMRMLTransformNodeModified( vtkObject* ) ) ); 
+  */
 }
 
-//-----------------------------------------------------------------------------
-void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified(vtkObject* caller)
+
+
+void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified( vtkObject* caller )
 {
-  Q_D(qSlicerTransformRecorderModuleWidget);
+  Q_D( qSlicerTransformRecorderModuleWidget );
   
-  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(caller);
+  // TODO: I'm not sure this function is needed at all.
+  /*
+  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
   if (!transformNode) { return; }
   
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+  */
 }
 
 
@@ -185,30 +195,9 @@ void qSlicerTransformRecorderModuleWidget::loadLogFile()
 
 
 
-
-
-
 void qSlicerTransformRecorderModuleWidget::enter()
 {
   this->Superclass::enter();
-  this->updateWidget();
-}
-
-void qSlicerTransformRecorderModuleWidget::onConnectorSelected()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
- 
-  if( d->logic()->GetModuleNode() == NULL || d->IGTComboBox->currentNode() == NULL )
-  {
-    return;
-  }
-  
-  vtkMRMLNode* node = d->IGTComboBox->currentNode();
-  
-  if( node != NULL )
-  {
-    d->logic()->GetModuleNode()->SetAndObserveConnectorNodeID( node->GetID() );
-  }
   this->updateWidget();
 }
 
@@ -231,41 +220,50 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
   this->updateWidget();
 }
 
-void qSlicerTransformRecorderModuleWidget::onStartButtonPressed()
+
+
+void qSlicerTransformRecorderModuleWidget
+::onStartButtonPressed()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
-
-      // Go through transform types (ie ProbeToReference, StylusTipToReference,etc) 
-  // Save selected state as 1 and unselected state as 0 of each transform type in transformSelections vector.
+  
+  
+  if ( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }
+  
+  
+    // Go through transform types (ie ProbeToReference, StylusTipToReference, etc) 
+    // Save selected state as 1 and unselected state as 0 of each transform type in transformSelections vector.
   
   std::vector< int > transformSelections;
-  int unselected = 0;
-  int selected = 1;
-
-  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++){
-	if(d->TransformCheckableComboBox->checkState(d->TransformCheckableComboBox->nodeFromIndex(i)) == Qt::Checked  ){
-	  transformSelections.push_back(selected);
-	}
-	else{
-	  transformSelections.push_back(unselected);
-	}
-	  
-  }
-
-  // Communicate to the MRML node, which transforms should be saved.
-  d->logic()->GetModuleNode()->SetTransformSelections( transformSelections );
-
-
-  if( d->logic()->GetModuleNode() != NULL && d->IGTComboBox->currentNode() != NULL  )
+  const int unselected = 0;
+  const int selected = 1;
+  
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    d->logic()->GetModuleNode()->SetRecording( true );
-  }
- 
+	  if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
+	  {
+	    d->logic()->GetModuleNode()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+	  }
+	  else
+	  {
+	    d->logic()->GetModuleNode()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+	  }
+	}
+  
+  
+  d->logic()->GetModuleNode()->SetRecording( true );
+  
   this->updateWidget();
   
 }
 
-void qSlicerTransformRecorderModuleWidget::onStopButtonPressed()
+
+
+void qSlicerTransformRecorderModuleWidget
+::onStopButtonPressed()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
@@ -275,12 +273,14 @@ void qSlicerTransformRecorderModuleWidget::onStopButtonPressed()
   }
 
   d->logic()->GetModuleNode()->SetRecording( false );
-  //d->logic()->GetModuleNode()->UpdateFileFromBuffer();
    
   this->updateWidget();
 }
 
-void qSlicerTransformRecorderModuleWidget::onClearBufferButtonPressed() 
+
+
+void qSlicerTransformRecorderModuleWidget
+::onClearBufferButtonPressed() 
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
@@ -295,37 +295,36 @@ void qSlicerTransformRecorderModuleWidget::onClearBufferButtonPressed()
 }
 
 
+
 void qSlicerTransformRecorderModuleWidget::insertItem()
 {
 	Q_D( qSlicerTransformRecorderModuleWidget );
 
+  QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
+      tr("Input text for the new annotation:"));
 
-    QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
-        tr("Input text for the new annotation:"));
-
-    if (itemText.isNull())
-        return;
-
-
-    QListWidgetItem *newItem = new QListWidgetItem;
-    newItem->setText(itemText);
+  if (itemText.isNull())
+      return;
 
 
+  QListWidgetItem *newItem = new QListWidgetItem;
+  newItem->setText(itemText);
   
+  QString toolTipText = tr("Tooltip:") + itemText;
+  QString statusTipText = tr("Status tip:") + itemText;
+  QString whatsThisText = tr("What's This?:") + itemText;
 
-    QString toolTipText = tr("Tooltip:") + itemText;
-    QString statusTipText = tr("Status tip:") + itemText;
-    QString whatsThisText = tr("What's This?:") + itemText;
-
-    newItem->setToolTip(toolTipText);
-    newItem->setStatusTip(toolTipText);
-    newItem->setWhatsThis(whatsThisText);
+  newItem->setToolTip(toolTipText);
+  newItem->setStatusTip(toolTipText);
+  newItem->setWhatsThis(whatsThisText);
 
 	d->AnnotationListWidget->addItem(newItem);
 	std::string annotation = itemText.toStdString();
 	d->logic()->GetModuleNode()->CustomMessage( annotation );
 
 }
+
+
 
 void qSlicerTransformRecorderModuleWidget::clearItems()
 {
@@ -335,64 +334,50 @@ void qSlicerTransformRecorderModuleWidget::clearItems()
 }
 
 
+
 void qSlicerTransformRecorderModuleWidget::updateWidget()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
+  
+  
       // Disableing node selector widgets if there is no module node to reference input nodes.
     
   if ( d->logic()->GetModuleNode() == NULL )
   {
-    d->IGTComboBox->setEnabled( false );
-    
+    d->TransformCheckableComboBox->setEnabled( false );
   }
   else
   {
-    d->IGTComboBox->setEnabled( true );
-   
+    d->TransformCheckableComboBox->setEnabled( true );
   }
   
-  // Check if node selection has changed.
-  
-  if( d->logic()->GetModuleNode() != NULL && d->IGTComboBox->currentNode() != NULL )
-  {
-    char* selectedID = d->IGTComboBox->currentNode()->GetID();
-    char* nodeID = d->logic()->GetModuleNode()->GetConnectorNodeID();
-    if ( strcmp( selectedID, nodeID ) != NULL )
-    {
-      this->onConnectorSelected();
-    }
-
-  }
-  else if (    d->logic()->GetModuleNode() != NULL
-            && d->logic()->GetModuleNode()->GetConnectorNode() != NULL
-            && d->IGTComboBox->currentNode() == NULL )
-  {
-    this->onConnectorSelected();
-
-  }
-  
-  
-    // Update selector widgets if selected nodes have changed.
+    // The following code requires a module node.
   
   if ( d->logic()->GetModuleNode() == NULL )
   {
     return;
   }
   
+  
+  
+    // Update status descriptor labels.
+  
   if ( d->logic()->GetModuleNode()->GetRecording() )
   {
     d->StatusResultLabel->setText( "Recording" );
-
+    d->TransformCheckableComboBox->setEnabled( false );
   }
- else
+  else
   {
     d->StatusResultLabel->setText( "Waiting" );
+    d->TransformCheckableComboBox->setEnabled( true );
   }
- 
+  
+  
   int numRec = d->logic()->GetModuleNode()->GetTransformsBufferSize() + d->logic()->GetModuleNode()->GetMessagesBufferSize();
   std::stringstream ss;
   ss << numRec;
-  d->NumRecordsResultLabel->setText( QString::fromStdString(ss.str()) );
+  d->NumRecordsResultLabel->setText( QString::fromStdString( ss.str() ) );
   
   ss.str( "" );
   ss.precision( 2 );

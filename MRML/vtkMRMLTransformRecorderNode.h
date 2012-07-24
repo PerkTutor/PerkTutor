@@ -39,7 +39,6 @@ class vtkTransform;
 
 
 class vtkImageData;
-class vtkMRMLIGTLConnectorNode;
 class vtkMRMLLinearTransformNode;
 class vtkMRMLModelNode;
 class vtkMRMLViewNode;
@@ -85,7 +84,8 @@ public:
   };
   //ETX
   
-  // Standard MRML node methods
+  
+    // Standard MRML node methods
   
   static vtkMRMLTransformRecorderNode *New();
   vtkTypeMacro( vtkMRMLTransformRecorderNode, vtkMRMLNode );
@@ -98,11 +98,12 @@ public:
   virtual void UpdateScene( vtkMRMLScene * );
   void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
   
+  
   virtual void UpdateReferenceID( const char *oldID, const char *newID );
   void UpdateReferences();
   void StartReceiveServer();
   void StopReceiveServer();
-    // Public interface
+  
   
 protected:
 
@@ -113,27 +114,21 @@ protected:
   vtkMRMLTransformRecorderNode ( const vtkMRMLTransformRecorderNode& );
   void operator=( const vtkMRMLTransformRecorderNode& );
 
- 
   void RemoveMRMLObservers();
   
   
-    // Protected member variables
-    
-  // Reference to the OpenIGTLink connection node.
-
-public:
-  vtkGetStringMacro( ConnectorNodeID  );
-  vtkMRMLIGTLConnectorNode* GetConnectorNode();
-  void SetAndObserveConnectorNodeID( const char* ConnectorNodeRef );
-protected:
-  vtkSetReferenceStringMacro( TransformNodeID );
-  char* TransformNodeID;
-  vtkMRMLTransformNode* TransformNode;
+    // Reference to observed transform nodes.
   
-  vtkSetReferenceStringMacro( ConnectorNodeID );
-  char* ConnectorNodeID;
-  vtkMRMLIGTLConnectorNode* ConnectorNode; 
-
+public:
+  void AddObservedTransformNode( const char* TransformNodeID );
+  void RemoveObservedTransformNode( const char* TransformNodeID );
+  void ClearObservedTranformNodes();
+  vtkMRMLLinearTransformNode* GetObservedTransformNode( const char* TransformNodeID );
+protected:
+  std::vector< char* > ObservedTransformNodeIDs;
+  std::vector< vtkMRMLLinearTransformNode* > ObservedTransformNodes;
+  
+  
 public:
   unsigned int GetTransformsBufferSize();
   unsigned int GetMessagesBufferSize();
@@ -154,13 +149,11 @@ public:
   
   void UpdateFileFromBuffer();
   void ClearBuffer();
-protected:
-  void AddNewTransform( int index );
   
-  //BTX
-  std::vector< vtkMRMLTransformNode* > TransformNodes;
-  // std::vector< char* >                 ObservedTransformNodeIDs;
-  //ETX
+  
+protected:
+  
+  void AddNewTransform( const char* TransformNodeID );
   
   
   //BTX

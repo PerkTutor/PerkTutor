@@ -48,13 +48,15 @@ vtkSlicerTransformRecorderLogic::~vtkSlicerTransformRecorderLogic()
   }
 }
 
-//----------------------------------------------------------------------------
+
+
 void vtkSlicerTransformRecorderLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }
 
-//---------------------------------------------------------------------------
+
+
 void vtkSlicerTransformRecorderLogic::InitializeEventListeners()
 {
   vtkNew<vtkIntArray> events;
@@ -64,17 +66,8 @@ void vtkSlicerTransformRecorderLogic::InitializeEventListeners()
   this->SetAndObserveMRMLSceneEventsInternal(this->GetMRMLScene(), events.GetPointer());
 }
 
-//---------------------------------------------------------------------------
-void vtkSlicerTransformRecorderLogic::SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node )
-{
-  if ( this->GetModuleNode() != NULL )
-  {
-    this->GetModuleNode()->SetAndObserveConnectorNodeID( node->GetID() );
-  }
-}
 
 
-//-----------------------------------------------------------------------------
 void vtkSlicerTransformRecorderLogic::RegisterNodes()
 {
   //assert(this->GetMRMLScene() != 0);
@@ -89,13 +82,15 @@ void vtkSlicerTransformRecorderLogic::RegisterNodes()
   
 }
 
-//---------------------------------------------------------------------------
+
+
 void vtkSlicerTransformRecorderLogic::UpdateFromMRMLScene()
 {
   assert(this->GetMRMLScene() != 0);
 }
 
-//---------------------------------------------------------------------------
+
+
 void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeAdded(vtkMRMLNode* vtkNotUsed(node))
 {
