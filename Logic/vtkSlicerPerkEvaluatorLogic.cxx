@@ -26,8 +26,10 @@
 // STD includes
 #include <cassert>
 
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkSlicerPerkEvaluatorLogic);
+
 
 //----------------------------------------------------------------------------
 vtkSlicerPerkEvaluatorLogic::vtkSlicerPerkEvaluatorLogic()
@@ -39,11 +41,25 @@ vtkSlicerPerkEvaluatorLogic::~vtkSlicerPerkEvaluatorLogic()
 {
 }
 
+
 //----------------------------------------------------------------------------
 void vtkSlicerPerkEvaluatorLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }
+
+
+
+/**
+ * Read XML file that was written by TransformRecorder module.
+ */
+void vtkSlicerPerkEvaluatorLogic
+::ImportFile( std::string fileName )
+{
+
+}
+
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerPerkEvaluatorLogic::SetMRMLSceneInternal(vtkMRMLScene * newScene)

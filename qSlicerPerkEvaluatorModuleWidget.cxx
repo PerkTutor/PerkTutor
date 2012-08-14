@@ -17,41 +17,86 @@
 
 // Qt includes
 #include <QDebug>
+#include <QtGui>
 
 // SlicerQt includes
 #include "qSlicerPerkEvaluatorModuleWidget.h"
 #include "ui_qSlicerPerkEvaluatorModule.h"
 
+#include "vtkSlicerPerkEvaluatorLogic.h"
+
+
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class qSlicerPerkEvaluatorModuleWidgetPrivate: public Ui_qSlicerPerkEvaluatorModule
 {
+  Q_DECLARE_PUBLIC( qSlicerPerkEvaluatorModuleWidget );
+protected:
+  qSlicerPerkEvaluatorModuleWidget* const q_ptr;
 public:
-  qSlicerPerkEvaluatorModuleWidgetPrivate();
+  qSlicerPerkEvaluatorModuleWidgetPrivate( qSlicerPerkEvaluatorModuleWidget& object );
+  vtkSlicerPerkEvaluatorLogic* logic() const;
 };
 
 //-----------------------------------------------------------------------------
 // qSlicerPerkEvaluatorModuleWidgetPrivate methods
 
+
 //-----------------------------------------------------------------------------
-qSlicerPerkEvaluatorModuleWidgetPrivate::qSlicerPerkEvaluatorModuleWidgetPrivate()
+qSlicerPerkEvaluatorModuleWidgetPrivate
+::qSlicerPerkEvaluatorModuleWidgetPrivate( qSlicerPerkEvaluatorModuleWidget& object )
+ : q_ptr( &object )
 {
 }
+
+
+//-----------------------------------------------------------------------------
+vtkSlicerPerkEvaluatorLogic*
+qSlicerPerkEvaluatorModuleWidgetPrivate::logic() const
+{
+  Q_Q( const qSlicerPerkEvaluatorModuleWidget );
+  return vtkSlicerPerkEvaluatorLogic::SafeDownCast( q->logic() );
+}
+
+
+
+
 
 //-----------------------------------------------------------------------------
 // qSlicerPerkEvaluatorModuleWidget methods
 
+
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorModuleWidget::qSlicerPerkEvaluatorModuleWidget(QWidget* _parent)
   : Superclass( _parent )
-  , d_ptr( new qSlicerPerkEvaluatorModuleWidgetPrivate )
+  , d_ptr( new qSlicerPerkEvaluatorModuleWidgetPrivate( *this ) )
 {
 }
+
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorModuleWidget::~qSlicerPerkEvaluatorModuleWidget()
 {
 }
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnImportClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  QString filename = QFileDialog::getOpenFileName( this, tr("Open record"), "", tr("XML Files (*.xml)") );
+  
+  if ( filename.isEmpty() == false )
+  {
+    d->logic()->ImportFile( filename.toStdString() );
+  }
+  
+  // this->updateWidget();
+}
+
 
 //-----------------------------------------------------------------------------
 void qSlicerPerkEvaluatorModuleWidget::setup()
@@ -59,5 +104,7 @@ void qSlicerPerkEvaluatorModuleWidget::setup()
   Q_D(qSlicerPerkEvaluatorModuleWidget);
   d->setupUi(this);
   this->Superclass::setup();
+  
+  connect( d->ImportButton, SIGNAL( pressed() ), this, SLOT( OnImportClicked() ) );
 }
 

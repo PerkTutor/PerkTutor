@@ -40,6 +40,8 @@ public:
 
 public slots:
 
+  void OnImportClicked();
+  
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorModuleWidgetPrivate> d_ptr;
