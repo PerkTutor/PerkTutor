@@ -17,6 +17,7 @@
 
 // Qt includes
 #include <QDebug>
+#include <QtCore>
 #include <QtGui>
 
 // SlicerQt includes
@@ -94,7 +95,7 @@ void qSlicerPerkEvaluatorModuleWidget
     d->logic()->ImportFile( filename.toStdString() );
   }
   
-  // this->updateWidget();
+  this->UpdateGUI();
 }
 
 
@@ -106,5 +107,16 @@ void qSlicerPerkEvaluatorModuleWidget::setup()
   this->Superclass::setup();
   
   connect( d->ImportButton, SIGNAL( pressed() ), this, SLOT( OnImportClicked() ) );
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::UpdateGUI()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  d->TotalTimeLabel->setText( QString::number( d->logic()->GetTotalTime(), 'f', 2 ) );
+  
 }
 

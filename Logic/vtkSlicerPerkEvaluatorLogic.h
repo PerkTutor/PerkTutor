@@ -16,7 +16,13 @@
 // STD includes
 #include <cstdlib>
 
+#include "vtkSmartPointer.h"
+#include "vtkXMLDataParser.h"
+
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
+
+#include "vtkTransformTimeSeries.h"
+
 
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -31,6 +37,10 @@ public:
   
   void ImportFile( std::string fileName );
   
+  double GetTotalTime();
+  double GetMinTime();
+  double GetMaxTime();
+  
   
 protected:
   vtkSlicerPerkEvaluatorLogic();
@@ -42,10 +52,22 @@ protected:
   virtual void UpdateFromMRMLScene();
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
+
 private:
 
   vtkSlicerPerkEvaluatorLogic(const vtkSlicerPerkEvaluatorLogic&); // Not implemented
   void operator=(const vtkSlicerPerkEvaluatorLogic&);               // Not implemented
+  
+  void ClearData();
+  double GetTimestampFromElement( vtkXMLDataElement* element );
+  vtkTransformTimeSeries* UpdateToolList( std::string name );
+  
+  typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;
+  TrajectoryContainerType ToolTrajectories;
+  
+  typedef std::pair< double, std::string > AnnotationType;
+  typedef std::vector< AnnotationType > AnnotationVectorType;
+  AnnotationVectorType Annotations;
 };
 
 #endif

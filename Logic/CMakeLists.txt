@@ -10,6 +10,9 @@ set(${KIT}_INCLUDE_DIRECTORIES
 set(${KIT}_SRCS
   vtkSlicer${MODULE_NAME}Logic.cxx
   vtkSlicer${MODULE_NAME}Logic.h
+  vtkTransformTimeSeries.cxx
+  vtkTransformTimeSeries.h
+  #ToolTrajectory.h
   )
 
 set(${KIT}_TARGET_LIBRARIES

@@ -51,6 +51,9 @@ protected:
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorModuleWidget);
+  
+  void UpdateGUI();
+  
 };
 
 #endif
