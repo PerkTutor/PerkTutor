@@ -95,7 +95,7 @@ void qSlicerPerkEvaluatorModuleWidget
     d->logic()->ImportFile( filename.toStdString() );
   }
   
-  d->logic()->SetCurrentTime( d->logic()->GetMinTime() );
+  d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
   this->UpdateGUI();
 }
 
@@ -106,8 +106,53 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
-  d->logic()->SetCurrentTime( value + d->logic()->GetMinTime() );
+  d->logic()->SetPlaybackTime( value + d->logic()->GetMinTime() );
 }
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackNextClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() + 0.2 );
+  this->UpdateGUI();
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackPrevClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() - 0.2 );
+  this->UpdateGUI();
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackBeginClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+  this->UpdateGUI();
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackEndClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  d->logic()->SetPlaybackTime( d->logic()->GetMaxTime() );
+  this->UpdateGUI();
+}
+
 
 
 //-----------------------------------------------------------------------------
@@ -117,8 +162,12 @@ void qSlicerPerkEvaluatorModuleWidget::setup()
   d->setupUi(this);
   this->Superclass::setup();
   
-  connect( d->ImportButton, SIGNAL( pressed() ), this, SLOT( OnImportClicked() ) );
+  connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( OnImportClicked() ) );
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
+  connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
+  connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
+  connect( d->BeginButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackBeginClicked() ) );
+  connect( d->EndButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackEndClicked() ) );
 }
 
 
@@ -132,6 +181,7 @@ void qSlicerPerkEvaluatorModuleWidget
   
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
+  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
   
 }
 

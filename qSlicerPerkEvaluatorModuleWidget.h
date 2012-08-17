@@ -42,6 +42,10 @@ public slots:
 
   void OnImportClicked();
   void OnPlaybackSliderChanged( double value );
+  void OnPlaybackNextClicked();
+  void OnPlaybackPrevClicked();
+  void OnPlaybackBeginClicked();
+  void OnPlaybackEndClicked();
   
 
 protected:

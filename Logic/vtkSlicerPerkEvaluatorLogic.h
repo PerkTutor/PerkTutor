@@ -37,12 +37,12 @@ public:
   
   void ImportFile( std::string fileName );
   
-  double GetTotalTime();
-  double GetMinTime();
-  double GetMaxTime();
-  double GetCurrentTime();
+  double GetTotalTime() const;
+  double GetMinTime() const;
+  double GetMaxTime() const;
+  double GetPlaybackTime() const;
   
-  void SetCurrentTime( double time );
+  void SetPlaybackTime( double time );
   
   
 protected:
@@ -73,7 +73,7 @@ private:
   typedef std::vector< AnnotationType > AnnotationVectorType;
   AnnotationVectorType Annotations;
   
-  double CurrentTime;
+  double PlaybackTime;
 };
 
 #endif

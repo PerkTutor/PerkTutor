@@ -59,7 +59,7 @@ vtkStandardNewMacro(vtkSlicerPerkEvaluatorLogic);
 //----------------------------------------------------------------------------
 vtkSlicerPerkEvaluatorLogic::vtkSlicerPerkEvaluatorLogic()
 {
-  this->CurrentTime = 0.0;
+  this->PlaybackTime = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -139,7 +139,7 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 double vtkSlicerPerkEvaluatorLogic
-::GetTotalTime()
+::GetTotalTime() const
 {
   double minTime = this->GetMinTime();
   double maxTime = this->GetMaxTime();
@@ -159,11 +159,11 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 double vtkSlicerPerkEvaluatorLogic
-::GetMinTime()
+::GetMinTime() const
 {
   double minTime = std::numeric_limits< double >::max();
   
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
+  for ( TrajectoryContainerType::const_iterator tIt = this->ToolTrajectories.begin();
         tIt != this->ToolTrajectories.end(); ++ tIt )
   {
     if ( (*tIt)->GetMinTime() < minTime )
@@ -178,11 +178,11 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 double vtkSlicerPerkEvaluatorLogic
-::GetMaxTime()
+::GetMaxTime() const
 {
   double maxTime = std::numeric_limits< double >::min();
   
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
+  for ( TrajectoryContainerType::const_iterator tIt = this->ToolTrajectories.begin();
         tIt != this->ToolTrajectories.end(); ++ tIt )
   {
     if ( (*tIt)->GetMaxTime() > maxTime )
@@ -196,15 +196,23 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 
+double vtkSlicerPerkEvaluatorLogic
+::GetPlaybackTime() const
+{
+  return this->PlaybackTime;
+}
+
+
+
 void vtkSlicerPerkEvaluatorLogic
-::SetCurrentTime( double time )
+::SetPlaybackTime( double time )
 {
   if ( time < this->GetMinTime()  ||  time > this->GetMaxTime() )
   {
     return;
   }
   
-  this->CurrentTime = time;
+  this->PlaybackTime = time;
   
   for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
         tIt != this->ToolTrajectories.end(); ++ tIt )
