@@ -3,9 +3,11 @@
 #include "vtkSlicerPerkEvaluatorLogic.h"
 
 // MRML includes
+#include "vtkMRMLLinearTransformNode.h"
 
 // VTK includes
 #include <vtkNew.h>
+#include <vtkSmartPointer.h>
 
 // STD includes
 #include <cassert>
@@ -57,6 +59,7 @@ vtkStandardNewMacro(vtkSlicerPerkEvaluatorLogic);
 //----------------------------------------------------------------------------
 vtkSlicerPerkEvaluatorLogic::vtkSlicerPerkEvaluatorLogic()
 {
+  this->CurrentTime = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -129,6 +132,8 @@ void vtkSlicerPerkEvaluatorLogic
       trajectory->AddRecord( time, tr );
     }
   }
+  
+  this->CreateTransformNodes();
 }
 
 
@@ -187,6 +192,45 @@ double vtkSlicerPerkEvaluatorLogic
   }
   
   return maxTime;
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetCurrentTime( double time )
+{
+  if ( time < this->GetMinTime()  ||  time > this->GetMaxTime() )
+  {
+    return;
+  }
+  
+  this->CurrentTime = time;
+  
+  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
+        tIt != this->ToolTrajectories.end(); ++ tIt )
+  {
+    std::string toolName = (*tIt)->GetToolName();
+    int currentIndex = 0;
+    for ( int i = 1; i < (*tIt)->GetNumberOfRecords(); ++ i )
+    {
+      if ( time > (*tIt)->GetTimeAtIndex( i ) )
+      {
+        currentIndex = i - 1;
+        break;
+      }
+    }
+    
+    vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( toolName.c_str() );
+    vtkMRMLLinearTransformNode* tNode = NULL;
+    if ( collection->GetNumberOfItems() > 0 )
+    {
+      tNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
+    }
+    if ( tNode != NULL )
+    {
+      tNode->SetAndObserveMatrixTransformToParent( (*tIt)->GetTransformAtIndex( currentIndex )->GetMatrix() );
+    }
+  }
 }
 
 
@@ -292,5 +336,30 @@ vtkTransformTimeSeries* vtkSlicerPerkEvaluatorLogic
   tts->SetToolName( name );
   this->ToolTrajectories.push_back( tts );
   return tts;
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::CreateTransformNodes()
+{
+  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
+        tIt != this->ToolTrajectories.end(); ++ tIt )
+  {
+    std::string toolName = (*tIt)->GetToolName();
+    vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( toolName.c_str() );
+    vtkMRMLLinearTransformNode* tNode = NULL;
+    if ( collection->GetNumberOfItems() > 0 )
+    {
+      tNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
+    }
+    if ( tNode == NULL )
+    {
+      vtkSmartPointer< vtkMRMLLinearTransformNode > newNode = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
+      newNode->SetName( toolName.c_str() );
+      newNode->SetScene( this->GetMRMLScene() );
+      this->GetMRMLScene()->AddNode( newNode );
+    }
+  }
 }
 

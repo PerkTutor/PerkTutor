@@ -95,6 +95,7 @@ void qSlicerPerkEvaluatorModuleWidget
     d->logic()->ImportFile( filename.toStdString() );
   }
   
+  d->logic()->SetCurrentTime( d->logic()->GetMinTime() );
   this->UpdateGUI();
 }
 
@@ -117,6 +118,9 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   d->TotalTimeLabel->setText( QString::number( d->logic()->GetTotalTime(), 'f', 2 ) );
+  
+  d->PlaybackSlider->setMinimum( 0 );
+  d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
   
 }
 

@@ -40,6 +40,9 @@ public:
   double GetTotalTime();
   double GetMinTime();
   double GetMaxTime();
+  double GetCurrentTime();
+  
+  void SetCurrentTime( double time );
   
   
 protected:
@@ -61,6 +64,7 @@ private:
   void ClearData();
   double GetTimestampFromElement( vtkXMLDataElement* element );
   vtkTransformTimeSeries* UpdateToolList( std::string name );
+  void CreateTransformNodes();
   
   typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;
   TrajectoryContainerType ToolTrajectories;
@@ -68,6 +72,8 @@ private:
   typedef std::pair< double, std::string > AnnotationType;
   typedef std::vector< AnnotationType > AnnotationVectorType;
   AnnotationVectorType Annotations;
+  
+  double CurrentTime;
 };
 
 #endif
