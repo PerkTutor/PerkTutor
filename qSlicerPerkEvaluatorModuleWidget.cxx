@@ -1,24 +1,9 @@
-/*==============================================================================
-
-  Program: 3D Slicer
-
-  Portions (c) Copyright Brigham and Women's Hospital (BWH) All Rights Reserved.
-
-  See COPYRIGHT.txt
-  or http://www.slicer.org/copyright/copyright.txt for details.
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-==============================================================================*/
 
 // Qt includes
 #include <QDebug>
 #include <QtCore>
 #include <QtGui>
+#include <QTimer>
 
 // SlicerQt includes
 #include "qSlicerPerkEvaluatorModuleWidget.h"
@@ -40,11 +25,14 @@ public:
   vtkSlicerPerkEvaluatorLogic* logic() const;
 };
 
+
+
+
 //-----------------------------------------------------------------------------
 // qSlicerPerkEvaluatorModuleWidgetPrivate methods
 
 
-//-----------------------------------------------------------------------------
+
 qSlicerPerkEvaluatorModuleWidgetPrivate
 ::qSlicerPerkEvaluatorModuleWidgetPrivate( qSlicerPerkEvaluatorModuleWidget& object )
  : q_ptr( &object )
@@ -73,12 +61,15 @@ qSlicerPerkEvaluatorModuleWidget::qSlicerPerkEvaluatorModuleWidget(QWidget* _par
   : Superclass( _parent )
   , d_ptr( new qSlicerPerkEvaluatorModuleWidgetPrivate( *this ) )
 {
+  this->Timer = new QTimer( this );
+  this->TimerIntervalSec = 0.1;
 }
 
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorModuleWidget::~qSlicerPerkEvaluatorModuleWidget()
 {
+  delete this->Timer;
 }
 
 
@@ -155,8 +146,52 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 
-//-----------------------------------------------------------------------------
-void qSlicerPerkEvaluatorModuleWidget::setup()
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackPlayClicked()
+{
+  this->Timer->start( int( this->TimerIntervalSec * 1000 ) );
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackStopClicked()
+{
+  this->Timer->stop();
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnTimeout()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  double newPlaybackTime = d->logic()->GetPlaybackTime() + this->TimerIntervalSec;
+  if ( newPlaybackTime >= d->logic()->GetMaxTime() )
+  {
+    if ( d->PlaybackRepeatCheckBox->checkState() == Qt::Checked )
+    {
+      d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+    }
+    else
+    {
+      d->logic()->SetPlaybackTime( d->logic()->GetMaxTime() );
+      this->Timer->stop();
+    }
+  }
+  else
+  {
+    d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() + this->TimerIntervalSec );
+  }
+  
+  this->UpdateGUI();
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
   d->setupUi(this);
@@ -168,6 +203,9 @@ void qSlicerPerkEvaluatorModuleWidget::setup()
   connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
   connect( d->BeginButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackBeginClicked() ) );
   connect( d->EndButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackEndClicked() ) );
+  connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) );
+  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
+  connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 }
 
 
@@ -176,8 +214,6 @@ void qSlicerPerkEvaluatorModuleWidget
 ::UpdateGUI()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  d->TotalTimeLabel->setText( QString::number( d->logic()->GetTotalTime(), 'f', 2 ) );
   
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );

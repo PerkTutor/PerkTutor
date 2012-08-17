@@ -46,6 +46,9 @@ public slots:
   void OnPlaybackPrevClicked();
   void OnPlaybackBeginClicked();
   void OnPlaybackEndClicked();
+  void OnPlaybackPlayClicked();
+  void OnPlaybackStopClicked();
+  void OnTimeout();
   
 
 protected:
@@ -58,6 +61,9 @@ private:
   Q_DISABLE_COPY(qSlicerPerkEvaluatorModuleWidget);
   
   void UpdateGUI();
+  
+  double TimerIntervalSec;
+  QTimer* Timer;
   
 };
 
