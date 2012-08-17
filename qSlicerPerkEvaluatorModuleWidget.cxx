@@ -100,6 +100,16 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnPlaybackSliderChanged( double value )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  d->logic()->SetCurrentTime( value + d->logic()->GetMinTime() );
+}
+
+
 //-----------------------------------------------------------------------------
 void qSlicerPerkEvaluatorModuleWidget::setup()
 {
@@ -108,6 +118,7 @@ void qSlicerPerkEvaluatorModuleWidget::setup()
   this->Superclass::setup();
   
   connect( d->ImportButton, SIGNAL( pressed() ), this, SLOT( OnImportClicked() ) );
+  connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
 }
 
 

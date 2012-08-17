@@ -41,6 +41,7 @@ public:
 public slots:
 
   void OnImportClicked();
+  void OnPlaybackSliderChanged( double value );
   
 
 protected:

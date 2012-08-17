@@ -11,6 +11,7 @@
 
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
 
+#include "vtkSmartPointer.h"
 #include "vtkTransform.h"
 
 
@@ -33,6 +34,7 @@ public:
   int GetNumberOfRecords() const;
   double GetTimeAtIndex( int index ) const;
   vtkTransform* GetTransformAtIndex( int index ) const;
+  vtkSmartPointer< vtkMatrix4x4 > GetMatrixAtIndex( int index );
   
   void AddRecord( double time, vtkTransform* transform );
   void Clear();

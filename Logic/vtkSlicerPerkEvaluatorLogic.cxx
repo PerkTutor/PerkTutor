@@ -213,7 +213,7 @@ void vtkSlicerPerkEvaluatorLogic
     int currentIndex = 0;
     for ( int i = 1; i < (*tIt)->GetNumberOfRecords(); ++ i )
     {
-      if ( time > (*tIt)->GetTimeAtIndex( i ) )
+      if ( time < (*tIt)->GetTimeAtIndex( i ) )
       {
         currentIndex = i - 1;
         break;
@@ -221,6 +221,7 @@ void vtkSlicerPerkEvaluatorLogic
     }
     
     vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( toolName.c_str() );
+    collection->InitTraversal();
     vtkMRMLLinearTransformNode* tNode = NULL;
     if ( collection->GetNumberOfItems() > 0 )
     {
@@ -228,8 +229,9 @@ void vtkSlicerPerkEvaluatorLogic
     }
     if ( tNode != NULL )
     {
-      tNode->SetAndObserveMatrixTransformToParent( (*tIt)->GetTransformAtIndex( currentIndex )->GetMatrix() );
+      tNode->GetMatrixTransformToParent()->DeepCopy( (*tIt)->GetMatrixAtIndex( currentIndex ) );
     }
+    collection->Delete();
   }
 }
 
@@ -360,6 +362,7 @@ void vtkSlicerPerkEvaluatorLogic
       newNode->SetScene( this->GetMRMLScene() );
       this->GetMRMLScene()->AddNode( newNode );
     }
+    collection->Delete();
   }
 }
 

@@ -79,12 +79,31 @@ vtkTransformTimeSeries
 
 
 
+vtkSmartPointer< vtkMatrix4x4 >
+vtkTransformTimeSeries
+::GetMatrixAtIndex( int index )
+{
+  vtkSmartPointer< vtkMatrix4x4 > m = vtkSmartPointer< vtkMatrix4x4 >::New();
+  
+  if ( index < 0  ||  (unsigned int)index >= this->Data.size() )
+  {
+    return m;
+  }
+  
+  m->DeepCopy( this->Data[ index ].second->GetMatrix() );
+  
+  return m;
+}
+
+
+
 void
 vtkTransformTimeSeries
 ::AddRecord( double time, vtkTransform* transform )
 {
   vtkTransform* tr = vtkTransform::New(); // Deleted in Clear function.
-  tr->DeepCopy( transform );
+  tr->GetMatrix()->DeepCopy( transform->GetMatrix() );
+  tr->Update();
   
   std::pair< double, vtkTransform* > p( time, tr );
   
