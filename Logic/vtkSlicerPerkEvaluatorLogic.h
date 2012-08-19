@@ -47,6 +47,12 @@ public:
   void SetMarkBegin( double begin );
   void SetMarkEnd( double end );
   
+  typedef std::pair< std::string, double > MetricType;
+  typedef std::vector< MetricType > MetricVectorType;
+  
+  void Analyse();
+  MetricVectorType GetMetrics();
+  
   
 protected:
   vtkSlicerPerkEvaluatorLogic();
@@ -69,16 +75,23 @@ private:
   vtkTransformTimeSeries* UpdateToolList( std::string name );
   void CreateTransformNodes();
   
+  double PathLength( double From, double To, vtkTransformTimeSeries* Trajectory );
+  
+  
   typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;
   TrajectoryContainerType ToolTrajectories;
   
   typedef std::pair< double, std::string > AnnotationType;
   typedef std::vector< AnnotationType > AnnotationVectorType;
+  
   AnnotationVectorType Annotations;
   
   double PlaybackTime;
   double MarkBegin;
   double MarkEnd;
+  
+  MetricVectorType Metrics;
+  
 };
 
 #endif

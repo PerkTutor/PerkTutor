@@ -220,6 +220,23 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::OnAnalyseClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
+  double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
+  d->logic()->SetMarkBegin( begin );
+  d->logic()->SetMarkEnd( end ); 
+  
+  d->logic()->Analyse();
+  
+  this->UpdateGUI();
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
@@ -237,7 +254,7 @@ void qSlicerPerkEvaluatorModuleWidget
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
-  
+  connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
 }
 
 
@@ -251,5 +268,24 @@ void qSlicerPerkEvaluatorModuleWidget
   d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
   
+  
+    // Metrics table
+  
+  vtkSlicerPerkEvaluatorLogic::MetricVectorType metrics = d->logic()->GetMetrics();
+  
+  d->MetricsTable->setRowCount( metrics.size() );
+  d->MetricsTable->setColumnCount( 2 );
+  QStringList headerLabels;
+  headerLabels << "Metric name" << "Value";
+  d->MetricsTable->setHorizontalHeaderLabels( headerLabels );
+  d->MetricsTable->setColumnWidth( 0, 250 );
+  
+  for ( int i = 0; i < metrics.size(); ++ i )
+  {
+    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( metrics[ i ].first ) );
+    QTableWidgetItem* valueItem = new QTableWidgetItem( QString::number( metrics[ i ].second, 'f', 2 ) );
+    d->MetricsTable->setItem( i, 0, nameItem );
+    d->MetricsTable->setItem( i, 1, valueItem );
+  }
 }
 

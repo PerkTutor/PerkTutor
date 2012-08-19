@@ -6,6 +6,8 @@
 #include "vtkMRMLLinearTransformNode.h"
 
 // VTK includes
+#include <vtkMath.h>
+#include <vtkMatrix4x4.h>
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
 
@@ -94,8 +96,49 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
-//----------------------------------------------------------------------------
-vtkSlicerPerkEvaluatorLogic::vtkSlicerPerkEvaluatorLogic()
+
+void vtkSlicerPerkEvaluatorLogic
+::Analyse()
+{
+    // Check conditions.
+  
+  if (    this->MarkBegin >= this->MarkEnd
+       || this->MarkBegin < this->GetMinTime()
+       || this->MarkEnd > this->GetMaxTime() )
+  {
+    this->Metrics.clear();
+    return;
+  }
+  
+  
+    // Compute metrics.
+  
+  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
+        tIt != this->ToolTrajectories.end(); ++ tIt )
+  {
+    std::string toolName = (*tIt)->GetToolName();
+    
+    MetricType pathLength;
+    pathLength.first = toolName + " path length (mm)";
+    pathLength.second = this->PathLength( this->MarkBegin, this->MarkEnd, (*tIt) );
+    
+    this->Metrics.push_back( pathLength );
+  }
+}
+
+
+
+vtkSlicerPerkEvaluatorLogic::MetricVectorType
+vtkSlicerPerkEvaluatorLogic
+::GetMetrics()
+{
+  return this->Metrics;
+}
+
+
+
+vtkSlicerPerkEvaluatorLogic
+::vtkSlicerPerkEvaluatorLogic()
 {
   this->PlaybackTime = 0.0;
   this->MarkBegin = 0.0;
@@ -415,3 +458,42 @@ void vtkSlicerPerkEvaluatorLogic
   }
 }
 
+
+
+double vtkSlicerPerkEvaluatorLogic
+::PathLength( double From, double To, vtkTransformTimeSeries* Trajectory )
+{
+  double length = 0.0;
+  
+  double O[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
+  double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
+  double P1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
+  
+  vtkSmartPointer< vtkMatrix4x4 > M0;
+  vtkSmartPointer< vtkMatrix4x4 > M1;
+  
+  for ( int i = 1; i < Trajectory->GetNumberOfRecords(); ++ i )
+  {
+    if ( Trajectory->GetTimeAtIndex( i ) < From )
+    {
+      continue;
+    }
+    
+    if ( Trajectory->GetTimeAtIndex( i ) > To )
+    {
+      break;
+    }
+    
+    M0 = Trajectory->GetMatrixAtIndex( i - 1 );
+    M1 = Trajectory->GetMatrixAtIndex( i );
+    
+    M0->MultiplyPoint( O, P0 );
+    M1->MultiplyPoint( O, P1 );
+    
+    double distance = sqrt( vtkMath::Distance2BetweenPoints( P0, P1 ) );
+    
+    length += distance;
+  }
+  
+  return length;
+}
