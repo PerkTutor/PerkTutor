@@ -26,8 +26,9 @@
 
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
-class VTK_SLICER_PERKEVALUATOR_MODULE_LOGIC_EXPORT vtkSlicerPerkEvaluatorLogic :
-  public vtkSlicerModuleLogic
+class VTK_SLICER_PERKEVALUATOR_MODULE_LOGIC_EXPORT
+vtkSlicerPerkEvaluatorLogic
+ : public vtkSlicerModuleLogic
 {
 public:
 
@@ -43,6 +44,8 @@ public:
   double GetPlaybackTime() const;
   
   void SetPlaybackTime( double time );
+  void SetMarkBegin( double begin );
+  void SetMarkEnd( double end );
   
   
 protected:
@@ -74,6 +77,8 @@ private:
   AnnotationVectorType Annotations;
   
   double PlaybackTime;
+  double MarkBegin;
+  double MarkEnd;
 };
 
 #endif

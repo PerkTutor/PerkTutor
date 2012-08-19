@@ -83,11 +83,22 @@ void qSlicerPerkEvaluatorModuleWidget
   
   if ( filename.isEmpty() == false )
   {
+    QProgressDialog dialog;
+    dialog.setModal( true );
+    dialog.setLabelText( "Please wait while reading XML file..." );
+    dialog.show();
+    dialog.setValue( 10 );
     d->logic()->ImportFile( filename.toStdString() );
+    dialog.setValue( 60 );
+    QFileInfo pathInfo( filename );
+    d->FileNameLabel->setText( pathInfo.fileName() );
+    dialog.setValue( 70 );
+    d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+    dialog.setValue( 80 );
+    this->UpdateGUI();
+    dialog.setValue( 100 );
+    dialog.close();
   }
-  
-  d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
-  this->UpdateGUI();
 }
 
 
@@ -191,6 +202,24 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::OnMarkBeginClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  d->BeginSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkEndClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
@@ -206,6 +235,9 @@ void qSlicerPerkEvaluatorModuleWidget
   connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) );
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
+  connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
+  connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
+  
 }
 
 

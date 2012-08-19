@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>445</width>
+    <width>391</width>
     <height>827</height>
    </rect>
   </property>
@@ -50,7 +50,10 @@
          <string>Input</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="0">
+         <property name="verticalSpacing">
+          <number>10</number>
+         </property>
+         <item row="2" column="0">
           <widget class="QPushButton" name="ImportButton">
            <property name="maximumSize">
             <size>
@@ -63,85 +66,75 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_3">
+         <item row="3" column="0">
+          <widget class="QLabel" name="label">
            <property name="text">
-            <string>Current procedure: None loaded</string>
+            <string>Measurement range:</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>Begin marker: </string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="BeginEdit">
-             <property name="minimumSize">
-              <size>
-               <width>30</width>
-               <height>0</height>
-              </size>
-             </property>
+         <item row="0" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_3">
              <property name="maximumSize">
               <size>
-               <width>120</width>
+               <width>110</width>
                <height>16777215</height>
               </size>
              </property>
              <property name="text">
-              <string>0</string>
+              <string>Current procedure:</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
+           <item>
+            <widget class="QLabel" name="FileNameLabel">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="4" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
             <widget class="QPushButton" name="MarkBeginButton">
              <property name="text">
-              <string>Mark</string>
+              <string>Mark begin</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
+           <item>
+            <widget class="QDoubleSpinBox" name="BeginSpinBox"/>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>End marker: </string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="EndEdit">
+           <item>
+            <widget class="QLabel" name="label_6">
              <property name="maximumSize">
               <size>
-               <width>120</width>
+               <width>20</width>
                <height>16777215</height>
               </size>
              </property>
              <property name="text">
-              <string>0</string>
+              <string> -- </string>
              </property>
             </widget>
            </item>
-           <item row="1" column="2">
+           <item>
+            <widget class="QDoubleSpinBox" name="EndSpinBox"/>
+           </item>
+           <item>
             <widget class="QPushButton" name="MarkEndButton">
              <property name="text">
-              <string>Mark</string>
+              <string>Mark end</string>
              </property>
             </widget>
            </item>
@@ -168,6 +161,9 @@
          <string>Playback</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
+         <property name="verticalSpacing">
+          <number>10</number>
+         </property>
          <item row="4" column="0">
           <widget class="QTableWidget" name="AnnotationsTable">
            <property name="maximumSize">
@@ -327,13 +323,23 @@
          <string>Results</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="0">
+         <property name="verticalSpacing">
+          <number>10</number>
+         </property>
+         <item row="1" column="0">
           <widget class="QTableView" name="ResultsTable">
            <property name="maximumSize">
             <size>
              <width>16777215</width>
              <height>120</height>
             </size>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="AnalyseButton">
+           <property name="text">
+            <string>Analyse</string>
            </property>
           </widget>
          </item>

@@ -56,11 +56,52 @@ StrToTransform( std::string str, vtkTransform* tr )
 vtkStandardNewMacro(vtkSlicerPerkEvaluatorLogic);
 
 
+
+void vtkSlicerPerkEvaluatorLogic
+::SetMarkBegin( double begin )
+{
+  if ( begin <= this->GetMinTime() )
+  {
+    this->MarkBegin = this->GetMinTime();
+  }
+  else if ( begin >= this->GetMaxTime() )
+  {
+    this->MarkBegin = this->GetMaxTime();
+  }
+  else
+  {
+    this->MarkBegin = begin;
+  }
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetMarkEnd( double end )
+{
+  if ( end <= this->GetMinTime() )
+  {
+    this->MarkEnd = this->GetMinTime();
+  }
+  else if ( end >= this->GetMaxTime() )
+  {
+    this->MarkEnd = this->GetMaxTime();
+  }
+  else
+  {
+    this->MarkEnd = end;
+  }
+}
+
+
 //----------------------------------------------------------------------------
 vtkSlicerPerkEvaluatorLogic::vtkSlicerPerkEvaluatorLogic()
 {
   this->PlaybackTime = 0.0;
+  this->MarkBegin = 0.0;
+  this->MarkEnd = 0.0;
 }
+
 
 //----------------------------------------------------------------------------
 vtkSlicerPerkEvaluatorLogic::~vtkSlicerPerkEvaluatorLogic()
