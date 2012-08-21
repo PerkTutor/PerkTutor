@@ -88,7 +88,7 @@ QIcon qSlicerPerkEvaluatorModule::icon()const
 //-----------------------------------------------------------------------------
 QStringList qSlicerPerkEvaluatorModule::categories() const
 {
-  return QStringList() << "" << "IGT";
+  return QStringList() << "IGT";
 }
 
 //-----------------------------------------------------------------------------
