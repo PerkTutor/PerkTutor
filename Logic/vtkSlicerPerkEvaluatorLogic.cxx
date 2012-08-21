@@ -4,11 +4,18 @@
 
 // MRML includes
 #include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLModelNode.h"
 
 // VTK includes
+#include <vtkDataArray.h>
+#include <vtkIntArray.h>
 #include <vtkMath.h>
 #include <vtkMatrix4x4.h>
 #include <vtkNew.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+#include <vtkSelectEnclosedPoints.h>
 #include <vtkSmartPointer.h>
 
 // STD includes
@@ -55,7 +62,10 @@ StrToTransform( std::string str, vtkTransform* tr )
 
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkSlicerPerkEvaluatorLogic);
+
+
+
+vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
 
 
 
@@ -100,29 +110,34 @@ void vtkSlicerPerkEvaluatorLogic
 void vtkSlicerPerkEvaluatorLogic
 ::Analyse()
 {
+  this->Metrics.clear();
+  
+  
     // Check conditions.
   
   if (    this->MarkBegin >= this->MarkEnd
        || this->MarkBegin < this->GetMinTime()
        || this->MarkEnd > this->GetMaxTime() )
   {
-    this->Metrics.clear();
     return;
   }
   
   
-    // Compute metrics.
+    // Compute common metrics.
+  
+  MetricType procedureTime;
+  procedureTime.first = "Total procedure time (s)";
+  procedureTime.second = this->MarkEnd - this->MarkBegin;
+  this->Metrics.push_back( procedureTime );
+  
+  
+    // Compute metrics for each trajectory.
   
   for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
         tIt != this->ToolTrajectories.end(); ++ tIt )
   {
     std::string toolName = (*tIt)->GetToolName();
-    
-    MetricType pathLength;
-    pathLength.first = toolName + " path length (mm)";
-    pathLength.second = this->PathLength( this->MarkBegin, this->MarkEnd, (*tIt) );
-    
-    this->Metrics.push_back( pathLength );
+    this->AnalyseTrajectory( *tIt );
   }
 }
 
@@ -137,25 +152,50 @@ vtkSlicerPerkEvaluatorLogic
 
 
 
+void
+vtkSlicerPerkEvaluatorLogic
+::SetBodyModelNode( vtkMRMLModelNode* node )
+{
+  vtkSetMRMLNodeMacro( this->BodyModelNode, node );
+  this->Modified();
+}
+
+
+
+// Constructor
+// 
 vtkSlicerPerkEvaluatorLogic
 ::vtkSlicerPerkEvaluatorLogic()
 {
   this->PlaybackTime = 0.0;
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
+  
+  this->BodyModelNode = NULL;
 }
 
 
-//----------------------------------------------------------------------------
-vtkSlicerPerkEvaluatorLogic::~vtkSlicerPerkEvaluatorLogic()
+
+vtkSlicerPerkEvaluatorLogic::
+~vtkSlicerPerkEvaluatorLogic()
 {
+  if ( this->BodyModelNode != NULL )
+  {
+    this->BodyModelNode->Delete();
+    this->BodyModelNode = NULL;
+  }
 }
 
 
-//----------------------------------------------------------------------------
-void vtkSlicerPerkEvaluatorLogic::PrintSelf(ostream& os, vtkIndent indent)
+
+void
+vtkSlicerPerkEvaluatorLogic
+::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
+  
+  os << indent << "vtkSlicerPerkEvaluatorLogic: " << this->GetClassName() << "\n";
+  os << indent << "BodyModelNode: " << ( this->BodyModelNode ? this->BodyModelNode->GetName() : "(none)" ) << "\n";
 }
 
 
@@ -163,7 +203,8 @@ void vtkSlicerPerkEvaluatorLogic::PrintSelf(ostream& os, vtkIndent indent)
 /**
  * Read XML file that was written by TransformRecorder module.
  */
-void vtkSlicerPerkEvaluatorLogic
+void
+vtkSlicerPerkEvaluatorLogic
 ::ImportFile( std::string fileName )
 {
   this->ClearData();
@@ -222,7 +263,8 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 
-double vtkSlicerPerkEvaluatorLogic
+double
+vtkSlicerPerkEvaluatorLogic
 ::GetTotalTime() const
 {
   double minTime = this->GetMinTime();
@@ -242,7 +284,8 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 
-double vtkSlicerPerkEvaluatorLogic
+double
+vtkSlicerPerkEvaluatorLogic
 ::GetMinTime() const
 {
   double minTime = std::numeric_limits< double >::max();
@@ -280,7 +323,8 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 
-double vtkSlicerPerkEvaluatorLogic
+double
+vtkSlicerPerkEvaluatorLogic
 ::GetPlaybackTime() const
 {
   return this->PlaybackTime;
@@ -288,7 +332,8 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 
-void vtkSlicerPerkEvaluatorLogic
+void
+vtkSlicerPerkEvaluatorLogic
 ::SetPlaybackTime( double time )
 {
   if ( time < this->GetMinTime()  ||  time > this->GetMaxTime() )
@@ -329,8 +374,9 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 
-//---------------------------------------------------------------------------
-void vtkSlicerPerkEvaluatorLogic::SetMRMLSceneInternal(vtkMRMLScene * newScene)
+void
+vtkSlicerPerkEvaluatorLogic
+::SetMRMLSceneInternal( vtkMRMLScene * newScene )
 {
   vtkNew<vtkIntArray> events;
   events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
@@ -339,35 +385,44 @@ void vtkSlicerPerkEvaluatorLogic::SetMRMLSceneInternal(vtkMRMLScene * newScene)
   this->SetAndObserveMRMLSceneEventsInternal(newScene, events.GetPointer());
 }
 
-//-----------------------------------------------------------------------------
-void vtkSlicerPerkEvaluatorLogic::RegisterNodes()
+
+
+void
+vtkSlicerPerkEvaluatorLogic
+::RegisterNodes()
 {
   assert(this->GetMRMLScene() != 0);
 }
 
 
-//---------------------------------------------------------------------------
-void vtkSlicerPerkEvaluatorLogic::UpdateFromMRMLScene()
+
+void
+vtkSlicerPerkEvaluatorLogic
+::UpdateFromMRMLScene()
 {
   assert(this->GetMRMLScene() != 0);
 }
 
 
-//---------------------------------------------------------------------------
-void vtkSlicerPerkEvaluatorLogic
-::OnMRMLSceneNodeAdded(vtkMRMLNode* vtkNotUsed(node))
+
+void
+vtkSlicerPerkEvaluatorLogic
+::OnMRMLSceneNodeAdded( vtkMRMLNode* vtkNotUsed( node ) )
 {
 }
 
 
-//---------------------------------------------------------------------------
-void vtkSlicerPerkEvaluatorLogic
-::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
+
+void
+vtkSlicerPerkEvaluatorLogic
+::OnMRMLSceneNodeRemoved( vtkMRMLNode* vtkNotUsed( node ) )
 {
 }
 
 
-void vtkSlicerPerkEvaluatorLogic
+
+void
+vtkSlicerPerkEvaluatorLogic
 ::ClearData()
 {
   this->ToolTrajectories.clear();
@@ -376,7 +431,8 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 
-double vtkSlicerPerkEvaluatorLogic
+double
+vtkSlicerPerkEvaluatorLogic
 ::GetTimestampFromElement( vtkXMLDataElement* element )
 {
     // Check if time was coded according to the old or new fashion.
@@ -410,7 +466,8 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 
-vtkTransformTimeSeries* vtkSlicerPerkEvaluatorLogic
+vtkTransformTimeSeries*
+vtkSlicerPerkEvaluatorLogic
 ::UpdateToolList( std::string name )
 {
     // Check if any of the existing tools have this name.
@@ -434,7 +491,8 @@ vtkTransformTimeSeries* vtkSlicerPerkEvaluatorLogic
 
 
 
-void vtkSlicerPerkEvaluatorLogic
+void
+vtkSlicerPerkEvaluatorLogic
 ::CreateTransformNodes()
 {
   for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
@@ -460,10 +518,13 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 
-double vtkSlicerPerkEvaluatorLogic
-::PathLength( double From, double To, vtkTransformTimeSeries* Trajectory )
+void
+vtkSlicerPerkEvaluatorLogic
+::AnalyseTrajectory( vtkTransformTimeSeries* Trajectory )
 {
   double length = 0.0;
+  double insideLength = 0.0;
+  double insideTime = 0.0;
   
   double O[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
   double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
@@ -472,14 +533,27 @@ double vtkSlicerPerkEvaluatorLogic
   vtkSmartPointer< vtkMatrix4x4 > M0;
   vtkSmartPointer< vtkMatrix4x4 > M1;
   
+  
+    // Prepare inside-outside body measurements.
+  
+  vtkPolyData* body = NULL;
+  vtkSmartPointer< vtkSelectEnclosedPoints > EnclosedFilter = vtkSmartPointer< vtkSelectEnclosedPoints >::New();
+  if ( this->BodyModelNode != NULL )
+  {
+    body = this->BodyModelNode->GetPolyData();
+    // EnclosedFilter->SetSurface( body );
+    EnclosedFilter->Initialize( body );
+  }
+  
+  
   for ( int i = 1; i < Trajectory->GetNumberOfRecords(); ++ i )
   {
-    if ( Trajectory->GetTimeAtIndex( i ) < From )
+    if ( Trajectory->GetTimeAtIndex( i ) < this->MarkBegin )
     {
       continue;
     }
     
-    if ( Trajectory->GetTimeAtIndex( i ) > To )
+    if ( Trajectory->GetTimeAtIndex( i ) > this->MarkEnd )
     {
       break;
     }
@@ -493,7 +567,38 @@ double vtkSlicerPerkEvaluatorLogic
     double distance = sqrt( vtkMath::Distance2BetweenPoints( P0, P1 ) );
     
     length += distance;
+    
+    
+      // Check if current point is inside the body.
+    
+    int Inside = 0;
+    if ( body != NULL )
+    {
+      Inside = EnclosedFilter->IsInsideSurface( P1[ 0 ], P1[ 1 ], P1[ 2 ] );
+    }
+    
+    if ( Inside )
+    {
+      insideLength += distance;
+      insideTime += Trajectory->GetTimeAtIndex( i ) - Trajectory->GetTimeAtIndex( i - 1 );
+    }
   }
   
-  return length;
+  
+    // Recording metrics.
+  
+  MetricType PathLength;
+  PathLength.first = Trajectory->GetToolName() + " path length (mm)";
+  PathLength.second = length;
+  this->Metrics.push_back( PathLength );
+  
+  MetricType InsidePathLength;
+  InsidePathLength.first = Trajectory->GetToolName() + " inside path (mm)";
+  InsidePathLength.second = insideLength;
+  this->Metrics.push_back( InsidePathLength );
+  
+  MetricType InsideTime;
+  InsideTime.first = Trajectory->GetToolName() + " inside time (s)";
+  InsideTime.second = insideTime;
+  this->Metrics.push_back( InsideTime );
 }

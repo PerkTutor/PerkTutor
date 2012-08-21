@@ -11,6 +11,9 @@
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
 
+#include "vtkMRMLModelNode.h"
+#include "vtkMRMLNode.h"
+
 
 
 //-----------------------------------------------------------------------------
@@ -236,7 +239,20 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 
-void qSlicerPerkEvaluatorModuleWidget
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnBodyModelNodeSelected()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( d->BodyNodeComboBox->currentNode() );
+  d->logic()->SetBodyModelNode( mnode );
+}
+
+
+
+void
+qSlicerPerkEvaluatorModuleWidget
 ::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
@@ -255,6 +271,7 @@ void qSlicerPerkEvaluatorModuleWidget
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
   connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
+  connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
 }
 
 

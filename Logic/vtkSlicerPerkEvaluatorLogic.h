@@ -12,6 +12,8 @@
 #include "vtkSlicerModuleLogic.h"
 
 // MRML includes
+#include "vtkMRML.h"
+#include "vtkMRMLModelNode.h"
 
 // STD includes
 #include <cstdlib>
@@ -54,6 +56,15 @@ public:
   MetricVectorType GetMetrics();
   
   
+    // Reference to body model node.
+  
+public:
+  vtkGetObjectMacro( BodyModelNode, vtkMRMLModelNode );
+  void SetBodyModelNode( vtkMRMLModelNode* node );
+private:
+  vtkMRMLModelNode* BodyModelNode;
+  
+  
 protected:
   vtkSlicerPerkEvaluatorLogic();
   virtual ~vtkSlicerPerkEvaluatorLogic();
@@ -75,7 +86,7 @@ private:
   vtkTransformTimeSeries* UpdateToolList( std::string name );
   void CreateTransformNodes();
   
-  double PathLength( double From, double To, vtkTransformTimeSeries* Trajectory );
+  void AnalyseTrajectory( vtkTransformTimeSeries* Trajectory );
   
   
   typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;

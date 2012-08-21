@@ -36,7 +36,7 @@ public slots:
   void OnMarkBeginClicked();
   void OnMarkEndClicked();
   void OnAnalyseClicked();
-  
+  void OnBodyModelNodeSelected();
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorModuleWidgetPrivate> d_ptr;
