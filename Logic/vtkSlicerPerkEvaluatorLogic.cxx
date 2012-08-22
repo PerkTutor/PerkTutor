@@ -5,6 +5,7 @@
 // MRML includes
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
+#include "vtkMRMLTransformNode.h"
 
 // VTK includes
 #include <vtkDataArray.h>
@@ -257,7 +258,15 @@ vtkSlicerPerkEvaluatorLogic
     {
       AnnotationType annotation;
       annotation.first = time;
-      annotation.second = std::string( noteElement->GetAttribute( "message" ) );
+      const char* msg = noteElement->GetAttribute( "message" );
+      if ( msg != NULL )
+      {
+        annotation.second = std::string( msg );
+      }
+      else
+      {
+        annotation.second = "(none)";
+      }
       this->Annotations.push_back( annotation );
     }
 
@@ -439,6 +448,10 @@ vtkSlicerPerkEvaluatorLogic
 {
   this->ToolTrajectories.clear();
   this->Annotations.clear();
+  
+  this->MarkBegin = 0.0;
+  this->MarkEnd = 0.0;
+  this->PlaybackTime = 0.0;
 }
 
 
@@ -546,6 +559,27 @@ vtkSlicerPerkEvaluatorLogic
   vtkSmartPointer< vtkMatrix4x4 > M1;
   
   
+    // Check if the corresponding transform has any parent transforms.
+  
+  vtkSmartPointer< vtkMatrix4x4 > ParentMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
+  ParentMatrix->Identity();
+  vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( Trajectory->GetToolName().c_str() );
+  vtkMRMLLinearTransformNode* tNode = NULL;
+  if ( collection->GetNumberOfItems() > 0 )
+  {
+    tNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
+  }
+  if ( tNode != NULL )
+  {
+    vtkMRMLTransformNode* ptNode = tNode->GetParentTransformNode();
+    if ( ptNode != NULL )
+    {
+      ptNode->GetMatrixTransformToWorld( ParentMatrix );
+    }
+  }
+  collection->Delete();
+  
+  
     // Prepare inside-outside body measurements.
   
   vtkPolyData* body = NULL;
@@ -572,6 +606,9 @@ vtkSlicerPerkEvaluatorLogic
     
     M0 = Trajectory->GetMatrixAtIndex( i - 1 );
     M1 = Trajectory->GetMatrixAtIndex( i );
+    
+    vtkMatrix4x4::Multiply4x4( ParentMatrix, M0, M0 );
+    vtkMatrix4x4::Multiply4x4( ParentMatrix, M1, M1 );
     
     M0->MultiplyPoint( O, P0 );
     M1->MultiplyPoint( O, P1 );
