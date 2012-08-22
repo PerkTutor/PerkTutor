@@ -49,6 +49,13 @@ public:
   void SetMarkBegin( double begin );
   void SetMarkEnd( double end );
   
+  
+  typedef std::pair< double, std::string > AnnotationType;
+  typedef std::vector< AnnotationType > AnnotationVectorType;
+  
+  AnnotationVectorType GetAnnotations();
+  
+  
   typedef std::pair< std::string, double > MetricType;
   typedef std::vector< MetricType > MetricVectorType;
   
@@ -91,9 +98,6 @@ private:
   
   typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;
   TrajectoryContainerType ToolTrajectories;
-  
-  typedef std::pair< double, std::string > AnnotationType;
-  typedef std::vector< AnnotationType > AnnotationVectorType;
   
   AnnotationVectorType Annotations;
   

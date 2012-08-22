@@ -286,6 +286,26 @@ void qSlicerPerkEvaluatorModuleWidget
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
   
   
+    // Annotations table
+  
+  vtkSlicerPerkEvaluatorLogic::AnnotationVectorType annotations = d->logic()->GetAnnotations();
+  
+  d->AnnotationsTable->setRowCount( annotations.size() );
+  d->AnnotationsTable->setColumnCount( 2 );
+  QStringList AnnotationHeaders;
+  AnnotationHeaders << "Time" << "Annotation";
+  d->AnnotationsTable->setHorizontalHeaderLabels( AnnotationHeaders );
+  d->AnnotationsTable->setColumnWidth( 1, 250 );
+  
+  for ( int i = 0; i < annotations.size(); ++ i )
+  {
+    QTableWidgetItem* TimeItem = new QTableWidgetItem( QString::number( annotations[ i ].first - d->logic()->GetMinTime(), 'f', 1 ) );
+    QTableWidgetItem* NoteItem = new QTableWidgetItem( QString::fromStdString( annotations[ i ].second ) );
+    d->AnnotationsTable->setItem( i, 0, TimeItem );
+    d->AnnotationsTable->setItem( i, 1, NoteItem );
+  }
+  
+  
     // Metrics table
   
   vtkSlicerPerkEvaluatorLogic::MetricVectorType metrics = d->logic()->GetMetrics();
@@ -304,5 +324,6 @@ void qSlicerPerkEvaluatorModuleWidget
     d->MetricsTable->setItem( i, 0, nameItem );
     d->MetricsTable->setItem( i, 1, valueItem );
   }
+  
 }
 

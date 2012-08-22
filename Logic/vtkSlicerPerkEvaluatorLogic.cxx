@@ -69,7 +69,8 @@ vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
 
 
 
-void vtkSlicerPerkEvaluatorLogic
+void
+vtkSlicerPerkEvaluatorLogic
 ::SetMarkBegin( double begin )
 {
   if ( begin <= this->GetMinTime() )
@@ -88,7 +89,8 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 
-void vtkSlicerPerkEvaluatorLogic
+void
+vtkSlicerPerkEvaluatorLogic
 ::SetMarkEnd( double end )
 {
   if ( end <= this->GetMinTime() )
@@ -107,7 +109,17 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 
-void vtkSlicerPerkEvaluatorLogic
+vtkSlicerPerkEvaluatorLogic::AnnotationVectorType
+vtkSlicerPerkEvaluatorLogic
+::GetAnnotations()
+{
+  return this->Annotations;
+}
+
+
+
+void
+vtkSlicerPerkEvaluatorLogic
 ::Analyse()
 {
   this->Metrics.clear();
