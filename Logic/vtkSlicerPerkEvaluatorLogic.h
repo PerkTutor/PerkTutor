@@ -13,6 +13,7 @@
 
 // MRML includes
 #include "vtkMRML.h"
+#include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
 
 // STD includes
@@ -37,6 +38,8 @@ public:
   static vtkSlicerPerkEvaluatorLogic *New();
   vtkTypeMacro(vtkSlicerPerkEvaluatorLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
+  
+  virtual void OnMRMLSceneEndClose();
   
   void ImportFile( std::string fileName );
   
@@ -72,16 +75,27 @@ private:
   vtkMRMLModelNode* BodyModelNode;
   
   
+    // Reference to the needle coordinate system.
+
+public:
+  vtkGetObjectMacro( NeedleTransformNode, vtkMRMLLinearTransformNode );
+  void SetNeedleTransformNode( vtkMRMLLinearTransformNode* node );
+private:
+  vtkMRMLLinearTransformNode* NeedleTransformNode;
+  
+  
 protected:
+  
   vtkSlicerPerkEvaluatorLogic();
   virtual ~vtkSlicerPerkEvaluatorLogic();
-
-  virtual void SetMRMLSceneInternal(vtkMRMLScene* newScene);
+  
+  virtual void SetMRMLSceneInternal( vtkMRMLScene* newScene );
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
   virtual void RegisterNodes();
   virtual void UpdateFromMRMLScene();
-  virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
-  virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
+  virtual void OnMRMLSceneNodeAdded( vtkMRMLNode* node );
+  virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
+  
 
 private:
 
@@ -94,7 +108,8 @@ private:
   void CreateTransformNodes();
   
   void AnalyseTrajectory( vtkTransformTimeSeries* Trajectory );
-  
+  void AnalyseNeedle( vtkMRMLLinearTransformNode* tnode );
+  double SpanArea( double* E0, double* E1, double* T0, double* T1 );
   
   typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;
   TrajectoryContainerType ToolTrajectories;

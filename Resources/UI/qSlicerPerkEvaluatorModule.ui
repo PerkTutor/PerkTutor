@@ -66,7 +66,7 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
+         <item row="6" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
             <string>Measurement range:</string>
@@ -103,7 +103,7 @@
            </item>
           </layout>
          </item>
-         <item row="6" column="0">
+         <item row="7" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QPushButton" name="MarkBeginButton">
@@ -116,6 +116,19 @@
             <widget class="QDoubleSpinBox" name="BeginSpinBox"/>
            </item>
            <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QLabel" name="label_6">
              <property name="maximumSize">
               <size>
@@ -124,9 +137,22 @@
               </size>
              </property>
              <property name="text">
-              <string> -- </string>
+              <string>--</string>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="EndSpinBox"/>
@@ -140,20 +166,39 @@
            </item>
           </layout>
          </item>
-         <item row="4" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item>
+         <item row="3" column="0">
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="0">
             <widget class="QLabel" name="label_4">
              <property name="text">
               <string>Body surface node: </string>
              </property>
             </widget>
            </item>
-           <item>
+           <item row="0" column="1">
             <widget class="qMRMLNodeComboBox" name="BodyNodeComboBox">
              <property name="nodeTypes">
               <stringlist>
                <string>vtkMRMLModelNode</string>
+              </stringlist>
+             </property>
+             <property name="noneEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Needle reference frame:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="qMRMLNodeComboBox" name="NeedleReferenceComboBox">
+             <property name="nodeTypes">
+              <stringlist>
+               <string>vtkMRMLLinearTransformNode</string>
               </stringlist>
              </property>
              <property name="noneEnabled">
@@ -229,9 +274,15 @@
             <widget class="QPushButton" name="BeginButton">
              <property name="maximumSize">
               <size>
-               <width>40</width>
+               <width>35</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
              <property name="text">
               <string>|&lt;&lt;</string>
@@ -242,9 +293,15 @@
             <widget class="QPushButton" name="PrevButton">
              <property name="maximumSize">
               <size>
-               <width>40</width>
+               <width>35</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
              <property name="text">
               <string>&lt;&lt;</string>
@@ -281,9 +338,15 @@
             <widget class="QPushButton" name="NextButton">
              <property name="maximumSize">
               <size>
-               <width>40</width>
+               <width>35</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
              <property name="text">
               <string>&gt;&gt;</string>
@@ -294,9 +357,15 @@
             <widget class="QPushButton" name="EndButton">
              <property name="maximumSize">
               <size>
-               <width>40</width>
+               <width>35</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
              <property name="text">
               <string>&gt;&gt;|</string>
@@ -426,6 +495,22 @@
     <hint type="destinationlabel">
      <x>246</x>
      <y>132</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerPerkEvaluatorModule</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>NeedleReferenceComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>195</x>
+     <y>413</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>257</x>
+     <y>158</y>
     </hint>
    </hints>
   </connection>

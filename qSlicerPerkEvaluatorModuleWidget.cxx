@@ -97,11 +97,11 @@ void qSlicerPerkEvaluatorModuleWidget
     d->FileNameLabel->setText( pathInfo.fileName() );
     dialog.setValue( 70 );
     d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
-    dialog.setValue( 80 );
-    this->UpdateGUI();
     dialog.setValue( 100 );
     dialog.close();
   }
+  
+  this->UpdateGUI();
 }
 
 
@@ -253,6 +253,18 @@ qSlicerPerkEvaluatorModuleWidget
 
 void
 qSlicerPerkEvaluatorModuleWidget
+::OnNeedleReferenceSelected()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( d->NeedleReferenceComboBox->currentNode() );
+  d->logic()->SetNeedleTransformNode( tnode );
+}
+
+
+
+void
+qSlicerPerkEvaluatorModuleWidget
 ::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
@@ -272,6 +284,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
   connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
+  connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
 }
 
 
@@ -284,7 +297,6 @@ void qSlicerPerkEvaluatorModuleWidget
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
-  
   
     // Annotations table
   
