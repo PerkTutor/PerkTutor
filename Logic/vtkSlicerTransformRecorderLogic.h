@@ -34,7 +34,7 @@
 #include "vtkSmartPointer.h"
 
 // MRML includes
-class vtkMRMLIGTLConnectorNode;
+// class vtkMRMLIGTLConnectorNode;
 class vtkMRMLViewNode;
 #include "vtkMRMLTransformRecorderNode.h"
 // STD includes

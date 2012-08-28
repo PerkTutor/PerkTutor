@@ -20,7 +20,7 @@
 #include "vtkMRMLTransformRecorderNode.h"
 
 // MRML includes
-#include "vtkMRMLIGTLConnectorNode.h"
+// #include "vtkMRMLIGTLConnectorNode.h"
 #include "vtkMRMLViewNode.h"
 
 // VTK includes

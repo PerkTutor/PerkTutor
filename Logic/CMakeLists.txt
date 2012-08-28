@@ -17,8 +17,8 @@ set(module_logic_export_directive "VTK_SLICER_TRANSFORMRECORDER_MODULE_LOGIC_EXP
 # Additional directories to include
 set(module_logic_include_directories
   ${Slicer_Base_INCLUDE_DIRS}
-  ${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF/MRML
-  ${OpenIGTLinkIF_SOURCE_DIR}/MRML
+  #${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF/MRML
+  # ${OpenIGTLinkIF_SOURCE_DIR}/MRML
   )
 
 # Source files
@@ -30,7 +30,6 @@ set(module_logic_SRCS
 # Additional Target libraries
 set(module_logic_target_libraries
   ${ITK_LIBRARIES}
-  ${OpenIGTLink_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic 
   vtkSlicerTransformRecorderModuleMRML

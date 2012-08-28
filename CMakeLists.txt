@@ -43,7 +43,6 @@ set(qt_module_UI_SRCS
 set(qt_module_target_libraries
   vtkSlicerTransformRecorderModuleLogic
   vtkSlicerTransformRecorderModuleMRML
-  ${OpenIGTLink_LIBRARIES}
   ${MRML_LIBRARIES}
   )
 
