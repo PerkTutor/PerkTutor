@@ -86,19 +86,30 @@ void qSlicerPerkEvaluatorModuleWidget
   
   if ( filename.isEmpty() == false )
   {
+    /*
+    QMessageBox mb( this );
+    mb.setModal( true );
+    mb.setStandardButtons( 0 );
+    mb.setText( QString( "Please wait while analysing data..." ) );
+    mb.update();
+    mb.show();
+    */
+    
     QProgressDialog dialog;
     dialog.setModal( true );
     dialog.setLabelText( "Please wait while reading XML file..." );
     dialog.show();
     dialog.setValue( 10 );
+    
     d->logic()->ImportFile( filename.toStdString() );
     dialog.setValue( 60 );
     QFileInfo pathInfo( filename );
     d->FileNameLabel->setText( pathInfo.fileName() );
     dialog.setValue( 70 );
     d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
-    dialog.setValue( 100 );
     dialog.close();
+    
+    // mb.hide();
   }
   
   this->UpdateGUI();
@@ -227,12 +238,16 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
+  
+  
   double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
   double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
   d->logic()->SetMarkBegin( begin );
   d->logic()->SetMarkEnd( end ); 
   
   d->logic()->Analyse();
+  
+  
   
   this->UpdateGUI();
 }
