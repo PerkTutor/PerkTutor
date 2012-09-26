@@ -57,6 +57,9 @@ public:
   typedef std::vector< AnnotationType > AnnotationVectorType;
   
   AnnotationVectorType GetAnnotations();
+  void AddAnnotation( std::string annString );
+  void RemoveAnnotation( int row );
+  void SaveAnnotations( std::string fileName );
   
   
   typedef std::pair< std::string, double > MetricType;

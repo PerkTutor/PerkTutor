@@ -276,6 +276,61 @@ qSlicerPerkEvaluatorModuleWidget
   d->logic()->SetNeedleTransformNode( tnode );
 }
 
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnAddItemClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+
+  QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
+    tr("Input text for the new annotation:"));
+
+  
+  d->logic()->AddAnnotation( itemText.toStdString() );
+
+  this->UpdateGUI();
+}
+
+
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnRemoveItemClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  // Remove the time and note items from the annotations table
+
+  int currRow = d->AnnotationsTable->currentRow();
+
+  // Remove the annotation from the list of annotations, if appropriate row selected
+  if ( currRow >= 0 )
+  {
+    d->logic()->RemoveAnnotation( currRow );
+  }
+
+
+  this->UpdateGUI();
+}
+
+
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnSaveItemsClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  QString filename = QFileDialog::getSaveFileName( this, tr("Save record"), "", tr("XML Files (*.xml)") );
+  
+  if ( filename.isEmpty() == false )
+  {
+    d->logic()->SaveAnnotations( filename.toStdString() );
+  }
+
+  this->UpdateGUI();
+}
+
+
 
 
 void
@@ -297,6 +352,9 @@ qSlicerPerkEvaluatorModuleWidget
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
+  connect( d->AddItemButton, SIGNAL( clicked() ), this, SLOT ( OnAddItemClicked() ) );
+  connect( d->RemoveItemButton, SIGNAL( clicked() ), this, SLOT ( OnRemoveItemClicked() ) );
+  connect( d->SaveItemsButton, SIGNAL( clicked() ), this, SLOT( OnSaveItemsClicked() ) );
   connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );

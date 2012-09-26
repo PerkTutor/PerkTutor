@@ -75,6 +75,33 @@ StrToTransform( std::string str, vtkTransform* tr )
   return tr;
 }
 
+std::string
+TransformToStr( vtkTransform* tr )
+{
+	std::stringstream ss( "" );
+
+	ss << tr->GetMatrix()->GetElement( 0, 0 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 0, 1 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 0, 2 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 0, 3 ) << " ";
+
+	ss << tr->GetMatrix()->GetElement( 1, 0 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 1, 1 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 1, 2 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 1, 3 ) << " ";
+
+	ss << tr->GetMatrix()->GetElement( 2, 0 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 2, 1 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 2, 2 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 2, 3 ) << " ";
+
+	ss << tr->GetMatrix()->GetElement( 3, 0 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 3, 1 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 3, 2 ) << " ";
+	ss << tr->GetMatrix()->GetElement( 3, 3 ) << " ";
+
+	return ss.str();
+}
 
 
 //----------------------------------------------------------------------------
@@ -130,6 +157,86 @@ vtkSlicerPerkEvaluatorLogic
 ::GetAnnotations()
 {
   return this->Annotations;
+}
+
+
+void
+vtkSlicerPerkEvaluatorLogic
+::AddAnnotation( std::string annString )
+{
+  AnnotationType annotation;
+  annotation.first = this->GetPlaybackTime();
+  annotation.second = annString;
+  this->Annotations.push_back( annotation );
+}
+
+
+
+void
+vtkSlicerPerkEvaluatorLogic
+::RemoveAnnotation( int row )
+{
+  Annotations.erase( Annotations.begin() + row );
+}
+
+
+
+void
+vtkSlicerPerkEvaluatorLogic
+::SaveAnnotations( std::string fileName )
+{
+
+  std::ofstream output( fileName.c_str() );
+  
+  if ( ! output.is_open() )
+  {
+    vtkErrorMacro( "Record file could not be opened!" );
+    return;
+  }
+  
+  output << "<TransformRecorderLog>" << std::endl;
+
+  // Save transforms  
+  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
+        tIt != this->ToolTrajectories.end(); ++ tIt )
+  {
+    for ( unsigned int i = 0; i < (*tIt)->GetNumberOfRecords(); ++ i )
+    {
+      double currTime = (*tIt)->GetTimeAtIndex( i );
+	  int intPart = floor( currTime );
+	  int fracPart = floor( ( currTime - intPart ) * 1e9 );
+	  vtkSmartPointer< vtkMatrix4x4 > currMatrix = (*tIt)->GetMatrixAtIndex( i );
+	  vtkSmartPointer< vtkTransform > currTr = vtkSmartPointer< vtkTransform >::New();
+	  currTr->SetMatrix( vtkMatrix4x4::SafeDownCast( currMatrix ) );
+
+      output << "  <log";	  
+      output << " TimeStampSec=\"" << intPart << "\"";
+      output << " TimeStampNSec=\"" << fracPart << "\"";
+      output << " type=\"transform\"";
+      output << " DeviceName=\"" << (*tIt)->GetToolName() << "\"";
+	  output << " transform=\"" << TransformToStr( currTr ) << "\"";
+      output << " />" << std::endl;
+    }
+  }
+ 
+  // Save annotations.
+  
+  for ( int i = 0; i < Annotations.size(); ++ i )
+  {
+    int intPart = floor( Annotations[i].first );
+	int fracPart = floor( ( Annotations[i].first - intPart ) * 1e9 );
+    output << "  <log";
+    output << " TimeStampSec=\"" << intPart << "\"";
+    output << " TimeStampNSec=\"" << fracPart << "\"";
+    output << " type=\"message\"";
+    output << " message=\"" << Annotations[i].second << "\"";
+    output << " />" << std::endl;
+  }
+  
+  
+  output << "</TransformRecorderLog>" << std::endl;
+  output.close();
+
 }
 
 
