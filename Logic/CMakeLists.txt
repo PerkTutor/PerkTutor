@@ -25,6 +25,12 @@ set(module_logic_include_directories
 set(module_logic_SRCS
   vtkSlicerWorkflowSegmentationLogic.cxx
   vtkSlicerWorkflowSegmentationLogic.h
+  vtkRecordLog.cxx
+  vtkRecordLog.h
+  vtkProcedure.cxx
+  vtkProcedure.h
+  vtkTrackingRecord.cxx
+  vtkTrackingRecord.h
   )
 
 # Additional Target libraries
