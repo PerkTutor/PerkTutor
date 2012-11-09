@@ -54,7 +54,7 @@ public:
   vtkMarkovModel( int numInitStates, int numInitSymbols );
   ~vtkMarkovModel();
 
-private:
+protected:
 
 	std::vector<LabelRecord> A; // State transition matrix
 	std::vector<LabelRecord> B; // Observation matrix

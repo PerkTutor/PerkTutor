@@ -311,7 +311,7 @@ std::vector<LabelRecord> vtkRecordLog
 	  double currSum = 0.0;
 	  for ( int d = 0; d < recordSize; d++ )
 	  {
-        currSum = currSum + ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) ) * ( this->GetRecordAt(i).get(d) - valueRecords[i].get(d) );
+        currSum = currSum + ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) ) * ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) );
 	  }
 	  // Add to the current order record
 	  distRecord.add( currSum );
@@ -576,7 +576,7 @@ vtkRecordLog* vtkRecordLog
     vtkRecordLog* trimRecordLog = padRecordLog->Trim( i, i + window );
 	
 	// Create a new matrix to which the Legendre coefficients will be assigned
-	std::vector<LabelRecord> legCoeffVector= trimRecordLog->LegendreTransformation( order );
+	std::vector<LabelRecord> legCoeffMatrix = trimRecordLog->LegendreTransformation( order );
 	TimeLabelRecord currLegRecord;
 
 	// Calculate the Legendre coefficients: 2D -> 1D
@@ -584,7 +584,7 @@ vtkRecordLog* vtkRecordLog
     {
       for ( int d = 0; d < recordSize; d++ )
 	  {
-        currLegRecord.add( legCoeffVector[o].get(d) );
+        currLegRecord.add( legCoeffMatrix[o].get(d) );
 	  }
     }
 

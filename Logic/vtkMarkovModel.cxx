@@ -414,7 +414,7 @@ std::vector<MarkovRecord> vtkMarkovModel
 
   for ( int j = 0; j < numStates; j++ )
   {
-    currDelta.add( logPi.get( j ) + logB[j].get( sequence[0].symbol ) );
+    currDelta.add( logPi.get( j ) + logB[j].get( sequence[0].getSymbol() ) );
   }
   delta.push_back( currDelta );
 

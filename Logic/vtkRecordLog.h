@@ -68,7 +68,7 @@ public:
   vtkRecordLog();
   ~vtkRecordLog();
 
-private:
+protected:
 
   std::vector<TimeLabelRecord> records;
   int numRecords;
