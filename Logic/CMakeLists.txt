@@ -31,6 +31,9 @@ set(module_logic_SRCS
   vtkProcedure.h
   vtkTrackingRecord.cxx
   vtkTrackingRecord.h
+  vtkMarkovModel.cxx
+  vtkMarkovModel.h
+  RecordType.h
   )
 
 # Additional Target libraries
