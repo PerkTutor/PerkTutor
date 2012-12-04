@@ -986,3 +986,44 @@ vtkRecordLog* vtkRecordLog
   return clusterRecordLog;
 
 }
+
+
+std::vector<vtkRecordLog*> vtkRecordLog
+::GroupRecordsByLabel( int MaxLabel )
+{
+  std::vector<vtkRecordLog*> recordsByTask;
+
+  // For each label, create a new recordLog
+  for ( int i = 0; i < MaxLabel; i++ )
+  {
+    recordsByTask[i] = new vtkRecordLog();
+  }
+
+  // Iterate over all records
+  for ( int i = 0; i < this->Size(); i++ )
+  {
+    recordsByTask[ this->GetRecordAt(i).getLabel() ]->AddRecord( this->GetRecordAt(i) );
+  }
+
+  return recordsByTask;
+
+}
+
+
+std::vector<MarkovRecord> vtkRecordLog
+::ToMarkovRecordVector()
+{
+  std::vector<MarkovRecord> markovRecords;
+
+  // We will assume that: label -> state, values[0] -> symbol
+  for ( int i = 0; i < this->Size(); i++ )
+  {
+    MarkovRecord currMarkovRecord;
+    currMarkovRecord.setState( this->GetRecordAt(i).getLabel() );
+	currMarkovRecord.setSymbol( this->GetRecordAt(i).get(0) );
+	markovRecords.push_back( currMarkovRecord );
+  }
+
+  return markovRecords;
+
+}

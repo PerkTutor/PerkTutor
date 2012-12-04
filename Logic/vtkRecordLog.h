@@ -51,6 +51,9 @@ public:
 
   std::vector<LabelRecord> fwdkmeans( int numClusters );
   vtkRecordLog* fwdkmeansTransform( std::vector<LabelRecord> centroids );
+
+  std::vector<vtkRecordLog*> GroupRecordsByLabel( int MaxLabel );
+  std::vector<MarkovRecord> ToMarkovRecordVector();
   
 
 private:

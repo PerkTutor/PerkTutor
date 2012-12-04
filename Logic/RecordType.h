@@ -3,6 +3,7 @@
 #define RECORDTYPE_H
 
 #include <vector>
+#include <sstream>
 
 class ValueRecord
 {
@@ -29,7 +30,7 @@ class TimeLabelRecord : public LabelRecord
 {
 public:
   double time;
-  void setTime( int newTime ) { time = newTime; };
+  void setTime( double newTime ) { time = newTime; };
   double getTime() { return time; };
 };
 
@@ -44,5 +45,6 @@ public:
   int getState() { return state; };
   int getSymbol() { return symbol; };
 };
+
 
 #endif

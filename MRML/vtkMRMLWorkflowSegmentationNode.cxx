@@ -35,8 +35,6 @@
 #include <sstream>
 #include <string>
 
-// Max needle speed that is used in measurements. Filters outliers.
-#define MAX_NEEDLE_SPEED_MMPERS 500
 
 // MACROS ---------------------------------------------------------------------
 
@@ -277,6 +275,27 @@ void vtkMRMLWorkflowSegmentationNode::WriteXML( ostream& of, int nIndent )
   
   of << indent << " Recording=\"" << this->Recording << "\"";
   of << indent << " LogFileName=\"" << this->LogFileName << "\"";
+
+  of << indent << " InputParameterFileName=\"" << this->InputParameterFileName << "\"";
+  of << indent << " TrainingParameterFileName=\"" << this->TrainingParameterFileName << "\"";
+
+  of << indent << " NumTasks=\"" << this->inputParam.NumTasks << "\"";
+  of << indent << " FilterWidth=\"" << this->inputParam.FilterWidth << "\"";
+  of << indent << " OrthogonalOrder=\"" << this->inputParam.OrthogonalOrder << "\"";
+  of << indent << " OrthogonalWindow=\"" << this->inputParam.OrthogonalWindow << "\"";
+  of << indent << " Derivative=\"" << this->inputParam.Derivative << "\"";
+  of << indent << " NumCentroids=\"" << this->inputParam.NumCentroids << "\"";
+  of << indent << " NumPrinComps=\"" << this->inputParam.NumPrinComps << "\"";
+  of << indent << " MarkovPseudoScalePi=\"" << this->inputParam.MarkovPseudoScalePi << "\"";
+  of << indent << " MarkovPseudoScaleA=\"" << this->inputParam.MarkovPseudoScaleA << "\"";
+  of << indent << " MarkovPseudoScaleB=\"" << this->inputParam.MarkovPseudoScaleB << "\"";
+
+  of << indent << " PrinComps=\"" << this->trainingParam.PrinComps << "\"";
+  of << indent << " Centroids=\"" << this->trainingParam.Centroids << "\"";
+  of << indent << " MarkovPi=\"" << this->trainingParam.MarkovPi << "\"";
+  of << indent << " MarkovA=\"" << this->trainingParam.MarkovA << "\"";
+  of << indent << " MarkovB=\"" << this->trainingParam.MarkovB << "\"";
+
 }
 
 
@@ -636,7 +655,20 @@ std::string vtkMRMLWorkflowSegmentationNode::GetCurrentTask()
   {
     return "";
   }
-  return TransformsBuffer[ n - 1 ].Task;
+  //return TransformsBuffer[ n - 1 ].Task;
+  std::string currTask = "Task 1";
+  if ( this->GetTotalTime() > 110 )
+	  currTask = "Task 2";
+  if ( this->GetTotalTime() > 114 )
+	  currTask = "Task 3";
+  if ( this->GetTotalTime() > 119 )
+	  currTask = "Task 4";
+  if ( this->GetTotalTime() > 121 )
+	  currTask = "Task 5";
+  if ( this->GetTotalTime() > 124 )
+	  currTask = "Task 1";
+
+  return currTask;
 }
 
 

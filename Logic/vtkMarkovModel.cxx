@@ -119,6 +119,12 @@ void vtkMarkovModel
 }
 
 
+void vtkMarkovModel
+::SetA( std::vector<LabelRecord> newA )
+{
+  A = newA;
+}
+
 std::vector<LabelRecord> vtkMarkovModel
 ::GetA()
 {
@@ -173,6 +179,12 @@ std::vector<LabelRecord> vtkMarkovModel
   return zeroA;
 }
 
+
+void vtkMarkovModel
+::SetB( std::vector<LabelRecord> newB )
+{
+  B = newB;
+}
 
 std::vector<LabelRecord> vtkMarkovModel
 ::GetB()
@@ -229,6 +241,12 @@ std::vector<LabelRecord> vtkMarkovModel
 }
 
 
+void vtkMarkovModel
+::SetPi( LabelRecord newPi )
+{
+  pi = newPi;
+}
+
 LabelRecord vtkMarkovModel
 ::GetPi()
 {
@@ -262,6 +280,76 @@ LabelRecord vtkMarkovModel
 
   zeroPi.setLabel( 0 );
   return zeroPi;
+}
+
+
+
+std::string vtkMarkovModel
+::ToString()
+{
+
+  std::stringstream s;
+  
+  for ( int i = 0; i < numStates; i++ )
+  {
+    s << pi.get(i) << " ";
+  }
+
+  for ( int i = 0; i < numStates; i++ )
+  {
+    for ( int j = 0; j < numStates; j++ )
+	{
+	  s << A[i].get(j) << " ";
+	}
+  }
+
+  for ( int i = 0; i < numStates; i++ )
+  {
+    for ( int j = 0; j < numSymbols; j++ )
+	{
+	  s << B[i].get(j) << " ";
+	}
+  }
+
+  return s.str();
+}
+
+
+void vtkMarkovModel
+::FromString( std::string s )
+{
+  // Must already know the number of states and number of symbols to do this
+  pi = GetZeroPi();
+  A = GetZeroA();
+  B = GetZeroB();
+
+  std::stringstream ss( s );
+  double val;
+
+  for ( int i = 0; i < numStates; i++ )
+  {
+    ss >> val;
+    pi.set( i, val );
+  }
+
+  for ( int i = 0; i < numStates; i++ )
+  {
+    for ( int j = 0; j < numStates; j++ )
+	{
+	  ss >> val;
+	  A[i].set( j, val );
+	}
+  }
+
+  for ( int i = 0; i < numStates; i++ )
+  {
+    for ( int j = 0; j < numSymbols; j++ )
+	{
+	  ss >> val;
+	  B[i].set( j, val );
+	}
+  }
+
 }
 
 

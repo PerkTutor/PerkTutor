@@ -20,7 +20,6 @@
 #include <utility>
 #include <vector>
 
-
 #include "vtkMRMLModelNode.h"
 #include "vtkTransform.h"
 #include "vtkMRMLNode.h"
@@ -44,9 +43,13 @@ class vtkMRMLModelNode;
 class vtkMRMLViewNode;
 class vtkMRMLVolumeNode;
 
-/**
- * Struct to store a recorded transform.
- */
+
+
+//-------------------------------------------------------------------------
+// Helper classes for MRML
+//-------------------------------------------------------------------------
+
+// Class to store observed transforms
 class TransformRecord
 {
 public:
@@ -57,8 +60,7 @@ public:
   std::string Task;
 };
 
-
-
+// Class to store recorded messages
 class MessageRecord
 {
 public:
@@ -66,7 +68,40 @@ public:
   long int TimeStampSec;
   int TimeStampNSec;
 };
-//ETX
+
+// Class to store algorithm input parameters
+class InputParameter
+{
+public:
+  int NumTasks;
+  double FilterWidth;
+  int OrthogonalOrder;
+  int OrthogonalWindow;
+  int Derivative;
+  int NumCentroids;
+  int NumPrinComps;
+  double MarkovPseudoScalePi, MarkovPseudoScaleA, MarkovPseudoScaleB;
+};
+
+// Class to store algorithm training parameters
+class TrainingParameter
+{
+public:
+  std::string PrinComps;
+  std::string Centroids;
+  std::string MarkovPi;
+  std::string MarkovA;
+  std::string MarkovB;
+};
+
+
+
+
+
+
+//-------------------------------------------------------------------------
+// MRML Node classes
+//-------------------------------------------------------------------------
 
 
 class
@@ -76,8 +111,8 @@ vtkMRMLWorkflowSegmentationNode
 {
 public:
   
+  //Enumeration of events
   //BTX
-  // Events.
   enum {
     TransformChangedEvent = 201001,
     RecordingStartEvent   = 200901,
@@ -85,9 +120,7 @@ public:
   };
   //ETX
   
-  
-    // Standard MRML node methods
-  
+  // Standard MRML node methods  
   static vtkMRMLWorkflowSegmentationNode *New();
   vtkTypeMacro( vtkMRMLWorkflowSegmentationNode, vtkMRMLNode );
   virtual vtkMRMLNode* CreateNodeInstance();
@@ -108,29 +141,33 @@ public:
   
 protected:
 
-    // Constructor/desctructor
-
+  // Constructor/desctructor methods
   vtkMRMLWorkflowSegmentationNode();
   virtual ~vtkMRMLWorkflowSegmentationNode();
   vtkMRMLWorkflowSegmentationNode ( const vtkMRMLWorkflowSegmentationNode& );
   void operator=( const vtkMRMLWorkflowSegmentationNode& );
 
   void RemoveMRMLObservers();
-  
-  
-    // Reference to observed transform nodes.
+    
   
 public:
+  
+  // Reference to observed transform nodes.
   void AddObservedTransformNode( const char* TransformNodeID );
   void RemoveObservedTransformNode( const char* TransformNodeID );
   void ClearObservedTranformNodes();
   vtkMRMLLinearTransformNode* GetObservedTransformNode( const char* TransformNodeID );
+
 protected:
+
+  // Reference to observed transform nodes
   std::vector< char* > ObservedTransformNodeIDs;
   std::vector< vtkMRMLLinearTransformNode* > ObservedTransformNodes;
   
   
 public:
+
+  // Statistics associated with recorded transforms
   unsigned int GetTransformsBufferSize();
   unsigned int GetMessagesBufferSize();
   double GetTotalTime();
@@ -139,6 +176,7 @@ public:
   vtkGetMacro( Recording, bool );
   void SetRecording( bool newState );
   
+  // Setters for saving the scene
   //BTX
   void SetTransformSelections( std::vector< int > selections );
   void SetLogFileName( std::string fileName );
@@ -147,41 +185,52 @@ public:
   void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
   //ETX
   
+  // File IO methods
   void UpdateFileFromBuffer();
   void ImportTrainingData( std::string dirName );
   void ImportInputParameters( std::string fileName );
   void TrainSegmentationAlgorithm();
   void ClearBuffer();
   
+  // Get the current time stamp sec, nanosec
   void GetTimestamp( int &sec, int &nsec );
   
   
 protected:
   
-  void AddNewTransform( const char* TransformNodeID );
+  //Observe a new transform
+  void AddNewTransform( const char* TransformNodeID ); 
   
-  
+  // Variables associated with recording
   //BTX
-  std::vector< int > TransformSelections;
-  
+  std::vector< int > TransformSelections;  
   std::string LogFileName;
+  std::string InputParameterFileName;
+  std::string TrainingParameterFileName;
   std::vector< TransformRecord > TransformsBuffer;
   std::vector< MessageRecord > MessagesBuffer;
   //ETX
+ 
+  // Active recording
+  bool Recording;
+  bool Active;
   
-  bool Recording;  
-  
-    // Time.
-    // Set a zero timestamp in the constructor using the system clock.
-  
+  // Time.
+  // Set a zero timestamp in the constructor using the system clock.  
   clock_t Clock0;
   
+  // Clock synchronization
   double IGTLTimeOffsetSeconds;  // Adding this to the IGTL timestamp synchronizes it with the clock.
   bool IGTLTimeSynchronized;
 
+  // Keep track of the last recorded transform to avoid repeats
   vtkTransform* LastNeedleTransform;
   double LastNeedleTime;
-  bool Active;
+
+public:
+  // Parameter variables
+  InputParameter inputParam;
+  TrainingParameter trainingParam;
   
 };  
 

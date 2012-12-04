@@ -7,7 +7,7 @@
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
 
 #include <vector>
-#include <iostream>
+#include <sstream>
 
 // Class representing a procedure comprised of tracking records
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
@@ -23,14 +23,17 @@ public:
   int GetNumStates();
   int GetNumSymbols();
 
+  void SetA( std::vector<LabelRecord> newA );
   std::vector<LabelRecord> GetA();
   std::vector<LabelRecord> GetZeroA();
   std::vector<LabelRecord> GetLogA();
 
+  void SetB( std::vector<LabelRecord> newB );
   std::vector<LabelRecord> GetB();
   std::vector<LabelRecord> GetZeroB();
   std::vector<LabelRecord> GetLogB();
 
+  void SetPi( LabelRecord newPi );
   LabelRecord GetPi();
   LabelRecord GetZeroPi();
   LabelRecord GetLogPi();
@@ -41,7 +44,9 @@ public:
   void AddPseudoData( LabelRecord pseudoPi, std::vector<LabelRecord> pseudoA, std::vector<LabelRecord> pseudoB );
   void EstimateParameters();
   std::vector<MarkovRecord> CalculateStates( std::vector<MarkovRecord> sequence );
-  
+
+  std::string ToString();
+  void FromString( std::string s );
 
 private:
 

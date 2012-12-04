@@ -33,6 +33,10 @@ set(module_logic_SRCS
   vtkTrackingRecord.h
   vtkMarkovModel.cxx
   vtkMarkovModel.h
+  vtkMarkovModelRT.cxx
+  vtkMarkovModelRT.h
+  vtkWorkflowAlgorithm.cxx
+  vtkWorkflowAlgorithm.h
   RecordType.h
   )
 
