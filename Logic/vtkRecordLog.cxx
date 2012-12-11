@@ -181,7 +181,7 @@ vtkRecordLog* vtkRecordLog
 }
 
 
-
+// Note: Does not add to start, just creates start - must concatenate it
 vtkRecordLog* vtkRecordLog
 ::PadStart( int window )
 {
@@ -189,7 +189,7 @@ vtkRecordLog* vtkRecordLog
   vtkRecordLog* padRecordLog = vtkRecordLog::New();
 
   // Find the average time stamp
-  double DT = ( records[0].time - records[numRecords-1].time ) / numRecords;
+  double DT = ( GetRecordAt(numRecords-1).getTime() - GetRecordAt(0).getTime() ) / numRecords;
 
   // Calculate the values and time stamp
   for ( int i = window; i > 0; i-- )
@@ -564,7 +564,7 @@ vtkRecordLog* vtkRecordLog
 ::OrthogonalTransformation( int window, int order )
 {
   // Pad the recordlog with values at the beginning
-  vtkRecordLog* padRecordLog = this->PadStart( window );
+  vtkRecordLog* padRecordLog = this->PadStart( window )->Concatenate( this );
 
   // Create a new record log with the orthogonally transformed data
   vtkRecordLog* orthRecordLog = vtkRecordLog::New();

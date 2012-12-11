@@ -15,6 +15,7 @@
 #include "vtkSmartPointer.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
+#include "vtkXMLDataParser.h"
 
 // WorkflowSegmentation MRML includes
 #include "vtkMRMLWorkflowSegmentationNode.h"
@@ -189,14 +190,79 @@ void
 vtkMRMLWorkflowSegmentationNode
 ::ImportInputParameters( std::string fileName )
 {
-  // Read the input parameters from the specified file
-}
 
-void
-vtkMRMLWorkflowSegmentationNode
-::TrainSegmentationAlgorithm()
-{
-  // Train the workflow segmentation algorithm using the inputted parameters
+  // Create a parser to parse the XML data from TransformRecorderLog
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( fileName.c_str() );
+  parser->Parse();
+  
+  // Get the root element (and check it exists)
+  vtkXMLDataElement* rootElement = parser->GetRootElement();
+  if ( ! rootElement )
+  {
+    return;
+  }
+  
+  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
+  
+  for ( int i = 0; i < num; ++ i )
+  {
+
+    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
+    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 )
+    {
+      continue;  // If it's not a "Parameter", jump to the next.
+    }
+
+	const char* elementType = noteElement->GetAttribute( "Type" );
+	
+	std::stringstream ss( std::string( noteElement->GetAttribute( "Value" ) ) );
+	double value;
+	ss >> value;
+
+    if ( strcmp( elementType, "NumTasks" ) == 0 )
+    {
+	  this->inputParam.NumTasks = value;
+    }
+	if ( strcmp( elementType, "Derivative" ) == 0 )
+    {
+	  this->inputParam.Derivative = value;
+    }
+	if ( strcmp( elementType, "FilterWidth" ) == 0 )
+    {
+	  this->inputParam.FilterWidth = value;
+    }
+	if ( strcmp( elementType, "OrthogonalOrder" ) == 0 )
+    {
+	  this->inputParam.OrthogonalOrder = value;
+    }
+	if ( strcmp( elementType, "OrthogonalWindow" ) == 0 )
+    {
+	  this->inputParam.OrthogonalWindow = value;
+    }
+	if ( strcmp( elementType, "NumPrinComps" ) == 0 )
+    {
+	  this->inputParam.NumPrinComps = value;
+    }
+    if ( strcmp( elementType, "NumCentroids" ) == 0 )
+    {
+	  this->inputParam.NumCentroids = value;
+    }
+	if ( strcmp( elementType, "MarkovPseudoScalePi" ) == 0 )
+    {
+	  this->inputParam.MarkovPseudoScalePi = value;
+    }
+	if ( strcmp( elementType, "MarkovPseudoScaleA" ) == 0 )
+    {
+	  this->inputParam.MarkovPseudoScaleA = value;
+    }
+	if ( strcmp( elementType, "MarkovPseudoScaleB" ) == 0 )
+    {
+	  this->inputParam.MarkovPseudoScaleB = value;
+    }
+
+  }
+
 }
 
 
@@ -276,6 +342,7 @@ void vtkMRMLWorkflowSegmentationNode::WriteXML( ostream& of, int nIndent )
   of << indent << " Recording=\"" << this->Recording << "\"";
   of << indent << " LogFileName=\"" << this->LogFileName << "\"";
 
+  /*
   of << indent << " InputParameterFileName=\"" << this->InputParameterFileName << "\"";
   of << indent << " TrainingParameterFileName=\"" << this->TrainingParameterFileName << "\"";
 
@@ -295,6 +362,7 @@ void vtkMRMLWorkflowSegmentationNode::WriteXML( ostream& of, int nIndent )
   of << indent << " MarkovPi=\"" << this->trainingParam.MarkovPi << "\"";
   of << indent << " MarkovA=\"" << this->trainingParam.MarkovA << "\"";
   of << indent << " MarkovB=\"" << this->trainingParam.MarkovB << "\"";
+  */
 
 }
 
@@ -656,20 +724,109 @@ std::string vtkMRMLWorkflowSegmentationNode::GetCurrentTask()
     return "";
   }
   //return TransformsBuffer[ n - 1 ].Task;
-  std::string currTask = "Task 1";
-  if ( this->GetTotalTime() > 110 )
-	  currTask = "Task 2";
-  if ( this->GetTotalTime() > 114 )
-	  currTask = "Task 3";
-  if ( this->GetTotalTime() > 119 )
-	  currTask = "Task 4";
-  if ( this->GetTotalTime() > 121 )
-	  currTask = "Task 5";
-  if ( this->GetTotalTime() > 124 )
-	  currTask = "Task 1";
+  std::string currTask = "Task 1 (Translation)";
+  if ( this->GetTotalTime() > 10.6 )
+	  currTask = "Task 2 (Rotation)";
+  if ( this->GetTotalTime() > 14.0 )
+	  currTask = "Task 3 (Insertion)";
+  if ( this->GetTotalTime() > 18.4 )
+	  currTask = "Task 5 (Retraction)";
+  if ( this->GetTotalTime() > 19.2 )
+	  currTask = "Task 3 (Insertion)";
+  if ( this->GetTotalTime() > 21.0 )
+	  currTask = "Task 4 (Verification)";
+  if ( this->GetTotalTime() > 21.4 )
+	  currTask = "Task 5 (Retraction)";
+  if ( this->GetTotalTime() > 22.0 )
+	  currTask = "Task 1 (Translation)";
 
   return currTask;
 }
+
+
+std::string vtkMRMLWorkflowSegmentationNode::GetCurrentInstruction()
+{
+  unsigned int n = this->TransformsBuffer.size();
+  if ( n < 1 )
+  {
+    return "";
+  }
+  //return TransformsBuffer[ n - 1 ].Task;
+  std::string currTask = "Move needle-tip between L3-L4 vertebrae.";
+  if ( this->GetTotalTime() > 10.6 )
+	  currTask = "Angle needle 15 degrees medially.";
+  if ( this->GetTotalTime() > 14.0 )
+	  currTask = "Insert needle into subarachnoid space.";
+  if ( this->GetTotalTime() > 18.4 )
+	  currTask = "Remove needle from tissue.";
+  if ( this->GetTotalTime() > 19.2 )
+	  currTask = "Insert needle into subarachnoid space.";
+  if ( this->GetTotalTime() > 21.0 )
+	  currTask = "Remove needle stylet; verify CSF.";
+  if ( this->GetTotalTime() > 21.4 )
+	  currTask = "Remove needle from tissue.";
+  if ( this->GetTotalTime() > 22.0 )
+	  currTask = "Move needle-tip between L3-L4 vertebrae.";
+
+  return currTask;
+}
+
+
+std::string vtkMRMLWorkflowSegmentationNode::GetNextTask()
+{
+  unsigned int n = this->TransformsBuffer.size();
+  if ( n < 1 )
+  {
+    return "";
+  }
+  //return TransformsBuffer[ n - 1 ].Task;
+  std::string currTask = "Task 2 (Rotation)";
+  if ( this->GetTotalTime() > 10.6 )
+	  currTask = "Task 3 (Insertion)";
+  if ( this->GetTotalTime() > 14.0 )
+	  currTask = "Task 4 (Verification)";
+  if ( this->GetTotalTime() > 18.4 )
+	  currTask = "Task 1 (Translation)";
+  if ( this->GetTotalTime() > 19.2 )
+	  currTask = "Task 4 (Verification)";
+  if ( this->GetTotalTime() > 21.0 )
+	  currTask = "Task 5 (Retraction)";
+  if ( this->GetTotalTime() > 21.4 )
+	  currTask = "Task 1 (Translation)";
+  if ( this->GetTotalTime() > 22.0 )
+	  currTask = "Task 2 (Rotation)";
+
+  return currTask;
+}
+
+
+std::string vtkMRMLWorkflowSegmentationNode::GetNextInstruction()
+{
+  unsigned int n = this->TransformsBuffer.size();
+  if ( n < 1 )
+  {
+    return "";
+  }
+  //return TransformsBuffer[ n - 1 ].Task;
+  std::string currTask = "Angle needle 15 degrees medially.";
+  if ( this->GetTotalTime() > 10.6 )
+	  currTask = "Insert needle into subarachnoid space.";
+  if ( this->GetTotalTime() > 14.0 )
+	  currTask = "Remove needle stylet; verify CSF.";
+  if ( this->GetTotalTime() > 18.4 )
+	  currTask = "Move needle-tip between L3-L4 vertebrae.";
+  if ( this->GetTotalTime() > 19.2 )
+	  currTask = "Remove needle stylet; verify CSF.";
+  if ( this->GetTotalTime() > 21.0 )
+	  currTask = "Remove needle from tissue.";
+  if ( this->GetTotalTime() > 21.4 )
+	  currTask = "Move needle-tip between L3-L4 vertebrae.";
+  if ( this->GetTotalTime() > 22.0 )
+	  currTask = "Angle needle 15 degrees medially.";
+
+  return currTask;
+}
+
 
 
 

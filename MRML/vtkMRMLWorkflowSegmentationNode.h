@@ -172,6 +172,9 @@ public:
   unsigned int GetMessagesBufferSize();
   double GetTotalTime();
   std::string GetCurrentTask();
+  std::string GetCurrentInstruction();
+  std::string GetNextTask();
+  std::string GetNextInstruction();
   
   vtkGetMacro( Recording, bool );
   void SetRecording( bool newState );
@@ -189,7 +192,7 @@ public:
   void UpdateFileFromBuffer();
   void ImportTrainingData( std::string dirName );
   void ImportInputParameters( std::string fileName );
-  void TrainSegmentationAlgorithm();
+  //void TrainSegmentationAlgorithm();
   void ClearBuffer();
   
   // Get the current time stamp sec, nanosec

@@ -154,7 +154,8 @@ std::vector<double> vtkWorkflowAlgorithm
   {
     taskCounts.push_back( 0 );
   }
-  int sum;
+
+  int sum = 0;
 
   // Iterate over all record logs and count label (task) instances
   for ( int i = 0; i < procedures.size(); i++ )
@@ -170,7 +171,7 @@ std::vector<double> vtkWorkflowAlgorithm
   // Calculate the proportion of each task
   for ( int i = 0; i < this->NumTasks; i++ )
   {
-    taskProportions[i] = ( 1.0 * taskCounts[i] ) / sum;
+    taskProportions.push_back( ( 1.0 * taskCounts[i] ) / sum );
   }
 
   return taskProportions;
@@ -252,7 +253,7 @@ void vtkWorkflowAlgorithm
   {
     // Find the record with the largest smaller time stamp
     int currTask = 0;
-	double currTimeDiff = ( records[records.size()].getTime() - records[0].getTime() );
+	double currTimeDiff = ( records[records.size()-1].getTime() - records[0].getTime() );
 	for ( int j = 0; j < messages.size(); j++ )
 	{
       if ( messages[j].getTime() < records[i].getTime() && records[i].getTime() - messages[j].getTime() < currTimeDiff )
@@ -265,11 +266,11 @@ void vtkWorkflowAlgorithm
 	records[i].setLabel( currTask );
   }
   
-  // Only add the record to the log if there is a previous message (otherwise task undefinfed -> discard)
+  // Only add the record to the log if there is a previous message or before stop message(otherwise task undefinfed -> discard)
   vtkRecordLog* currProcedure = new vtkRecordLog();
   for ( int i = 0; i < records.size(); i++ )
   {
-    if ( records[i].getLabel() > 0 )
+    if ( records[i].getLabel() >= 1 && records[i].getLabel() <= NumTasks )
 	{
       currProcedure->AddRecord( records[i] );
 	}
@@ -293,7 +294,7 @@ void vtkWorkflowAlgorithm
   taskProportions = CalculateTaskProportions();
   for ( int i = 0; i < NumTasks; i ++ )
   {
-    taskCentroids[i] = taskProportions[i] * this->NumCentroids;
+    taskCentroids.push_back( taskProportions[i] * this->NumCentroids );
   }
 
   // Apply Gaussian filtering to each record log

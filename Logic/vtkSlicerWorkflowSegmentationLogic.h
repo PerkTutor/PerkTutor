@@ -32,6 +32,7 @@
 #include "vtkObjectFactory.h"
 
 #include "vtkSmartPointer.h"
+#include "vtkWorkflowAlgorithm.h"
 
 // MRML includes
 // class vtkMRMLIGTLConnectorNode;
@@ -89,6 +90,12 @@ private:
 public:
   vtkGetObjectMacro( ModuleNode, vtkMRMLWorkflowSegmentationNode );
   void SetModuleNode( vtkMRMLWorkflowSegmentationNode* node );
+
+  vtkWorkflowAlgorithm* GetWorkflowAlgorithm();
+
+private:
+
+  vtkWorkflowAlgorithm* workflowAlgorithm;
 
 };
 

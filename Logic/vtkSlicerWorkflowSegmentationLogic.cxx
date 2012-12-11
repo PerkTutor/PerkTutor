@@ -36,6 +36,7 @@ vtkStandardNewMacro(vtkSlicerWorkflowSegmentationLogic);
 vtkSlicerWorkflowSegmentationLogic::vtkSlicerWorkflowSegmentationLogic()
 {
   this->ModuleNode = NULL;
+  this->workflowAlgorithm = vtkWorkflowAlgorithm::New();
 }
 
 //----------------------------------------------------------------------------
@@ -111,4 +112,9 @@ void vtkSlicerWorkflowSegmentationLogic
   this->Modified();
 }
 
+vtkWorkflowAlgorithm* vtkSlicerWorkflowSegmentationLogic
+::GetWorkflowAlgorithm()
+{
+  return this->workflowAlgorithm;
+}
 

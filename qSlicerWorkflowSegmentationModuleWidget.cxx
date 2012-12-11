@@ -104,6 +104,9 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   d->NumRecordsResultLabel=NULL;
   d->TotalTimeResultLabel=NULL;
   d->CurrentTaskResultLabel=NULL;
+  d->CurrentInstructionResultLabel=NULL;
+  d->NextTaskResultLabel=NULL;
+  d->NextInstructionResultLabel=NULL;
 
   d->setupUi(this);
   this->Superclass::setup();
@@ -228,9 +231,16 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  QString dirName = QFileDialog::getExistingDirectory( this, tr("Open training directory"), "", QFileDialog::ShowDirsOnly );
+  QStringList files = QFileDialog::getOpenFileNames( this, tr("Open training files"), "", "Tracking Records (*.xml)" );
   
-  if ( dirName.isEmpty() == false )
+  // Vector of QStrings
+  std::vector<std::string> trainingFileVector;
+  for( int i = 0; i < files.size(); i++ )
+  {
+    trainingFileVector.push_back( files.at(i).toStdString() );
+  }
+
+  if ( files.isEmpty() == false )
   {
     
     QProgressDialog dialog;
@@ -239,7 +249,7 @@ void qSlicerWorkflowSegmentationModuleWidget
     dialog.show();
     dialog.setValue( 10 );
     
-	d->logic()->GetModuleNode()->ImportTrainingData( dirName.toStdString() );
+	d->logic()->GetWorkflowAlgorithm()->ReadAllProcedures( trainingFileVector );
 
     dialog.close();
     
@@ -259,6 +269,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   if ( fileName.isEmpty() == false )
   {
 	d->logic()->GetModuleNode()->ImportInputParameters( fileName.toStdString() );
+	d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
   }
   
   this->updateGUI();
@@ -269,8 +280,10 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  d->logic()->GetModuleNode()->TrainSegmentationAlgorithm();
-  
+  d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
+  d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
+  d->logic()->GetWorkflowAlgorithm()->train();
+
   this->updateGUI();
 }
 
@@ -421,6 +434,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   else
   {
     d->TransformCheckableComboBox->setEnabled( true );
+	d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
   }
   
     // The following code requires a module node.
@@ -459,5 +473,17 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   ss.str( "" );
   ss << d->logic()->GetModuleNode()->GetCurrentTask();
   d->CurrentTaskResultLabel->setText( ss.str().c_str() );
+
+  ss.str( "" );
+  ss << d->logic()->GetModuleNode()->GetCurrentInstruction();
+  d->CurrentInstructionResultLabel->setText( ss.str().c_str() );
+
+  ss.str( "" );
+  ss << d->logic()->GetModuleNode()->GetNextTask();
+  d->NextTaskResultLabel->setText( ss.str().c_str() );
+
+  ss.str( "" );
+  ss << d->logic()->GetModuleNode()->GetNextInstruction();
+  d->NextInstructionResultLabel->setText( ss.str().c_str() );
 
 }
