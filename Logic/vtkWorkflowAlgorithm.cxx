@@ -27,7 +27,7 @@ LabelRecordVectorToString( std::vector<LabelRecord> records )
   for ( int i = 0; i < records.size(); i++ )
   {
     ss << records[i].getLabel() << " ";
-    for ( int j = 0; i < records[i].size(); j++ )
+    for ( int j = 0; j < records[i].size(); j++ )
 	{
       ss << records[i].get(j) << " ";
 	}
@@ -263,14 +263,15 @@ void vtkWorkflowAlgorithm
 	  }
 	}
 	// Set the label
-	records[i].setLabel( currTask );
+	records[i].setLabel( currTask - 1 ); // Remember that task labelling starts at 1, but indexing starts at 0
+	// We shall represent tasks starting at zero here
   }
   
   // Only add the record to the log if there is a previous message or before stop message(otherwise task undefinfed -> discard)
   vtkRecordLog* currProcedure = new vtkRecordLog();
   for ( int i = 0; i < records.size(); i++ )
   {
-    if ( records[i].getLabel() >= 1 && records[i].getLabel() <= NumTasks )
+    if ( records[i].getLabel() >= 0 && records[i].getLabel() < NumTasks )
 	{
       currProcedure->AddRecord( records[i] );
 	}
@@ -297,6 +298,7 @@ void vtkWorkflowAlgorithm
     taskCentroids.push_back( taskProportions[i] * this->NumCentroids );
   }
 
+  // TODO: Should concatenate values with derivative
   // Apply Gaussian filtering to each record log
   std::vector<vtkRecordLog*> filterProcedures;
   for ( int i = 0; i < procedures.size(); i++ )
@@ -315,10 +317,11 @@ void vtkWorkflowAlgorithm
   vtkRecordLog* orthogonalCat = new vtkRecordLog();
   for ( int i = 0; i < orthogonalProcedures.size(); i++ )
   {
-    orthogonalCat->Concatenate( orthogonalProcedures[i] );
+    orthogonalCat = orthogonalCat->Concatenate( orthogonalProcedures[i] );
   }
 
   // Calculate and apply the PCA transform
+  // TODO: Should substrac mean
   this->PrinComps = orthogonalCat->CalculatePCA( this->NumPrinComps );
   std::vector<vtkRecordLog*> principalProcedures;
   for ( int i = 0; i < orthogonalProcedures.size(); i++ )
@@ -331,6 +334,7 @@ void vtkWorkflowAlgorithm
   std::vector<vtkRecordLog*> recordsByTask = principalCat->GroupRecordsByLabel( this->NumTasks );
 
   // Add the centroids from each task
+  // TODO: Change NumCentroids back to 700
   for ( int i = 0; i < this->NumTasks; i++ )
   {
 	std::vector<LabelRecord> currTaskCentroids = recordsByTask[i]->fwdkmeans( taskCentroids[i] );
@@ -349,18 +353,20 @@ void vtkWorkflowAlgorithm
 
   // Assume that all the estimation matrices are ones
   LabelRecord PseudoPi;
-  std::vector<double> ones;
-  ones.assign( 1.0 * this->MarkovPseudoScalePi, this->NumTasks );
-  PseudoPi.values = ones;
+  for ( int j = 0; j < NumTasks; j++ )
+  {
+    PseudoPi.add( 1.0 * this->MarkovPseudoScalePi );
+  }
   PseudoPi.setLabel(0);
 
   std::vector<LabelRecord> PseudoA;
   for ( int i = 0; i < NumTasks; i++ )
   {
 	LabelRecord currPseudoA;
-	std::vector<double> ones;
-	ones.assign( 1.0 * this->MarkovPseudoScaleA, this->NumTasks );
-	currPseudoA.values = ones;
+	for ( int j = 0; j < NumTasks; j++ )
+	{
+      currPseudoA.add( 1.0 * this->MarkovPseudoScaleA );
+	}
 	currPseudoA.setLabel(i);
 	PseudoA.push_back( currPseudoA );
   }
@@ -369,14 +375,16 @@ void vtkWorkflowAlgorithm
   for ( int i = 0; i < NumTasks; i++ )
   {
 	LabelRecord currPseudoB;
-	std::vector<double> ones;
-	ones.assign( 1.0 * this->MarkovPseudoScaleB, this->NumCentroids );
-	currPseudoB.values = ones;
+	for ( int j = 0; j < NumCentroids; j++ )
+	{
+      currPseudoB.add( 1.0 * this->MarkovPseudoScaleB );
+	}
 	currPseudoB.setLabel(i);
 	PseudoB.push_back( currPseudoB );
   }
 
   // Create a new Markov Model, and estimate its parameters
+  Markov = vtkMarkovModel::New();
   this->Markov->InitializeEstimation( NumTasks, NumCentroids );
   this->Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
   for ( int i = 0; i < centroidProcedures.size(); i++ )

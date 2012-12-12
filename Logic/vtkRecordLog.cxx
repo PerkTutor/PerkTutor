@@ -437,14 +437,14 @@ std::vector<LabelRecord> vtkRecordLog
   
   // Calculate the time adjustment (need range -1 to 1)
   double startTime = recLogCopy->GetRecordAt(0).getTime();
-  double endTime = recLogCopy->GetRecordAt(numRecords-1).getTime();
+  double endTime = recLogCopy->GetRecordAt(recLogCopy->numRecords-1).getTime();
   double rangeTime = endTime - startTime;
   
   for ( int i = 0; i < numRecords; i++ )
   {
-    recLogCopy->records[i].setTime( records[i].getTime() - startTime ); // ( 0 to tmax )
-    recLogCopy->records[i].setTime( records[i].getTime() * 2.0 / rangeTime ); // ( 0 to 2 )
-	recLogCopy->records[i].setTime( records[i].getTime() - 1 ); // ( -1 to 1 )
+    recLogCopy->GetRecordAt(i).setTime( GetRecordAt(i).getTime() - startTime ); // ( 0 to tmax )
+    recLogCopy->GetRecordAt(i).setTime( GetRecordAt(i).getTime() * 2.0 / rangeTime ); // ( 0 to 2 )
+	recLogCopy->GetRecordAt(i).setTime( GetRecordAt(i).getTime() - 1 ); // ( -1 to 1 )
   }
 
   // Create a copy of the record log for each degree of Legendre polynomial
@@ -467,8 +467,8 @@ std::vector<LabelRecord> vtkRecordLog
 	// Integrate to get the Legendre coefficients for the particular order
 	LabelRecord legRecord;
 	legRecord.values = orderRecLogCopy->Integrate().values;
-	legVector[o].setLabel( o );
     legVector.push_back( legRecord );	
+	legVector[o].setLabel( o );
 
   }
 
@@ -564,7 +564,7 @@ vtkRecordLog* vtkRecordLog
 ::OrthogonalTransformation( int window, int order )
 {
   // Pad the recordlog with values at the beginning
-  vtkRecordLog* padRecordLog = this->PadStart( window )->Concatenate( this );
+  vtkRecordLog* padRecordLog = this->PadStart( window - 1 )->Concatenate( this );
 
   // Create a new record log with the orthogonally transformed data
   vtkRecordLog* orthRecordLog = vtkRecordLog::New();
@@ -649,8 +649,8 @@ std::vector<LabelRecord> vtkRecordLog
   vnl_matrix<double>* cov = this->CovarianceMatrix();
 
   //Calculate the eigenvectors of the covariance matrix
-  vnl_matrix<double> eigenvectors;
-  vnl_vector<double> eigenvalues;
+  vnl_matrix<double> eigenvectors( cov->rows(), cov->cols(), 0.0 );
+  vnl_vector<double> eigenvalues( cov->rows(), 0.0 );
   vnl_symmetric_eigensystem_compute( *cov, eigenvectors, eigenvalues );
 
   // Grab only the most important eigenvectors
@@ -756,9 +756,9 @@ std::vector<LabelRecord> vtkRecordLog
 	  // Calculate change
 	  for ( int i = 0; i < membership.size(); i++ )
 	  {
-        if ( membership[i] != newMembership[i] )
+        if ( membership[i] == newMembership[i] )
 		{
-          change = true;
+          change = false;
 		}
 	  }
 	  membership = newMembership;
@@ -934,6 +934,7 @@ std::vector<LabelRecord> vtkRecordLog
 	}
 	blankRecord.setLabel( c );
 	centroids.push_back( blankRecord );
+	memberCount.push_back( 0 );
   }
 
 
@@ -996,7 +997,7 @@ std::vector<vtkRecordLog*> vtkRecordLog
   // For each label, create a new recordLog
   for ( int i = 0; i < MaxLabel; i++ )
   {
-    recordsByTask[i] = new vtkRecordLog();
+	recordsByTask.push_back( vtkRecordLog::New() );
   }
 
   // Iterate over all records

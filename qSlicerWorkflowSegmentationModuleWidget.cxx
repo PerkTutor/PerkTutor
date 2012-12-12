@@ -279,10 +279,20 @@ void qSlicerWorkflowSegmentationModuleWidget
 ::onTrainButtonClicked()
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
+
+  QProgressDialog dialog;
+  dialog.setModal( true );
+  dialog.setLabelText( "Please wait while training algorithm... Expected Time: 10 mins" );
+  dialog.show();
+  dialog.setValue( 10 );
   
   d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
+  dialog.setValue( 20 );
   d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
+  dialog.setValue( 30 );
   d->logic()->GetWorkflowAlgorithm()->train();
+
+  dialog.close();
 
   this->updateGUI();
 }
