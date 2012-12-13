@@ -25,15 +25,8 @@ vtkRecordLogRT
   for( int i = 0; i < numRecords; i++ )
     delete [] &records[i];
 
-  for( int d = 0; d < prinComps.size(); d++ )
-    delete [] &prinComps[d];
-
-  for( int c = 0; c < centroids.size(); c++ )
-    delete [] &centroids[c];
-
   records.clear();
-  prinComps.clear();
-  centroids.clear();
+
 }
 
 
@@ -41,24 +34,6 @@ TimeLabelRecord vtkRecordLogRT
 ::GetRecordRT()
 {
   return GetRecordAt( numRecords - 1 );
-}
-
-void vtkRecordLogRT
-::SetMean( ValueRecord newMean )
-{
-  mean = newMean;
-}
-
-void vtkRecordLogRT
-::SetPrinComps( std::vector<LabelRecord> newPrinComps )
-{
-  prinComps = newPrinComps;
-}
-
-void vtkRecordLogRT
-::SetCentroids( std::vector<LabelRecord> newCentroids )
-{
-  centroids = newCentroids;
 }
 
 
@@ -169,8 +144,16 @@ TimeLabelRecord vtkRecordLogRT
 TimeLabelRecord vtkRecordLogRT
 ::OrthogonalTransformationRT( int window, int order )
 {
-  // Pad the recordlog with values at the beginning
-  vtkRecordLog* padRecordLog = this->PadStart( window );
+  // Pad the recordlog with values at the beginning (only if necessary)
+  vtkRecordLog* padRecordLog;
+  if ( numRecords < window )
+  {
+    padRecordLog = this->PadStart( window - 1 )->Concatenate( this );
+  }
+  else
+  {
+    padRecordLog = this;
+  }
 
   // Calculate the record log to include
   vtkRecordLog* trimRecordLog = padRecordLog->Trim( numRecords - 1 - window, numRecords - 1 );
@@ -198,7 +181,7 @@ TimeLabelRecord vtkRecordLogRT
 
 
 TimeLabelRecord vtkRecordLogRT
-::TransformPCART()
+::TransformPCART( std::vector<LabelRecord> prinComps, ValueRecord mean )
 {
   // Create a TimeLabelRecord for the transformed record log
   TimeLabelRecord transRecord;
@@ -211,7 +194,7 @@ TimeLabelRecord vtkRecordLogRT
     // Iterate over all dimensions, and perform the transformation (ie vector multiplcation)
     for ( int d = 0; d < recordSize; d++ )
 	{
-      transRecord.set( o, transRecord.get(o) + GetRecordRT().get(d) * prinComps[o].get(d) );
+      transRecord.set( o, transRecord.get(o) + ( GetRecordRT().get(d) - mean.get(d) ) * prinComps[o].get(d) );
 	}
   }
 
@@ -226,7 +209,7 @@ TimeLabelRecord vtkRecordLogRT
 
 
 TimeLabelRecord vtkRecordLogRT
-::fwdkmeansTransformRT()
+::fwdkmeansTransformRT( std::vector<LabelRecord> centroids )
 {
   // Calculate closest cluster centroid to last
   // Find the record farthest from any centroid
@@ -252,4 +235,17 @@ TimeLabelRecord vtkRecordLogRT
   
   return clustRecord;
 
+}
+
+
+MarkovRecord vtkRecordLogRT
+::ToMarkovRecordRT()
+{
+  MarkovRecord markovRecord;
+
+  // We will assume that: label -> state, values[0] -> symbol
+  markovRecord.setState( this->GetRecordRT().getLabel() );
+  markovRecord.setSymbol( this->GetRecordRT().get(0) );
+
+  return markovRecord;
 }

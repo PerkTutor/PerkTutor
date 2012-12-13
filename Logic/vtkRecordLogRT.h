@@ -33,9 +33,11 @@ public:
 
   TimeLabelRecord OrthogonalTransformationRT( int window, int order );
 
-  TimeLabelRecord TransformPCART();
+  TimeLabelRecord TransformPCART( std::vector<LabelRecord> prinComps, ValueRecord mean );
 
-  TimeLabelRecord fwdkmeansTransformRT();
+  TimeLabelRecord fwdkmeansTransformRT( std::vector<LabelRecord> centroids );
+
+  MarkovRecord ToMarkovRecordRT();
 
 public:
 
@@ -43,10 +45,6 @@ public:
   ~vtkRecordLogRT();
 
 private:
-
-  ValueRecord mean;
-  std::vector<LabelRecord> prinComps;
-  std::vector<LabelRecord> centroids;
 
 };
 

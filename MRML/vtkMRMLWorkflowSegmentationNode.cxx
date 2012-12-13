@@ -378,6 +378,12 @@ vtkMRMLWorkflowSegmentationNode
   }
 }
 
+TransformRecord vtkMRMLWorkflowSegmentationNode
+::GetTransformAt( int index )
+{
+  return TransformsBuffer.at(index);
+}
+
 
 
 void vtkMRMLWorkflowSegmentationNode
@@ -784,7 +790,7 @@ double vtkMRMLWorkflowSegmentationNode::GetTotalTime()
 
 
 
-
+// TODO: Move these to logic, and implement properly
 std::string vtkMRMLWorkflowSegmentationNode::GetCurrentTask()
 {
   unsigned int n = this->TransformsBuffer.size();

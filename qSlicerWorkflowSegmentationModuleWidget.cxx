@@ -320,7 +320,8 @@ void qSlicerWorkflowSegmentationModuleWidget
 
 
 
-void qSlicerWorkflowSegmentationModuleWidget::onSaveTrackingLogButtonClicked()
+void qSlicerWorkflowSegmentationModuleWidget
+::onSaveTrackingLogButtonClicked()
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
@@ -337,7 +338,8 @@ void qSlicerWorkflowSegmentationModuleWidget::onSaveTrackingLogButtonClicked()
 
 
 
-void qSlicerWorkflowSegmentationModuleWidget::onSaveTrainingButtonClicked()
+void qSlicerWorkflowSegmentationModuleWidget
+::onSaveTrainingButtonClicked()
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
@@ -387,6 +389,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 	}
   
   
+  d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
   d->logic()->GetModuleNode()->SetRecording( true );
   
   this->updateGUI();
@@ -543,7 +546,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );
-  ss << d->logic()->GetModuleNode()->GetCurrentTask();
+  ss << d->logic()->GetWorkflowAlgorithm()->getCurrentTask();
   d->CurrentTaskResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );

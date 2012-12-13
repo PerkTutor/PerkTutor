@@ -6,7 +6,9 @@
 #include "vtkSmartPointer.h"
 #include "vtkObject.h"
 #include "vtkRecordLog.h"
+#include "vtkRecordLogRT.h"
 #include "vtkMarkovModel.h"
+#include "vtkMarkovModelRT.h"
 #include "vtkMRMLWorkflowSegmentationNode.h"
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
 #include "RecordType.h"
@@ -35,7 +37,11 @@ public:
   void ReadProcedure( std::string fileName );
 
   // Training and testing phases
+  void InitializeSegmentationRT();
   void train();
+  void addRecord( TransformRecord t );
+  void addSegmentRecord( TransformRecord t );
+  int getCurrentTask();
   
   std::vector<double> CalculateTaskProportions();
 
@@ -51,6 +57,19 @@ private:
 
   // List of procedures for training
   std::vector<vtkRecordLog*> procedures;
+
+  // The current procedure for real-time segmentation
+  vtkRecordLogRT* procedureRT;
+  vtkRecordLogRT* filterProcedureRT;
+  vtkRecordLogRT* orthogonalProcedureRT;
+  vtkRecordLogRT* principalProcedureRT;
+  vtkRecordLogRT* centroidProcedureRT;
+  vtkRecordLogRT* markovProcedureRT;
+
+  vtkMarkovModelRT* MarkovRT;
+
+  int indexLastProcessed;
+  int currentTask;
 
   // All the input parameters
   int NumTasks;

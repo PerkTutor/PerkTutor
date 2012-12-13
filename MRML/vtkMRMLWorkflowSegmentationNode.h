@@ -193,7 +193,7 @@ public:
   void ImportTrainingParameters( std::string dirName );
   void ImportTrainingData( std::string dirName );
 
-  //void TrainSegmentationAlgorithm();
+  TransformRecord GetTransformAt( int index );
   void ClearBuffer();
   
   // Get the current time stamp sec, nanosec

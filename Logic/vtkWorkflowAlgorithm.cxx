@@ -242,7 +242,7 @@ void vtkWorkflowAlgorithm
     {
 	  TimeLabelRecord currRecord;
 	  std::string transformString = std::string( noteElement->GetAttribute( "transform" ) );
-	  vtkTrackingRecord* currTrackingRecord = new vtkTrackingRecord();
+	  vtkTrackingRecord* currTrackingRecord = vtkTrackingRecord::New();
 	  currTrackingRecord->fromMatrixString( transformString );
 	  currRecord.values = currTrackingRecord->GetVector();
 	  currRecord.setTime( elementTime );
@@ -324,7 +324,6 @@ void vtkWorkflowAlgorithm
   }
 
   // Calculate and apply the PCA transform
-  // TODO: Should substrac mean
   this->Mean.values = orthogonalCat->Mean().values;
   this->Mean.setLabel( 0 );
   this->PrinComps = orthogonalCat->CalculatePCA( this->NumPrinComps );
@@ -340,6 +339,7 @@ void vtkWorkflowAlgorithm
 
   // Add the centroids from each task
   // TODO: Change NumCentroids back to 700
+  // TODO: Make cluster labels non-overlapping
   for ( int i = 0; i < this->NumTasks; i++ )
   {
 	std::vector<LabelRecord> currTaskCentroids = recordsByTask[i]->fwdkmeans( taskCentroids[i] );
@@ -408,5 +408,77 @@ void vtkWorkflowAlgorithm
   this->MRMLNode->trainingParam.MarkovB = LabelRecordVectorToString( this->Markov->GetB() );
   this->MRMLNode->trainingParam.MarkovPi = LabelRecordToString( this->Markov->GetPi() );
 
+
+}
+
+
+
+void vtkWorkflowAlgorithm
+::InitializeSegmentationRT()
+{
+  MarkovRT = vtkMarkovModelRT::New();
+  indexLastProcessed = 0;
+  currentTask = 0;
+}
+
+
+
+void vtkWorkflowAlgorithm
+::addRecord( TransformRecord t )
+{
+
+  TimeLabelRecord currRecord;
+  vtkTrackingRecord* currTrackingRecord = vtkTrackingRecord::New();
+  currTrackingRecord->fromMatrixString( t.Transform );
+  currRecord.values = currTrackingRecord->GetVector();
+  currRecord.setTime( t.TimeStampSec + 1.0e-9 * t.TimeStampNSec );
+  currRecord.setLabel( 0 );
+  procedureRT->AddRecord( currRecord );
+
+}
+
+
+
+void vtkWorkflowAlgorithm
+::addSegmentRecord( TransformRecord t )
+{
+  addRecord( t );
+
+  // TODO: Should concatenate values with derivative
+  // Apply Gaussian filtering to each previous records
+  filterProcedureRT->AddRecord( procedureRT->GaussianFilterRT( this->FilterWidth ) );
+
+  // Apply orthogonal transformation
+  orthogonalProcedureRT->AddRecord( filterProcedureRT->OrthogonalTransformationRT( this->OrthogonalWindow, this->OrthogonalOrder ) );
+
+  // Apply PCA transformation
+  principalProcedureRT->AddRecord( orthogonalProcedureRT->TransformPCART( this->PrinComps, this->Mean ) );
+
+  // Apply centroid transformation
+  centroidProcedureRT->AddRecord( principalProcedureRT->fwdkmeansTransformRT( this->Centroids ) );
+
+  // Use Markov Model calculate states to come up with the current most likely state...
+  MarkovRecord markovState = MarkovRT->CalculateStateRT( centroidProcedureRT->ToMarkovRecordRT() );
+
+  // Now, we will keep a recording of the workflow segmentation in procedureRT, in addition to returning it
+  procedureRT->GetRecordRT().setLabel( markovState.getState() );
+
+  this->currentTask = markovState.getState();
+
+}
+
+
+
+int vtkWorkflowAlgorithm
+::getCurrentTask()
+{
+  // Check if there are any new transforms to process
+  if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
+  {
+    indexLastProcessed++;
+	addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+  }
+
+  return this->currentTask;
 
 }
