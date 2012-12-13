@@ -117,6 +117,7 @@ void vtkWorkflowAlgorithm
 ::GetInputParamtersFromMRMLNode()
 {
   this->NumTasks = this->MRMLNode->inputParam.NumTasks;
+  this->Derivative = this->MRMLNode->inputParam.Derivative;
   this->FilterWidth = this->MRMLNode->inputParam.FilterWidth;
   this->OrthogonalWindow = this->MRMLNode->inputParam.OrthogonalWindow;
   this->OrthogonalOrder = this->MRMLNode->inputParam.OrthogonalOrder;
@@ -139,6 +140,7 @@ void vtkWorkflowAlgorithm
   this->Centroids = StringToLabelRecordVector( this->MRMLNode->trainingParam.Centroids, NumCentroids, NumPrinComps );
 
   Markov = vtkMarkovModel::New();
+  Markov->SetSize( NumTasks, NumCentroids );
   this->Markov->SetPi( StringToLabelRecord( this->MRMLNode->trainingParam.MarkovPi, NumTasks ) );
   this->Markov->SetA( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovA, NumTasks, NumTasks ) );
   this->Markov->SetB( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovB, NumTasks, NumCentroids ) );
@@ -301,12 +303,23 @@ void vtkWorkflowAlgorithm
     taskCentroids.push_back( taskProportions[i] * this->NumCentroids );
   }
 
-  // TODO: Should concatenate values with derivative
-  // Apply Gaussian filtering to each record log
-  std::vector<vtkRecordLog*> filterProcedures;
+  // Use velocity also
+  std::vector<vtkRecordLog*> derivativeProcedures;
   for ( int i = 0; i < procedures.size(); i++ )
   {
-    filterProcedures.push_back( procedures[i]->GaussianFilter( this->FilterWidth ) );
+    derivativeProcedures.push_back( procedures[i] );
+    for ( int d = 1; d <= this->Derivative; d++ )
+	{
+	  derivativeProcedures[i] = derivativeProcedures[i]->ConcatenateValues( procedures[i]->Derivative(d) );
+	}
+  }
+
+
+  // Apply Gaussian filtering to each record log
+  std::vector<vtkRecordLog*> filterProcedures;
+  for ( int i = 0; i < derivativeProcedures.size(); i++ )
+  {
+    filterProcedures.push_back( derivativeProcedures[i]->GaussianFilter( this->FilterWidth ) );
   }
 
   // Apply orthogonal transformation
@@ -340,6 +353,7 @@ void vtkWorkflowAlgorithm
   // Add the centroids from each task
   // TODO: Change NumCentroids back to 700
   // TODO: Make cluster labels non-overlapping
+  // TODO: Clustering sometimes produces not a number values (probably divison by zero)
   for ( int i = 0; i < this->NumTasks; i++ )
   {
 	std::vector<LabelRecord> currTaskCentroids = recordsByTask[i]->fwdkmeans( taskCentroids[i] );
@@ -418,6 +432,7 @@ void vtkWorkflowAlgorithm
 ::InitializeSegmentationRT()
 {
   procedureRT = vtkRecordLogRT::New();
+  derivativeProcedureRT = vtkRecordLogRT::New();
   filterProcedureRT = vtkRecordLogRT::New();
   orthogonalProcedureRT = vtkRecordLogRT::New();
   principalProcedureRT = vtkRecordLogRT::New();
@@ -456,8 +471,20 @@ void vtkWorkflowAlgorithm
 {
   addRecord( t );
 
-  // TODO: Should concatenate values with derivative
   // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
+  
+  // Concatenate with derivative (velocity, acceleration, etc...)
+  TimeLabelRecord derivativeRecord = procedureRT->GetRecordRT();
+  for ( int d = 1; d <= this->Derivative; d++ )
+  {
+    TimeLabelRecord currDerivativeRecord = procedureRT->DerivativeRT(d);
+	for ( int j = 0; j < currDerivativeRecord.size(); j++ )
+	{
+      derivativeRecord.add( currDerivativeRecord.get(j) );
+	}
+  }
+  derivativeProcedureRT->AddRecord( derivativeRecord );
+
   // Apply Gaussian filtering to each previous records
   filterProcedureRT->AddRecord( procedureRT->GaussianFilterRT( this->FilterWidth ) );
 

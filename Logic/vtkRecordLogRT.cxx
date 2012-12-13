@@ -76,6 +76,21 @@ TimeLabelRecord vtkRecordLogRT
 {
   // To calculate a derivative of arbitrary order, we need arbitrarily many time stamps
   // Just calculate zeroth order first order derivative here, otherwise use other method
+  if ( numRecords < 2 )
+  {
+    TimeLabelRecord derivRecord;
+
+    for( int d = 0; d < recordSize; d++ )
+    {
+      derivRecord.add( 0.0 );
+    }
+	
+    derivRecord.setTime( GetRecordAt(numRecords-1).getTime() );
+    derivRecord.setLabel( GetRecordAt(numRecords-1).getLabel() );
+    
+	return derivRecord;
+  }
+
   if ( order == 0 )
   {
     return GetRecordRT();

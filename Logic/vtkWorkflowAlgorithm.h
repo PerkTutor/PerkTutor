@@ -60,11 +60,11 @@ private:
 
   // The current procedure for real-time segmentation
   vtkRecordLogRT* procedureRT;
+  vtkRecordLogRT* derivativeProcedureRT;
   vtkRecordLogRT* filterProcedureRT;
   vtkRecordLogRT* orthogonalProcedureRT;
   vtkRecordLogRT* principalProcedureRT;
   vtkRecordLogRT* centroidProcedureRT;
-  vtkRecordLogRT* markovProcedureRT;
 
   vtkMarkovModelRT* MarkovRT;
 

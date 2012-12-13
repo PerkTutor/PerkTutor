@@ -39,6 +39,7 @@ public:
   vtkRecordLog* PadStart( int window );
   vtkRecordLog* Concatenate( vtkRecordLog* otherRecLog );
   vtkRecordLog* ConcatenateValues( vtkRecordLog* otherRecLog );
+  vtkRecordLog* ConcatenateValues( ValueRecord record );
 
   vtkRecordLog* GaussianFilter( double width );
 

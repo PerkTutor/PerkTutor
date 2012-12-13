@@ -181,6 +181,37 @@ vtkRecordLog* vtkRecordLog
 }
 
 
+vtkRecordLog* vtkRecordLog
+::ConcatenateValues( ValueRecord record )
+{
+
+  // Iterate over all records in log and stick them together
+  vtkRecordLog* catRecordLog = vtkRecordLog::New();
+
+  for ( int i = 0; i < this->numRecords; i++ )
+  {
+
+    TimeLabelRecord currRecord;
+
+    for ( int d = 0; d < this->recordSize; d++ )
+	{
+      currRecord.add( this->GetRecordAt(i).get(d) );
+	}
+	for ( int d = 0; d < record.size(); d++ )
+	{
+	  currRecord.add( record.get(d) );
+	}
+
+	currRecord.setTime( this->GetRecordAt(i).getTime() );
+	currRecord.setLabel( this->GetRecordAt(i).getLabel() );
+    catRecordLog->AddRecord( currRecord );
+  }
+
+  return catRecordLog;
+}
+
+
+
 // Note: Does not add to start, just creates start - must concatenate it
 vtkRecordLog* vtkRecordLog
 ::PadStart( int window )
@@ -367,7 +398,7 @@ vtkRecordLog* vtkRecordLog
 
 	for( int d = 0; d < recordSize; d++ )
 	{
-      midRecord.add( ( GetRecordAt(i+1).get(d) - GetRecordAt(i-1).get(d) ) / ( 2 * DT ) );
+      midRecord.add( ( GetRecordAt(i+1).get(d) - GetRecordAt(i-1).get(d) ) / DT );
 	}
 	
 	midRecord.setTime( GetRecordAt(i).getTime() );
@@ -653,11 +684,13 @@ std::vector<LabelRecord> vtkRecordLog
   vnl_matrix<double> eigenvectors( cov->rows(), cov->cols(), 0.0 );
   vnl_vector<double> eigenvalues( cov->rows(), 0.0 );
   vnl_symmetric_eigensystem_compute( *cov, eigenvectors, eigenvalues );
+  // Note: eigenvectors are ordered in increasing eigenvalue ( 0 = smallest, end = biggest )
 
   // Grab only the most important eigenvectors
   std::vector<LabelRecord> prinComps;
 
-  for ( int i = 0; i < numComp; i++ )
+  // TODO: Prevent more prinicipal components than original dimensions
+  for ( int i = eigenvectors.rows() - 1; i > eigenvectors.rows() - 1 - numComp; i-- )
   {
 
     // Add a new principal component
