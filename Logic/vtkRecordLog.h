@@ -47,7 +47,7 @@ public:
 
   vnl_matrix<double>* CovarianceMatrix();
   std::vector<LabelRecord> CalculatePCA( int numComp );
-  vtkRecordLog* TransformPCA( std::vector<LabelRecord> prinComps );
+  vtkRecordLog* TransformPCA( std::vector<LabelRecord> prinComps, ValueRecord mean );
 
   std::vector<LabelRecord> fwdkmeans( int numClusters );
   vtkRecordLog* fwdkmeansTransform( std::vector<LabelRecord> centroids );

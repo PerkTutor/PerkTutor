@@ -679,7 +679,7 @@ std::vector<LabelRecord> vtkRecordLog
 
 
 vtkRecordLog* vtkRecordLog
-::TransformPCA( std::vector<LabelRecord> prinComps )
+::TransformPCA( std::vector<LabelRecord> prinComps, ValueRecord mean )
 {
   // Record log with the PCA transformed data
   vtkRecordLog* pcaRecLog = vtkRecordLog::New();
@@ -698,7 +698,7 @@ vtkRecordLog* vtkRecordLog
 	  // Iterate over all dimensions, and perform the transformation (ie vector multiplcation)
       for ( int d = 0; d < recordSize; d++ )
 	  {
-        transRecord.set( o, transRecord.get(o) + GetRecordAt(i).get(d) * prinComps[o].get(d) );
+        transRecord.set( o, transRecord.get(o) + ( GetRecordAt(i).get(d) - mean.get(d) ) * prinComps[o].get(d) );
 	  }
 	}
 

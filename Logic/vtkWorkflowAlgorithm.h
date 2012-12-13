@@ -64,6 +64,7 @@ private:
 
   // All the training parameters
   std::vector<LabelRecord> PrinComps; // Size: NumPrinComps, ( Orthogonal Order + 1 ) * 7 * numTools
+  LabelRecord Mean; // Size: 7
   std::vector<LabelRecord> Centroids; // Size: NumCentroids, NumPrinComps
   vtkMarkovModel* Markov; // Size: NumTasks, NumCentroids
 

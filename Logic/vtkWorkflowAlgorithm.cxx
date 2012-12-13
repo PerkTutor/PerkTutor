@@ -53,7 +53,7 @@ StringToLabelRecordVector( std::string s, int numRecords, int recordSize )
     for ( int j = 0; j < recordSize; j++ )
 	{
       ss >> val;
-	  currRecord.set( j, val );
+	  currRecord.add( val );
 	}
 	recordVector.push_back( currRecord );
   }
@@ -135,10 +135,13 @@ void vtkWorkflowAlgorithm
   int SizePrinComps = ( OrthogonalOrder + 1 ) * TRACKINGRECORD_SIZE; // TODO: * this->MRMLNode->numTools;
 
   this->PrinComps = StringToLabelRecordVector( this->MRMLNode->trainingParam.PrinComps, NumPrinComps, SizePrinComps );
+  this->Mean = StringToLabelRecord( this->MRMLNode->trainingParam.Mean, SizePrinComps );
   this->Centroids = StringToLabelRecordVector( this->MRMLNode->trainingParam.Centroids, NumCentroids, NumPrinComps );
+
+  Markov = vtkMarkovModel::New();
   this->Markov->SetPi( StringToLabelRecord( this->MRMLNode->trainingParam.MarkovPi, NumTasks ) );
   this->Markov->SetA( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovA, NumTasks, NumTasks ) );
-  this->Markov->SetA( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovA, NumTasks, NumCentroids ) );
+  this->Markov->SetB( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovB, NumTasks, NumCentroids ) );
 }
 
 
@@ -322,13 +325,15 @@ void vtkWorkflowAlgorithm
 
   // Calculate and apply the PCA transform
   // TODO: Should substrac mean
+  this->Mean.values = orthogonalCat->Mean().values;
+  this->Mean.setLabel( 0 );
   this->PrinComps = orthogonalCat->CalculatePCA( this->NumPrinComps );
   std::vector<vtkRecordLog*> principalProcedures;
   for ( int i = 0; i < orthogonalProcedures.size(); i++ )
   {
-    principalProcedures.push_back( orthogonalProcedures[i]->TransformPCA( this->PrinComps ) );
+    principalProcedures.push_back( orthogonalProcedures[i]->TransformPCA( this->PrinComps, this->Mean ) );
   }
-  vtkRecordLog* principalCat = orthogonalCat->TransformPCA( this->PrinComps );
+  vtkRecordLog* principalCat = orthogonalCat->TransformPCA( this->PrinComps, this->Mean );
 
   // Put together all the tasks together for task by task clustering
   std::vector<vtkRecordLog*> recordsByTask = principalCat->GroupRecordsByLabel( this->NumTasks );
@@ -397,6 +402,7 @@ void vtkWorkflowAlgorithm
   // Now, change the associated values in the MRML
   // Assume that the input parameters are ok (if they are not then this whole training procedure was useless anyway)
   this->MRMLNode->trainingParam.PrinComps = LabelRecordVectorToString( this->PrinComps );
+  this->MRMLNode->trainingParam.Mean = LabelRecordToString( this->Mean );
   this->MRMLNode->trainingParam.Centroids = LabelRecordVectorToString( this->Centroids );
   this->MRMLNode->trainingParam.MarkovA = LabelRecordVectorToString( this->Markov->GetA() );
   this->MRMLNode->trainingParam.MarkovB = LabelRecordVectorToString( this->Markov->GetB() );

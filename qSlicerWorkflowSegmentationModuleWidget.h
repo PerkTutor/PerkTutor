@@ -25,10 +25,6 @@ public:
   virtual ~qSlicerWorkflowSegmentationModuleWidget();
   
 
-
-public slots:
-  void loadLogFile();
-
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
   
@@ -36,17 +32,27 @@ protected:
   virtual void enter();
 
 protected slots:
+
   void onTransformsNodeSelected(vtkMRMLNode* node);
   void onMRMLTransformNodeModified(vtkObject* caller);
+  void onModuleNodeSelected();
+ 
+  void onInputParameterButtonClicked();
+  void onTrainingParameterButtonClicked();
+  void onTrainingDataButtonClicked();
+  void onTrainButtonClicked();
+
+  void onSaveTrackingLogButtonClicked();
+  void onSaveTrainingButtonClicked();
+
   void onStopButtonClicked();
   void onStartButtonClicked();
   void onClearBufferButtonClicked();
-  void onTrainingDataButtonClicked();
-  void onInputParameterButtonClicked();
-  void onTrainButtonClicked();
+
   void insertAnnotation();
   void clearAnnotations();
-  void onModuleNodeSelected();
+
+  
   void updateGUI();
 
 private:

@@ -134,9 +134,9 @@ vtkMRMLWorkflowSegmentationNode
 
 void
 vtkMRMLWorkflowSegmentationNode
-::UpdateFileFromBuffer()
+::SaveTrackingLog( std::string fileName )
 {
-  std::ofstream output( this->LogFileName.c_str() );
+  std::ofstream output( fileName.c_str() );
   
   if ( ! output.is_open() )
     {
@@ -178,6 +178,40 @@ vtkMRMLWorkflowSegmentationNode
   this->ClearBuffer();
   
 }
+
+
+
+void
+vtkMRMLWorkflowSegmentationNode
+::SaveTrainingParameters( std::string fileName )
+{
+  std::ofstream output( fileName.c_str() );
+  
+  if ( ! output.is_open() )
+    {
+    vtkErrorMacro( "Record file could not be opened!" );
+    return;
+    }
+  
+  output << "<WorkflowSegmentationParameters>" << std::endl; 
+
+  output << "  <Parameter Type=\"PrinComps\" Value=\"" << this->trainingParam.PrinComps << "\" />";
+  output << "  <Parameter Type=\"Mean\" Value=\"" << this->trainingParam.Mean << "\" />";
+  output << "  <Parameter Type=\"Centroids\" Value=\"" << this->trainingParam.Centroids << "\" />";
+  output << "  <Parameter Type=\"MarkovPi\" Value=\"" << this->trainingParam.MarkovPi << "\" />";
+  output << "  <Parameter Type=\"MarkovA\" Value=\"" << this->trainingParam.MarkovA << "\" />";
+  output << "  <Parameter Type=\"MarkovB\" Value=\"" << this->trainingParam.MarkovB << "\" />";
+
+  output << "</WorkflowSegmentationParameters>" << std::endl;
+
+  output.close();
+  this->ClearBuffer();
+  
+}
+
+
+
+
 
 void
 vtkMRMLWorkflowSegmentationNode
@@ -266,6 +300,69 @@ vtkMRMLWorkflowSegmentationNode
 }
 
 
+void
+vtkMRMLWorkflowSegmentationNode
+::ImportTrainingParameters( std::string fileName )
+{
+
+  // Create a parser to parse the XML data from TransformRecorderLog
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( fileName.c_str() );
+  parser->Parse();
+  
+  // Get the root element (and check it exists)
+  vtkXMLDataElement* rootElement = parser->GetRootElement();
+  if ( ! rootElement )
+  {
+    return;
+  }
+  
+  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
+  
+  for ( int i = 0; i < num; ++ i )
+  {
+
+    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
+    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 )
+    {
+      continue;  // If it's not a "Parameter", jump to the next.
+    }
+
+	const char* elementType = noteElement->GetAttribute( "Type" );
+	
+	std::string value = std::string( noteElement->GetAttribute( "Value" ) );
+
+    if ( strcmp( elementType, "PrinComps" ) == 0 )
+    {
+	  this->trainingParam.PrinComps = value;
+    }
+	if ( strcmp( elementType, "Mean" ) == 0 )
+    {
+	  this->trainingParam.Mean = value;
+    }
+	if ( strcmp( elementType, "Centroids" ) == 0 )
+    {
+	  this->trainingParam.Centroids = value;
+    }
+	if ( strcmp( elementType, "MarkovPi" ) == 0 )
+    {
+	  this->trainingParam.MarkovPi = value;
+    }
+	if ( strcmp( elementType, "MarkovA" ) == 0 )
+    {
+	  this->trainingParam.MarkovA = value;
+    }
+	if ( strcmp( elementType, "MarkovB" ) == 0 )
+    {
+	  this->trainingParam.MarkovB = value;
+    }
+
+  }
+
+
+}
+
+
 
 void
 vtkMRMLWorkflowSegmentationNode
@@ -340,7 +437,6 @@ void vtkMRMLWorkflowSegmentationNode::WriteXML( ostream& of, int nIndent )
   vtkIndent indent(nIndent);
   
   of << indent << " Recording=\"" << this->Recording << "\"";
-  of << indent << " LogFileName=\"" << this->LogFileName << "\"";
 
   /*
   of << indent << " InputParameterFileName=\"" << this->InputParameterFileName << "\"";
@@ -377,7 +473,7 @@ void vtkMRMLWorkflowSegmentationNode::ReadXMLAttributes( const char** atts )
   const char* attValue;
 
   while (*atts != NULL)
-    {
+  {
     attName  = *(atts++);
     attValue = *(atts++);
     
@@ -387,12 +483,8 @@ void vtkMRMLWorkflowSegmentationNode::ReadXMLAttributes( const char** atts )
       {
       this->SetRecording( StringToBool( std::string( attValue ) ) );
       }
-    
-    if ( ! strcmp( attName, "LogFileName" ) )
-      {
-      this->SetLogFileName( attValue );
-      }
-    }
+  }
+
 }
 
 
@@ -410,7 +502,6 @@ void vtkMRMLWorkflowSegmentationNode::Copy( vtkMRMLNode *anode )
     }
   
   this->SetRecording( node->GetRecording() );
-  this->SetLogFileName( node->GetLogFileName() );
 }
 
 
@@ -637,28 +728,6 @@ void vtkMRMLWorkflowSegmentationNode::SetTransformSelections( std::vector< int >
 
 }
 
-
-
-void vtkMRMLWorkflowSegmentationNode::SetLogFileName( std::string fileName )
-{
-  this->LogFileName = fileName;
-}
-
-
-
-void vtkMRMLWorkflowSegmentationNode::SaveIntoFile( std::string fileName )
-{
-  this->LogFileName = fileName;
-  this->UpdateFileFromBuffer();
-
-}
-
-
-
-std::string vtkMRMLWorkflowSegmentationNode::GetLogFileName()
-{
-  return this->LogFileName;
-}
 
 
 

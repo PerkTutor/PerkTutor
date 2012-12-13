@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>346</width>
-    <height>701</height>
+    <height>759</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -128,32 +128,6 @@ p, li { white-space: pre-wrap; }
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
           <layout class="QGridLayout" name="gridLayout_4">
-           <item row="0" column="1">
-            <widget class="QPushButton" name="TrainingDataButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Select Training Folder</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="TrainingDataLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Load Training Data:</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
             <widget class="QPushButton" name="InputParameterButton">
              <property name="sizePolicy">
@@ -177,6 +151,46 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="text">
               <string>Load Input Parameters:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="TrainingDataLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Load Training Data:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QPushButton" name="TrainingDataButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Select Training Files</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="TrainingParameterLabel">
+             <property name="text">
+              <string>Load Training Parameters:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QPushButton" name="TrainingParameterButton">
+             <property name="text">
+              <string>Select Training Parameters</string>
              </property>
             </widget>
            </item>
@@ -459,7 +473,7 @@ p, li { white-space: pre-wrap; }
          <item>
           <layout class="QGridLayout" name="gridLayout_5">
            <item row="0" column="2">
-            <widget class="QPushButton" name="LoadLogButton">
+            <widget class="QPushButton" name="SaveTrackingLogButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -467,12 +481,12 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Select Tracking Record File</string>
+              <string>Select Tracking Log File</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QLabel" name="TrackingRecordLabel">
+            <widget class="QLabel" name="SaveTrackingLogLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -480,21 +494,35 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Save Tracking Record:</string>
+              <string>Save Tracking Record Log:</string>
              </property>
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLabel" name="WorkflowSegmentationLabel">
+            <widget class="QLabel" name="SaveSegmentationLabel">
              <property name="text">
               <string>Save Segmentation:</string>
              </property>
             </widget>
            </item>
            <item row="1" column="2">
-            <widget class="QPushButton" name="WorkflowSegmentationButton">
+            <widget class="QPushButton" name="SaveSegmentationButton">
              <property name="text">
               <string>Select Segmentation File</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="SaveTrainingLabel">
+             <property name="text">
+              <string>Save Training Parameters:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="SaveTrainingButton">
+             <property name="text">
+              <string>Select Parameter File</string>
              </property>
             </widget>
            </item>

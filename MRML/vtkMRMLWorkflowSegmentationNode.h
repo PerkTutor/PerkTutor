@@ -88,6 +88,7 @@ class TrainingParameter
 {
 public:
   std::string PrinComps;
+  std::string Mean;
   std::string Centroids;
   std::string MarkovPi;
   std::string MarkovA;
@@ -182,16 +183,16 @@ public:
   // Setters for saving the scene
   //BTX
   void SetTransformSelections( std::vector< int > selections );
-  void SetLogFileName( std::string fileName );
-  void SaveIntoFile( std::string fileName );
-  std::string GetLogFileName();
   void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
   //ETX
   
   // File IO methods
-  void UpdateFileFromBuffer();
-  void ImportTrainingData( std::string dirName );
+  void SaveTrackingLog( std::string fileName );
+  void SaveTrainingParameters( std::string fileName );
   void ImportInputParameters( std::string fileName );
+  void ImportTrainingParameters( std::string dirName );
+  void ImportTrainingData( std::string dirName );
+
   //void TrainSegmentationAlgorithm();
   void ClearBuffer();
   
