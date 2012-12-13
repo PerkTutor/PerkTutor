@@ -545,6 +545,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   ss << std::fixed << d->logic()->GetModuleNode()->GetTotalTime();
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
 
+  // TODO: Record the workflow segmentations in MRML (like annotations)
   ss.str( "" );
   ss << d->logic()->GetWorkflowAlgorithm()->getCurrentTask();
   d->CurrentTaskResultLabel->setText( ss.str().c_str() );

@@ -97,7 +97,7 @@ vtkRecordLog* vtkRecordLog
   vtkRecordLog* trimRecordLog = vtkRecordLog::New();
 
   // Iterate over all tracking records in the current procedure, and add to new
-  for ( int i = start; i < end; i++ )
+  for ( int i = start; i <= end; i++ )
   {
 
 	TimeLabelRecord currRecord;
@@ -432,19 +432,20 @@ std::vector<LabelRecord> vtkRecordLog
 {
 
   // Create a copy of the current record log
-  vtkRecordLog* recLogCopy = this->DeepCopy();  
+  vtkRecordLog* recLogCopy = vtkRecordLog::New();  
   std::vector<LabelRecord> legVector;
   
   // Calculate the time adjustment (need range -1 to 1)
-  double startTime = recLogCopy->GetRecordAt(0).getTime();
-  double endTime = recLogCopy->GetRecordAt(recLogCopy->numRecords-1).getTime();
+  double startTime = GetRecordAt(0).getTime();
+  double endTime = GetRecordAt( numRecords - 1 ).getTime();
   double rangeTime = endTime - startTime;
   
   for ( int i = 0; i < numRecords; i++ )
   {
-    recLogCopy->GetRecordAt(i).setTime( GetRecordAt(i).getTime() - startTime ); // ( 0 to tmax )
-    recLogCopy->GetRecordAt(i).setTime( GetRecordAt(i).getTime() * 2.0 / rangeTime ); // ( 0 to 2 )
-	recLogCopy->GetRecordAt(i).setTime( GetRecordAt(i).getTime() - 1 ); // ( -1 to 1 )
+    TimeLabelRecord currRecord;
+	currRecord = GetRecordAt(i);
+	currRecord.setTime( ( currRecord.getTime() - startTime ) * 2.0 / rangeTime - 1 ); // tmin - tmax --> -1 - 1
+	recLogCopy->AddRecord( currRecord );
   }
 
   // Create a copy of the record log for each degree of Legendre polynomial
@@ -455,7 +456,7 @@ std::vector<LabelRecord> vtkRecordLog
     // Multiply the values by the Legendre polynomials
     for ( int i = 0; i < numRecords; i++ )
     {
-	  double legPoly = LegendrePolynomial( orderRecLogCopy->GetRecordAt(i).getTime(), order );
+	  double legPoly = LegendrePolynomial( orderRecLogCopy->GetRecordAt(i).getTime(), o );
 
       for ( int d = 0; d < recordSize; d++ )
 	  {	    
@@ -564,7 +565,7 @@ vtkRecordLog* vtkRecordLog
 ::OrthogonalTransformation( int window, int order )
 {
   // Pad the recordlog with values at the beginning
-  vtkRecordLog* padRecordLog = this->PadStart( window - 1 )->Concatenate( this );
+  vtkRecordLog* padRecordLog = this->PadStart( window )->Concatenate( this );
 
   // Create a new record log with the orthogonally transformed data
   vtkRecordLog* orthRecordLog = vtkRecordLog::New();

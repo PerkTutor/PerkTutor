@@ -390,6 +390,7 @@ void vtkWorkflowAlgorithm
 
   // Create a new Markov Model, and estimate its parameters
   Markov = vtkMarkovModel::New();
+  Markov->SetSize( this->NumTasks, this->NumCentroids );
   this->Markov->InitializeEstimation( NumTasks, NumCentroids );
   this->Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
   for ( int i = 0; i < centroidProcedures.size(); i++ )
@@ -416,7 +417,18 @@ void vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::InitializeSegmentationRT()
 {
+  procedureRT = vtkRecordLogRT::New();
+  filterProcedureRT = vtkRecordLogRT::New();
+  orthogonalProcedureRT = vtkRecordLogRT::New();
+  principalProcedureRT = vtkRecordLogRT::New();
+  centroidProcedureRT = vtkRecordLogRT::New();
+
   MarkovRT = vtkMarkovModelRT::New();
+  MarkovRT->SetSize( this->NumTasks, this->NumCentroids );
+  MarkovRT->SetPi( this->Markov->GetPi() );
+  MarkovRT->SetA( this->Markov->GetA() );
+  MarkovRT->SetB( this->Markov->GetB() );
+
   indexLastProcessed = 0;
   currentTask = 0;
 }
@@ -445,6 +457,7 @@ void vtkWorkflowAlgorithm
   addRecord( t );
 
   // TODO: Should concatenate values with derivative
+  // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
   // Apply Gaussian filtering to each previous records
   filterProcedureRT->AddRecord( procedureRT->GaussianFilterRT( this->FilterWidth ) );
 
@@ -475,8 +488,8 @@ int vtkWorkflowAlgorithm
   // Check if there are any new transforms to process
   if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
   {
-    indexLastProcessed++;
 	addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	indexLastProcessed++;
   }
 
   return this->currentTask;

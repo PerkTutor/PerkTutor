@@ -146,9 +146,9 @@ TimeLabelRecord vtkRecordLogRT
 {
   // Pad the recordlog with values at the beginning (only if necessary)
   vtkRecordLog* padRecordLog;
-  if ( numRecords < window )
+  if ( numRecords <= window )
   {
-    padRecordLog = this->PadStart( window - 1 )->Concatenate( this );
+    padRecordLog = this->PadStart( window )->Concatenate( this );
   }
   else
   {
@@ -156,7 +156,7 @@ TimeLabelRecord vtkRecordLogRT
   }
 
   // Calculate the record log to include
-  vtkRecordLog* trimRecordLog = padRecordLog->Trim( numRecords - 1 - window, numRecords - 1 );
+  vtkRecordLog* trimRecordLog = padRecordLog->Trim( padRecordLog->Size() - 1 - window, padRecordLog->Size() - 1 );
 	
   // Create a new matrix to which the Legendre coefficients will be assigned
   std::vector<LabelRecord> legCoeffMatrix = trimRecordLog->LegendreTransformation( order );

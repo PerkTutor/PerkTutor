@@ -102,7 +102,7 @@ MarkovRecord vtkMarkovModelRT
 	  }
 
 	  // Account for observation probability
-	  currDelta.set( j, maxProb + logB[j].get( element.symbol ) ); 
+	  currDelta.set( j, maxProb + logB[j].get( element.getSymbol() ) ); 
       currPsi.set( j, maxIndex );
 	}
 
