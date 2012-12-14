@@ -299,10 +299,10 @@ std::vector<LabelRecord> vtkRecordLog
 	  double currSum = 0.0;
 	  for ( int d = 0; d < recordSize; d++ )
 	  {
-        currSum = currSum + ( this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d) ) * ( this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d) );
+        currSum += ( this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d) ) * ( this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d) );
 	  }
 	  // Add to the current order record
-	  distRecord.add( currSum );
+	  distRecord.add( sqrt( currSum ) );
 	}
 
 	// Add the current order record to the vector
@@ -342,10 +342,10 @@ std::vector<LabelRecord> vtkRecordLog
 	  double currSum = 0.0;
 	  for ( int d = 0; d < recordSize; d++ )
 	  {
-        currSum = currSum + ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) ) * ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) );
+        currSum += ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) ) * ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) );
 	  }
 	  // Add to the current order record
-	  distRecord.add( currSum );
+	  distRecord.add( sqrt( currSum ) );
 	}
 
 	// Add the current order record to the vector
@@ -778,7 +778,7 @@ std::vector<LabelRecord> vtkRecordLog
 	  continue;
 	}
 
-	centroids = this->AddNextCentroid( centroids );
+	centroids.push_back( this->FindNextCentroid( centroids ) );
 
 	// Iterate until there are no more changes in membership and no clusters are empty
     bool change = true;
@@ -788,18 +788,21 @@ std::vector<LabelRecord> vtkRecordLog
 	  std::vector<int> newMembership = this->ReassignMembership( centroids );
 
 	  // Calculate change
-	  for ( int i = 0; i < membership.size(); i++ )
+	  change = this->MembershipChanged( membership, newMembership );
+      if ( ! change )
 	  {
-        if ( membership[i] == newMembership[i] )
-		{
-          change = false;
-		}
+        break;
 	  }
 	  membership = newMembership;
 
 	  // Remove emptiness
-      centroids = this->MoveEmptyClusters( centroids, membership );
-
+	  std::vector<bool> emptyVector = this->FindEmptyClusters( centroids, membership );
+      if ( this->HasEmptyClusters( emptyVector ) )
+	  {
+        centroids = this->MoveEmptyClusters( centroids, emptyVector );
+		// At the end of this, we are guaranteed no empty clusters
+        continue;
+	  }	  
 
 	  // Recalculate centroids
       centroids = this->RecalculateCentroids( membership, k + 1 );
@@ -813,8 +816,10 @@ std::vector<LabelRecord> vtkRecordLog
 }
 
 
-std::vector<LabelRecord> vtkRecordLog
-::AddNextCentroid( std::vector<LabelRecord> centroids )
+
+
+LabelRecord vtkRecordLog
+::FindNextCentroid( std::vector<LabelRecord> centroids )
 {
 
   // Find the record farthest from any centroid
@@ -822,7 +827,7 @@ std::vector<LabelRecord> vtkRecordLog
   std::vector<LabelRecord> centDist = this->Distances( std::vector<ValueRecord>( centroids.begin(), centroids.end() ) );
 	
   int candidateRecord = 0;
-  double candidateDistance = centDist[0].get(0);
+  double candidateDistance = 0;
 
   for ( int i = 0; i < numRecords; i++ )
   {
@@ -837,26 +842,43 @@ std::vector<LabelRecord> vtkRecordLog
 	}
 	
 	// Maximum of the minimums
-    if ( currMinDist < candidateDistance )
+    if ( currMinDist > candidateDistance )
     {
       candidateDistance = currMinDist;
       candidateRecord = i;
 	}
   }
 
-  // Add the candidate point to the list of centroids
+  // Create new centroid for candidate
   LabelRecord currCentroid;
   currCentroid.values = this->records[candidateRecord].values;
   currCentroid.setLabel( centroids.size() );
-  centroids.push_back( currCentroid );
 
-  return centroids;
+  return currCentroid;
 
 }
 
 
-std::vector<LabelRecord> vtkRecordLog
-::MoveEmptyClusters( std::vector<LabelRecord> centroids, std::vector<int> membership )
+
+bool vtkRecordLog
+::MembershipChanged( std::vector<int> oldMembership, std::vector<int> newMembership )
+{
+
+  for ( int i = 0; i < oldMembership.size(); i++ )
+  {
+    if ( oldMembership[i] != newMembership[i] )
+	{
+      return true;
+	}
+  }
+
+  return false;
+}
+
+
+
+std::vector<bool> vtkRecordLog
+::FindEmptyClusters( std::vector<LabelRecord> centroids, std::vector<int> membership )
 {
   std::vector<bool> emptyVector;
 
@@ -869,7 +891,32 @@ std::vector<LabelRecord> vtkRecordLog
   {
     emptyVector[ membership[i] ] = false;
   }
-	  
+
+  return emptyVector;
+}
+
+
+
+bool vtkRecordLog
+::HasEmptyClusters( std::vector<bool> emptyVector )
+{
+  for ( int c = 0; c < emptyVector.size(); c++ )
+  {
+    if ( emptyVector[c] )
+	{
+      return true;
+	}
+  }
+ 
+  return false;
+}
+
+
+
+std::vector<LabelRecord> vtkRecordLog
+::MoveEmptyClusters( std::vector<LabelRecord> centroids, std::vector<bool> emptyVector )
+{
+
   // Remove any emptyness
   for ( int c = 0; c < centroids.size(); c++ )
   {
@@ -878,38 +925,7 @@ std::vector<LabelRecord> vtkRecordLog
 	  continue;
 	}
 
-    // Find the record farthest from any centroid
-    // Tricky way to cast vector of LabelRecord to vector of ValeuRecord
-    std::vector<LabelRecord> centDist = this->Distances( std::vector<ValueRecord>( centroids.begin(), centroids.end() ) );
-	
-    int candidateRecord = 0;
-    double candidateDistance = centDist[0].get(0);
-
-    for ( int i = 0; i < numRecords; i++ )
-    {
-      double currMinDist = centDist[i].get(0);
-      // Minimum for each point
-      for ( int c = 0; c < centroids.size(); c++ )
-	  {
-        if ( centDist[i].get(c) < currMinDist )
-	    {
-          currMinDist = centDist[i].get(c);
-	    }
-	  }
-	
-	  // Maximum of the minimums
-      if ( currMinDist < candidateDistance )
-      {
-        candidateDistance = currMinDist;
-        candidateRecord = i;
-	  }
-    }
-
-	// Change the empty centroid
-    LabelRecord currCentroid;
-    currCentroid.values = this->records[candidateRecord].values;
-    currCentroid.setLabel( c );
-    centroids[c] = currCentroid;
+    centroids[c] = this->FindNextCentroid( ( centroids ) );
 
   }
 

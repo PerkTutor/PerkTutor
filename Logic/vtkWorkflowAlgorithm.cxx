@@ -297,10 +297,14 @@ void vtkWorkflowAlgorithm
   // Calculate the number of centroids for each task
   std::vector<int> taskCentroids;
   std::vector<double> taskProportions;
+  std::vector<int> cumulativeCentroids;
+  int currSum = 0;
   taskProportions = CalculateTaskProportions();
   for ( int i = 0; i < NumTasks; i ++ )
   {
     taskCentroids.push_back( taskProportions[i] * this->NumCentroids );
+	cumulativeCentroids.push_back( currSum );
+	currSum += taskCentroids[i];
   }
 
   // Use velocity also
@@ -316,6 +320,7 @@ void vtkWorkflowAlgorithm
 
 
   // Apply Gaussian filtering to each record log
+  // TODO: This is very slow, can we make it faster by only using "nearby" time stamps
   std::vector<vtkRecordLog*> filterProcedures;
   for ( int i = 0; i < derivativeProcedures.size(); i++ )
   {
@@ -352,13 +357,12 @@ void vtkWorkflowAlgorithm
 
   // Add the centroids from each task
   // TODO: Change NumCentroids back to 700
-  // TODO: Make cluster labels non-overlapping
-  // TODO: Clustering sometimes produces not a number values (probably divison by zero)
   for ( int i = 0; i < this->NumTasks; i++ )
   {
 	std::vector<LabelRecord> currTaskCentroids = recordsByTask[i]->fwdkmeans( taskCentroids[i] );
 	for ( int j = 0; j < taskCentroids[i]; j++ )
 	{
+	  currTaskCentroids[j].setLabel( currTaskCentroids[j].getLabel() + cumulativeCentroids[i] );
       this->Centroids.push_back( currTaskCentroids[j] );
 	}
   }

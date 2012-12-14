@@ -61,9 +61,12 @@ private:
 
   double LegendrePolynomial( double time, int order );	
 
-  std::vector<LabelRecord> AddNextCentroid( std::vector<LabelRecord> centroids );
+  LabelRecord FindNextCentroid( std::vector<LabelRecord> centroids );
+  bool MembershipChanged( std::vector<int> oldMembership, std::vector<int> newMembership );
+  bool HasEmptyClusters( std::vector<bool> emptyVector );
+  std::vector<bool> FindEmptyClusters( std::vector<LabelRecord> centroids, std::vector<int> membership );
   std::vector<int> ReassignMembership( std::vector<LabelRecord> centroids );
-  std::vector<LabelRecord> MoveEmptyClusters( std::vector<LabelRecord> centroids, std::vector<int> membership );
+  std::vector<LabelRecord> MoveEmptyClusters( std::vector<LabelRecord> centroids, std::vector<bool> emptyVector );
   std::vector<LabelRecord> RecalculateCentroids( std::vector<int> membership, int numClusters );
 
 
