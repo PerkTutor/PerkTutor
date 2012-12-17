@@ -70,6 +70,7 @@ private:
 
   int indexLastProcessed;
   int currentTask;
+  int prevTask;
 
   // All the input parameters
   int NumTasks;

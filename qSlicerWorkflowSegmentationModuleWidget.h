@@ -43,6 +43,7 @@ protected slots:
   void onTrainButtonClicked();
 
   void onSaveTrackingLogButtonClicked();
+  void onSaveSegmentationButtonClicked();
   void onSaveTrainingButtonClicked();
 
   void onStopButtonClicked();

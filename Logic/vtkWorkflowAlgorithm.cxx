@@ -463,7 +463,8 @@ void vtkWorkflowAlgorithm
   MarkovRT->SetB( this->Markov->GetB() );
 
   indexLastProcessed = 0;
-  currentTask = 0;
+  currentTask = -1;
+  prevTask = -1;
 }
 
 
@@ -540,6 +541,14 @@ int vtkWorkflowAlgorithm
 	else
 	{
 	  addRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	}
+	// Add to the segmentation buffer
+	if ( this->currentTask != this->prevTask )
+	{
+      prevTask = currentTask;
+	  std::stringstream ss;
+	  ss << currentTask;
+	  this->MRMLNode->AddSegmentation( ss.str() );
 	}
 	indexLastProcessed++;
   }

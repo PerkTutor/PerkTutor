@@ -57,7 +57,6 @@ public:
   std::string Transform;
   long int TimeStampSec; 
   int TimeStampNSec;     // Nanoseconds from TimeStampSec to the real timestamp.
-  std::string Task;
 };
 
 // Class to store recorded messages
@@ -171,6 +170,7 @@ public:
   // Statistics associated with recorded transforms
   unsigned int GetTransformsBufferSize();
   unsigned int GetMessagesBufferSize();
+  unsigned int GetSegmentationBufferSize();
   double GetTotalTime();
   std::string GetCurrentTask();
   std::string GetCurrentInstruction();
@@ -188,10 +188,12 @@ public:
   //BTX
   void SetTransformSelections( std::vector< int > selections );
   void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
+  void AddSegmentation( std::string task, int sec = -1, int nsec = -1 );
   //ETX
   
   // File IO methods
   void SaveTrackingLog( std::string fileName );
+  void SaveSegmentation( std::string fileName );
   void SaveTrainingParameters( std::string fileName );
   void ImportInputParameters( std::string fileName );
   void ImportTrainingParameters( std::string dirName );
@@ -216,6 +218,7 @@ protected:
   std::string TrainingParameterFileName;
   std::vector< TransformRecord > TransformsBuffer;
   std::vector< MessageRecord > MessagesBuffer;
+  std::vector< MessageRecord > SegmentationBuffer;
   //ETX
  
   // Active recording

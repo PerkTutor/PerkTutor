@@ -181,6 +181,57 @@ vtkMRMLWorkflowSegmentationNode
 
 
 
+
+void
+vtkMRMLWorkflowSegmentationNode
+::SaveSegmentation( std::string fileName )
+{
+  std::ofstream output( fileName.c_str() );
+  
+  if ( ! output.is_open() )
+    {
+    vtkErrorMacro( "Record file could not be opened!" );
+    return;
+    }
+  
+  output << "<TransformRecorderLog>" << std::endl;
+  
+    // Save transforms.
+  
+  for ( unsigned int i = 0; i < this->GetTransformsBufferSize(); ++ i )
+    {
+    output << "  <log";
+    output << " TimeStampSec=\"" << this->TransformsBuffer[ i ].TimeStampSec << "\"";
+    output << " TimeStampNSec=\"" << this->TransformsBuffer[ i ].TimeStampNSec << "\"";
+    output << " type=\"transform\"";
+    output << " DeviceName=\"" << this->TransformsBuffer[ i ].DeviceName << "\"";
+    output << " transform=\"" << this->TransformsBuffer[ i ].Transform << "\"";
+    output << " />" << std::endl;
+    }
+  
+  
+    // Save messages.
+  
+  for ( unsigned int i = 0; i < this->GetSegmentationBufferSize(); ++ i )
+    {
+    output << "  <log";
+    output << " TimeStampSec=\"" << this->SegmentationBuffer[ i ].TimeStampSec << "\"";
+    output << " TimeStampNSec=\"" << this->SegmentationBuffer[ i ].TimeStampNSec << "\"";
+    output << " type=\"message\"";
+    output << " message=\"" << this->SegmentationBuffer[ i ].Message << "\"";
+    output << " />" << std::endl;
+    }
+  
+  
+  output << "</TransformRecorderLog>" << std::endl;
+  output.close();
+  // this->ClearBuffer(); Don't do this, the user may want to save the annotations also
+  
+}
+
+
+
+
 void
 vtkMRMLWorkflowSegmentationNode
 ::SaveTrainingParameters( std::string fileName )
@@ -205,7 +256,6 @@ vtkMRMLWorkflowSegmentationNode
   output << "</WorkflowSegmentationParameters>" << std::endl;
 
   output.close();
-  this->ClearBuffer();
   
 }
 
@@ -361,6 +411,7 @@ vtkMRMLWorkflowSegmentationNode
 {
   this->TransformsBuffer.clear();
   this->MessagesBuffer.clear();
+  this->SegmentationBuffer.clear();
   
   if ( this->LastNeedleTransform != NULL )
   {
@@ -748,6 +799,24 @@ void vtkMRMLWorkflowSegmentationNode::CustomMessage( std::string message, int se
 
 
 
+void vtkMRMLWorkflowSegmentationNode::AddSegmentation( std::string task, int sec, int nsec )
+{
+  if ( sec == -1  &&  nsec == -1 )
+  {
+    this->GetTimestamp( sec, nsec );
+  }
+  
+  MessageRecord rec;
+    rec.Message = task;
+    rec.TimeStampSec = sec;
+    rec.TimeStampNSec = nsec;
+  
+  this->SegmentationBuffer.push_back( rec );
+
+}
+
+
+
 unsigned int vtkMRMLWorkflowSegmentationNode::GetTransformsBufferSize()
 {
   return this->TransformsBuffer.size();
@@ -759,6 +828,13 @@ unsigned int vtkMRMLWorkflowSegmentationNode::GetTransformsBufferSize()
 unsigned int vtkMRMLWorkflowSegmentationNode::GetMessagesBufferSize()
 {
   return this->MessagesBuffer.size();
+}
+
+
+
+unsigned int vtkMRMLWorkflowSegmentationNode::GetSegmentationBufferSize()
+{
+  return this->SegmentationBuffer.size();
 }
 
 
@@ -958,7 +1034,6 @@ void vtkMRMLWorkflowSegmentationNode::AddNewTransform( const char* TransformNode
     rec.TimeStampSec = sec;
     rec.TimeStampNSec = nsec;
     rec.Transform = mss.str();
-	rec.Task = "Task 1";
   
   if ( this->Recording == false )
   {

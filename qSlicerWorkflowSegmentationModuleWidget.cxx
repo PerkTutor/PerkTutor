@@ -129,6 +129,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
 
   // Save tracking log and parameters
   connect( d->SaveTrackingLogButton, SIGNAL(clicked()),this, SLOT ( onSaveTrackingLogButtonClicked() ) );
+  connect( d->SaveSegmentationButton, SIGNAL(clicked()),this, SLOT ( onSaveSegmentationButtonClicked() ) );
   connect( d->SaveTrainingButton, SIGNAL(clicked()),this, SLOT ( onSaveTrainingButtonClicked() ) );
 
   // Recording controls
@@ -229,7 +230,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  QString fileName = QFileDialog::getOpenFileName( this, tr("Open parameters"), "", tr("XML Files (*.xml)") );
+  QString fileName = QFileDialog::getOpenFileName( this, tr("Open input parameters"), "", tr("XML Files (*.xml)") );
   
   if ( fileName.isEmpty() == false )
   {
@@ -249,7 +250,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  QString fileName = QFileDialog::getOpenFileName( this, tr("Open parameters"), "", tr("XML Files (*.xml)") );
+  QString fileName = QFileDialog::getOpenFileName( this, tr("Open training parameters"), "", tr("XML Files (*.xml)") );
   
   if ( fileName.isEmpty() == false )
   {
@@ -342,11 +343,28 @@ void qSlicerWorkflowSegmentationModuleWidget
   if ( filename.isEmpty() == false )
   {
     d->logic()->GetModuleNode()->SaveTrackingLog( filename.toStdString() );
-    d->AnnotationListWidget->clear();
   }
   
   this->updateGUI();
 }
+
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onSaveSegmentationButtonClicked()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  QString filename = QFileDialog::getSaveFileName( this, tr("Save segmentation"), "", tr("XML Files (*.xml)") );
+  
+  if ( filename.isEmpty() == false )
+  {
+    d->logic()->GetModuleNode()->SaveSegmentation( filename.toStdString() );
+  }
+  
+  this->updateGUI();
+}
+
 
 
 
@@ -595,7 +613,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   ss << std::fixed << d->logic()->GetModuleNode()->GetTotalTime();
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
 
-  // TODO: Record the workflow segmentations in MRML (like annotations)
+  // TODO: Add instructional functionality
   ss.str( "" );
   ss << d->logic()->GetWorkflowAlgorithm()->getCurrentTask();
   d->CurrentTaskResultLabel->setText( ss.str().c_str() );
