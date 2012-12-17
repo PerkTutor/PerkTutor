@@ -289,10 +289,15 @@ void vtkWorkflowAlgorithm
 
 
 
-
-void vtkWorkflowAlgorithm
+// Return whether or not training was successful
+bool vtkWorkflowAlgorithm
 ::train()
 {
+  // There must exist procedures
+  if ( procedures.empty() )
+  {
+    return false;
+  }
 
   // Calculate the number of centroids for each task
   std::vector<int> taskCentroids;
@@ -303,8 +308,16 @@ void vtkWorkflowAlgorithm
   for ( int i = 0; i < NumTasks; i ++ )
   {
     taskCentroids.push_back( taskProportions[i] * this->NumCentroids );
+
+	// Make sure that every task is represented in the procedures
+	if ( taskCentroids[i] == 0 )
+	{
+      return false;
+	}
+
 	cumulativeCentroids.push_back( currSum );
 	currSum += taskCentroids[i];
+
   }
 
   // Use velocity also
@@ -427,6 +440,7 @@ void vtkWorkflowAlgorithm
   this->MRMLNode->trainingParam.MarkovB = LabelRecordVectorToString( this->Markov->GetB() );
   this->MRMLNode->trainingParam.MarkovPi = LabelRecordToString( this->Markov->GetPi() );
 
+  return true;
 
 }
 
@@ -519,7 +533,14 @@ int vtkWorkflowAlgorithm
   // Check if there are any new transforms to process
   if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
   {
-	addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+    if ( this->MRMLNode->GetIsTrained() )
+	{
+	  addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	}
+	else
+	{
+	  addRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	}
 	indexLastProcessed++;
   }
 

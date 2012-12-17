@@ -179,6 +179,10 @@ public:
   
   vtkGetMacro( Recording, bool );
   void SetRecording( bool newState );
+  vtkGetMacro( HasInput, bool );
+  vtkGetMacro( IsTrained, bool );
+  vtkSetMacro( HasInput, bool );
+  vtkSetMacro( IsTrained, bool );
   
   // Setters for saving the scene
   //BTX
@@ -191,7 +195,6 @@ public:
   void SaveTrainingParameters( std::string fileName );
   void ImportInputParameters( std::string fileName );
   void ImportTrainingParameters( std::string dirName );
-  void ImportTrainingData( std::string dirName );
 
   TransformRecord GetTransformAt( int index );
   void ClearBuffer();
@@ -216,6 +219,8 @@ protected:
   //ETX
  
   // Active recording
+  bool HasInput;
+  bool IsTrained;
   bool Recording;
   bool Active;
   

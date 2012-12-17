@@ -132,14 +132,14 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->SaveTrainingButton, SIGNAL(clicked()),this, SLOT ( onSaveTrainingButtonClicked() ) );
 
   // Recording controls
-  connect( d->StartButton, SIGNAL(clicked()),this,SLOT(onStartButtonClicked() ) );
-  connect( d->StopButton, SIGNAL(clicked()),this,SLOT(onStopButtonClicked() ) );
-  connect( d->ClearBufferButton, SIGNAL(clicked()),this,SLOT(onClearBufferButtonClicked() ) );
+  connect( d->StartButton, SIGNAL(clicked()), this, SLOT(onStartButtonClicked() ) );
+  connect( d->StopButton, SIGNAL(clicked()), this, SLOT(onStopButtonClicked() ) );
+  connect( d->ClearBufferButton, SIGNAL(clicked()), this, SLOT(onClearBufferButtonClicked() ) );
 
   //Annotations
   d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-  connect(d->InsertAnnotationButton, SIGNAL(clicked()), this, SLOT(insertAnnotation()));
-  connect(d->ClearAnnotationButton, SIGNAL(clicked()), this, SLOT(clearAnnotations()));
+  connect( d->InsertAnnotationButton, SIGNAL(clicked()), this, SLOT(insertAnnotation()));
+  connect( d->ClearAnnotationButton, SIGNAL(clicked()), this, SLOT(clearAnnotations()));
 
 
   // GUI refresh: updates every 10ms
@@ -214,7 +214,10 @@ void qSlicerWorkflowSegmentationModuleWidget::onModuleNodeSelected()
   }
   
   d->logic()->SetModuleNode( TRNode );
+  d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
+
   this->updateGUI();
+
 }
 
 
@@ -232,6 +235,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
 	d->logic()->GetModuleNode()->ImportInputParameters( fileName.toStdString() );
 	d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
+	d->logic()->GetModuleNode()->SetHasInput( true );
   }
   
   this->updateGUI();
@@ -251,6 +255,8 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
 	d->logic()->GetModuleNode()->ImportTrainingParameters( fileName.toStdString() );
 	d->logic()->GetWorkflowAlgorithm()->GetTrainingParametersFromMRMLNode();
+	d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
+	d->logic()->GetModuleNode()->SetIsTrained( true );
   }
   
   this->updateGUI();
@@ -310,9 +316,15 @@ void qSlicerWorkflowSegmentationModuleWidget
   dialog.setValue( 20 );
   d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
   dialog.setValue( 30 );
-  d->logic()->GetWorkflowAlgorithm()->train();
+  d->logic()->GetModuleNode()->SetIsTrained( d->logic()->GetWorkflowAlgorithm()->train() );
+  dialog.setValue( 80 );
+  if ( d->logic()->GetModuleNode()->GetIsTrained() )
+  {
+    d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
+  }
 
   dialog.close();
+
 
   this->updateGUI();
 }
@@ -389,7 +401,6 @@ void qSlicerWorkflowSegmentationModuleWidget
 	}
   
   
-  d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
   d->logic()->GetModuleNode()->SetRecording( true );
   
   this->updateGUI();
@@ -426,7 +437,12 @@ void qSlicerWorkflowSegmentationModuleWidget
   }
 
   d->logic()->GetModuleNode()->ClearBuffer();
-   
+
+  if ( d->logic()->GetModuleNode()->GetIsTrained() )
+  {
+  d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
+  }
+
   this->updateGUI();
 }
 
@@ -500,16 +516,28 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   
   
   // Disableing node selector widgets if there is no module node to reference input nodes.
-  // TODO: Disable input/training buttons if no module node selected, training buttons if no input parameters selected
     
   if ( d->logic()->GetModuleNode() == NULL )
   {
     d->TransformCheckableComboBox->setEnabled( false );
+
+	d->InputParameterButton->setEnabled( false );
+	d->TrainingParameterButton->setEnabled( false );
+	d->TrainingDataButton->setEnabled( false );
+	d->TrainButton->setEnabled( false );
+
+	d->SaveTrackingLogButton->setEnabled( false );
+    d->SaveSegmentationButton->setEnabled( false );
+	d->SaveTrainingButton->setEnabled( false );
   }
   else
   {
     d->TransformCheckableComboBox->setEnabled( true );
-	d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
+
+	d->InputParameterButton->setEnabled( true );
+
+	d->SaveTrackingLogButton->setEnabled( true );
+    d->SaveSegmentationButton->setEnabled( true );
   }
   
     // The following code requires a module node.
@@ -521,7 +549,29 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   
   
   
-    // Update status descriptor labels.
+  // Update status descriptor labels.
+
+  if ( ! d->logic()->GetModuleNode()->GetHasInput() )
+  {
+    d->TrainingParameterButton->setEnabled( false );
+	d->TrainingDataButton->setEnabled( false );
+	d->TrainButton->setEnabled( false );
+  }
+  else
+  {
+    d->TrainingParameterButton->setEnabled( true );
+	d->TrainingDataButton->setEnabled( true );
+	d->TrainButton->setEnabled( true );
+  }
+
+  if ( ! d->logic()->GetModuleNode()->GetIsTrained() )
+  {
+    d->SaveTrainingButton->setEnabled( false );
+  }
+  else
+  {
+    d->SaveTrainingButton->setEnabled( true );
+  }
   
   if ( d->logic()->GetModuleNode()->GetRecording() )
   {

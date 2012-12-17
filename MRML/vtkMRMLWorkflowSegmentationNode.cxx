@@ -144,11 +144,11 @@ vtkMRMLWorkflowSegmentationNode
     return;
     }
   
-  output << "<WorkflowSegmentationLog>" << std::endl;
+  output << "<TransformRecorderLog>" << std::endl;
   
     // Save transforms.
   
-  for ( unsigned int i = 0; i < this->TransformsBuffer.size(); ++ i )
+  for ( unsigned int i = 0; i < this->GetTransformsBufferSize(); ++ i )
     {
     output << "  <log";
     output << " TimeStampSec=\"" << this->TransformsBuffer[ i ].TimeStampSec << "\"";
@@ -162,7 +162,7 @@ vtkMRMLWorkflowSegmentationNode
   
     // Save messages.
   
-  for ( unsigned int i = 0; i < this->MessagesBuffer.size(); ++ i )
+  for ( unsigned int i = 0; i < this->GetMessagesBufferSize(); ++ i )
     {
     output << "  <log";
     output << " TimeStampSec=\"" << this->MessagesBuffer[ i ].TimeStampSec << "\"";
@@ -173,9 +173,9 @@ vtkMRMLWorkflowSegmentationNode
     }
   
   
-  output << "</WorkflowSegmentationLog>" << std::endl;
+  output << "</TransformRecorderLog>" << std::endl;
   output.close();
-  this->ClearBuffer();
+  // this->ClearBuffer(); Don't do this, the user may want to save the task segmentation also
   
 }
 
@@ -195,12 +195,12 @@ vtkMRMLWorkflowSegmentationNode
   
   output << "<WorkflowSegmentationParameters>" << std::endl; 
 
-  output << "  <Parameter Type=\"PrinComps\" Value=\"" << this->trainingParam.PrinComps << "\" />";
-  output << "  <Parameter Type=\"Mean\" Value=\"" << this->trainingParam.Mean << "\" />";
-  output << "  <Parameter Type=\"Centroids\" Value=\"" << this->trainingParam.Centroids << "\" />";
-  output << "  <Parameter Type=\"MarkovPi\" Value=\"" << this->trainingParam.MarkovPi << "\" />";
-  output << "  <Parameter Type=\"MarkovA\" Value=\"" << this->trainingParam.MarkovA << "\" />";
-  output << "  <Parameter Type=\"MarkovB\" Value=\"" << this->trainingParam.MarkovB << "\" />";
+  output << "  <Parameter Type=\"PrinComps\" Value=\"" << this->trainingParam.PrinComps << "\" />" << std::endl;
+  output << "  <Parameter Type=\"Mean\" Value=\"" << this->trainingParam.Mean << "\" />" << std::endl;
+  output << "  <Parameter Type=\"Centroids\" Value=\"" << this->trainingParam.Centroids << "\" />" << std::endl;
+  output << "  <Parameter Type=\"MarkovPi\" Value=\"" << this->trainingParam.MarkovPi << "\" />" << std::endl;
+  output << "  <Parameter Type=\"MarkovA\" Value=\"" << this->trainingParam.MarkovA << "\" />" << std::endl;
+  output << "  <Parameter Type=\"MarkovB\" Value=\"" << this->trainingParam.MarkovB << "\" />" << std::endl;
 
   output << "</WorkflowSegmentationParameters>" << std::endl;
 
@@ -209,16 +209,6 @@ vtkMRMLWorkflowSegmentationNode
   
 }
 
-
-
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::ImportTrainingData( std::string dirName )
-{
-  // Read all of the xml files from the specified directory
-}
 
 void
 vtkMRMLWorkflowSegmentationNode
@@ -254,6 +244,7 @@ vtkMRMLWorkflowSegmentationNode
 	double value;
 	ss >> value;
 
+	// TODO: Use macros here to make this take fewer lines of code
     if ( strcmp( elementType, "NumTasks" ) == 0 )
     {
 	  this->inputParam.NumTasks = value;
@@ -405,6 +396,8 @@ vtkMRMLWorkflowSegmentationNode
   // this->SetModifiedSinceRead( true );
   
   this->Recording = false;
+  this->HasInput = false;
+  this->IsTrained = false;
   
   this->LogFileName = "";
   

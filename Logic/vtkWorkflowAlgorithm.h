@@ -38,7 +38,7 @@ public:
 
   // Training and testing phases
   void InitializeSegmentationRT();
-  void train();
+  bool train();
   void addRecord( TransformRecord t );
   void addSegmentRecord( TransformRecord t );
   int getCurrentTask();
