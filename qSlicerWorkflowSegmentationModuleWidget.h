@@ -37,6 +37,7 @@ protected slots:
   void onMRMLTransformNodeModified(vtkObject* caller);
   void onModuleNodeSelected();
  
+  void onProcedureDefinitionButtonClicked();
   void onInputParameterButtonClicked();
   void onTrainingParameterButtonClicked();
   void onTrainingDataButtonClicked();

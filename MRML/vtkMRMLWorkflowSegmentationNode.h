@@ -68,11 +68,20 @@ public:
   int TimeStampNSec;
 };
 
+// Class to store the definition of a procedure
+class ProcedureDefinition
+{
+public:
+  int NumTasks;
+  std::vector<std::string> TaskName;
+  std::vector<std::string> TaskInstruction;
+  std::vector<std::string> TaskNext;
+};
+
 // Class to store algorithm input parameters
 class InputParameter
 {
 public:
-  int NumTasks;
   double FilterWidth;
   int OrthogonalOrder;
   int OrthogonalWindow;
@@ -179,8 +188,10 @@ public:
   
   vtkGetMacro( Recording, bool );
   void SetRecording( bool newState );
+  vtkGetMacro( ProcedureDefined, bool );
   vtkGetMacro( HasInput, bool );
   vtkGetMacro( IsTrained, bool );
+  vtkSetMacro( ProcedureDefined, bool );
   vtkSetMacro( HasInput, bool );
   vtkSetMacro( IsTrained, bool );
   
@@ -195,6 +206,7 @@ public:
   void SaveTrackingLog( std::string fileName );
   void SaveSegmentation( std::string fileName );
   void SaveTrainingParameters( std::string fileName );
+  void ImportProcedureDefinition( std::string fileName );
   void ImportInputParameters( std::string fileName );
   void ImportTrainingParameters( std::string dirName );
 
@@ -222,6 +234,7 @@ protected:
   //ETX
  
   // Active recording
+  bool ProcedureDefined;
   bool HasInput;
   bool IsTrained;
   bool Recording;
@@ -241,6 +254,7 @@ protected:
 
 public:
   // Parameter variables
+  ProcedureDefinition procDefn;
   InputParameter inputParam;
   TrainingParameter trainingParam;
   

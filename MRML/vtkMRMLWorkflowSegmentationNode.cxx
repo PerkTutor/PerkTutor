@@ -260,6 +260,54 @@ vtkMRMLWorkflowSegmentationNode
 }
 
 
+
+void
+vtkMRMLWorkflowSegmentationNode
+::ImportProcedureDefinition( std::string fileName )
+{
+
+  // Create a parser to parse the XML data from TransformRecorderLog
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( fileName.c_str() );
+  parser->Parse();
+  
+  // Get the root element (and check it exists)
+  vtkXMLDataElement* rootElement = parser->GetRootElement();
+  if ( ! rootElement )
+  {
+    return;
+  }
+  
+  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
+
+  // Must re-initialize everything in case we load a new procedure
+  this->procDefn.NumTasks = 0;
+  this->procDefn.TaskName.clear();
+  this->procDefn.TaskInstruction.clear();
+  this->procDefn.TaskNext.clear();
+
+  
+  for ( int i = 0; i < num; ++ i )
+  {
+
+    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
+    if ( strcmp( noteElement->GetName(), "Task" ) != 0 )
+    {
+      continue;  // If it's not a "Parameter", jump to the next.
+    }
+	
+	this->procDefn.NumTasks ++;
+	this->procDefn.TaskName.push_back( std::string( noteElement->GetAttribute( "Name" ) ) );
+    this->procDefn.TaskInstruction.push_back( std::string( noteElement->GetAttribute( "Instruction" ) ) );
+	this->procDefn.TaskNext.push_back( std::string( noteElement->GetAttribute( "Next" ) ) );
+
+  }
+
+}
+
+
+
+
 void
 vtkMRMLWorkflowSegmentationNode
 ::ImportInputParameters( std::string fileName )
@@ -294,11 +342,6 @@ vtkMRMLWorkflowSegmentationNode
 	double value;
 	ss >> value;
 
-	// TODO: Use macros here to make this take fewer lines of code
-    if ( strcmp( elementType, "NumTasks" ) == 0 )
-    {
-	  this->inputParam.NumTasks = value;
-    }
 	if ( strcmp( elementType, "Derivative" ) == 0 )
     {
 	  this->inputParam.Derivative = value;
@@ -447,6 +490,7 @@ vtkMRMLWorkflowSegmentationNode
   // this->SetModifiedSinceRead( true );
   
   this->Recording = false;
+  this->ProcedureDefined = false;
   this->HasInput = false;
   this->IsTrained = false;
   

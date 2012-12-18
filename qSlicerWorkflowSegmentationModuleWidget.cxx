@@ -120,6 +120,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformsNodeSelected(vtkMRMLNode*) ) );
 
   // Import parameters and files
+  connect( d->ProcedureDefinitionButton, SIGNAL(clicked()), this, SLOT( onProcedureDefinitionButtonClicked() ) );
   connect( d->InputParameterButton, SIGNAL(clicked()), this, SLOT( onInputParameterButtonClicked() ) );
   connect( d->TrainingParameterButton, SIGNAL(clicked()), this, SLOT( onTrainingParameterButtonClicked() ) );
   connect( d->TrainingDataButton, SIGNAL(clicked()), this, SLOT( onTrainingDataButtonClicked() ) );
@@ -219,6 +220,26 @@ void qSlicerWorkflowSegmentationModuleWidget::onModuleNodeSelected()
 
   this->updateGUI();
 
+}
+
+
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onProcedureDefinitionButtonClicked()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  QString fileName = QFileDialog::getOpenFileName( this, tr("Open procedure definition"), "", tr("XML Files (*.xml)") );
+  
+  if ( fileName.isEmpty() == false )
+  {
+	d->logic()->GetModuleNode()->ImportProcedureDefinition( fileName.toStdString() );
+	d->logic()->GetWorkflowAlgorithm()->GetProcedureDefinitionFromMRMLNode();
+	d->logic()->GetModuleNode()->SetProcedureDefined( true );
+  }
+  
+  this->updateGUI();
 }
 
 
@@ -539,6 +560,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   {
     d->TransformCheckableComboBox->setEnabled( false );
 
+	d->ProcedureDefinitionButton->setEnabled( false );
 	d->InputParameterButton->setEnabled( false );
 	d->TrainingParameterButton->setEnabled( false );
 	d->TrainingDataButton->setEnabled( false );
@@ -552,7 +574,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   {
     d->TransformCheckableComboBox->setEnabled( true );
 
-	d->InputParameterButton->setEnabled( true );
+	d->ProcedureDefinitionButton->setEnabled( true );
 
 	d->SaveTrackingLogButton->setEnabled( true );
     d->SaveSegmentationButton->setEnabled( true );
@@ -568,6 +590,15 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   
   
   // Update status descriptor labels.
+
+  if ( ! d->logic()->GetModuleNode()->GetProcedureDefined() )
+  {    
+    d->InputParameterButton->setEnabled( false );
+  }
+  else
+  {
+    d->InputParameterButton->setEnabled( true );
+  }
 
   if ( ! d->logic()->GetModuleNode()->GetHasInput() )
   {
@@ -614,20 +645,22 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
 
   // TODO: Add instructional functionality
+  d->logic()->GetWorkflowAlgorithm()->UpdateTask();
+
   ss.str( "" );
   ss << d->logic()->GetWorkflowAlgorithm()->getCurrentTask();
   d->CurrentTaskResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );
-  ss << d->logic()->GetModuleNode()->GetCurrentInstruction();
+  ss << d->logic()->GetWorkflowAlgorithm()->getCurrentInstruction();
   d->CurrentInstructionResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );
-  ss << d->logic()->GetModuleNode()->GetNextTask();
+  ss << d->logic()->GetWorkflowAlgorithm()->getNextTask();
   d->NextTaskResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );
-  ss << d->logic()->GetModuleNode()->GetNextInstruction();
+  ss << d->logic()->GetWorkflowAlgorithm()->getNextInstruction();
   d->NextInstructionResultLabel->setText( ss.str().c_str() );
 
 }

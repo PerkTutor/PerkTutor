@@ -103,7 +103,7 @@ void vtkTrackingRecord
 ::SetVector( std::vector<double> v )
 {
   // Check v is of correct form
-  if ( v.size() != 7 )
+  if ( v.size() != TRACKINGRECORD_SIZE )
   {
     return;
   }

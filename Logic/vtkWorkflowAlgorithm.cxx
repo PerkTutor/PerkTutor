@@ -114,9 +114,20 @@ void vtkWorkflowAlgorithm
 
 
 void vtkWorkflowAlgorithm
+::GetProcedureDefinitionFromMRMLNode()
+{
+  this->NumTasks = this->MRMLNode->procDefn.NumTasks;
+  this->TaskName = this->MRMLNode->procDefn.TaskName;
+  this->TaskInstruction = this->MRMLNode->procDefn.TaskInstruction;
+  this->TaskNext = this->MRMLNode->procDefn.TaskNext;
+
+}
+
+
+
+void vtkWorkflowAlgorithm
 ::GetInputParamtersFromMRMLNode()
 {
-  this->NumTasks = this->MRMLNode->inputParam.NumTasks;
   this->Derivative = this->MRMLNode->inputParam.Derivative;
   this->FilterWidth = this->MRMLNode->inputParam.FilterWidth;
   this->OrthogonalWindow = this->MRMLNode->inputParam.OrthogonalWindow;
@@ -144,6 +155,24 @@ void vtkWorkflowAlgorithm
   this->Markov->SetPi( StringToLabelRecord( this->MRMLNode->trainingParam.MarkovPi, NumTasks ) );
   this->Markov->SetA( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovA, NumTasks, NumTasks ) );
   this->Markov->SetB( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovB, NumTasks, NumCentroids ) );
+}
+
+
+
+
+int vtkWorkflowAlgorithm
+::FindTaskIndex( std::string name )
+{
+  // Just iterate through all of them... otherwise assign -1
+  for ( int i = 0; i < NumTasks; i++ )
+  {
+    if ( strcmp( TaskName.at(i).c_str(), name.c_str() ) == 0 )
+	{
+	  return i;
+	}
+  }
+
+  return -1;
 }
 
 
@@ -235,7 +264,7 @@ void vtkWorkflowAlgorithm
     if ( strcmp( elementType, "message" ) == 0 )
     {
 	  TimeLabelRecord currMessage;
-	  currMessage.setLabel( atoi( noteElement->GetAttribute( "message" ) ) );
+	  currMessage.setLabel( FindTaskIndex( std::string( noteElement->GetAttribute( "message" ) ) ) );
 	  currMessage.setTime( elementTime );
       messages.push_back( currMessage );
     }
@@ -528,8 +557,8 @@ void vtkWorkflowAlgorithm
 
 
 
-int vtkWorkflowAlgorithm
-::getCurrentTask()
+void vtkWorkflowAlgorithm
+::UpdateTask()
 {
   // Check if there are any new transforms to process
   if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
@@ -553,6 +582,64 @@ int vtkWorkflowAlgorithm
 	indexLastProcessed++;
   }
 
-  return this->currentTask;
+}
 
+
+std::string vtkWorkflowAlgorithm
+::getCurrentTask()
+{
+  if ( this->currentTask < 0 || this->currentTask > NumTasks )
+  {
+    return "-";
+  }
+  return TaskName[ this->currentTask ];
+}
+
+
+std::string vtkWorkflowAlgorithm
+::getCurrentInstruction()
+{
+  if ( this->currentTask < 0 || this->currentTask > NumTasks )
+  {
+    return "-";
+  }
+  return TaskInstruction[ this->currentTask ];
+}
+
+
+std::string vtkWorkflowAlgorithm
+::getNextTask()
+{
+  if ( this->currentTask < 0 || this->currentTask > NumTasks )
+  {
+    return "-";
+  }
+
+  int nextTaskIndex  = FindTaskIndex( TaskNext[ this->currentTask ] );
+
+  if ( nextTaskIndex < 0 || nextTaskIndex > NumTasks )
+  {
+    return "-";
+  }
+
+  return TaskName[ nextTaskIndex ];
+}
+
+
+std::string vtkWorkflowAlgorithm
+::getNextInstruction()
+{
+  if ( this->currentTask < 0 || this->currentTask > NumTasks )
+  {
+    return "-";
+  }
+
+  int nextTaskIndex  = FindTaskIndex( TaskNext[ this->currentTask ] );
+
+  if ( nextTaskIndex < 0 || nextTaskIndex > NumTasks )
+  {
+    return "-";
+  }
+
+  return TaskInstruction[ nextTaskIndex ];
 }

@@ -29,6 +29,7 @@ public:
 
   // Set the associated MRML node
   void setMRMLNode( vtkMRMLWorkflowSegmentationNode* MRMLNode );
+  void GetProcedureDefinitionFromMRMLNode();
   void GetInputParamtersFromMRMLNode();
   void GetTrainingParametersFromMRMLNode();
 
@@ -41,7 +42,13 @@ public:
   bool train();
   void addRecord( TransformRecord t );
   void addSegmentRecord( TransformRecord t );
-  int getCurrentTask();
+  void UpdateTask();
+
+  std::string getCurrentTask();
+  std::string getCurrentInstruction();
+  std::string getNextTask();
+  std::string getNextInstruction();
+  int FindTaskIndex( std::string name );
   
   std::vector<double> CalculateTaskProportions();
 
@@ -72,8 +79,13 @@ private:
   int currentTask;
   int prevTask;
 
-  // All the input parameters
+  // Procedure definition
   int NumTasks;
+  std::vector<std::string> TaskName;
+  std::vector<std::string> TaskInstruction;
+  std::vector<std::string> TaskNext;
+
+  // All the input parameters
   double FilterWidth;
   int OrthogonalOrder;
   int OrthogonalWindow;

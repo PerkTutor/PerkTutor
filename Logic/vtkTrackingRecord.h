@@ -67,10 +67,12 @@ public:
 
 private:
 
-	TranslationXYZ trans;
-	RotationQuaternion quat;
-	double time;
-	std::string deviceName;
+  static const int TRACKINGRECORD_SIZE = 7;
+
+  TranslationXYZ trans;
+  RotationQuaternion quat;
+  double time;
+  std::string deviceName;
 
 };
 
