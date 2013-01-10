@@ -1,5 +1,5 @@
 
-project(vtkSlicer${qt_module_name}ModuleMRML)
+project(vtkSlicer${MODULE_NAME}ModuleMRML)
 
 #
 # See CMake/SlicerMacroBuildModuleMRML.cmake for details
