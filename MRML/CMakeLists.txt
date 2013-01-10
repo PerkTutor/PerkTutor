@@ -1,46 +1,37 @@
+project(vtkSlicer${MODULE_NAME}ModuleMRML)
 
-project(vtkSlicer${qt_module_name}ModuleMRML)
+set(KIT ${PROJECT_NAME})
 
-#
-# See CMake/SlicerMacroBuildModuleMRML.cmake for details
-#
+set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_MRML_EXPORT")
 
-set(module_mrml_name "${PROJECT_NAME}")
-
-# The header '${module_mrml_name}Export.h' will be automatically configured.
-set(module_mrml_export_directive "VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT")
-
-# Debug
-#MESSAGE( STATUS "WorkflowSegmentation ====================================" )
-#MESSAGE( STATUS "Included: ${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF" )
-
-
-
-# Additional directories to include
-set(module_mrml_include_directories
+set(${KIT}_INCLUDE_DIRECTORIES
   ${Slicer_Base_INCLUDE_DIRS}
-  #${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF/MRML
   )
 
-# Source files
-set(module_mrml_SRCS
+# --------------------------------------------------------------------------
+# Sources
+
+set(${KIT}_SRCS
   vtkMRMLWorkflowSegmentationNode.cxx
   vtkMRMLWorkflowSegmentationNode.h
   )
 
-# Additional Target libraries
-set(module_mrml_target_libraries
+SET (${KIT}_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "" FORCE)
+
+# --------------------------------------------------------------------------
+# Build the library
+
+set(${KIT}_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
-  #vtkSlicerOpenIGTLinkIFModuleMRML
   vtkSlicerAnnotationsModuleMRML 
   )
 
 SlicerMacroBuildModuleMRML(
-  NAME ${module_mrml_name}
-  EXPORT_DIRECTIVE ${module_mrml_export_directive}
-  INCLUDE_DIRECTORIES ${module_mrml_include_directories}
-  SRCS ${module_mrml_SRCS}
-  TARGET_LIBRARIES ${module_mrml_target_libraries}
+  NAME ${KIT}
+  EXPORT_DIRECTIVE ${${KIT}_EXPORT_DIRECTIVE}
+  INCLUDE_DIRECTORIES ${${KIT}_INCLUDE_DIRECTORIES}
+  SRCS ${${KIT}_SRCS}
+  TARGET_LIBRARIES ${${KIT}_TARGET_LIBRARIES}
   )
