@@ -35,24 +35,46 @@ vtkRecordLog* vtkRecordLog
 {
   // Create a new procedure object
   vtkRecordLog* newRecordLog = vtkRecordLog::New();
+  newRecordLog->Initialize( this->numRecords, this->recordSize );
+
+  TimeLabelRecord currRecord;
+  currRecord.initialize( this->recordSize, 0.0 );
 
   // Iterate over all tracking records in the current procedure, and add to new
-  for ( int i = 0; i < numRecords; i++ )
+  for ( int i = 0; i < this->numRecords; i++ )
   {
-	TimeLabelRecord currRecord;
 
-	for ( int d = 0; d < recordSize; d++ )
+	for ( int d = 0; d < this->recordSize; d++ )
 	{
-      currRecord.add( GetRecordAt(i).get(d) );
+      currRecord.set( d, this->GetRecordAt(i).get(d) );
 	}
 
-	currRecord.setTime( GetRecordAt(i).getTime() );
-	currRecord.setLabel( GetRecordAt(i).getLabel() );
-    newRecordLog->AddRecord( currRecord );
+	currRecord.setTime( this->GetRecordAt(i).getTime() );
+	currRecord.setLabel( this->GetRecordAt(i).getLabel() );
+    newRecordLog->SetRecord( i, currRecord );
 
   }
   
   return newRecordLog;
+}
+
+
+
+void vtkRecordLog
+::Initialize( int initNumRecords, int initRecordSize )
+{
+  // Create an empty time label record
+  TimeLabelRecord emptyRecord;
+  emptyRecord.initialize( initRecordSize, 0.0 );
+  emptyRecord.setLabel( 0 );
+  emptyRecord.setTime( 0.0 );
+
+  //Set record to be a vector of these empty records
+  records = std::vector<TimeLabelRecord>( initNumRecords, emptyRecord );
+
+  numRecords = initNumRecords;
+  recordSize = initRecordSize;
+
 }
 
 
@@ -74,6 +96,17 @@ void vtkRecordLog
 }
 
 
+void vtkRecordLog
+::SetRecord( int index, TimeLabelRecord newRecord )
+{
+  // Only do something if the index and size are valid
+  if ( index >= 0 && index < numRecords && newRecord.size() == recordSize )
+  {
+    records[index] = newRecord;
+  }
+}
+
+
 TimeLabelRecord vtkRecordLog
 ::GetRecordAt( int index )
 {
@@ -88,28 +121,38 @@ int vtkRecordLog
 }
 
 
+int vtkRecordLog
+::RecordSize()
+{
+  return recordSize;
+}
+
+
 
 vtkRecordLog* vtkRecordLog
 ::Trim( int start, int end )
 {
 
-  // Create a new procedure object
+  // Include the endpoints
   vtkRecordLog* trimRecordLog = vtkRecordLog::New();
+  trimRecordLog->Initialize( end - start + 1, this->recordSize );
+
+  TimeLabelRecord currRecord;
+  currRecord.initialize( this->recordSize, 0.0 );
 
   // Iterate over all tracking records in the current procedure, and add to new
+  int count = 0;
   for ( int i = start; i <= end; i++ )
   {
-
-	TimeLabelRecord currRecord;
-
-	for ( int d = 0; d < recordSize; d++ )
+	for ( int d = 0; d < this->recordSize; d++ )
 	{
-      currRecord.add( GetRecordAt(i).get(d) );
+      currRecord.set( d, this->GetRecordAt(i).get(d) );
 	}
 
-	currRecord.setTime( GetRecordAt(i).getTime() );
-	currRecord.setLabel( GetRecordAt(i).getLabel() );
-    trimRecordLog->AddRecord( currRecord );
+	currRecord.setTime( this->GetRecordAt(i).getTime() );
+	currRecord.setLabel( this->GetRecordAt(i).getLabel() );
+    trimRecordLog->SetRecord( count, currRecord );
+	count++;
 
   }
 
@@ -122,7 +165,7 @@ vtkRecordLog* vtkRecordLog
 vtkRecordLog* vtkRecordLog
 ::Concatenate( vtkRecordLog* otherRecordLog )
 {
-  // First, deep copy the current record log and the concatenating one
+  // First, deep copy the current record log and the concatenating one, so two record logs do not have access to the same record object
   vtkRecordLog* currRecordLogCopy;
   vtkRecordLog* otherRecordLogCopy;
 
@@ -132,14 +175,25 @@ vtkRecordLog* vtkRecordLog
   // Create a new record log and assign the copies to it
   vtkRecordLog* catRecordLog = vtkRecordLog::New();
 
+  // Ensure that the record size are the same
+  if ( this->recordSize != otherRecordLog->recordSize )
+  {
+    return currRecordLogCopy;
+  }
+
+  catRecordLog->Initialize( this->numRecords + otherRecordLog->numRecords, this->recordSize );
+
+  int count = 0;
   for( int i = 0; i < currRecordLogCopy->numRecords; i++ )
   {
-    catRecordLog->AddRecord( currRecordLogCopy->records[i] );
+    catRecordLog->SetRecord( count, currRecordLogCopy->records[i] );
+	count++;
   }
 
   for( int i = 0; i < otherRecordLogCopy->numRecords; i++ )
   {
-    catRecordLog->AddRecord( otherRecordLogCopy->records[i] );
+    catRecordLog->SetRecord( count, otherRecordLogCopy->records[i] );
+	count++;
   }
 
   return catRecordLog;
@@ -158,23 +212,28 @@ vtkRecordLog* vtkRecordLog
 
   // Iterate over all records in both logs and stick them together
   vtkRecordLog* catRecordLog = vtkRecordLog::New();
+  catRecordLog->Initialize( this->numRecords, this->recordSize + otherRecordLog->recordSize );
+
+  TimeLabelRecord currRecord;
+  currRecord.initialize( this->recordSize + otherRecordLog->recordSize, 0.0 );
 
   for ( int i = 0; i < this->numRecords; i++ )
   {
-    TimeLabelRecord currRecord;
-
+	int count = 0;
     for ( int d = 0; d < this->recordSize; d++ )
 	{
-      currRecord.add( this->GetRecordAt(i).get(d) );
+      currRecord.set( count, this->GetRecordAt(i).get(d) );
+	  count++;
 	}
 	for ( int d = 0; d < otherRecordLog->recordSize; d++ )
 	{
-	  currRecord.add( otherRecordLog->GetRecordAt(i).get(d) );
+	  currRecord.set( count, otherRecordLog->GetRecordAt(i).get(d) );
+	  count++;
 	}
 
 	currRecord.setTime( this->GetRecordAt(i).getTime() );
 	currRecord.setLabel( this->GetRecordAt(i).getLabel() );
-    catRecordLog->AddRecord( currRecord );
+    catRecordLog->SetRecord( i, currRecord );
   }
 
   return catRecordLog;
@@ -187,24 +246,28 @@ vtkRecordLog* vtkRecordLog
 
   // Iterate over all records in log and stick them together
   vtkRecordLog* catRecordLog = vtkRecordLog::New();
+  catRecordLog->Initialize( this->numRecords, this->recordSize + record.size() );
+
+  TimeLabelRecord currRecord;
+  currRecord.initialize( this->recordSize + record.size(), 0.0 );
 
   for ( int i = 0; i < this->numRecords; i++ )
   {
-
-    TimeLabelRecord currRecord;
-
+    int count = 0;
     for ( int d = 0; d < this->recordSize; d++ )
 	{
-      currRecord.add( this->GetRecordAt(i).get(d) );
+      currRecord.set( count, this->GetRecordAt(i).get(d) );
+	  count++;
 	}
 	for ( int d = 0; d < record.size(); d++ )
 	{
-	  currRecord.add( record.get(d) );
+	  currRecord.set( count, record.get(d) );
+	  count++;
 	}
 
 	currRecord.setTime( this->GetRecordAt(i).getTime() );
 	currRecord.setLabel( this->GetRecordAt(i).getLabel() );
-    catRecordLog->AddRecord( currRecord );
+    catRecordLog->SetRecord( i, currRecord );
   }
 
   return catRecordLog;
@@ -218,23 +281,31 @@ vtkRecordLog* vtkRecordLog
 {
   // Create a new record log of padded values only
   vtkRecordLog* padRecordLog = vtkRecordLog::New();
+  padRecordLog->Initialize( window, this->recordSize );
+
+  TimeLabelRecord padRecord;
+  padRecord.initialize( this->recordSize, 0.0 );
 
   // Find the average time stamp
-  double DT = ( GetRecordAt(numRecords-1).getTime() - GetRecordAt(0).getTime() ) / numRecords;
+  // Divide by numRecords - 1 because there are one fewer differences than there are stamps
+  double DT = 1.0; // TODO: Get a more intelligible default value (not a magic number)
+  if ( numRecords > 1 )
+  {
+    DT = ( GetRecordAt(numRecords-1).getTime() - GetRecordAt(0).getTime() ) / ( numRecords - 1 );
+  }
 
   // Calculate the values and time stamp
-  for ( int i = window; i > 0; i-- )
+  for ( int i = 0; i < window; i++ )
   {
-	TimeLabelRecord padRecord;
 
 	for ( int d = 0; d < recordSize; d++ )
 	{
-	   padRecord.add( GetRecordAt(0).get(d) );
+	   padRecord.set( d, this->GetRecordAt(0).get(d) );
 	}
 
-	padRecord.setTime( GetRecordAt(0).getTime() - i * DT );
-	padRecord.setLabel( GetRecordAt(0).getLabel() );
-	padRecordLog->AddRecord( padRecord );
+	padRecord.setTime( this->GetRecordAt(0).getTime() - ( i + 1 ) * DT );
+	padRecord.setLabel( this->GetRecordAt(0).getLabel() );
+	padRecordLog->SetRecord( window - ( i + 1 ), padRecord );
 
   }
 
@@ -247,25 +318,20 @@ ValueRecord vtkRecordLog
 {
   // The record log will only hold one record at the end
   ValueRecord meanRecord;
-
-  // Iterate over all dimensions
-  for ( int d = 0; d < recordSize; d++ )
-  {
-    meanRecord.add( 0.0 );
-  }
+  meanRecord.initialize( this->recordSize, 0.0 );
 
   // For each time
-  for ( int i = 0; i < numRecords; i++ )
+  for ( int i = 0; i < this->numRecords; i++ )
   {
 	// Iterate over all dimensions
-	for ( int d = 0; d < recordSize; d++ )
+	for ( int d = 0; d < this->recordSize; d++ )
 	{
 	  meanRecord.set( d, meanRecord.get( d ) + GetRecordAt(i).get(d) );
 	}
   }
 
   // Divide by the number of records
-  for ( int d = 0; d < recordSize; d++ )
+  for ( int d = 0; d < this->recordSize; d++ )
   {
     meanRecord.set( d, meanRecord.get(d) / numRecords );
   }
@@ -278,36 +344,43 @@ ValueRecord vtkRecordLog
 std::vector<LabelRecord> vtkRecordLog
 ::Distances( vtkRecordLog* otherRecLog )
 {
-  // Create a vector of order records
-  std::vector<LabelRecord> dists;
+
+   // Create a vector of order records
+  LabelRecord distRecord;
+  std::vector<LabelRecord> dists ( numRecords, distRecord );  
 
   // First, ensure that the records are the same size
   if ( this->recordSize != otherRecLog->recordSize )
   {
     return dists;
   }
+  
+  double currSum;
+  double currDiff;
 
   // Otherwise, calculate the vectors based on distances from this's records
   for ( int i = 0; i < numRecords; i++ )
   {
-    // Create a new order record
-    LabelRecord distRecord;
+    // Initialize values, so we don't change its size so many times
+	distRecord.initialize( otherRecLog->Size(), 0.0 );
 
-    for ( int j = 0; j < otherRecLog->numRecords; j++ )
+    for ( int j = 0; j < otherRecLog->Size(); j++ )
 	{
+      
       // Initialize the sum to zero
-	  double currSum = 0.0;
+	  currSum = 0.0;
 	  for ( int d = 0; d < recordSize; d++ )
 	  {
-        currSum += ( this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d) ) * ( this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d) );
+	    currDiff = this->GetRecordAt(i).get(d) - otherRecLog->GetRecordAt(j).get(d);
+        currSum += currDiff * currDiff;
 	  }
 	  // Add to the current order record
-	  distRecord.add( sqrt( currSum ) );
+	  distRecord.set( j, sqrt( currSum ) );
 	}
 
 	// Add the current order record to the vector
 	distRecord.setLabel( i );
-	dists.push_back( distRecord );
+	dists[i] = distRecord;
 
   }
 
@@ -321,13 +394,17 @@ std::vector<LabelRecord> vtkRecordLog
 ::Distances( std::vector<ValueRecord> valueRecords )
 {
   // Create a vector of order records
-  std::vector<LabelRecord> dists;
+  LabelRecord distRecord;
+  std::vector<LabelRecord> dists ( numRecords, distRecord );  
+  
+  double currSum;
+  double currDiff;
 
   // Otherwise, calculate the vectors based on distances from this's records
   for ( int i = 0; i < numRecords; i++ )
   {
-    // Create a new order record
-    LabelRecord distRecord;
+    // Initialize values, so we don't change its size so many times
+	distRecord.initialize( valueRecords.size(), 0.0 );
 
     for ( int j = 0; j < valueRecords.size(); j++ )
 	{
@@ -339,22 +416,52 @@ std::vector<LabelRecord> vtkRecordLog
       }
 
       // Initialize the sum to zero
-	  double currSum = 0.0;
+	  currSum = 0.0;
 	  for ( int d = 0; d < recordSize; d++ )
 	  {
-        currSum += ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) ) * ( this->GetRecordAt(i).get(d) - valueRecords[j].get(d) );
+	    currDiff = this->GetRecordAt(i).get(d) - valueRecords[j].get(d);
+        currSum += currDiff * currDiff;
 	  }
 	  // Add to the current order record
-	  distRecord.add( sqrt( currSum ) );
+	  distRecord.set( j, sqrt( currSum ) );
 	}
 
 	// Add the current order record to the vector
 	distRecord.setLabel( i );
-	dists.push_back( distRecord );
+	dists[i] = distRecord;
 
   }
 
   return dists;
+
+}
+
+
+int vtkRecordLog
+::ClosestRecord( ValueRecord valueRecord )
+{
+  if ( this->recordSize != valueRecord.size() )
+  {
+    return -1;
+  }
+
+  // Calculate the distance to this point
+  std::vector<ValueRecord> valueRecords ( 1, valueRecord );
+  std::vector<LabelRecord> dist = this->Distances( valueRecords );
+
+  // Now find the closest point
+  double minDist = dist[0].get( 0 );
+  int minRecord = 0;
+  for ( int i = 0; i < this->numRecords; i++ )
+  {
+    if ( dist[i].get( 0 ) < minDist )
+	{
+      minDist = dist[i].get( 0 );
+	  minRecord = i;
+	}
+  }
+
+  return minRecord;
 
 }
 
@@ -372,53 +479,55 @@ vtkRecordLog* vtkRecordLog
 
   // Otherwise, calculate the derivative
   vtkRecordLog* derivRecordLog = vtkRecordLog::New();
+  derivRecordLog->Initialize( this->numRecords, this->recordSize );
+
+  TimeLabelRecord derivRecord;
+  derivRecord.initialize( this->recordSize, 0.0 );
+
   double DT;
 
-
   // First
-  DT = GetRecordAt(1).getTime() - GetRecordAt(0).getTime();
-  TimeLabelRecord firstRecord;
+  DT = this->GetRecordAt(1).getTime() - this->GetRecordAt(0).getTime();
 
-  for( int d = 0; d < recordSize; d++ )
+  for( int d = 0; d < this->recordSize; d++ )
   {
-    firstRecord.add( ( GetRecordAt(1).get(d) - GetRecordAt(0).get(d) ) / DT );
+    derivRecord.set( d, ( this->GetRecordAt(1).get(d) - this->GetRecordAt(0).get(d) ) / DT );
   }
 	
-  firstRecord.setTime( GetRecordAt(0).getTime() );
-  firstRecord.setLabel( GetRecordAt(0).getLabel() );
-  derivRecordLog->AddRecord( firstRecord );
+  derivRecord.setTime( this->GetRecordAt(0).getTime() );
+  derivRecord.setLabel( this->GetRecordAt(0).getLabel() );
+  derivRecordLog->SetRecord( 0, derivRecord );
 
 
   // Middle
-  for ( int i = 1; i < numRecords - 1; i++ )
+  for ( int i = 1; i < this->numRecords - 1; i++ )
   {
 
-	DT = GetRecordAt(i+1).getTime() - GetRecordAt(i-1).getTime();
-    TimeLabelRecord midRecord;
+	DT = this->GetRecordAt(i+1).getTime() - this->GetRecordAt(i-1).getTime();
 
-	for( int d = 0; d < recordSize; d++ )
+	for( int d = 0; d < this->recordSize; d++ )
 	{
-      midRecord.add( ( GetRecordAt(i+1).get(d) - GetRecordAt(i-1).get(d) ) / DT );
+      derivRecord.set( d, ( this->GetRecordAt(i+1).get(d) - this->GetRecordAt(i-1).get(d) ) / DT );
 	}
 	
-	midRecord.setTime( GetRecordAt(i).getTime() );
-	midRecord.setLabel( GetRecordAt(i).getLabel() );
-	derivRecordLog->AddRecord( midRecord );
+	derivRecord.setTime( this->GetRecordAt(i).getTime() );
+	derivRecord.setLabel( this->GetRecordAt(i).getLabel() );
+	derivRecordLog->SetRecord( i, derivRecord );
 
   }
+
 
   // Last
-  DT = GetRecordAt(numRecords-1).getTime() - GetRecordAt(numRecords-2).getTime();
-  TimeLabelRecord lastRecord;
+  DT = this->GetRecordAt(numRecords-1).getTime() - this->GetRecordAt(numRecords-2).getTime();
 
-  for( int d = 0; d < recordSize; d++ )
+  for( int d = 0; d < this->recordSize; d++ )
   {
-    lastRecord.add( ( GetRecordAt(numRecords-1).get(d) - GetRecordAt(numRecords-2).get(d) ) / DT );
+    derivRecord.set( d, ( this->GetRecordAt(numRecords-1).get(d) - this->GetRecordAt(numRecords-2).get(d) ) / DT );
   }
 	
-  lastRecord.setTime( GetRecordAt(numRecords-1).getTime() );
-  lastRecord.setLabel( GetRecordAt(numRecords-1).getLabel() );
-  derivRecordLog->AddRecord( lastRecord );
+  derivRecord.setTime( this->GetRecordAt(numRecords-1).getTime() );
+  derivRecord.setLabel( this->GetRecordAt(numRecords-1).getLabel() );
+  derivRecordLog->SetRecord( this->numRecords - 1, derivRecord );
 
   // Return the order - 1 derivative
   return derivRecordLog->Derivative( order - 1 );
@@ -432,15 +541,10 @@ ValueRecord vtkRecordLog
 {
   // The record log will only hold one record at the end
   ValueRecord intRecord;
-
-  // Iterate over all dimensions
-  for ( int d = 0; d < recordSize; d++ )
-  {
-    intRecord.add( 0.0 );
-  }
+  intRecord.initialize( this->recordSize, 0.0 );
 
   // For each time
-  for ( int i = 1; i < numRecords - 1; i++ )
+  for ( int i = 1; i < numRecords; i++ )
   {
 	// Find the time difference
     double DT = GetRecordAt(i).getTime() - GetRecordAt(i-1).getTime();
@@ -463,9 +567,15 @@ std::vector<LabelRecord> vtkRecordLog
 {
 
   // Create a copy of the current record log
-  vtkRecordLog* recLogCopy = vtkRecordLog::New();  
-  std::vector<LabelRecord> legVector;
-  
+  vtkRecordLog* recLogCopy = vtkRecordLog::New();
+  recLogCopy->Initialize( this->numRecords, this->recordSize );
+
+  LabelRecord legRecord;
+  legRecord.initialize( recordSize, 0.0 );
+  std::vector<LabelRecord> legVector( order + 1, legRecord );
+
+  TimeLabelRecord currRecord;
+
   // Calculate the time adjustment (need range -1 to 1)
   double startTime = GetRecordAt(0).getTime();
   double endTime = GetRecordAt( numRecords - 1 ).getTime();
@@ -473,33 +583,37 @@ std::vector<LabelRecord> vtkRecordLog
   
   for ( int i = 0; i < numRecords; i++ )
   {
-    TimeLabelRecord currRecord;
 	currRecord = GetRecordAt(i);
 	currRecord.setTime( ( currRecord.getTime() - startTime ) * 2.0 / rangeTime - 1 ); // tmin - tmax --> -1 - 1
-	recLogCopy->AddRecord( currRecord );
+	recLogCopy->SetRecord( i, currRecord );
   }
 
   // Create a copy of the record log for each degree of Legendre polynomial
   for ( int o = 0; o <= order; o++ )
   {
-    vtkRecordLog* orderRecLogCopy = recLogCopy->DeepCopy();
+	vtkRecordLog* orderRecLogCopy = vtkRecordLog::New();
+    orderRecLogCopy->Initialize( this->numRecords, this->recordSize );
+	currRecord.initialize( this->recordSize, 0.0 );
 
     // Multiply the values by the Legendre polynomials
     for ( int i = 0; i < numRecords; i++ )
     {
-	  double legPoly = LegendrePolynomial( orderRecLogCopy->GetRecordAt(i).getTime(), o );
+	  double legPoly = LegendrePolynomial( recLogCopy->GetRecordAt(i).getTime(), o );
 
       for ( int d = 0; d < recordSize; d++ )
 	  {	    
-        orderRecLogCopy->records[i].set( d, orderRecLogCopy->GetRecordAt(i).get(d) * legPoly );
+        currRecord.set( d, recLogCopy->GetRecordAt(i).get(d) * legPoly );
 	  }
+
+	  currRecord.setTime( recLogCopy->GetRecordAt(i).getTime() );
+	  currRecord.setLabel( recLogCopy->GetRecordAt(i).getLabel() );
+
+	  orderRecLogCopy->SetRecord( i, currRecord );
 
     }
 
 	// Integrate to get the Legendre coefficients for the particular order
-	LabelRecord legRecord;
-	legRecord.values = orderRecLogCopy->Integrate().values;
-    legVector.push_back( legRecord );	
+	legVector[o].values = orderRecLogCopy->Integrate().values;
 	legVector[o].setLabel( o );
 
   }
@@ -552,12 +666,15 @@ vtkRecordLog* vtkRecordLog
 {
   // Assume a Gaussian filter
   vtkRecordLog* gaussRecordLog = vtkRecordLog::New();
+  gaussRecordLog->Initialize( this->numRecords, this->recordSize );
+
+  TimeLabelRecord gaussRecord;
 
   // For each record
   for ( int i = 0; i < numRecords; i++ )
   {
-    // Create a new record valuestor
-    TimeLabelRecord gaussRecord;
+    // Create a new record    
+	gaussRecord.initialize( recordSize, 0.0 );
 
     // Iterate over all dimensions
 	for ( int d = 0; d < recordSize; d++ )
@@ -569,7 +686,7 @@ vtkRecordLog* vtkRecordLog
       for ( int j = 0; j < numRecords; j++ )
       {
         // Calculate the values of the Gaussian distribution at this time
-	    double gaussWeight = exp( - ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) * ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width );
+	    double gaussWeight = exp( - ( ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width ) * ( ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width ) / 2 );
 		// Add the product with the values to function sum
         weightSum = weightSum + GetRecordAt(j).get(d) * gaussWeight;
 		// Add the values to normSum
@@ -577,14 +694,15 @@ vtkRecordLog* vtkRecordLog
       }
 
 	  // Add to the new values
-	  gaussRecord.add( weightSum / normSum );
+	  gaussRecord.set( d, weightSum / normSum );
 
 	}
 
-	  // Add the new record vector to the record log
-	  gaussRecord.setTime( GetRecordAt(i).getTime() );
-	  gaussRecord.setLabel( GetRecordAt(i).getLabel() );
-      gaussRecordLog->AddRecord( gaussRecord );
+	// Add the new record vector to the record log
+	gaussRecord.setTime( GetRecordAt(i).getTime() );
+	gaussRecord.setLabel( GetRecordAt(i).getLabel() );
+    gaussRecordLog->SetRecord( i, gaussRecord );
+
   }
 
   return gaussRecordLog;
@@ -600,6 +718,10 @@ vtkRecordLog* vtkRecordLog
 
   // Create a new record log with the orthogonally transformed data
   vtkRecordLog* orthRecordLog = vtkRecordLog::New();
+  orthRecordLog->Initialize( this->numRecords, this->recordSize * ( order + 1 ) );
+
+  TimeLabelRecord currLegRecord;
+  currLegRecord.initialize( this->recordSize * ( order + 1 ), 0.0 );
 
   // Iterate over all data, and calculate Legendre expansion coefficients
   for ( int i = 0; i < this->numRecords; i++ )
@@ -609,21 +731,22 @@ vtkRecordLog* vtkRecordLog
 	
 	// Create a new matrix to which the Legendre coefficients will be assigned
 	std::vector<LabelRecord> legCoeffMatrix = trimRecordLog->LegendreTransformation( order );
-	TimeLabelRecord currLegRecord;
 
 	// Calculate the Legendre coefficients: 2D -> 1D
+	int count = 0;
 	for ( int o = 0; o <= order; o++ )
     {
       for ( int d = 0; d < recordSize; d++ )
 	  {
-        currLegRecord.add( legCoeffMatrix[o].get(d) );
+        currLegRecord.set( count, legCoeffMatrix[o].get(d) );
+		count++;
 	  }
     }
 
 	// New value record to add to the record log
     currLegRecord.setTime( GetRecordAt(i).getTime() );
 	currLegRecord.setLabel( GetRecordAt(i).getLabel() );
-	orthRecordLog->AddRecord( currLegRecord );
+	orthRecordLog->SetRecord( i, currLegRecord );
 
   }
 
@@ -636,7 +759,8 @@ vnl_matrix<double>* vtkRecordLog
 ::CovarianceMatrix()
 {
   // Copy the current record log
-  vtkRecordLog* covRecLog = this->DeepCopy();
+  vtkRecordLog* covRecLog = vtkRecordLog::New();
+  covRecLog->Initialize( this->numRecords, this->recordSize );
 
   // Construct a recordSize by recordSize vnl matrix
   vnl_matrix<double> *cov = new vnl_matrix<double>( recordSize, recordSize );
@@ -644,27 +768,34 @@ vnl_matrix<double>* vtkRecordLog
 
   // Determine the mean, subtract the mean from each record
   ValueRecord meanRecord = this->Mean();
+  TimeLabelRecord currRecord;
+  currRecord.initialize( this->recordSize, 0.0 );
 
-  for ( int i = 0; i < numRecords; i++ )
+  for ( int i = 0; i < this->numRecords; i++ )
   {
-    for( int d = 0; d < recordSize; d++ )
+    for( int d = 0; d < this->recordSize; d++ )
 	{
-	  covRecLog->records[i].set( d, covRecLog->GetRecordAt(i).get(d) - meanRecord.get(d) );
+	  currRecord.set( d, this->GetRecordAt(i).get(d) - meanRecord.get(d) );
 	}
+
+	currRecord.setTime( this->GetRecordAt(i).getTime() );
+	currRecord.setLabel( this->GetRecordAt(i).getLabel() );
+
+	covRecLog->SetRecord( i, currRecord );
   }
 
   // Pick two dimensions, and find their covariance
-  for ( int d1 = 0; d1 < recordSize; d1++ )
+  for ( int d1 = 0; d1 < this->recordSize; d1++ )
   {
-    for ( int d2 = 0; d2 < recordSize; d2++ )
+    for ( int d2 = 0; d2 < this->recordSize; d2++ )
 	{
 	  // Iterate over all times
-	  for ( int i = 0; i < numRecords; i++ )
+	  for ( int i = 0; i < this->numRecords; i++ )
 	  {
 	    cov->put( d1, d2, cov->get( d1, d2 ) + covRecLog->GetRecordAt(i).get(d1) * covRecLog->GetRecordAt(i).get(d2) );
 	  }
 	  // Divide by the number of records
-	  cov->put( d1, d2, cov->get( d1, d2 ) / numRecords );
+	  cov->put( d1, d2, cov->get( d1, d2 ) / this->numRecords );
 	}
   }
 
@@ -687,22 +818,22 @@ std::vector<LabelRecord> vtkRecordLog
   // Note: eigenvectors are ordered in increasing eigenvalue ( 0 = smallest, end = biggest )
 
   // Grab only the most important eigenvectors
-  std::vector<LabelRecord> prinComps;
+  LabelRecord currPrinComp;
+  currPrinComp.initialize( this->recordSize, 0.0 );
+
+  std::vector<LabelRecord> prinComps ( numComp, currPrinComp );
 
   // TODO: Prevent more prinicipal components than original dimensions
-  for ( int i = eigenvectors.rows() - 1; i > eigenvectors.rows() - 1 - numComp; i-- )
+  for ( int i = eigenvectors.cols() - 1; i > eigenvectors.cols() - 1 - numComp; i-- )
   {
-
-    // Add a new principal component
-    LabelRecord currPrinComp;
     
-    for ( int j = 0; j < recordSize; j++ )
+    for ( int d = 0; d < this->recordSize; d++ )
 	{
-	  currPrinComp.add( eigenvectors.get( j, i ) );
+	  currPrinComp.set( d, eigenvectors.get( d, i ) );
 	}
 
-	currPrinComp.setLabel( i );
-	prinComps.push_back( currPrinComp );
+	currPrinComp.setLabel( eigenvectors.cols() - 1 - i );
+	prinComps[ eigenvectors.cols() - 1 - i ] = currPrinComp;
 
   }
 
@@ -766,7 +897,7 @@ std::vector<LabelRecord> vtkRecordLog
   for ( int k = 0; k < numClusters; k++ )
   {
 
-	// Use the mean of all points for the first clusters
+	// Use closest point to the mean of all points for the first centroid
     if ( k == 0 )
 	{
 	  // An order record for the current cluster
@@ -971,22 +1102,10 @@ std::vector<LabelRecord> vtkRecordLog
 {
 
   // For each cluster, have an order record and a count
-  std::vector<LabelRecord> centroids;
-  std::vector<int> memberCount;
-
-  // Initialize our vector of centroids, since we know the number of clusters
-  for ( int c = 0; c < numClusters; c++ )
-  {
-    LabelRecord blankRecord;
-	for ( int d = 0; d < recordSize; d++ )
-	{
-	  blankRecord.add( 0.0 );
-	}
-	blankRecord.setLabel( c );
-	centroids.push_back( blankRecord );
-	memberCount.push_back( 0 );
-  }
-
+  LabelRecord initCentroid;
+  initCentroid.initialize( this->recordSize, 0.0 );
+  std::vector<LabelRecord> centroids ( numClusters, initCentroid );
+  std::vector<int> memberCount ( numClusters, 0 );;
 
   // Iterate over all time
   for ( int i = 0; i < numRecords; i++ )
@@ -1007,6 +1126,7 @@ std::vector<LabelRecord> vtkRecordLog
 	{
 	  centroids[c].set( d, centroids[c].get(d) / memberCount[c] );
 	}
+	centroids[c].setLabel( c );
   }
 
   return centroids;

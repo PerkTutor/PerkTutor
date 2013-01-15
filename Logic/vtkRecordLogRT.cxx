@@ -37,6 +37,13 @@ TimeLabelRecord vtkRecordLogRT
 }
 
 
+void vtkRecordLogRT
+::SetRecordRT( TimeLabelRecord newRecord )
+{
+  return SetRecord( numRecords - 1, newRecord );
+}
+
+
 LabelRecord vtkRecordLogRT
 ::DistancesRT( std::vector<ValueRecord> valueRecords )
 {

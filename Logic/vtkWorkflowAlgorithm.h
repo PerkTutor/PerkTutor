@@ -36,6 +36,7 @@ public:
   // Read training procedures from file
   void ReadAllProcedures( std::vector<std::string> fileNames );
   void ReadProcedure( std::string fileName );
+  void SegmentProcedure( std::string fileName );
 
   // Training and testing phases
   void InitializeSegmentationRT();
@@ -51,6 +52,7 @@ public:
   int FindTaskIndex( std::string name );
   
   std::vector<double> CalculateTaskProportions();
+  std::vector<int> CalculateTaskCentroids();
 
   vtkWorkflowAlgorithm();
   ~vtkWorkflowAlgorithm();

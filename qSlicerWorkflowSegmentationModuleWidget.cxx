@@ -313,6 +313,11 @@ void qSlicerWorkflowSegmentationModuleWidget
     
 	d->logic()->GetWorkflowAlgorithm()->ReadAllProcedures( trainingFileVector );
 
+	// TODO: This is for testing only
+	/*
+	d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( trainingFileVector[0] );
+    */
+
     dialog.close();
     
   }
