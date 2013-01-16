@@ -23,8 +23,11 @@ public:
   vtkRecordLog* DeepCopy();
 
   int Size();
+  int RecordSize();
 
+  void Initialize ( int initNumRecords, int initRecordSize );
   void AddRecord( TimeLabelRecord newRecord );
+  void SetRecord( int index, TimeLabelRecord newRecord );
   TimeLabelRecord GetRecordAt( int index );
   vtkRecordLog* Trim( int start, int end );
 
@@ -32,6 +35,7 @@ public:
 
   std::vector<LabelRecord> Distances( vtkRecordLog* otherRecLog );
   std::vector<LabelRecord> Distances( std::vector<ValueRecord> valueRecords );
+  int ClosestRecord( ValueRecord valueRecord );
 
   vtkRecordLog* Derivative( int order = 1 );
   ValueRecord Integrate();

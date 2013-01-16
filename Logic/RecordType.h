@@ -9,6 +9,7 @@ class ValueRecord
 {
 public:
   std::vector<double> values;
+  void initialize( int size, double value ) { values = std::vector<double> ( size, value ); };
   void add( double newValue ) { values.push_back( newValue ); };
   void set( int index, double newValue ){ values[index] = newValue; };
   void increment( int index ){ values[index]++; };

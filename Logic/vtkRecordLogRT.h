@@ -24,6 +24,7 @@ public:
   void SetCentroids( std::vector<LabelRecord> newCentroids );
 
   TimeLabelRecord GetRecordRT();
+  void SetRecordRT( TimeLabelRecord newRecord );
 
   LabelRecord DistancesRT( std::vector<ValueRecord> valueRecords );
 

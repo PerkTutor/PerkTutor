@@ -225,12 +225,12 @@ void vtkTrackingRecord
 	quat.q4 = - quat.q4;
   }
 
-  double norm = quat.q1 * quat.q1 + quat.q2 * quat.q2 + quat.q3 * quat.q3 + quat.q4 * quat.q4;
+  double norm = sqrt( quat.q1 * quat.q1 + quat.q2 * quat.q2 + quat.q3 * quat.q3 + quat.q4 * quat.q4 );
 
   quat.q1 = quat.q1 / norm;
-  quat.q2 = quat.q1 / norm;
-  quat.q3 = quat.q1 / norm;
-  quat.q4 = quat.q1 / norm;
+  quat.q2 = quat.q2 / norm;
+  quat.q3 = quat.q3 / norm;
+  quat.q4 = quat.q4 / norm;
 
 }
 
