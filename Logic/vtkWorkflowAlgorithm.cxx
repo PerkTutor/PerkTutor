@@ -693,7 +693,7 @@ void vtkWorkflowAlgorithm
   // Check if there are any new transforms to process
   if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
   {
-    if ( this->MRMLNode->GetIsTrained() )
+    if ( this->MRMLNode->GetAlgorithmTrained() )
 	{
 	  addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
 	}

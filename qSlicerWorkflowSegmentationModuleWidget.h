@@ -54,7 +54,7 @@ protected slots:
   void insertAnnotation();
   void clearAnnotations();
 
-  
+  void enableButtons();  
   void updateGUI();
 
 private:
