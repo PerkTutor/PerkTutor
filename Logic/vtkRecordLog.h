@@ -19,6 +19,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkRecordLog *New();
+  vtkTypeMacro(vtkRecordLog, vtkObject);
 
   vtkRecordLog* DeepCopy();
 

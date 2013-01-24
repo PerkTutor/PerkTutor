@@ -91,7 +91,15 @@ vtkStandardNewMacro( vtkWorkflowAlgorithm );
 vtkWorkflowAlgorithm
 ::vtkWorkflowAlgorithm()
 {
+  this->procedureRT = NULL;
+  this->derivativeProcedureRT = NULL;
+  this->filterProcedureRT = NULL;
+  this->orthogonalProcedureRT = NULL;
+  this->principalProcedureRT = NULL;
+  this->centroidProcedureRT = NULL;
+  this->MarkovRT = NULL;
 }
+
 
 vtkWorkflowAlgorithm
 ::~vtkWorkflowAlgorithm()
@@ -101,6 +109,23 @@ vtkWorkflowAlgorithm
     delete [] procedures.at(i);
   }
   procedures.clear();
+
+  if ( this->procedureRT != NULL )
+  {
+    this->procedureRT->Delete();
+    this->derivativeProcedureRT->Delete();
+    this->filterProcedureRT->Delete();
+    this->orthogonalProcedureRT->Delete();
+    this->principalProcedureRT->Delete();
+    this->centroidProcedureRT->Delete();
+    this->MarkovRT->Delete();
+  }
+
+  TaskName.clear();
+  TaskInstruction.clear();
+  TaskNext.clear();
+
+  this->MRMLNode = NULL;
 }
 
 
@@ -604,14 +629,26 @@ bool vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::InitializeSegmentationRT()
 {
+
+  if ( this->procedureRT != NULL )
+  {
+    this->procedureRT->Delete();
+    this->derivativeProcedureRT->Delete();
+    this->filterProcedureRT->Delete();
+    this->orthogonalProcedureRT->Delete();
+    this->principalProcedureRT->Delete();
+    this->centroidProcedureRT->Delete();
+    this->MarkovRT->Delete();
+  }
+
   procedureRT = vtkRecordLogRT::New();
   derivativeProcedureRT = vtkRecordLogRT::New();
   filterProcedureRT = vtkRecordLogRT::New();
   orthogonalProcedureRT = vtkRecordLogRT::New();
   principalProcedureRT = vtkRecordLogRT::New();
   centroidProcedureRT = vtkRecordLogRT::New();
-
   MarkovRT = vtkMarkovModelRT::New();
+
   MarkovRT->SetSize( this->NumTasks, this->NumCentroids );
   MarkovRT->SetPi( this->Markov->GetPi() );
   MarkovRT->SetA( this->Markov->GetA() );
@@ -620,6 +657,7 @@ void vtkWorkflowAlgorithm
   indexLastProcessed = 0;
   currentTask = -1;
   prevTask = -1;
+
 }
 
 

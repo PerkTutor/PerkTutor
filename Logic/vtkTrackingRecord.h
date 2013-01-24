@@ -34,6 +34,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkTrackingRecord *New();
+  vtkTypeMacro(vtkTrackingRecord, vtkObject);
 
   vtkTrackingRecord* DeepCopy();
 

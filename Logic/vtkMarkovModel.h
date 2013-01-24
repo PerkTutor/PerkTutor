@@ -16,6 +16,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkMarkovModel *New();
+  vtkTypeMacro(vtkMarkovModel,vtkObject);
 
   vtkMarkovModel* DeepCopy();
 
