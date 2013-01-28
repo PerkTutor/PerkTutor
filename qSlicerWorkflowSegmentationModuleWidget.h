@@ -51,6 +51,8 @@ protected slots:
   void onStartButtonClicked();
   void onClearBufferButtonClicked();
 
+  void onSegmentTrackingLogButtonClicked();
+
   void insertAnnotation();
   void clearAnnotations();
 

@@ -292,7 +292,7 @@ void
 vtkMRMLWorkflowSegmentationNode
 ::SaveSegmentation()
 {
-  std::ofstream output( this->TrackingLogFileName.c_str() );
+  std::ofstream output( this->SegmentationLogFileName.c_str() );
   
   if ( ! output.is_open() )
     {
@@ -943,6 +943,14 @@ void vtkMRMLWorkflowSegmentationNode
 }
 
 
+double vtkMRMLWorkflowSegmentationNode
+::GetTimestamp()
+{
+  clock_t clock1 = clock();
+  return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+}
+
+
 double vtkMRMLWorkflowSegmentationNode::GetTotalTime()
 {
   double totalTime = 0.0;
@@ -1040,6 +1048,37 @@ void vtkMRMLWorkflowSegmentationNode::AddSegmentation( std::string task, int sec
 }
 
 
+void vtkMRMLWorkflowSegmentationNode::AddNewTransform( TransformRecord rec )
+{
+ 
+  
+    // Look for the most recent value of this transform.
+    // If the value hasn't changed, we don't record.
+  
+  std::vector< TransformRecord >::iterator trIt;
+  trIt = this->TransformsBuffer.end();
+  bool duplicate = false;
+  while ( trIt != this->TransformsBuffer.begin() )
+  {
+    trIt --;
+    if ( rec.DeviceName.compare( (*trIt).DeviceName ) == 0 )
+    {
+      if ( rec.Transform.compare( (*trIt).Transform ) == 0 )
+      {
+        duplicate = true;
+      }
+      break;
+    }
+  }
+  
+  if ( duplicate == false )
+  {
+    this->TransformsBuffer.push_back( rec );
+  }
+
+}
+
+
 void vtkMRMLWorkflowSegmentationNode::AddNewTransform( const char* TransformNodeID )
 {
   int sec = 0;
@@ -1085,36 +1124,15 @@ void vtkMRMLWorkflowSegmentationNode::AddNewTransform( const char* TransformNode
     rec.TimeStampSec = sec;
     rec.TimeStampNSec = nsec;
     rec.Transform = mss.str();
-  
+
+	
   if ( this->Recording == false )
   {
     return;
   }
   
-  
-    // Look for the most recent value of this transform.
-    // If the value hasn't changed, we don't record.
-  
-  std::vector< TransformRecord >::iterator trIt;
-  trIt = this->TransformsBuffer.end();
-  bool duplicate = false;
-  while ( trIt != this->TransformsBuffer.begin() )
-  {
-    trIt --;
-    if ( rec.DeviceName.compare( (*trIt).DeviceName ) == 0 )
-    {
-      if ( rec.Transform.compare( (*trIt).Transform ) == 0 )
-      {
-        duplicate = true;
-      }
-      break;
-    }
-  }
-  
-  if ( duplicate == false )
-  {
-    this->TransformsBuffer.push_back( rec );
-  }
+  this->AddNewTransform( rec );
+
 }
 
 

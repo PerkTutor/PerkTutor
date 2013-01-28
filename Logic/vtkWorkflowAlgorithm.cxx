@@ -457,7 +457,8 @@ void vtkWorkflowAlgorithm
 	  rec.Transform = std::string( noteElement->GetAttribute( "transform" ) );
 	  rec.TimeStampNSec = timeNSec;
 	  rec.TimeStampSec = timeSec;
-	  addSegmentRecord( rec );
+	  this->MRMLNode->AddNewTransform( rec );
+	  this->UpdateTask();
     }
 
   }
@@ -731,13 +732,16 @@ void vtkWorkflowAlgorithm
   // Check if there are any new transforms to process
   if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
   {
+
+    TransformRecord currentTransform = this->MRMLNode->GetTransformAt( indexLastProcessed );
+
     if ( this->MRMLNode->GetAlgorithmTrained() )
 	{
-	  addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	  addSegmentRecord( currentTransform );
 	}
 	else
 	{
-	  addRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	  addRecord( currentTransform );
 	}
 	// Add to the segmentation buffer
 	if ( this->currentTask != this->prevTask )
@@ -745,8 +749,9 @@ void vtkWorkflowAlgorithm
       prevTask = currentTask;
 	  std::stringstream ss;
 	  ss << currentTask;
-	  this->MRMLNode->AddSegmentation( ss.str() );
+	  this->MRMLNode->AddSegmentation( ss.str(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
 	}
+
 	indexLastProcessed++;
   }
 

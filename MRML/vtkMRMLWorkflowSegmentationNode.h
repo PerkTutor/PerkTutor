@@ -226,12 +226,15 @@ public:
   
   // Get the current time stamp sec, nanosec
   void GetTimestamp( int &sec, int &nsec );
+  double GetTimestamp();
   
-  
-protected:
-  
+ 
   //Observe a new transform
   void AddNewTransform( const char* TransformNodeID ); 
+  void AddNewTransform( TransformRecord rec );
+
+  
+protected:
   
   // Variables associated with recording
   //BTX

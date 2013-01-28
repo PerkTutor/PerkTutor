@@ -23,10 +23,6 @@ vtkRecordLog
 vtkRecordLog
 ::~vtkRecordLog()
 {
-  // Iterate over all items in the valuestor and delete
-  for( int i = 0; i < numRecords; i++ )
-    delete [] &records[i];
-
   records.clear();
 }
 

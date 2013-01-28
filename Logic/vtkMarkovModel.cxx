@@ -35,19 +35,8 @@ vtkMarkovModel
 vtkMarkovModel
 ::~vtkMarkovModel()
 {
-
-  delete [] &pi;
-
-  // Iterate over all states and delete
-  for( int i = 0; i < numStates; i++ )
-  {
-    delete [] &A[i];
-	delete [] &B[i];
-  }   
-
   A.clear();
   B.clear();
-
 }
 
 

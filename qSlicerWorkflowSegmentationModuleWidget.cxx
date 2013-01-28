@@ -134,9 +134,11 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->SaveTrainingButton, SIGNAL(clicked()),this, SLOT ( onSaveTrainingButtonClicked() ) );
 
   // Recording controls
-  connect( d->StartButton, SIGNAL(clicked()), this, SLOT(onStartButtonClicked() ) );
-  connect( d->StopButton, SIGNAL(clicked()), this, SLOT(onStopButtonClicked() ) );
-  connect( d->ClearBufferButton, SIGNAL(clicked()), this, SLOT(onClearBufferButtonClicked() ) );
+  connect( d->StartButton, SIGNAL(clicked()), this, SLOT( onStartButtonClicked() ) );
+  connect( d->StopButton, SIGNAL(clicked()), this, SLOT( onStopButtonClicked() ) );
+  connect( d->ClearBufferButton, SIGNAL(clicked()), this, SLOT( onClearBufferButtonClicked() ) );
+
+  connect( d->SegmentTrackingLogButton, SIGNAL(clicked()), this, SLOT(onSegmentTrackingLogButtonClicked() ) );
 
   //Annotations
   d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -330,6 +332,44 @@ void qSlicerWorkflowSegmentationModuleWidget
 
 
 
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onSegmentTrackingLogButtonClicked()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  QString fileName = QFileDialog::getOpenFileName( this, tr("Open tracking log"), "", "XML Files (*.xml)" );
+
+
+  if ( fileName.isEmpty() == false )
+  {
+    
+    QProgressDialog dialog;
+    dialog.setModal( true );
+    dialog.setLabelText( "Please wait while reading XML file..." );
+    dialog.show();
+    dialog.setValue( 10 );
+
+	d->logic()->GetModuleNode()->ClearBuffer();
+    if ( d->logic()->GetModuleNode()->GetAlgorithmTrained() )
+    {
+      d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
+    }
+	d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( fileName.toStdString() );
+
+    dialog.close();
+    
+  }
+  
+  this->updateGUI();
+}
+
+
+
+
+
+
 void qSlicerWorkflowSegmentationModuleWidget
 ::onTrainButtonClicked()
 {
@@ -487,7 +527,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 
   if ( d->logic()->GetModuleNode()->GetAlgorithmTrained() )
   {
-  d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
+    d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
   }
 
   this->updateGUI();
@@ -571,6 +611,8 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
 	d->TrainingDataButton->setEnabled( false );
 	d->TrainButton->setEnabled( false );
 
+	d->SegmentTrackingLogButton->setEnabled( false );
+
 	d->SaveTrackingLogButton->setEnabled( false );
     d->SaveSegmentationButton->setEnabled( false );
 	d->SaveTrainingButton->setEnabled( false );
@@ -620,10 +662,12 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   if ( ! d->logic()->GetModuleNode()->GetAlgorithmTrained() )
   {
     d->SaveTrainingButton->setEnabled( false );
+	d->SegmentTrackingLogButton->setEnabled( false );
   }
   else
   {
     d->SaveTrainingButton->setEnabled( true );
+	d->SegmentTrackingLogButton->setEnabled( true );
   }
   
   if ( d->logic()->GetModuleNode()->GetRecording() )
