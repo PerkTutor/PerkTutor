@@ -134,9 +134,11 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->SaveTrainingButton, SIGNAL(clicked()),this, SLOT ( onSaveTrainingButtonClicked() ) );
 
   // Recording controls
-  connect( d->StartButton, SIGNAL(clicked()), this, SLOT(onStartButtonClicked() ) );
-  connect( d->StopButton, SIGNAL(clicked()), this, SLOT(onStopButtonClicked() ) );
-  connect( d->ClearBufferButton, SIGNAL(clicked()), this, SLOT(onClearBufferButtonClicked() ) );
+  connect( d->StartButton, SIGNAL(clicked()), this, SLOT( onStartButtonClicked() ) );
+  connect( d->StopButton, SIGNAL(clicked()), this, SLOT( onStopButtonClicked() ) );
+  connect( d->ClearBufferButton, SIGNAL(clicked()), this, SLOT( onClearBufferButtonClicked() ) );
+
+  connect( d->SegmentTrackingLogButton, SIGNAL(clicked()), this, SLOT(onSegmentTrackingLogButtonClicked() ) );
 
   //Annotations
   d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -209,14 +211,15 @@ void qSlicerWorkflowSegmentationModuleWidget::onModuleNodeSelected()
   vtkMRMLNode* currentNode = d->ModuleComboBox->currentNode();
   std::cout << "Current node pointer: " << currentNode << std::endl;
   
-  vtkMRMLWorkflowSegmentationNode* TRNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( currentNode );
-  if ( TRNode != NULL )
-  {
-    
-  }
-  
-  d->logic()->SetModuleNode( TRNode );
+  vtkMRMLWorkflowSegmentationNode* WSNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( currentNode );
+
+  d->logic()->SetModuleNode( WSNode );
   d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
+
+  if ( WSNode != NULL )
+  {
+    d->logic()->GetWorkflowAlgorithm()->Reset(); // In case the selected node is trained
+  }
 
   this->updateGUI();
 
@@ -234,9 +237,10 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->GetModuleNode()->ImportProcedureDefinition( fileName.toStdString() );
-	d->logic()->GetWorkflowAlgorithm()->GetProcedureDefinitionFromMRMLNode();
-	d->logic()->GetModuleNode()->SetProcedureDefined( true );
+    d->logic()->GetModuleNode()->SetProcedureDefinitionFileName( fileName.toStdString() );
+	d->logic()->GetModuleNode()->ImportProcedureDefinition();
+    d->logic()->GetModuleNode()->SetProcedureDefined( true );
+	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
   this->updateGUI();
@@ -255,9 +259,10 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->GetModuleNode()->ImportInputParameters( fileName.toStdString() );
-	d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
-	d->logic()->GetModuleNode()->SetHasInput( true );
+    d->logic()->GetModuleNode()->SetInputParameterFileName( fileName.toStdString() );
+	d->logic()->GetModuleNode()->ImportInputParameters();
+	d->logic()->GetModuleNode()->SetParametersInputted( true );
+	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
   this->updateGUI();
@@ -275,10 +280,10 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->GetModuleNode()->ImportTrainingParameters( fileName.toStdString() );
-	d->logic()->GetWorkflowAlgorithm()->GetTrainingParametersFromMRMLNode();
-	d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
-	d->logic()->GetModuleNode()->SetIsTrained( true );
+    d->logic()->GetModuleNode()->SetTrainingParameterFileName( fileName.toStdString() );
+	d->logic()->GetModuleNode()->ImportTrainingParameters();
+	d->logic()->GetModuleNode()->SetAlgorithmTrained( true );
+	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
   this->updateGUI();
@@ -313,10 +318,41 @@ void qSlicerWorkflowSegmentationModuleWidget
     
 	d->logic()->GetWorkflowAlgorithm()->ReadAllProcedures( trainingFileVector );
 
-	// TODO: This is for testing only
-	/*
-	d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( trainingFileVector[0] );
-    */
+    dialog.close();
+    
+  }
+  
+  this->updateGUI();
+}
+
+
+
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onSegmentTrackingLogButtonClicked()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  QString fileName = QFileDialog::getOpenFileName( this, tr("Open tracking log"), "", "XML Files (*.xml)" );
+
+
+  if ( fileName.isEmpty() == false )
+  {
+    
+    QProgressDialog dialog;
+    dialog.setModal( true );
+    dialog.setLabelText( "Please wait while reading XML file..." );
+    dialog.show();
+    dialog.setValue( 10 );
+
+	
+    if ( d->logic()->GetModuleNode()->GetAlgorithmTrained() )
+    {
+	  d->logic()->GetModuleNode()->ClearBuffer();
+      d->logic()->GetWorkflowAlgorithm()->Reset();
+	  d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( fileName.toStdString() );
+    }	
 
     dialog.close();
     
@@ -324,6 +360,9 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   this->updateGUI();
 }
+
+
+
 
 
 
@@ -337,21 +376,12 @@ void qSlicerWorkflowSegmentationModuleWidget
   dialog.setModal( true );
   dialog.setLabelText( "Please wait while training algorithm... Expected Time: 10 mins" );
   dialog.show();
-  dialog.setValue( 10 );
-  
-  d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
-  dialog.setValue( 20 );
-  d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
   dialog.setValue( 30 );
-  d->logic()->GetModuleNode()->SetIsTrained( d->logic()->GetWorkflowAlgorithm()->train() );
-  dialog.setValue( 80 );
-  if ( d->logic()->GetModuleNode()->GetIsTrained() )
-  {
-    d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
-  }
+  
+  d->logic()->GetModuleNode()->SetAlgorithmTrained( d->logic()->GetWorkflowAlgorithm()->train() );
+  d->logic()->GetWorkflowAlgorithm()->Reset();
 
   dialog.close();
-
 
   this->updateGUI();
 }
@@ -364,11 +394,12 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save log"), "", tr("XML Files (*.xml)") );
+  QString fileName = QFileDialog::getSaveFileName( this, tr("Save log"), "", tr("XML Files (*.xml)") );
   
-  if ( filename.isEmpty() == false )
+  if ( fileName.isEmpty() == false )
   {
-    d->logic()->GetModuleNode()->SaveTrackingLog( filename.toStdString() );
+    d->logic()->GetModuleNode()->SetTrackingLogFileName( fileName.toStdString() );
+    d->logic()->GetModuleNode()->SaveTrackingLog();
   }
   
   this->updateGUI();
@@ -381,11 +412,12 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save segmentation"), "", tr("XML Files (*.xml)") );
+  QString fileName = QFileDialog::getSaveFileName( this, tr("Save segmentation"), "", tr("XML Files (*.xml)") );
   
-  if ( filename.isEmpty() == false )
+  if ( fileName.isEmpty() == false )
   {
-    d->logic()->GetModuleNode()->SaveSegmentation( filename.toStdString() );
+    d->logic()->GetModuleNode()->SetSegmentationLogFileName( fileName.toStdString() );
+    d->logic()->GetModuleNode()->SaveSegmentation();
   }
   
   this->updateGUI();
@@ -399,11 +431,12 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
   
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save training"), "", tr("XML Files (*.xml)") );
+  QString fileName = QFileDialog::getSaveFileName( this, tr("Save training"), "", tr("XML Files (*.xml)") );
   
-  if ( filename.isEmpty() == false )
+  if ( fileName.isEmpty() == false )
   {
-    d->logic()->GetModuleNode()->SaveTrainingParameters( filename.toStdString() );
+	d->logic()->GetModuleNode()->SetTrainingParameterFileName( fileName.toStdString() );
+    d->logic()->GetModuleNode()->SaveTrainingParameters();
   }
   
   this->updateGUI();
@@ -424,11 +457,7 @@ void qSlicerWorkflowSegmentationModuleWidget
     return;
   }
   
-  
-    // Go through transform types (ie ProbeToReference, StylusTipToReference, etc) 
-    // Save selected state as 1 and unselected state as 0 of each transform type in transformSelections vector.
-  
-  std::vector< int > transformSelections;
+  // Add only selected transforms
   const int unselected = 0;
   const int selected = 1;
   
@@ -481,11 +510,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   }
 
   d->logic()->GetModuleNode()->ClearBuffer();
-
-  if ( d->logic()->GetModuleNode()->GetIsTrained() )
-  {
-  d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
-  }
+  d->logic()->GetWorkflowAlgorithm()->Reset();
 
   this->updateGUI();
 }
@@ -552,13 +577,10 @@ void qSlicerWorkflowSegmentationModuleWidget
 
 
 
-
-
-void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
+void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
-  
-  
+
   // Disableing node selector widgets if there is no module node to reference input nodes.
     
   if ( d->logic()->GetModuleNode() == NULL )
@@ -570,6 +592,8 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
 	d->TrainingParameterButton->setEnabled( false );
 	d->TrainingDataButton->setEnabled( false );
 	d->TrainButton->setEnabled( false );
+
+	d->SegmentTrackingLogButton->setEnabled( false );
 
 	d->SaveTrackingLogButton->setEnabled( false );
     d->SaveSegmentationButton->setEnabled( false );
@@ -590,8 +614,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
   if ( d->logic()->GetModuleNode() == NULL )
   {
     return;
-  }
-  
+  } 
   
   
   // Update status descriptor labels.
@@ -605,7 +628,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
     d->InputParameterButton->setEnabled( true );
   }
 
-  if ( ! d->logic()->GetModuleNode()->GetHasInput() )
+  if ( ! d->logic()->GetModuleNode()->GetParametersInputted() )
   {
     d->TrainingParameterButton->setEnabled( false );
 	d->TrainingDataButton->setEnabled( false );
@@ -618,13 +641,15 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
 	d->TrainButton->setEnabled( true );
   }
 
-  if ( ! d->logic()->GetModuleNode()->GetIsTrained() )
+  if ( ! d->logic()->GetModuleNode()->GetAlgorithmTrained() )
   {
     d->SaveTrainingButton->setEnabled( false );
+	d->SegmentTrackingLogButton->setEnabled( false );
   }
   else
   {
     d->SaveTrainingButton->setEnabled( true );
+	d->SegmentTrackingLogButton->setEnabled( true );
   }
   
   if ( d->logic()->GetModuleNode()->GetRecording() )
@@ -637,7 +662,21 @@ void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
     d->StatusResultLabel->setText( "Waiting" );
     d->TransformCheckableComboBox->setEnabled( true );
   }
-  
+
+}
+
+
+
+void qSlicerWorkflowSegmentationModuleWidget::updateGUI()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+
+  enableButtons();
+
+  if ( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }   
   
   int numRec = d->logic()->GetModuleNode()->GetTransformsBufferSize() + d->logic()->GetModuleNode()->GetMessagesBufferSize();
   std::stringstream ss;

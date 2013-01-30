@@ -17,6 +17,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkMarkovModelRT *New();
+  vtkTypeMacro(vtkMarkovModelRT,vtkMarkovModel);
 
   MarkovRecord CalculateStateRT( MarkovRecord element );
 

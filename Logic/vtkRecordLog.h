@@ -19,6 +19,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkRecordLog *New();
+  vtkTypeMacro(vtkRecordLog, vtkObject);
 
   vtkRecordLog* DeepCopy();
 
@@ -80,6 +81,8 @@ public:
   ~vtkRecordLog();
 
 protected:
+	
+  static const int STDEV_CUTOFF = 5;
 
   std::vector<TimeLabelRecord> records;
   int numRecords;

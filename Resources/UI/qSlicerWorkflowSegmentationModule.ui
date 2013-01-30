@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>346</width>
-    <height>759</height>
+    <height>817</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -425,6 +425,13 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </item>
+         <item>
+          <widget class="QPushButton" name="SegmentTrackingLogButton">
+           <property name="text">
+            <string>Segment Saved Tracking Log</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
@@ -440,10 +447,10 @@ p, li { white-space: pre-wrap; }
          <string>Annotations</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="1" column="1" colspan="2">
+         <item row="2" column="1" colspan="2">
           <widget class="QListWidget" name="AnnotationListWidget"/>
          </item>
-         <item row="0" column="1">
+         <item row="1" column="1">
           <widget class="QPushButton" name="InsertAnnotationButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -456,7 +463,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
+         <item row="1" column="2">
           <widget class="QPushButton" name="ClearAnnotationButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

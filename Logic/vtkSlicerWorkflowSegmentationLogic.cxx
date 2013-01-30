@@ -47,6 +47,9 @@ vtkSlicerWorkflowSegmentationLogic::~vtkSlicerWorkflowSegmentationLogic()
     this->ModuleNode->Delete();
     this->ModuleNode = NULL;
   }
+
+  this->workflowAlgorithm->Delete();
+  this->workflowAlgorithm = NULL;
 }
 
 

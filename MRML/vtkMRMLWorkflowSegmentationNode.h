@@ -144,8 +144,6 @@ public:
   
   virtual void UpdateReferenceID( const char *oldID, const char *newID );
   void UpdateReferences();
-  void StartReceiveServer();
-  void StopReceiveServer();
   
   
 protected:
@@ -181,19 +179,31 @@ public:
   unsigned int GetMessagesBufferSize();
   unsigned int GetSegmentationBufferSize();
   double GetTotalTime();
-  std::string GetCurrentTask();
-  std::string GetCurrentInstruction();
-  std::string GetNextTask();
-  std::string GetNextInstruction();
   
-  vtkGetMacro( Recording, bool );
+  // State setters and getters
+  bool GetRecording();
   void SetRecording( bool newState );
-  vtkGetMacro( ProcedureDefined, bool );
-  vtkGetMacro( HasInput, bool );
-  vtkGetMacro( IsTrained, bool );
-  vtkSetMacro( ProcedureDefined, bool );
-  vtkSetMacro( HasInput, bool );
-  vtkSetMacro( IsTrained, bool );
+  bool GetProcedureDefined();
+  void SetProcedureDefined( bool newState );
+  bool GetParametersInputted();
+  void SetParametersInputted( bool newState );
+  bool GetAlgorithmTrained();
+  void SetAlgorithmTrained( bool newState );
+
+  // File name setters and getters
+  std::string GetTrackingLogFileName();
+  void SetTrackingLogFileName( std::string name );
+  std::string GetSegmentationLogFileName();
+  void SetSegmentationLogFileName( std::string name );
+  std::string GetProcedureDefinitionFileName();
+  void SetProcedureDefinitionFileName( std::string name );
+  std::string GetInputParameterFileName();
+  void SetInputParameterFileName( std::string name );
+  std::string GetTrainingParameterFileName();
+  void SetTrainingParameterFileName( std::string name );
+
+
+
   
   // Setters for saving the scene
   //BTX
@@ -203,42 +213,50 @@ public:
   //ETX
   
   // File IO methods
-  void SaveTrackingLog( std::string fileName );
-  void SaveSegmentation( std::string fileName );
-  void SaveTrainingParameters( std::string fileName );
-  void ImportProcedureDefinition( std::string fileName );
-  void ImportInputParameters( std::string fileName );
-  void ImportTrainingParameters( std::string dirName );
+  void SaveTrackingLog();
+  void SaveSegmentation();
+  void SaveTrainingParameters();
+  void ImportProcedureDefinition();
+  void ImportInputParameters();
+  void ImportTrainingParameters();
+  void ImportAvailableData();
 
   TransformRecord GetTransformAt( int index );
   void ClearBuffer();
   
   // Get the current time stamp sec, nanosec
   void GetTimestamp( int &sec, int &nsec );
+  double GetTimestamp();
   
-  
-protected:
-  
+ 
   //Observe a new transform
   void AddNewTransform( const char* TransformNodeID ); 
+  void AddNewTransform( TransformRecord rec );
+
+  
+protected:
   
   // Variables associated with recording
   //BTX
   std::vector< int > TransformSelections;  
-  std::string LogFileName;
-  std::string InputParameterFileName;
-  std::string TrainingParameterFileName;
   std::vector< TransformRecord > TransformsBuffer;
   std::vector< MessageRecord > MessagesBuffer;
   std::vector< MessageRecord > SegmentationBuffer;
   //ETX
+
+  // Input/output files
+  std::string TrackingLogFileName;
+  std::string SegmentationLogFileName;
+  std::string ProcedureDefinitionFileName;
+  std::string InputParameterFileName;
+  std::string TrainingParameterFileName;
  
   // Active recording
-  bool ProcedureDefined;
-  bool HasInput;
-  bool IsTrained;
   bool Recording;
-  bool Active;
+
+  bool ProcedureDefined;
+  bool ParametersInputted;
+  bool AlgorithmTrained;
   
   // Time.
   // Set a zero timestamp in the constructor using the system clock.  

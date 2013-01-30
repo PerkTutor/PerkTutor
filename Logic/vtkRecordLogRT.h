@@ -18,6 +18,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkRecordLogRT *New();
+  vtkTypeMacro(vtkRecordLogRT, vtkRecordLog);
 
   void SetMean( ValueRecord newMean );
   void SetPrinComps( std::vector<LabelRecord> newPrinComps );

@@ -21,12 +21,7 @@ vtkRecordLogRT
 vtkRecordLogRT
 ::~vtkRecordLogRT()
 {
-  // Iterate over all items in the valuestor and delete
-  for( int i = 0; i < numRecords; i++ )
-    delete [] &records[i];
-
   records.clear();
-
 }
 
 
@@ -49,6 +44,9 @@ LabelRecord vtkRecordLogRT
 {
   // Create a new order record
   LabelRecord distRecord;
+  distRecord.initialize( valueRecords.size(), 0.0 );
+
+  double currSum;
 
   for ( int j = 0; j < valueRecords.size(); j++ )
   {
@@ -60,14 +58,14 @@ LabelRecord vtkRecordLogRT
     }
 
     // Initialize the sum to zero
-    double currSum = 0.0;
+    currSum = 0.0;
 
     for ( int d = 0; d < recordSize; d++ )
     {
       currSum = currSum + ( this->GetRecordRT().get(d) - valueRecords[j].get(d) ) * ( this->GetRecordRT().get(d) - valueRecords[j].get(d) );
 	}
 	// Add to the current order record
-	distRecord.add( currSum );
+	distRecord.set( j, currSum );
   }
 
   // Add the current order record to the vector
@@ -131,26 +129,39 @@ TimeLabelRecord vtkRecordLogRT
 {
   // Create a new record valuestor
   TimeLabelRecord gaussRecord;
+  gaussRecord.initialize( recordSize, 0.0 );
 
   // Iterate over all dimensions
   for ( int d = 0; d < recordSize; d++ )
   {
     double weightSum = 0;
     double normSum = 0;
+	double gaussWeight;
+	double normDist;
 
-    // Iterate over all records
-    for ( int j = 0; j < numRecords; j++ )
+    // Iterate over all records nearby
+	int j = numRecords - 1;
+	while ( j >= 0 ) // Iterate backward
     {
+	  // If too far from "peak" of distribution, the stop - we're just wasting time
+	  normDist = ( GetRecordAt(j).getTime() - GetRecordRT().getTime() ) / width;
+	  if ( abs( normDist ) > STDEV_CUTOFF )
+	  {
+	    break;
+	  }
+
       // Calculate the values of the Gaussian distribution at this time
-      double gaussWeight = exp( - ( GetRecordAt(j).getTime() - GetRecordRT().getTime() ) * ( GetRecordAt(j).getTime() - GetRecordRT().getTime() ) / width );
-      // Add the product with the values to function sum
+	  gaussWeight = exp( - normDist * normDist / 2 );
+	  // Add the product with the values to function sum
       weightSum = weightSum + GetRecordAt(j).get(d) * gaussWeight;
-      // Add the values to normSum
-      normSum = normSum + gaussWeight;
+	  // Add the values to normSum
+	  normSum = normSum + gaussWeight;
+
+	  j--;
     }
 
     // Add to the new values
-    gaussRecord.add( weightSum / normSum );
+    gaussRecord.set( d, weightSum / normSum );
 
   }
 
@@ -182,14 +193,18 @@ TimeLabelRecord vtkRecordLogRT
 	
   // Create a new matrix to which the Legendre coefficients will be assigned
   std::vector<LabelRecord> legCoeffMatrix = trimRecordLog->LegendreTransformation( order );
+  
   TimeLabelRecord legRecord;
+  legRecord.initialize( this->recordSize * ( order + 1 ), 0.0 );
 
   // Calculate the Legendre coefficients: 2D -> 1D
+  int count = 0;
   for ( int o = 0; o <= order; o++ )
   {
     for ( int d = 0; d < recordSize; d++ )
     {
-      legRecord.add( legCoeffMatrix[o].get(d) );
+      legRecord.set( count, legCoeffMatrix[o].get(d) );
+	  count++;
     }
   }
 
@@ -207,12 +222,11 @@ TimeLabelRecord vtkRecordLogRT
 {
   // Create a TimeLabelRecord for the transformed record log
   TimeLabelRecord transRecord;
+  transRecord.initialize( prinComps.size(), 0.0 );
 
   // Initialize the components of the transformed time record to be zero
   for ( int o = 0; o < prinComps.size(); o++ )
-  {
-    transRecord.add( 0.0 );
-	  
+  {	  
     // Iterate over all dimensions, and perform the transformation (ie vector multiplcation)
     for ( int d = 0; d < recordSize; d++ )
 	{
@@ -270,4 +284,5 @@ MarkovRecord vtkRecordLogRT
   markovRecord.setSymbol( this->GetRecordRT().get(0) );
 
   return markovRecord;
+
 }

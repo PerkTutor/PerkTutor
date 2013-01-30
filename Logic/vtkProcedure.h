@@ -20,6 +20,8 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
 public:
 
   static vtkProcedure *New();
+  vtkTypeMacro(vtkProcedure, vtkObject);
+
 
   vtkProcedure* DeepCopy();
 

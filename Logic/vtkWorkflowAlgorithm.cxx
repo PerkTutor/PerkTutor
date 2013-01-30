@@ -91,7 +91,15 @@ vtkStandardNewMacro( vtkWorkflowAlgorithm );
 vtkWorkflowAlgorithm
 ::vtkWorkflowAlgorithm()
 {
+  this->procedureRT = NULL;
+  this->derivativeProcedureRT = NULL;
+  this->filterProcedureRT = NULL;
+  this->orthogonalProcedureRT = NULL;
+  this->principalProcedureRT = NULL;
+  this->centroidProcedureRT = NULL;
+  this->MarkovRT = NULL;
 }
+
 
 vtkWorkflowAlgorithm
 ::~vtkWorkflowAlgorithm()
@@ -101,6 +109,23 @@ vtkWorkflowAlgorithm
     delete [] procedures.at(i);
   }
   procedures.clear();
+
+  if ( this->procedureRT != NULL )
+  {
+    this->procedureRT->Delete();
+    this->derivativeProcedureRT->Delete();
+    this->filterProcedureRT->Delete();
+    this->orthogonalProcedureRT->Delete();
+    this->principalProcedureRT->Delete();
+    this->centroidProcedureRT->Delete();
+    this->MarkovRT->Delete();
+  }
+
+  TaskName.clear();
+  TaskInstruction.clear();
+  TaskNext.clear();
+
+  this->MRMLNode = NULL;
 }
 
 
@@ -117,6 +142,12 @@ void vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::GetProcedureDefinitionFromMRMLNode()
 {
+  // Make sure the procedure is defined in the node
+  if ( ! this->MRMLNode->GetProcedureDefined() )
+  {
+    return;
+  }
+
   this->NumTasks = this->MRMLNode->procDefn.NumTasks;
   this->TaskName = this->MRMLNode->procDefn.TaskName;
   this->TaskInstruction = this->MRMLNode->procDefn.TaskInstruction;
@@ -129,6 +160,12 @@ void vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::GetInputParamtersFromMRMLNode()
 {
+  // Make sure the input parameters are in the node
+  if ( ! this->MRMLNode->GetParametersInputted() )
+  {
+    return;
+  }
+
   this->Derivative = this->MRMLNode->inputParam.Derivative;
   this->FilterWidth = this->MRMLNode->inputParam.FilterWidth;
   this->OrthogonalWindow = this->MRMLNode->inputParam.OrthogonalWindow;
@@ -145,6 +182,12 @@ void vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::GetTrainingParametersFromMRMLNode()
 {
+  // Make sure the input parameters are in the node
+  if ( ! this->MRMLNode->GetAlgorithmTrained() )
+  {
+    return;
+  }
+
   int SizePrinComps = ( this->OrthogonalOrder + 1 ) * ( TRACKINGRECORD_SIZE ) * ( this->Derivative + 1 ); // TODO: * this->MRMLNode->numTools;
 
   this->PrinComps = StringToLabelRecordVector( this->MRMLNode->trainingParam.PrinComps, NumPrinComps, SizePrinComps );
@@ -432,7 +475,8 @@ void vtkWorkflowAlgorithm
 	  rec.Transform = std::string( noteElement->GetAttribute( "transform" ) );
 	  rec.TimeStampNSec = timeNSec;
 	  rec.TimeStampSec = timeSec;
-	  addSegmentRecord( rec );
+	  this->MRMLNode->AddNewTransform( rec );
+	  this->UpdateTask();
     }
 
   }
@@ -602,16 +646,39 @@ bool vtkWorkflowAlgorithm
 
 
 void vtkWorkflowAlgorithm
-::InitializeSegmentationRT()
+::Reset()
 {
+
+  // Make sure we grab the parameters from the MRML Node
+  this->GetProcedureDefinitionFromMRMLNode();
+  this->GetInputParamtersFromMRMLNode();
+  this->GetTrainingParametersFromMRMLNode();
+
+  // If the algorithm isn't trained, then we can't initialize it for real-time segmentation
+  if ( ! this->MRMLNode->GetAlgorithmTrained() )
+  {
+    return;
+  }
+
+  if ( this->procedureRT != NULL )
+  {
+    this->procedureRT->Delete();
+    this->derivativeProcedureRT->Delete();
+    this->filterProcedureRT->Delete();
+    this->orthogonalProcedureRT->Delete();
+    this->principalProcedureRT->Delete();
+    this->centroidProcedureRT->Delete();
+    this->MarkovRT->Delete();
+  }
+
   procedureRT = vtkRecordLogRT::New();
   derivativeProcedureRT = vtkRecordLogRT::New();
   filterProcedureRT = vtkRecordLogRT::New();
   orthogonalProcedureRT = vtkRecordLogRT::New();
   principalProcedureRT = vtkRecordLogRT::New();
   centroidProcedureRT = vtkRecordLogRT::New();
-
   MarkovRT = vtkMarkovModelRT::New();
+
   MarkovRT->SetSize( this->NumTasks, this->NumCentroids );
   MarkovRT->SetPi( this->Markov->GetPi() );
   MarkovRT->SetA( this->Markov->GetA() );
@@ -620,6 +687,7 @@ void vtkWorkflowAlgorithm
   indexLastProcessed = 0;
   currentTask = -1;
   prevTask = -1;
+
 }
 
 
@@ -635,6 +703,7 @@ void vtkWorkflowAlgorithm
   currRecord.setTime( t.TimeStampSec + 1.0e-9 * t.TimeStampNSec );
   currRecord.setLabel( 0 );
   procedureRT->AddRecord( currRecord );
+  //currTrackingRecord->Delete(); Deleting here causes error
 
 }
 
@@ -646,9 +715,15 @@ void vtkWorkflowAlgorithm
   addRecord( t );
 
   // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
+  // TODO: Use these statements to help find bottlenecks (check how much time each operation takes) and delete when finished
+  std::vector<double> elapseTime( 7, 0.0 );
+  double currTime = this->MRMLNode->GetTimestamp();
 
   // Apply Gaussian filtering to each previous records
   filterProcedureRT->AddRecord( procedureRT->GaussianFilterRT( this->FilterWidth ) );
+
+  elapseTime[0] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
   
   // Concatenate with derivative (velocity, acceleration, etc...)
   TimeLabelRecord derivativeRecord = filterProcedureRT->GetRecordRT();
@@ -662,17 +737,32 @@ void vtkWorkflowAlgorithm
   }
   derivativeProcedureRT->AddRecord( derivativeRecord );
 
+  elapseTime[1] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
+
   // Apply orthogonal transformation
   orthogonalProcedureRT->AddRecord( derivativeProcedureRT->OrthogonalTransformationRT( this->OrthogonalWindow, this->OrthogonalOrder ) );
+
+  elapseTime[2] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
 
   // Apply PCA transformation
   principalProcedureRT->AddRecord( orthogonalProcedureRT->TransformPCART( this->PrinComps, this->Mean ) );
 
+  elapseTime[3] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
+
   // Apply centroid transformation
   centroidProcedureRT->AddRecord( principalProcedureRT->fwdkmeansTransformRT( this->Centroids ) );
 
+  elapseTime[4] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
+
   // Use Markov Model calculate states to come up with the current most likely state...
   MarkovRecord markovState = MarkovRT->CalculateStateRT( centroidProcedureRT->ToMarkovRecordRT() );
+
+  elapseTime[5] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
 
   // Now, we will keep a recording of the workflow segmentation in procedureRT, in addition to returning it
   TimeLabelRecord newRecord;
@@ -682,6 +772,9 @@ void vtkWorkflowAlgorithm
   procedureRT->SetRecordRT( newRecord );
 
   this->currentTask = markovState.getState();
+
+  elapseTime[6] = currTime - this->MRMLNode->GetTimestamp();
+  currTime = this->MRMLNode->GetTimestamp();
 
 }
 
@@ -693,13 +786,16 @@ void vtkWorkflowAlgorithm
   // Check if there are any new transforms to process
   if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
   {
-    if ( this->MRMLNode->GetIsTrained() )
+
+    TransformRecord currentTransform = this->MRMLNode->GetTransformAt( indexLastProcessed );
+
+    if ( this->MRMLNode->GetAlgorithmTrained() )
 	{
-	  addSegmentRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	  addSegmentRecord( currentTransform );
 	}
 	else
 	{
-	  addRecord( this->MRMLNode->GetTransformAt( indexLastProcessed ) );
+	  addRecord( currentTransform );
 	}
 	// Add to the segmentation buffer
 	if ( this->currentTask != this->prevTask )
@@ -707,8 +803,9 @@ void vtkWorkflowAlgorithm
       prevTask = currentTask;
 	  std::stringstream ss;
 	  ss << currentTask;
-	  this->MRMLNode->AddSegmentation( ss.str() );
+	  this->MRMLNode->AddSegmentation( ss.str(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
 	}
+
 	indexLastProcessed++;
   }
 
