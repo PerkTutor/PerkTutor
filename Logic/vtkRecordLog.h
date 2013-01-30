@@ -81,6 +81,8 @@ public:
   ~vtkRecordLog();
 
 protected:
+	
+  static const int STDEV_CUTOFF = 5;
 
   std::vector<TimeLabelRecord> records;
   int numRecords;

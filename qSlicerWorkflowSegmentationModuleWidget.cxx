@@ -211,14 +211,15 @@ void qSlicerWorkflowSegmentationModuleWidget::onModuleNodeSelected()
   vtkMRMLNode* currentNode = d->ModuleComboBox->currentNode();
   std::cout << "Current node pointer: " << currentNode << std::endl;
   
-  vtkMRMLWorkflowSegmentationNode* TRNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( currentNode );
-  if ( TRNode != NULL )
-  {
-    
-  }
-  
-  d->logic()->SetModuleNode( TRNode );
+  vtkMRMLWorkflowSegmentationNode* WSNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( currentNode );
+
+  d->logic()->SetModuleNode( WSNode );
   d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
+
+  if ( WSNode != NULL )
+  {
+    d->logic()->GetWorkflowAlgorithm()->Reset(); // In case the selected node is trained
+  }
 
   this->updateGUI();
 
@@ -238,8 +239,8 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     d->logic()->GetModuleNode()->SetProcedureDefinitionFileName( fileName.toStdString() );
 	d->logic()->GetModuleNode()->ImportProcedureDefinition();
-	d->logic()->GetWorkflowAlgorithm()->GetProcedureDefinitionFromMRMLNode();
-	d->logic()->GetModuleNode()->SetProcedureDefined( true );
+    d->logic()->GetModuleNode()->SetProcedureDefined( true );
+	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
   this->updateGUI();
@@ -260,8 +261,8 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     d->logic()->GetModuleNode()->SetInputParameterFileName( fileName.toStdString() );
 	d->logic()->GetModuleNode()->ImportInputParameters();
-	d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
 	d->logic()->GetModuleNode()->SetParametersInputted( true );
+	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
   this->updateGUI();
@@ -281,9 +282,8 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     d->logic()->GetModuleNode()->SetTrainingParameterFileName( fileName.toStdString() );
 	d->logic()->GetModuleNode()->ImportTrainingParameters();
-	d->logic()->GetWorkflowAlgorithm()->GetTrainingParametersFromMRMLNode();
-	d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
 	d->logic()->GetModuleNode()->SetAlgorithmTrained( true );
+	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
   this->updateGUI();
@@ -318,11 +318,6 @@ void qSlicerWorkflowSegmentationModuleWidget
     
 	d->logic()->GetWorkflowAlgorithm()->ReadAllProcedures( trainingFileVector );
 
-	// TODO: This is for testing only
-	/*
-	d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( trainingFileVector[0] );
-    */
-
     dialog.close();
     
   }
@@ -351,12 +346,13 @@ void qSlicerWorkflowSegmentationModuleWidget
     dialog.show();
     dialog.setValue( 10 );
 
-	d->logic()->GetModuleNode()->ClearBuffer();
+	
     if ( d->logic()->GetModuleNode()->GetAlgorithmTrained() )
     {
-      d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
-    }
-	d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( fileName.toStdString() );
+	  d->logic()->GetModuleNode()->ClearBuffer();
+      d->logic()->GetWorkflowAlgorithm()->Reset();
+	  d->logic()->GetWorkflowAlgorithm()->SegmentProcedure( fileName.toStdString() );
+    }	
 
     dialog.close();
     
@@ -380,22 +376,12 @@ void qSlicerWorkflowSegmentationModuleWidget
   dialog.setModal( true );
   dialog.setLabelText( "Please wait while training algorithm... Expected Time: 10 mins" );
   dialog.show();
-  dialog.setValue( 10 );
-  
-  d->logic()->GetWorkflowAlgorithm()->setMRMLNode( d->logic()->GetModuleNode() );
-  dialog.setValue( 20 );
-  d->logic()->GetWorkflowAlgorithm()->GetInputParamtersFromMRMLNode();
   dialog.setValue( 30 );
+  
   d->logic()->GetModuleNode()->SetAlgorithmTrained( d->logic()->GetWorkflowAlgorithm()->train() );
-  dialog.setValue( 80 );
-
-  if ( d->logic()->GetModuleNode()->GetAlgorithmTrained() )
-  {
-    d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
-  }
+  d->logic()->GetWorkflowAlgorithm()->Reset();
 
   dialog.close();
-
 
   this->updateGUI();
 }
@@ -524,11 +510,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   }
 
   d->logic()->GetModuleNode()->ClearBuffer();
-
-  if ( d->logic()->GetModuleNode()->GetAlgorithmTrained() )
-  {
-    d->logic()->GetWorkflowAlgorithm()->InitializeSegmentationRT();
-  }
+  d->logic()->GetWorkflowAlgorithm()->Reset();
 
   this->updateGUI();
 }

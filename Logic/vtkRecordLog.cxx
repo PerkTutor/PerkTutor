@@ -677,16 +677,49 @@ vtkRecordLog* vtkRecordLog
 	{
       double weightSum = 0;
       double normSum = 0;
+	  double gaussWeight;
+	  double normDist;
 
-      // Iterate over all records
-      for ( int j = 0; j < numRecords; j++ )
+      // Iterate over all records nearby
+	  int j = i;
+	  while ( j >= 0 ) // Iterate backward
       {
+	    // If too far from "peak" of distribution, the stop - we're just wasting time
+	    normDist = ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width;
+		if ( abs( normDist ) > STDEV_CUTOFF )
+		{
+		  break;
+		}
+
         // Calculate the values of the Gaussian distribution at this time
-	    double gaussWeight = exp( - ( ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width ) * ( ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width ) / 2 );
+	    gaussWeight = exp( - normDist * normDist / 2 );
 		// Add the product with the values to function sum
         weightSum = weightSum + GetRecordAt(j).get(d) * gaussWeight;
 		// Add the values to normSum
 		normSum = normSum + gaussWeight;
+
+		j--;
+      }
+
+	  // Iterate over all records nearby
+	  j = i + 1;
+	  while ( j < numRecords ) // Iterate forward
+      {
+	    // If too far from "peak" of distribution, the stop - we're just wasting time
+	    normDist = ( GetRecordAt(j).getTime() - GetRecordAt(i).getTime() ) / width;
+		if ( abs( normDist ) > STDEV_CUTOFF )
+		{
+		  break;
+		}
+
+        // Calculate the values of the Gaussian distribution at this time
+	    gaussWeight = exp( - normDist * normDist / 2 );
+		// Add the product with the values to function sum
+        weightSum = weightSum + GetRecordAt(j).get(d) * gaussWeight;
+		// Add the values to normSum
+		normSum = normSum + gaussWeight;
+
+		j++;
       }
 
 	  // Add to the new values

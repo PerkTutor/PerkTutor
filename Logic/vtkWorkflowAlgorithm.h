@@ -40,7 +40,7 @@ public:
   void SegmentProcedure( std::string fileName );
 
   // Training and testing phases
-  void InitializeSegmentationRT();
+  void Reset();
   bool train();
   void addRecord( TransformRecord t );
   void addSegmentRecord( TransformRecord t );
