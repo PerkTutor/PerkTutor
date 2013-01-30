@@ -96,7 +96,7 @@ QStringList qSlicerWorkflowSegmentationModule::contributors()const
 //-----------------------------------------------------------------------------
 QIcon qSlicerWorkflowSegmentationModule::icon()const
 {
-  return QIcon("");
+  return QIcon(":/Icons/WorkflowSegmentation.png");
 }
 
 //-----------------------------------------------------------------------------
