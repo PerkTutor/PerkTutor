@@ -48,6 +48,10 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleMRML
   ${MRML_LIBRARIES}
   )
+  
+set(MODULE_RESOURCES
+  Resources/qSlicer${MODULE_NAME}Module.qrc
+  )
 
 #-----------------------------------------------------------------------------
 slicerMacroBuildQtModule(
