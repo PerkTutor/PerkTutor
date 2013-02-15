@@ -128,8 +128,27 @@ vtkMRMLWorkflowSegmentationNode
   
   this->LastNeedleTransform = NULL;
   this->LastNeedleTime = -1.0;
-}
 
+  // Initialize our parameters and definitions objects
+  this->procDefn.NumTasks = 0;
+
+  this->inputParam.FilterWidth = 0.0;
+  this->inputParam.OrthogonalOrder = 0;
+  this->inputParam.OrthogonalWindow = 0;
+  this->inputParam.Derivative = 0;
+  this->inputParam.NumCentroids = 0;
+  this->inputParam.NumPrinComps = 0;
+  this->inputParam.MarkovPseudoScalePi = 0.0;
+  this->inputParam.MarkovPseudoScaleA = 0.0;
+  this->inputParam.MarkovPseudoScaleB = 0.0;
+
+  this->trainingParam.PrinComps = "";
+  this->trainingParam.Mean = "";
+  this->trainingParam.Centroids = "";
+  this->trainingParam.MarkovPi = "";
+  this->trainingParam.MarkovA = "";
+  this->trainingParam.MarkovB = "";
+}
 
 
 

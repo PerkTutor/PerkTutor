@@ -88,7 +88,9 @@ public:
   int Derivative;
   int NumCentroids;
   int NumPrinComps;
-  double MarkovPseudoScalePi, MarkovPseudoScaleA, MarkovPseudoScaleB;
+  double MarkovPseudoScalePi;
+  double MarkovPseudoScaleA;
+  double MarkovPseudoScaleB;
 };
 
 // Class to store algorithm training parameters
