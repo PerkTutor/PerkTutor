@@ -31,8 +31,6 @@ vtkTrackingRecord
 vtkTrackingRecord
 ::~vtkTrackingRecord()
 {
-  delete [] &trans;
-  delete [] &quat;
 }
 
 vtkTrackingRecord* vtkTrackingRecord

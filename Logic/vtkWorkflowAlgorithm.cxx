@@ -98,6 +98,7 @@ vtkWorkflowAlgorithm
   this->principalProcedureRT = NULL;
   this->centroidProcedureRT = NULL;
   this->MarkovRT = NULL;
+  this->Markov = vtkMarkovModel::New();
 }
 
 
@@ -106,7 +107,7 @@ vtkWorkflowAlgorithm
 {
   for ( int i = 0 ; i < procedures.size(); i++ )
   {
-    delete [] procedures.at(i);
+    procedures.at(i)->Delete();
   }
   procedures.clear();
 
@@ -120,6 +121,8 @@ vtkWorkflowAlgorithm
     this->centroidProcedureRT->Delete();
     this->MarkovRT->Delete();
   }
+
+  this->Markov->Delete();
 
   TaskName.clear();
   TaskInstruction.clear();
@@ -194,8 +197,7 @@ void vtkWorkflowAlgorithm
   this->Mean = StringToLabelRecord( this->MRMLNode->trainingParam.Mean, SizePrinComps );
   this->Centroids = StringToLabelRecordVector( this->MRMLNode->trainingParam.Centroids, NumCentroids, NumPrinComps );
 
-  Markov = vtkMarkovModel::New();
-  Markov->SetSize( NumTasks, NumCentroids );
+  this->Markov->SetSize( NumTasks, NumCentroids );
   this->Markov->SetPi( StringToLabelRecord( this->MRMLNode->trainingParam.MarkovPi, NumTasks ) );
   this->Markov->SetA( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovA, NumTasks, NumTasks ) );
   this->Markov->SetB( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovB, NumTasks, NumCentroids ) );
@@ -396,6 +398,7 @@ void vtkWorkflowAlgorithm
 	  currRecord.values = currTrackingRecord->GetVector();
 	  currRecord.setTime( elementTime );
 	  records.push_back( currRecord );
+	  currTrackingRecord->Delete();
     }
 
   }
@@ -420,7 +423,7 @@ void vtkWorkflowAlgorithm
   }
   
   // Only add the record to the log if there is a previous message or before stop message(otherwise task undefinfed -> discard)
-  vtkRecordLog* currProcedure = new vtkRecordLog();
+  vtkRecordLog* currProcedure = vtkRecordLog::New();
   for ( int i = 0; i < records.size(); i++ )
   {
     if ( records[i].getLabel() >= 0 && records[i].getLabel() < NumTasks )
@@ -530,10 +533,14 @@ bool vtkWorkflowAlgorithm
   std::vector<vtkRecordLog*> derivativeProcedures;
   for ( int i = 0; i < procedures.size(); i++ )
   {
-    derivativeProcedures.push_back( filterProcedures[i] );
+    derivativeProcedures.push_back( filterProcedures[i]->DeepCopy() );
     for ( int d = 1; d <= this->Derivative; d++ )
 	{
-	  derivativeProcedures[i] = derivativeProcedures[i]->ConcatenateValues( filterProcedures[i]->Derivative(d) );
+	  vtkRecordLog* currDerivativeProcedure = derivativeProcedures[i];
+	  vtkRecordLog* orderDerivativeProcedure = filterProcedures[i]->Derivative(d);	  
+	  derivativeProcedures[i] = currDerivativeProcedure->ConcatenateValues( orderDerivativeProcedure );
+	  currDerivativeProcedure->Delete();
+	  orderDerivativeProcedure->Delete();	  
 	}
   }
 
@@ -550,7 +557,9 @@ bool vtkWorkflowAlgorithm
   orthogonalCat->Initialize( 0, orthogonalProcedures[0]->RecordSize() );
   for ( int i = 0; i < orthogonalProcedures.size(); i++ )
   {
-    orthogonalCat = orthogonalCat->Concatenate( orthogonalProcedures[i] );
+    vtkRecordLog* currOrthogonalCat = orthogonalCat;
+    orthogonalCat = currOrthogonalCat->Concatenate( orthogonalProcedures[i] );
+	currOrthogonalCat->Delete();
   }
 
   // Calculate and apply the PCA transform
@@ -619,8 +628,7 @@ bool vtkWorkflowAlgorithm
   }
 
   // Create a new Markov Model, and estimate its parameters
-  Markov = vtkMarkovModel::New();
-  Markov->SetSize( this->NumTasks, this->NumCentroids );
+  this->Markov->SetSize( this->NumTasks, this->NumCentroids );
   this->Markov->InitializeEstimation( NumTasks, this->NumCentroids );
   this->Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
   for ( int i = 0; i < centroidProcedures.size(); i++ )
@@ -629,6 +637,43 @@ bool vtkWorkflowAlgorithm
   }
   this->Markov->EstimateParameters();
 
+
+  // Delete objects we have created
+  for ( int i = 0; i < filterProcedures.size(); i++ )
+  {
+    filterProcedures[i]->Delete();
+  }
+  for ( int i = 0; i < derivativeProcedures.size(); i++ )
+  {
+    derivativeProcedures[i]->Delete();
+  }
+  for ( int i = 0; i < orthogonalProcedures.size(); i++ )
+  {
+    orthogonalProcedures[i]->Delete();
+  }
+  for ( int i = 0; i < principalProcedures.size(); i++ )
+  {
+    principalProcedures[i]->Delete();
+  }
+  for ( int i = 0; i < recordsByTask.size(); i++ )
+  {
+    recordsByTask[i]->Delete();
+  }
+  for ( int i = 0; i < centroidProcedures.size(); i++ )
+  {
+    centroidProcedures[i]->Delete();
+  }
+  
+  filterProcedures.clear();
+  derivativeProcedures.clear();
+  orthogonalProcedures.clear();
+  principalProcedures.clear();
+  recordsByTask.clear();
+  centroidProcedures.clear();
+
+  orthogonalCat->Delete();
+  principalCat->Delete();
+  
 
   // Now, change the associated values in the MRML
   // Assume that the input parameters are ok (if they are not then this whole training procedure was useless anyway)
@@ -651,8 +696,7 @@ void vtkWorkflowAlgorithm
 
   // Make sure we grab the parameters from the MRML Node
   this->GetProcedureDefinitionFromMRMLNode();
-  this->GetInputParamtersFromMRMLNode();
-  this->GetTrainingParametersFromMRMLNode();
+  this->GetInputParamtersFromMRMLNode();  
 
   // If the algorithm isn't trained, then we can't initialize it for real-time segmentation
   if ( ! this->MRMLNode->GetAlgorithmTrained() )
@@ -678,6 +722,8 @@ void vtkWorkflowAlgorithm
   principalProcedureRT = vtkRecordLogRT::New();
   centroidProcedureRT = vtkRecordLogRT::New();
   MarkovRT = vtkMarkovModelRT::New();
+  
+  this->GetTrainingParametersFromMRMLNode();
 
   MarkovRT->SetSize( this->NumTasks, this->NumCentroids );
   MarkovRT->SetPi( this->Markov->GetPi() );
@@ -703,7 +749,7 @@ void vtkWorkflowAlgorithm
   currRecord.setTime( t.TimeStampSec + 1.0e-9 * t.TimeStampNSec );
   currRecord.setLabel( 0 );
   procedureRT->AddRecord( currRecord );
-  //currTrackingRecord->Delete(); Deleting here causes error
+  currTrackingRecord->Delete();
 
 }
 

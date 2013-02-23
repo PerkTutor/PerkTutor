@@ -162,11 +162,8 @@ vtkRecordLog* vtkRecordLog
 ::Concatenate( vtkRecordLog* otherRecordLog )
 {
   // First, deep copy the current record log and the concatenating one, so two record logs do not have access to the same record object
-  vtkRecordLog* currRecordLogCopy;
-  vtkRecordLog* otherRecordLogCopy;
-
-  currRecordLogCopy = this->DeepCopy();
-  otherRecordLogCopy = otherRecordLog->DeepCopy();
+  vtkRecordLog* currRecordLogCopy = this->DeepCopy();
+  vtkRecordLog* otherRecordLogCopy = otherRecordLog->DeepCopy();
 
   // Create a new record log and assign the copies to it
   vtkRecordLog* catRecordLog = vtkRecordLog::New();
@@ -191,6 +188,9 @@ vtkRecordLog* vtkRecordLog
     catRecordLog->SetRecord( count, otherRecordLogCopy->records[i] );
 	count++;
   }
+
+  currRecordLogCopy->Delete();
+  otherRecordLogCopy->Delete();
 
   return catRecordLog;
 }
@@ -526,7 +526,9 @@ vtkRecordLog* vtkRecordLog
   derivRecordLog->SetRecord( this->numRecords - 1, derivRecord );
 
   // Return the order - 1 derivative
-  return derivRecordLog->Derivative( order - 1 );
+  vtkRecordLog* derivNextRecordLog = derivRecordLog->Derivative( order - 1 );
+  derivRecordLog->Delete();
+  return derivNextRecordLog;
 
 }
 
@@ -612,7 +614,11 @@ std::vector<LabelRecord> vtkRecordLog
 	legVector[o].values = orderRecLogCopy->Integrate().values;
 	legVector[o].setLabel( o );
 
+	orderRecLogCopy->Delete();
+
   }
+
+  recLogCopy->Delete();
 
   return legVector;
 
@@ -743,7 +749,8 @@ vtkRecordLog* vtkRecordLog
 ::OrthogonalTransformation( int window, int order )
 {
   // Pad the recordlog with values at the beginning
-  vtkRecordLog* padRecordLog = this->PadStart( window )->Concatenate( this );
+  vtkRecordLog* padRecordLog = this->PadStart( window );
+  vtkRecordLog* padCatRecordLog = padRecordLog->Concatenate( this );
 
   // Create a new record log with the orthogonally transformed data
   vtkRecordLog* orthRecordLog = vtkRecordLog::New();
@@ -756,10 +763,12 @@ vtkRecordLog* vtkRecordLog
   for ( int i = 0; i < this->numRecords; i++ )
   {
     // Calculate the record log to include
-    vtkRecordLog* trimRecordLog = padRecordLog->Trim( i, i + window );
+    vtkRecordLog* trimRecordLog = padCatRecordLog->Trim( i, i + window );
 	
 	// Create a new matrix to which the Legendre coefficients will be assigned
 	std::vector<LabelRecord> legCoeffMatrix = trimRecordLog->LegendreTransformation( order );
+
+	trimRecordLog->Delete();
 
 	// Calculate the Legendre coefficients: 2D -> 1D
 	int count = 0;
@@ -778,6 +787,9 @@ vtkRecordLog* vtkRecordLog
 	orthRecordLog->SetRecord( i, currLegRecord );
 
   }
+
+  padRecordLog->Delete();
+  padCatRecordLog->Delete();
 
   return orthRecordLog;
 
@@ -827,6 +839,8 @@ vnl_matrix<double>* vtkRecordLog
 	  cov->put( d1, d2, cov->get( d1, d2 ) / this->numRecords );
 	}
   }
+
+  covRecLog->Delete();
 
   return cov;
 
