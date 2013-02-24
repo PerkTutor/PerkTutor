@@ -5,7 +5,7 @@
 #include "vtkSmartPointer.h"
 #include "vtkObject.h"
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
-#include "vnl\vnl_matrix.h"
+#include "vnl/vnl_matrix.h"
 #include "RecordType.h"
 
 #include <vector>

@@ -2,8 +2,8 @@
 #include "vtkSmartPointer.h"
 #include "vtkRecordLog.h"
 #include "vtkObjectFactory.h"
-#include "vnl\vnl_matrix.h"
-#include "vnl\algo\vnl_symmetric_eigensystem.h"
+#include "vnl/vnl_matrix.h"
+#include "vnl/algo/vnl_symmetric_eigensystem.h"
 
 #include <string>
 #include <sstream>
