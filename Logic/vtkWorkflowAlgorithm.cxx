@@ -865,9 +865,7 @@ void vtkWorkflowAlgorithm
 	if ( this->currentTask != this->prevTask )
 	{
       prevTask = currentTask;
-	  std::stringstream ss;
-	  ss << currentTask;
-	  this->MRMLNode->AddSegmentation( ss.str(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
+	  this->MRMLNode->AddSegmentation( this->getCurrentTask(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
 	}
 
 	indexLastProcessed++;
