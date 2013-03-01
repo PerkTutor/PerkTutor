@@ -239,7 +239,6 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     d->logic()->GetModuleNode()->SetProcedureDefinitionFileName( fileName.toStdString() );
 	d->logic()->GetModuleNode()->ImportProcedureDefinition();
-    d->logic()->GetModuleNode()->SetProcedureDefined( true );
 	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
@@ -261,7 +260,6 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     d->logic()->GetModuleNode()->SetInputParameterFileName( fileName.toStdString() );
 	d->logic()->GetModuleNode()->ImportInputParameters();
-	d->logic()->GetModuleNode()->SetParametersInputted( true );
 	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
@@ -282,7 +280,6 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     d->logic()->GetModuleNode()->SetTrainingParameterFileName( fileName.toStdString() );
 	d->logic()->GetModuleNode()->ImportTrainingParameters();
-	d->logic()->GetModuleNode()->SetAlgorithmTrained( true );
 	d->logic()->GetWorkflowAlgorithm()->Reset();
   }
   
