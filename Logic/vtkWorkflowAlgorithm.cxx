@@ -99,7 +99,25 @@ vtkWorkflowAlgorithm
   this->centroidProcedureRT = NULL;
   this->MarkovRT = NULL;
   this->Markov = vtkMarkovModel::New();
+
+  this->indexLastProcessed = 0;
+  this->currentTask = -1;
+  this->prevTask = -1;
+
+  this->NumTasks = 0;
+
+  this->FilterWidth = 0.0;
+  this->OrthogonalOrder = 0;
+  this->OrthogonalWindow = 0;
+  this->Derivative = 0;
+  this->NumCentroids = 0;
+  this->NumPrinComps = 0;
+  this->MarkovPseudoScalePi = 0.0;
+  this->MarkovPseudoScaleA = 0.0;
+  this->MarkovPseudoScaleB = 0.0;
+
 }
+
 
 
 vtkWorkflowAlgorithm
@@ -847,9 +865,7 @@ void vtkWorkflowAlgorithm
 	if ( this->currentTask != this->prevTask )
 	{
       prevTask = currentTask;
-	  std::stringstream ss;
-	  ss << currentTask;
-	  this->MRMLNode->AddSegmentation( ss.str(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
+	  this->MRMLNode->AddSegmentation( this->getCurrentTask(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
 	}
 
 	indexLastProcessed++;

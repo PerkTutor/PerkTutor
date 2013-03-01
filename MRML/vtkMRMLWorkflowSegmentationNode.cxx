@@ -398,7 +398,7 @@ vtkMRMLWorkflowSegmentationNode
   
   // Get the root element (and check it exists)
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement )
+  if ( ! rootElement || strcmp( rootElement->GetName(), "PerkProcedure" ) != 0 )
   {
     return;
   }
@@ -428,6 +428,8 @@ vtkMRMLWorkflowSegmentationNode
 
   }
 
+  this->SetProcedureDefined( true );
+
 }
 
 
@@ -445,7 +447,7 @@ vtkMRMLWorkflowSegmentationNode
   
   // Get the root element (and check it exists)
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement )
+  if ( ! rootElement || strcmp( rootElement->GetName(), "WorkflowSegmentationParameters" ) != 0 )
   {
     return;
   }
@@ -506,6 +508,8 @@ vtkMRMLWorkflowSegmentationNode
 
   }
 
+  this->SetParametersInputted( true );
+
 }
 
 
@@ -521,7 +525,7 @@ vtkMRMLWorkflowSegmentationNode
   
   // Get the root element (and check it exists)
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement )
+  if ( ! rootElement || strcmp( rootElement->GetName(), "WorkflowSegmentationParameters" ) != 0 )
   {
     return;
   }
@@ -568,6 +572,7 @@ vtkMRMLWorkflowSegmentationNode
 
   }
 
+  this->SetAlgorithmTrained( true );
 
 }
 
@@ -576,29 +581,21 @@ void vtkMRMLWorkflowSegmentationNode
 ::ImportAvailableData()
 {
 
-  if ( ! strcmp( "-", this->ProcedureDefinitionFileName.c_str() ) )
-  {
-    return;
-  }
-
   this->ImportProcedureDefinition();
-  this->ProcedureDefined = true;
 
-  if ( ! strcmp( "-", this->InputParameterFileName.c_str() ) )
+  if ( ! this->GetProcedureDefined() )
   {
     return;
   }
 
   this->ImportInputParameters();
-  this->ParametersInputted = true;
 
-  if ( ! strcmp( "-", this->TrainingParameterFileName.c_str() ) )
+  if ( ! this->GetParametersInputted() )
   {
     return;
   }
 
   this->ImportTrainingParameters();
-  this->AlgorithmTrained = true;
 
 }
 
