@@ -34,7 +34,7 @@ void PrintToFile( std::string str )
 {
   ofstream o( "PerkEvaluatorLog.txt", std::ios_base::app );
   int c = clock();
-  o << c / CLOCKS_PER_SEC << " : " << str << std::endl;
+  o << std::fixed << setprecision( 2 ) << ( c / (double)CLOCKS_PER_SEC ) << " : " << str << std::endl;
   o.close();
 }
 
@@ -381,7 +381,9 @@ vtkSlicerPerkEvaluatorLogic
   
   vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
   parser->SetFileName( fileName.c_str() );
+  PrintToFile( "Start XML parser" );
   parser->Parse();
+  PrintToFile( "End XML parser" ); // debug
   
   vtkXMLDataElement* element = parser->GetRootElement();
   if ( ! element )
@@ -410,7 +412,6 @@ vtkSlicerPerkEvaluatorLogic
     
     double time = this->GetTimestampFromElement( noteElement );
     
-    
     if ( strcmp( type, "message" ) == 0 )
     {
       AnnotationType annotation;
@@ -436,7 +437,9 @@ vtkSlicerPerkEvaluatorLogic
     }
   }
   
+  PrintToFile( "begin create transform nodes" ); // debug
   this->CreateTransformNodes();
+  PrintToFile( "end create transform nodes" ); // debug
 }
 
 

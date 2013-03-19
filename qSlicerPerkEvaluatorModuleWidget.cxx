@@ -5,14 +5,32 @@
 #include <QtGui>
 #include <QTimer>
 
+#include <ctime>
+#include <fstream>
+#include <sstream>
+#include <string>
+
 // SlicerQt includes
 #include "qSlicerPerkEvaluatorModuleWidget.h"
 #include "ui_qSlicerPerkEvaluatorModule.h"
+
+#include <qSlicerApplication.h>
+#include <qSlicerCoreApplication.h>
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
 
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLNode.h"
+
+
+// Debug
+void PrintToFile( std::string str )
+{
+  ofstream o( "PerkEvaluatorLog.txt", std::ios_base::app );
+  int c = clock();
+  o << std::fixed << setprecision( 2 ) << ( c / (double)CLOCKS_PER_SEC ) << " : " << str << std::endl;
+  o.close();
+}
 
 
 
@@ -101,18 +119,28 @@ void qSlicerPerkEvaluatorModuleWidget
     dialog.show();
     dialog.setValue( 10 );
     
+    qSlicerApplication::application()->mainWindow()->setEnabled( false );
+    this->setEnabled( false );
+    
+    PrintToFile( "Start import file" ); // debug
     d->logic()->ImportFile( filename.toStdString() );
+    PrintToFile( "End import file" ); // debug
     dialog.setValue( 60 );
+    PrintToFile( " -- progress set" ); // debug
     QFileInfo pathInfo( filename );
     d->FileNameLabel->setText( pathInfo.fileName() );
     dialog.setValue( 70 );
     d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
     dialog.close();
     
+    this->setEnabled( true );
+    qSlicerApplication::application()->mainWindow()->setEnabled( true );
     // mb.hide();
   }
   
+  PrintToFile( "Start update GUI" ); // debug
   this->UpdateGUI();
+  PrintToFile( "End update GUI" );
 }
 
 
