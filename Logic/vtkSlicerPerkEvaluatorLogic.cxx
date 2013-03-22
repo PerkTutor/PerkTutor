@@ -52,25 +52,29 @@ StrToTransform( std::string str, vtkTransform* tr )
   
   tr->Identity();
   
-  tr->GetMatrix()->SetElement( 0, 0, e00 );
-  tr->GetMatrix()->SetElement( 0, 1, e01 );
-  tr->GetMatrix()->SetElement( 0, 2, e02 );
-  tr->GetMatrix()->SetElement( 0, 3, e03 );
+  vtkSmartPointer< vtkMatrix4x4 > matrix = vtkSmartPointer< vtkMatrix4x4 >::New();
   
-  tr->GetMatrix()->SetElement( 1, 0, e10 );
-  tr->GetMatrix()->SetElement( 1, 1, e11 );
-  tr->GetMatrix()->SetElement( 1, 2, e12 );
-  tr->GetMatrix()->SetElement( 1, 3, e13 );
+  matrix->SetElement( 0, 0, e00 );
+  matrix->SetElement( 0, 1, e01 );
+  matrix->SetElement( 0, 2, e02 );
+  matrix->SetElement( 0, 3, e03 );
   
-  tr->GetMatrix()->SetElement( 2, 0, e20 );
-  tr->GetMatrix()->SetElement( 2, 1, e21 );
-  tr->GetMatrix()->SetElement( 2, 2, e22 );
-  tr->GetMatrix()->SetElement( 2, 3, e23 );
+  matrix->SetElement( 1, 0, e10 );
+  matrix->SetElement( 1, 1, e11 );
+  matrix->SetElement( 1, 2, e12 );
+  matrix->SetElement( 1, 3, e13 );
   
-  tr->GetMatrix()->SetElement( 3, 0, e30 );
-  tr->GetMatrix()->SetElement( 3, 1, e31 );
-  tr->GetMatrix()->SetElement( 3, 2, e32 );
-  tr->GetMatrix()->SetElement( 3, 3, e33 );
+  matrix->SetElement( 2, 0, e20 );
+  matrix->SetElement( 2, 1, e21 );
+  matrix->SetElement( 2, 2, e22 );
+  matrix->SetElement( 2, 3, e23 );
+  
+  matrix->SetElement( 3, 0, e30 );
+  matrix->SetElement( 3, 1, e31 );
+  matrix->SetElement( 3, 2, e32 );
+  matrix->SetElement( 3, 3, e33 );
+  
+  tr->SetMatrix( matrix );
   
   return tr;
 }
@@ -378,19 +382,18 @@ vtkSlicerPerkEvaluatorLogic
 ::ImportFile( std::string fileName )
 {
   this->ClearData();
-  
+
   vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
   parser->SetFileName( fileName.c_str() );
-  PrintToFile( "Start XML parser" );
   parser->Parse();
-  PrintToFile( "End XML parser" ); // debug
+  // PrintToFile( "End XML parser" ); // debug
   
   vtkXMLDataElement* element = parser->GetRootElement();
   if ( ! element )
   {
     return;
   }
-  
+
   int num = element->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
   
   for ( int i = 0; i < num; ++ i )
@@ -408,7 +411,7 @@ vtkSlicerPerkEvaluatorLogic
       const char* deviceName = noteElement->GetAttribute( "DeviceName" );
       trajectory = this->UpdateToolList( std::string( deviceName ) );
     }
-    
+
     
     double time = this->GetTimestampFromElement( noteElement );
     
@@ -427,7 +430,6 @@ vtkSlicerPerkEvaluatorLogic
       }
       this->Annotations.push_back( annotation );
     }
-
     else if ( strcmp( type, "transform" ) == 0 )
     {
       const char* traC = noteElement->GetAttribute( "transform" );
@@ -435,11 +437,10 @@ vtkSlicerPerkEvaluatorLogic
       StrToTransform( std::string( traC ), tr );
       trajectory->AddRecord( time, tr );
     }
+   
   }
-  
-  PrintToFile( "begin create transform nodes" ); // debug
+
   this->CreateTransformNodes();
-  PrintToFile( "end create transform nodes" ); // debug
 }
 
 
