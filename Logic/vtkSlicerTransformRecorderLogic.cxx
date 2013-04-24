@@ -97,12 +97,15 @@ void vtkSlicerTransformRecorderLogic
 
 }
 
-//---------------------------------------------------------------------------
+
+
 void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
 	assert(this->GetMRMLScene() != 0);
 }
+
+
 
 void vtkSlicerTransformRecorderLogic
 ::SetModuleNode( vtkMRMLTransformRecorderNode* node )
@@ -112,3 +115,47 @@ void vtkSlicerTransformRecorderLogic
 }
 
 
+
+void vtkSlicerTransformRecorderLogic
+::AddObservedTransformNode( char* id )
+{
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->AddObservedTransformNode( id );
+  }
+}
+
+
+
+void vtkSlicerTransformRecorderLogic
+::RemoveObservedTransformNode( char* id )
+{
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->RemoveObservedTransformNode( id );
+  }
+}
+
+
+
+void vtkSlicerTransformRecorderLogic
+::SetRecording( bool isRecording )
+{
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->SetRecording( isRecording );
+  }
+}
+
+
+
+void vtkSlicerTransformRecorderLogic
+::ClearBuffer()
+{
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->ClearBuffer();
+  }
+}
+
+  

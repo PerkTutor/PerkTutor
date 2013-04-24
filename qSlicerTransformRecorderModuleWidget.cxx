@@ -228,12 +228,6 @@ void qSlicerTransformRecorderModuleWidget
   Q_D( qSlicerTransformRecorderModuleWidget );
   
   
-  if ( d->logic()->GetModuleNode() == NULL )
-  {
-    return;
-  }
-  
-  
     // Go through transform types (ie ProbeToReference, StylusTipToReference, etc) 
     // Save selected state as 1 and unselected state as 0 of each transform type in transformSelections vector.
   
@@ -245,16 +239,16 @@ void qSlicerTransformRecorderModuleWidget
   {
 	  if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
 	  {
-	    d->logic()->GetModuleNode()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+	    d->logic()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
 	  }
 	  else
 	  {
-	    d->logic()->GetModuleNode()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+	    d->logic()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
 	  }
 	}
   
   
-  d->logic()->GetModuleNode()->SetRecording( true );
+  d->logic()->SetRecording( true );
   
   this->updateWidget();
   
@@ -267,12 +261,7 @@ void qSlicerTransformRecorderModuleWidget
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
-  if( d->logic()->GetModuleNode() == NULL )
-  {
-    return;
-  }
-
-  d->logic()->GetModuleNode()->SetRecording( false );
+  d->logic()->SetRecording( false );
    
   this->updateWidget();
 }
@@ -283,13 +272,8 @@ void qSlicerTransformRecorderModuleWidget
 ::onClearBufferButtonPressed() 
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
-
-  if( d->logic()->GetModuleNode() == NULL )
-  {
-    return;
-  }
-
-  d->logic()->GetModuleNode()->ClearBuffer();
+  
+  d->logic()->ClearBuffer();
    
   this->updateWidget();
 }

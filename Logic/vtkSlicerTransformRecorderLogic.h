@@ -50,7 +50,6 @@ class VTK_SLICER_TRANSFORMRECORDER_MODULE_LOGIC_EXPORT vtkSlicerTransformRecorde
 {
 public:
 
-
    //BTX
   enum {  // Events
     //LocatorUpdateEvent      = 50000,
@@ -64,11 +63,14 @@ public:
   
   /// Initialize listening to MRML events
   void InitializeEventListeners();
-    
-  // void SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node );
-  //void SetProgressViewNode( vtkMRMLViewNode* node );
-  //void SetBullsEyeViewNode( vtkMRMLViewNode* node );
-
+  
+  // Functions to control recording.
+  void AddObservedTransformNode( char* id );
+  void RemoveObservedTransformNode( char* id );
+  void SetRecording( bool isRecording );
+  void ClearBuffer();
+  
+  
 protected:
   vtkSlicerTransformRecorderLogic();
   virtual ~vtkSlicerTransformRecorderLogic();
@@ -78,6 +80,8 @@ protected:
   virtual void UpdateFromMRMLScene();
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
+  
+  
 private:
 
   vtkSlicerTransformRecorderLogic(const vtkSlicerTransformRecorderLogic&); // Not implemented
