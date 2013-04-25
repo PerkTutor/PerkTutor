@@ -562,7 +562,8 @@ std::string vtkMRMLTransformRecorderNode::GetLogFileName()
 
 
 
-void vtkMRMLTransformRecorderNode::CustomMessage( std::string message, int sec, int nsec )
+void vtkMRMLTransformRecorderNode
+::CustomMessage( std::string message, int sec, int nsec )
 {
   if ( sec == -1  &&  nsec == -1 )
   {
@@ -570,14 +571,14 @@ void vtkMRMLTransformRecorderNode::CustomMessage( std::string message, int sec, 
   }
   
   MessageRecord rec;
-    rec.Message = message;
-    rec.TimeStampSec = sec;
-    rec.TimeStampNSec = nsec;
+  rec.Message = message;
+  rec.TimeStampSec = sec;
+  rec.TimeStampNSec = nsec;
   
   this->MessagesBuffer.push_back( rec );
   
   
-    // This shoulb probably be redesigned at some point.
+  // This should probably be redesigned at some point.
   
   if ( message.compare( "IN" ) == 0 )
   {
@@ -591,10 +592,12 @@ void vtkMRMLTransformRecorderNode::CustomMessage( std::string message, int sec, 
 
 
 
+
+
+
 unsigned int vtkMRMLTransformRecorderNode::GetTransformsBufferSize()
 {
   return this->TransformsBuffer.size();
-
 }
 
 

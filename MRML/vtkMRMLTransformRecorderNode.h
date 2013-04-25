@@ -132,6 +132,7 @@ protected:
 public:
   unsigned int GetTransformsBufferSize();
   unsigned int GetMessagesBufferSize();
+
   double GetTotalTime();
   double GetTotalPath();
   double GetTotalPathInside();

@@ -27,7 +27,7 @@ public:
 
 
 public slots:
-  void loadLogFile();
+  void saveToFile();
 
 protected:
   QScopedPointer<qSlicerTransformRecorderModuleWidgetPrivate> d_ptr;
@@ -41,8 +41,8 @@ protected slots:
   void onStopButtonPressed();
   void onStartButtonPressed();
   void onClearBufferButtonPressed();
-  void insertItem();
-  void clearItems();
+  void addAnnotation();
+  void clearAnnotations();
   void onModuleNodeSelected();
   void updateWidget();
 

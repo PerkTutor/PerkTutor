@@ -68,7 +68,15 @@ public:
   void AddObservedTransformNode( char* id );
   void RemoveObservedTransformNode( char* id );
   void SetRecording( bool isRecording );
+  bool GetRecording();
   void ClearBuffer();
+  void GetCurrentTimestamp( int &sec, int &nsec );
+  void AddAnnotation( std::string annotationName, int sec, int nsec );
+  void SaveToFile( std::string fileName );
+
+  double GetTotalTime();
+  double GetTotalPath();
+  double GetTotalPathInside();
   
   
 protected:

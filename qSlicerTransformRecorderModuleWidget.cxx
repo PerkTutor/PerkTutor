@@ -112,12 +112,12 @@ void qSlicerTransformRecorderModuleWidget::setup()
   d->ModuleComboBox->setNoneEnabled( true );
 
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
-  connect( d->LoadLogButton, SIGNAL(clicked()),this, SLOT (loadLogFile() ) );
-  connect( d->StartButton, SIGNAL(pressed()),this,SLOT(onStartButtonPressed() ) );
-  connect( d->StopButton, SIGNAL(pressed()),this,SLOT(onStopButtonPressed() ) );
-  connect( d->ClearBufferButton, SIGNAL(pressed()),this,SLOT(onClearBufferButtonPressed() ) );
+  connect( d->LoadLogButton, SIGNAL( clicked() ), this, SLOT ( saveToFile() ) );
+  connect( d->StartButton, SIGNAL( pressed() ), this, SLOT( onStartButtonPressed() ) );
+  connect( d->StopButton, SIGNAL( pressed() ), this, SLOT( onStopButtonPressed() ) );
+  connect( d->ClearBufferButton, SIGNAL( pressed() ), this, SLOT( onClearBufferButtonPressed() ) );
   connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),
-           this,                          SLOT( onTransformsNodeSelected(vtkMRMLNode*) ) );
+           this, SLOT( onTransformsNodeSelected( vtkMRMLNode* ) ) );
   
   
   // GUI refresh: updates every 10ms
@@ -128,12 +128,10 @@ void qSlicerTransformRecorderModuleWidget::setup()
   // onTransformsNodeSelected( 0 );
 
   //Annotations
+  d->AnnotationListWidget->setSelectionMode( QAbstractItemView::SingleSelection );
 
-
-  d->AnnotationListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-
-  connect(d->InsertAnnotationButton, SIGNAL(pressed()), this, SLOT(insertItem()));
-  connect(d->ClearAnnotationButton, SIGNAL(pressed()), this, SLOT(clearItems()));
+  connect( d->InsertAnnotationButton, SIGNAL( pressed() ), this, SLOT( addAnnotation() ) );
+  connect( d->ClearAnnotationButton, SIGNAL( pressed() ), this, SLOT( clearAnnotations() ) );
 
 }
 
@@ -178,7 +176,7 @@ void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified( vtkObjec
 
 
 
-void qSlicerTransformRecorderModuleWidget::loadLogFile()
+void qSlicerTransformRecorderModuleWidget::saveToFile()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
   
@@ -186,7 +184,7 @@ void qSlicerTransformRecorderModuleWidget::loadLogFile()
   
   if ( filename.isEmpty() == false )
   {
-    d->logic()->GetModuleNode()->SaveIntoFile( filename.toStdString() );
+    d->logic()->SaveToFile( filename.toStdString() );
     d->AnnotationListWidget->clear();
   }
   
@@ -280,57 +278,46 @@ void qSlicerTransformRecorderModuleWidget
 
 
 
-void qSlicerTransformRecorderModuleWidget::insertItem()
+void qSlicerTransformRecorderModuleWidget::addAnnotation()
 {
-	Q_D( qSlicerTransformRecorderModuleWidget );
+  Q_D( qSlicerTransformRecorderModuleWidget ); 
   
-  vtkMRMLTransformRecorderNode* moduleNode = d->logic()->GetModuleNode();
-  if ( moduleNode == NULL )
+  int sec = 0;
+  int nsec = 0;  
+  d->logic()->GetCurrentTimestamp( sec, nsec );
+  
+  // Get the timestamp for this annotation.   
+  QString annotationText = QInputDialog::getText( this, tr("Insert Annotation"), tr("Input text for the new annotation:") );
+
+  if ( annotationText.isNull() )
   {
     return;
   }
   
   
-  int sec = 0;
-  int nsec = 0;
+  QListWidgetItem *newAnnotation = new QListWidgetItem;
+  newAnnotation->setText( annotationText );
   
-  moduleNode->GetTimestamp( sec, nsec );
-  
-  
-    // Get the timestamp for this annotation.
-  
-  
-  QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
-      tr("Input text for the new annotation:"));
+  QString toolTipText = tr( "Tooltip:" ) + annotationText;
+  QString statusTipText = tr( "Status tip:" ) + annotationText;
+  QString whatsThisText = tr( "What's This?:" ) + annotationText;
 
-  if (itemText.isNull())
-      return;
-  
-  
-  QListWidgetItem *newItem = new QListWidgetItem;
-  newItem->setText(itemText);
-  
-  QString toolTipText = tr("Tooltip:") + itemText;
-  QString statusTipText = tr("Status tip:") + itemText;
-  QString whatsThisText = tr("What's This?:") + itemText;
+  newAnnotation->setToolTip( toolTipText );
+  newAnnotation->setStatusTip( toolTipText );
+  newAnnotation->setWhatsThis( whatsThisText );
 
-  newItem->setToolTip(toolTipText);
-  newItem->setStatusTip(toolTipText);
-  newItem->setWhatsThis(whatsThisText);
-
-	d->AnnotationListWidget->addItem(newItem);
-	std::string annotation = itemText.toStdString();
-	moduleNode->CustomMessage( annotation, sec, nsec );
+  d->AnnotationListWidget->addItem( newAnnotation );
+  d->logic()->AddAnnotation( annotationText.toStdString(), sec, nsec );
 
 }
 
 
 
-void qSlicerTransformRecorderModuleWidget::clearItems()
+void qSlicerTransformRecorderModuleWidget::clearAnnotations()
 {
-	Q_D( qSlicerTransformRecorderModuleWidget );
+  Q_D( qSlicerTransformRecorderModuleWidget );
 
-	d->AnnotationListWidget->clear();
+  d->AnnotationListWidget->clear(); // This only hides the annotations, does not clear them (could be important for inside/outside tissue)
 }
 
 
@@ -340,29 +327,22 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   Q_D( qSlicerTransformRecorderModuleWidget );
   
   
-      // Disableing node selector widgets if there is no module node to reference input nodes.
+  // Disableing node selector widgets if there is no module node to reference input nodes.
     
   if ( d->logic()->GetModuleNode() == NULL )
   {
     d->TransformCheckableComboBox->setEnabled( false );
+	return;
   }
   else
   {
     d->TransformCheckableComboBox->setEnabled( true );
   }
+ 
   
-    // The following code requires a module node.
+  // Update status descriptor labels.
   
-  if ( d->logic()->GetModuleNode() == NULL )
-  {
-    return;
-  }
-  
-  
-  
-    // Update status descriptor labels.
-  
-  if ( d->logic()->GetModuleNode()->GetRecording() )
+  if ( d->logic()->GetRecording() )
   {
     d->StatusResultLabel->setText( "Recording" );
     d->TransformCheckableComboBox->setEnabled( false );
@@ -381,17 +361,17 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->logic()->GetModuleNode()->GetTotalTime();
+  ss << std::fixed << d->logic()->GetTotalTime();
   d->TotalTimeResultsLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->logic()->GetModuleNode()->GetTotalPath();
+  ss << std::fixed << d->logic()->GetTotalPath();
   d->TotaNeedlelPathResultsLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->logic()->GetModuleNode()->GetTotalPathInside();
+  ss << std::fixed << d->logic()->GetTotalPathInside();
   d->InsideNeedlePathResultsLabel->setText( ss.str().c_str() );
   
 

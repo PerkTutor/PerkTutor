@@ -149,6 +149,18 @@ void vtkSlicerTransformRecorderLogic
 
 
 
+bool vtkSlicerTransformRecorderLogic
+::GetRecording()
+{
+  if ( this->ModuleNode != NULL )
+  {
+    return this->ModuleNode->GetRecording();
+  }
+  return false;
+}
+
+
+
 void vtkSlicerTransformRecorderLogic
 ::ClearBuffer()
 {
@@ -158,4 +170,71 @@ void vtkSlicerTransformRecorderLogic
   }
 }
 
+
+
+void vtkSlicerTransformRecorderLogic
+::GetCurrentTimestamp( int &sec, int &nsec )
+{
+  if ( this->ModuleNode != NULL )
+  {
+	this->ModuleNode->GetTimestamp( sec, nsec );
+  }
+}
+
+
+
+void vtkSlicerTransformRecorderLogic
+::AddAnnotation( std::string annotationName, int sec, int nsec )
+{
+  if ( this->ModuleNode != NULL )
+  {
+	this->ModuleNode->CustomMessage( annotationName, sec, nsec );
+  }
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::SaveToFile( std::string fileName )
+{
+  if ( this->ModuleNode != NULL )
+  {
+	this->ModuleNode->SaveIntoFile( fileName );
+  }
+}
+
+
+
+double vtkSlicerTransformRecorderLogic
+::GetTotalTime()
+{
+  if ( this->ModuleNode != NULL )
+  {
+	return this->ModuleNode->GetTotalTime();
+  }
+  return 0.0;
+}
+
+
+
+double vtkSlicerTransformRecorderLogic
+::GetTotalPath()
+{
+  if ( this->ModuleNode != NULL )
+  {
+	return this->ModuleNode->GetTotalPath();
+  }
+  return 0.0;
+}
+
+
+
+double vtkSlicerTransformRecorderLogic
+::GetTotalPathInside()
+{
+  if ( this->ModuleNode != NULL )
+  {
+	return this->ModuleNode->GetTotalPathInside();
+  }
+  return 0.0;
+}
   
