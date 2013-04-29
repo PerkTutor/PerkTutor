@@ -166,29 +166,30 @@ void vtkSlicerTransformRecorderLogic
 {
   if ( this->ModuleNode != NULL )
   {
-    this->ModuleNode->ClearBuffer();
+    this->ModuleNode->Clear();
   }
 }
 
 
 
-void vtkSlicerTransformRecorderLogic
-::GetCurrentTimestamp( int &sec, int &nsec )
+double vtkSlicerTransformRecorderLogic
+::GetCurrentTimestamp()
 {
   if ( this->ModuleNode != NULL )
   {
-	this->ModuleNode->GetTimestamp( sec, nsec );
+	return this->ModuleNode->GetCurrentTimestamp();
   }
+  return 0.0;
 }
 
 
 
 void vtkSlicerTransformRecorderLogic
-::AddAnnotation( std::string annotationName, int sec, int nsec )
+::AddMessage( std::string annotationName, double time )
 {
   if ( this->ModuleNode != NULL )
   {
-	this->ModuleNode->CustomMessage( annotationName, sec, nsec );
+	this->ModuleNode->AddMessage( annotationName, time );
   }
 }
 
@@ -198,7 +199,7 @@ void vtkSlicerTransformRecorderLogic
 {
   if ( this->ModuleNode != NULL )
   {
-	this->ModuleNode->SaveIntoFile( fileName );
+	this->ModuleNode->SaveToFile( fileName );
   }
 }
 
@@ -236,5 +237,27 @@ double vtkSlicerTransformRecorderLogic
 	return this->ModuleNode->GetTotalPathInside();
   }
   return 0.0;
+}
+
+
+vtkMRMLTransformBufferNode* vtkSlicerTransformRecorderLogic
+::GetBuffer()
+{
+  if ( this->ModuleNode != NULL )
+  {
+    return this->ModuleNode->TransformBuffer;
+  }
+  return NULL;
+}
+
+
+int vtkSlicerTransformRecorderLogic
+::GetBufferSize()
+{
+  if ( this->ModuleNode != NULL )
+  {
+    return this->ModuleNode->TransformBuffer->GetNumTransforms() + this->ModuleNode->TransformBuffer->GetNumMessages();
+  }
+  return NULL;
 }
   

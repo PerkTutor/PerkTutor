@@ -67,12 +67,17 @@ public:
   // Functions to control recording.
   void AddObservedTransformNode( char* id );
   void RemoveObservedTransformNode( char* id );
+
   void SetRecording( bool isRecording );
   bool GetRecording();
   void ClearBuffer();
-  void GetCurrentTimestamp( int &sec, int &nsec );
-  void AddAnnotation( std::string annotationName, int sec, int nsec );
+
+  double GetCurrentTimestamp();
+
+  void AddMessage( std::string annotationName, double time );
   void SaveToFile( std::string fileName );
+  vtkMRMLTransformBufferNode* GetBuffer();
+  int GetBufferSize();
 
   double GetTotalTime();
   double GetTotalPath();

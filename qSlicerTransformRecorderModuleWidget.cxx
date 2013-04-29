@@ -130,8 +130,8 @@ void qSlicerTransformRecorderModuleWidget::setup()
   //Annotations
   d->AnnotationListWidget->setSelectionMode( QAbstractItemView::SingleSelection );
 
-  connect( d->InsertAnnotationButton, SIGNAL( pressed() ), this, SLOT( addAnnotation() ) );
-  connect( d->ClearAnnotationButton, SIGNAL( pressed() ), this, SLOT( clearAnnotations() ) );
+  connect( d->InsertAnnotationButton, SIGNAL( pressed() ), this, SLOT( addMessage() ) );
+  connect( d->ClearAnnotationButton, SIGNAL( pressed() ), this, SLOT( clearMessages() ) );
 
 }
 
@@ -278,42 +278,40 @@ void qSlicerTransformRecorderModuleWidget
 
 
 
-void qSlicerTransformRecorderModuleWidget::addAnnotation()
+void qSlicerTransformRecorderModuleWidget::addMessage()
 {
   Q_D( qSlicerTransformRecorderModuleWidget ); 
-  
-  int sec = 0;
-  int nsec = 0;  
-  d->logic()->GetCurrentTimestamp( sec, nsec );
+
+  double time = d->logic()->GetCurrentTimestamp();
   
   // Get the timestamp for this annotation.   
-  QString annotationText = QInputDialog::getText( this, tr("Insert Annotation"), tr("Input text for the new annotation:") );
+  QString message = QInputDialog::getText( this, tr("Insert Message"), tr("Input text for the new message:") );
 
-  if ( annotationText.isNull() )
+  if ( message.isNull() )
   {
     return;
   }
   
   
-  QListWidgetItem *newAnnotation = new QListWidgetItem;
-  newAnnotation->setText( annotationText );
+  QListWidgetItem *newMessage = new QListWidgetItem;
+  newMessage->setText( message );
   
-  QString toolTipText = tr( "Tooltip:" ) + annotationText;
-  QString statusTipText = tr( "Status tip:" ) + annotationText;
-  QString whatsThisText = tr( "What's This?:" ) + annotationText;
+  QString toolTipText = tr( "Tooltip:" ) + message;
+  QString statusTipText = tr( "Status tip:" ) + message;
+  QString whatsThisText = tr( "What's This?:" ) + message;
 
-  newAnnotation->setToolTip( toolTipText );
-  newAnnotation->setStatusTip( toolTipText );
-  newAnnotation->setWhatsThis( whatsThisText );
+  newMessage->setToolTip( toolTipText );
+  newMessage->setStatusTip( toolTipText );
+  newMessage->setWhatsThis( whatsThisText );
 
-  d->AnnotationListWidget->addItem( newAnnotation );
-  d->logic()->AddAnnotation( annotationText.toStdString(), sec, nsec );
+  d->AnnotationListWidget->addItem( newMessage );
+  d->logic()->AddMessage( message.toStdString(), time );
 
 }
 
 
 
-void qSlicerTransformRecorderModuleWidget::clearAnnotations()
+void qSlicerTransformRecorderModuleWidget::clearMessages()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
@@ -354,7 +352,7 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   }
   
   
-  int numRec = d->logic()->GetModuleNode()->GetTransformsBufferSize() + d->logic()->GetModuleNode()->GetMessagesBufferSize();
+  int numRec = d->logic()->GetBufferSize();
   std::stringstream ss;
   ss << numRec;
   d->NumRecordsResultLabel->setText( QString::fromStdString( ss.str() ) );

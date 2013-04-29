@@ -73,20 +73,7 @@ void fileOutput( std::string str, double num )
 }
 
 
-
-// Helper functions.
-// ----------------------------------------------------------------------------
-
-bool
-StringToBool( std::string str )
-{
-  bool var;
-  std::stringstream ss( str );
-  ss >> var;
-  return var;
-}
-
-// ----------------------------------------------------------------------------
+// Standard MRML Node Functions ----------------------------------------------------------------------------
 
 vtkMRMLTransformRecorderNode* vtkMRMLTransformRecorderNode
 ::New()
@@ -117,102 +104,100 @@ vtkMRMLNode* vtkMRMLTransformRecorderNode
 }
 
 
-void
-vtkMRMLTransformRecorderNode
-::StartReceiveServer()
+void vtkMRMLTransformRecorderNode
+::PrintSelf( ostream& os, vtkIndent indent )
 {
-  this->Active = true;
+  vtkMRMLNode::PrintSelf(os,indent);
+  os << indent << "FileName: " << this->fileName << "\n";
 }
 
 
-
-void
-vtkMRMLTransformRecorderNode
-::StopReceiveServer()
+void vtkMRMLTransformRecorderNode
+::ReadXMLAttributes( const char** atts )
 {
-  this->Active = false;
-}
+  Superclass::ReadXMLAttributes(atts);
 
-void
-vtkMRMLTransformRecorderNode
-::UpdateFileFromBuffer()
-{
-  std::ofstream output( this->LogFileName.c_str() );
-  
-  if ( ! output.is_open() )
+  // Read all MRML node attributes from two arrays of names and values
+  const char* attName;
+  const char* attValue;
+
+  while (*atts != NULL)
     {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
+    attName  = *(atts++);
+    attValue = *(atts++);
+    
+    // TODO: Handle observed transform nodes and connector node.   
+    if ( ! strcmp( attName, "FileName" ) )
+      {
+      this->SetFileName( attValue );
+      }
     }
-  
-  output << "<TransformRecorderLog>" << std::endl;
-  
-    // Save transforms.
-  
-  for ( unsigned int i = 0; i < this->TransformsBuffer.size(); ++ i )
-    {
-    output << "  <log";
-    output << " TimeStampSec=\"" << this->TransformsBuffer[ i ].TimeStampSec << "\"";
-    output << " TimeStampNSec=\"" << this->TransformsBuffer[ i ].TimeStampNSec << "\"";
-    output << " type=\"transform\"";
-    output << " DeviceName=\"" << this->TransformsBuffer[ i ].DeviceName << "\"";
-    output << " transform=\"" << this->TransformsBuffer[ i ].Transform << "\"";
-    output << " />" << std::endl;
-    }
-  
-  
-    // Save messages.
-  
-  for ( unsigned int i = 0; i < this->MessagesBuffer.size(); ++ i )
-    {
-    output << "  <log";
-    output << " TimeStampSec=\"" << this->MessagesBuffer[ i ].TimeStampSec << "\"";
-    output << " TimeStampNSec=\"" << this->MessagesBuffer[ i ].TimeStampNSec << "\"";
-    output << " type=\"message\"";
-    output << " message=\"" << this->MessagesBuffer[ i ].Message << "\"";
-    output << " />" << std::endl;
-    }
-  
-  
-  output << "</TransformRecorderLog>" << std::endl;
-  output.close();
-  this->ClearBuffer();
-  
-}
-
-
-
-
-
-void
-vtkMRMLTransformRecorderNode
-::ClearBuffer()
-{
-  this->TransformsBuffer.clear();
-  this->MessagesBuffer.clear();
-  
-  this->TotalNeedlePath = 0.0;
-  this->TotalNeedlePathInside = 0.0;
-  
-  if ( this->LastNeedleTransform != NULL )
-  {
-    this->LastNeedleTransform->Delete();
-    this->LastNeedleTransform = NULL;
-  }
 }
 
 
 
 void vtkMRMLTransformRecorderNode
-::GetTimestamp( int &sec, int &nsec )
+::WriteXML( ostream& of, int nIndent )
 {
-  clock_t clock1 = clock();
-  double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-  sec = floor( seconds );
-  nsec = ( seconds - sec ) * 1e9;    
+  Superclass::WriteXML(of, nIndent);
+
+  vtkIndent indent(nIndent);
+  
+  of << indent << " FileName=\"" << this->fileName << "\"";
 }
 
 
+
+void vtkMRMLTransformRecorderNode
+::Copy( vtkMRMLNode *anode )
+{  
+  Superclass::Copy( anode );
+  vtkMRMLTransformRecorderNode *node = ( vtkMRMLTransformRecorderNode* ) anode;
+
+    // Observers must be removed here, otherwise MRML updates would activate nodes on the undo stack
+  
+  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
+    {
+    this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLLinearTransformNode::TransformModifiedEvent );
+    }
+  
+  this->SetRecording( node->GetRecording() );
+  this->SetFileName( node->GetFileName() );
+}
+
+
+void vtkMRMLTransformRecorderNode
+::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData )
+{
+  if ( this->Recording == false )
+  {
+    return;
+  }
+  
+  
+    // Handle modified event of any observed transform node.
+  
+  std::vector< vtkMRMLLinearTransformNode* >::iterator tIt;
+  for ( tIt = this->ObservedTransformNodes.begin();
+        tIt != this->ObservedTransformNodes.end();
+        tIt ++ )
+  {
+    if ( *tIt == vtkMRMLLinearTransformNode::SafeDownCast( caller )
+         && event == vtkMRMLLinearTransformNode::TransformModifiedEvent )
+    {
+      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
+      if ( transformNode != NULL )
+      {
+        this->AddTransform( transformNode->GetID() );
+      }
+    }
+  }
+}
+
+
+
+
+// Constructors and Destructors -----------------------------------------------------------
 
 vtkMRMLTransformRecorderNode
 ::vtkMRMLTransformRecorderNode()
@@ -223,20 +208,18 @@ vtkMRMLTransformRecorderNode
   
   this->Recording = false;
   
-  this->LogFileName = "";
-  
-  this->Active = true;
+  this->fileName = "";
   
   // Initialize zero time point.
   this->Clock0 = clock();
-  this->IGTLTimeOffsetSeconds = 0.0;
-  this->IGTLTimeSynchronized = false;
   
   this->TotalNeedlePath = 0.0;
   this->TotalNeedlePathInside = 0.0;
   this->LastNeedleTransform = NULL;
   this->LastNeedleTime = -1.0;
   this->NeedleInside = false;
+
+  this->TransformBuffer = vtkMRMLTransformBufferNode::New();
 }
 
 
@@ -252,112 +235,17 @@ vtkMRMLTransformRecorderNode
     this->LastNeedleTransform->Delete();
     this->LastNeedleTransform = NULL;
   }
+  if ( this->TransformBuffer != NULL )
+  {
+    this->TransformBuffer->Delete();
+    this->TransformBuffer = NULL;
+  }
 }
 
 
 
-void vtkMRMLTransformRecorderNode::WriteXML( ostream& of, int nIndent )
-{
-  Superclass::WriteXML(of, nIndent);
 
-  vtkIndent indent(nIndent);
-  
-  of << indent << " Recording=\"" << this->Recording << "\"";
-  of << indent << " LogFileName=\"" << this->LogFileName << "\"";
-}
-
-
-
-void vtkMRMLTransformRecorderNode::ReadXMLAttributes( const char** atts )
-{
-  Superclass::ReadXMLAttributes(atts);
-
-  // Read all MRML node attributes from two arrays of names and values
-  const char* attName;
-  const char* attValue;
-
-  while (*atts != NULL)
-    {
-    attName  = *(atts++);
-    attValue = *(atts++);
-    
-    // todo: Handle observed transform nodes and connector node.
-    
-    if ( ! strcmp( attName, "Recording" ) )
-      {
-      this->SetRecording( StringToBool( std::string( attValue ) ) );
-      }
-    
-    if ( ! strcmp( attName, "LogFileName" ) )
-      {
-      this->SetLogFileName( attValue );
-      }
-    }
-}
-
-
-//----------------------------------------------------------------------------
-void vtkMRMLTransformRecorderNode::Copy( vtkMRMLNode *anode )
-{  
-  Superclass::Copy( anode );
-  vtkMRMLTransformRecorderNode *node = ( vtkMRMLTransformRecorderNode* ) anode;
-
-    // Observers must be removed here, otherwise MRML updates would activate nodes on the undo stack
-  
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
-    {
-    this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLLinearTransformNode::TransformModifiedEvent );
-    }
-  
-  this->SetRecording( node->GetRecording() );
-  this->SetLogFileName( node->GetLogFileName() );
-}
-
-
-//----------------------------------------------------------------------------
-void vtkMRMLTransformRecorderNode::UpdateReferences()
-{
-  Superclass::UpdateReferences();
-      // MRML node ID's should be checked. If Scene->GetNodeByID( id ) returns NULL,
-    // the reference should be deleted (set to NULL).
-  
-}
-
-
-
-void vtkMRMLTransformRecorderNode::UpdateReferenceID( const char *oldID, const char *newID )
-{
-  Superclass::UpdateReferenceID( oldID, newID );
-  
-  /*
-  if ( this->ConnectorNodeID && !strcmp( oldID, this->ConnectorNodeID ) )
-    {
-    this->SetAndObserveConnectorNodeID( newID );
-    }
-  */
-  
-  // TODO: This needs to be written for observed transforms.
-  
-}
-
-
-
-void vtkMRMLTransformRecorderNode::UpdateScene( vtkMRMLScene *scene )
-{
-  Superclass::UpdateScene( scene );
-  // this->SetAndObserveConnectorNodeID( this->ConnectorNodeID );
-  // TODO: Deal with observed transforms.
-}
-
-
-
-void vtkMRMLTransformRecorderNode::PrintSelf( ostream& os, vtkIndent indent )
-{
-  vtkMRMLNode::PrintSelf(os,indent);
-  os << indent << "LogFileName: " << this->LogFileName << "\n";
-}
-
-
+// Observed transform nodes -------------------------------------------------------
 
 void vtkMRMLTransformRecorderNode
 ::AddObservedTransformNode( const char* TransformNodeID )
@@ -481,113 +369,38 @@ vtkMRMLLinearTransformNode* vtkMRMLTransformRecorderNode
 
 
 
-void vtkMRMLTransformRecorderNode::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData )
+
+
+// Clear --------------------------------------------------------------------
+
+bool vtkMRMLTransformRecorderNode
+::GetRecording()
 {
-  if ( this->Recording == false )
-  {
-    return;
-  }
-  
-  
-    // Handle modified event of any observed transform node.
-  
-  std::vector< vtkMRMLLinearTransformNode* >::iterator tIt;
-  for ( tIt = this->ObservedTransformNodes.begin();
-        tIt != this->ObservedTransformNodes.end();
-        tIt ++ )
-  {
-    if ( *tIt == vtkMRMLLinearTransformNode::SafeDownCast( caller )
-         && event == vtkMRMLLinearTransformNode::TransformModifiedEvent )
-    {
-      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
-      if ( transformNode != NULL )
-      {
-        this->AddNewTransform( transformNode->GetID() );
-      }
-    }
-  }
+  return this->Recording;
 }
-
-
-
-void vtkMRMLTransformRecorderNode::RemoveMRMLObservers()
-{
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
-  {
-    this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLLinearTransformNode::TransformModifiedEvent );
-  }
-}
-
-
-
-/**
- * @param selections Should contain as many elements as the number of incoming
- *        transforms throught the active connector. Order follows the order in
- *        the connector node. 0 means transform is not tracked, 1 means it's tracked.
- */
-void vtkMRMLTransformRecorderNode::SetTransformSelections( std::vector< int > selections )
-{
-  this->TransformSelections.clear();
-  
-  for ( unsigned int i = 0; i < selections.size(); ++ i )
-  {
-    this->TransformSelections.push_back( selections[ i ] );
-  }
-
-
-}
-
-
-
-void vtkMRMLTransformRecorderNode::SetLogFileName( std::string fileName )
-{
-  this->LogFileName = fileName;
-}
-
-
-
-void vtkMRMLTransformRecorderNode::SaveIntoFile( std::string fileName )
-{
-  this->LogFileName = fileName;
-  this->UpdateFileFromBuffer();
-
-}
-
-
-
-std::string vtkMRMLTransformRecorderNode::GetLogFileName()
-{
-  return this->LogFileName;
-}
-
 
 
 void vtkMRMLTransformRecorderNode
-::CustomMessage( std::string message, int sec, int nsec )
+::SetRecording( bool newRecording )
 {
-  if ( sec == -1  &&  nsec == -1 )
+  this->Recording = newRecording;
+}
+
+
+void vtkMRMLTransformRecorderNode
+::Clear()
+{
+  this->TotalNeedlePath = 0.0;
+  this->TotalNeedlePathInside = 0.0;
+
+  if ( this->LastNeedleTransform != NULL )
   {
-    this->GetTimestamp( sec, nsec );
+    this->LastNeedleTransform->Delete();
+    this->LastNeedleTransform = NULL;
   }
-  
-  MessageRecord rec;
-  rec.Message = message;
-  rec.TimeStampSec = sec;
-  rec.TimeStampNSec = nsec;
-  
-  this->MessagesBuffer.push_back( rec );
-  
-  
-  // This should probably be redesigned at some point.
-  
-  if ( message.compare( "IN" ) == 0 )
-  {
-    this->NeedleInside = true;
-  }
-  else if ( message.compare( "OUT" ) == 0 )
-  {
-    this->NeedleInside = false;
-  }
+
+  this->TransformBuffer->Clear();
+
 }
 
 
@@ -595,36 +408,68 @@ void vtkMRMLTransformRecorderNode
 
 
 
-unsigned int vtkMRMLTransformRecorderNode::GetTransformsBufferSize()
+// Time -----------------------------------------------------------------------------
+
+void vtkMRMLTransformRecorderNode
+::GetCurrentTimestamp( int &sec, int &nsec )
 {
-  return this->TransformsBuffer.size();
+  clock_t clock1 = clock();
+  double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+  sec = floor( seconds );
+  nsec = ( seconds - sec ) * 1e9;    
+}
+
+
+double vtkMRMLTransformRecorderNode
+::GetCurrentTimestamp()
+{
+  clock_t clock1 = clock();
+  return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
 }
 
 
 
-unsigned int vtkMRMLTransformRecorderNode::GetMessagesBufferSize()
+
+
+// Saving to file ----------------------------------------------------------------------------
+
+std::string vtkMRMLTransformRecorderNode
+::GetFileName()
 {
-  return this->MessagesBuffer.size();
+  return this->fileName;
+}
+
+void vtkMRMLTransformRecorderNode
+::SetFileName( std::string newFileName )
+{
+  this->fileName = newFileName;
 }
 
 
+
+void vtkMRMLTransformRecorderNode::SaveToFile( std::string newFileName )
+{
+  this->fileName = newFileName;
+  this->TransformBuffer->WriteToFile( newFileName );
+}
+
+
+
+
+
+// Trajectory metrics ---------------------------------------------------------------------------------------------
 
 double vtkMRMLTransformRecorderNode::GetTotalTime()
 {
-  double totalTime = 0.0;
-  unsigned int n = this->TransformsBuffer.size();
+  int n = this->TransformBuffer->GetNumTransforms();
   
   if ( n < 2 )
   {
-    return totalTime;
+    return 0.0;
   }
   
-  double diffSec = double( this->TransformsBuffer[ n - 1 ].TimeStampSec - this->TransformsBuffer[ 0 ].TimeStampSec );
-  double diffNSec = double( this->TransformsBuffer[ n - 1 ].TimeStampNSec - this->TransformsBuffer[ 0 ].TimeStampNSec );
-  
-  totalTime = diffSec + 1.0e-9 * diffNSec;
-  
-  return totalTime;
+  return ( this->TransformBuffer->GetCurrentTransform()->GetTime() - this->TransformBuffer->GetTransformAt(0)->GetTime() );
+
 }
 
 
@@ -645,35 +490,43 @@ double vtkMRMLTransformRecorderNode::GetTotalPathInside()
 
 
 
-void vtkMRMLTransformRecorderNode::SetRecording( bool newState )
+
+// Add transform or message -----------------------------------------------------------------------------------
+
+void vtkMRMLTransformRecorderNode
+::AddMessage( std::string message, double time )
 {
-  this->Recording = newState;
-  if ( this->Recording )
+  if ( time == -1 )
   {
-    this->InvokeEvent( this->RecordingStartEvent, NULL );
+    time = this->GetCurrentTimestamp();
   }
-  else
+
+  vtkMessageRecord* messageRecord = vtkMessageRecord::New();
+  messageRecord->SetMessage( message );
+  messageRecord->SetTime( time );
+  TransformBuffer->AddMessage( messageRecord ); 
+  
+  // This should probably be redesigned at some point.
+  
+  if ( message.compare( "IN" ) == 0 )
   {
-    this->InvokeEvent( this->RecordingStopEvent, NULL );
+    this->NeedleInside = true;
+  }
+  else if ( message.compare( "OUT" ) == 0 )
+  {
+    this->NeedleInside = false;
   }
 }
 
 
 
-void vtkMRMLTransformRecorderNode::AddNewTransform( const char* TransformNodeID )
+
+void vtkMRMLTransformRecorderNode::AddTransform( const char* TransformNodeID )
 {
-  int sec = 0;
-  int nsec = 0;
   vtkSmartPointer< vtkMatrix4x4 > m = vtkSmartPointer< vtkMatrix4x4 >::New();
-  std::string deviceName;
   
-  this->GetTimestamp( sec, nsec );
-  
-  
-    // Get the new transform matrix.
-  
-  vtkMRMLLinearTransformNode* ltn = this->GetObservedTransformNode( TransformNodeID );
-  
+  // Get the new transform matrix 
+  vtkMRMLLinearTransformNode* ltn = this->GetObservedTransformNode( TransformNodeID );  
   if ( ltn != NULL )
   {
     m->DeepCopy( ltn->GetMatrixTransformToParent() );
@@ -682,16 +535,20 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( const char* TransformNodeID 
   {
     vtkErrorMacro( "Transform node not found." );
   }
+
+  if ( this->Recording == false )
+  {
+    return;
+  }
   
     
-    // Get the device name for the new transform.
+  // Get the device name and time for the new transform  
+  std::string deviceName = std::string( ltn->GetName() );
+  double time = this->GetCurrentTimestamp();
   
-  deviceName = std::string( ltn->GetName() );
   
   
-  
-    // Compute path lengths for needle.
-  
+  // Compute path lengths for needle  
   if (    deviceName.compare( "Needle" ) == 0
        || deviceName.compare( "NeedleToReference" ) == 0
        || deviceName.compare( "Stylus" ) == 0
@@ -699,45 +556,40 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( const char* TransformNodeID 
        || deviceName.compare( "StylusTip" ) == 0
        || deviceName.compare( "StylusTipToReference" ) == 0 )
   {
-    double needleTime = double( sec ) + 1.0e-9 * double( nsec );
-    double vNeedle = 1000000.0;  // TODO: Just a very big number. It could be solved nicer.
     
     if ( this->LastNeedleTransform == NULL  ||  this->LastNeedleTime < 0.0 )  // This is the first needle transform.
     {
       this->LastNeedleTransform = vtkTransform::New();
-      this->LastNeedleTransform->SetMatrix( m );
     }
     else  // Add to length.
     {
-      double distVector[ 3 ] = { 0.0, 0.0, 0.0 };
-      for ( int i = 0; i < 3; ++ i )
-      {
-        distVector[ i ] = m->GetElement( i, 3 ) - this->LastNeedleTransform->GetMatrix()->GetElement( i, 3 );
-      }
+
+	  double distVector[ 3 ];
+	  distVector[0] = m->GetElement( 0, 3 ) - this->LastNeedleTransform->GetMatrix()->GetElement( 0, 3 );
+	  distVector[1] = m->GetElement( 1, 3 ) - this->LastNeedleTransform->GetMatrix()->GetElement( 1, 3 );
+	  distVector[2] = m->GetElement( 2, 3 ) - this->LastNeedleTransform->GetMatrix()->GetElement( 2, 3 );
       double dist = vtkMath::Norm( distVector );
-      double dt = needleTime - this->LastNeedleTime;
-      if ( dt > 0.0 )
+      double dt = time - this->LastNeedleTime;
+	  double vNeedle = dist / dt; // mm / s
+
+      if ( dt > 0.0 && vNeedle < MAX_NEEDLE_SPEED_MMPERS )
       {
-        vNeedle = dist / dt; // mm / s
-        // fileOutput( "Needle velocity", vNeedle );  // TODO: Should be removed to improve performance!
-        if ( vNeedle < MAX_NEEDLE_SPEED_MMPERS )
+        this->TotalNeedlePath += dist;
+        if ( this->NeedleInside )
         {
-          this->TotalNeedlePath += dist;
-          if ( this->NeedleInside )
-          {
-            this->TotalNeedlePathInside += dist;
-          }
-          this->LastNeedleTransform->SetMatrix( m );
+          this->TotalNeedlePathInside += dist;
         }
       }
+
     }
-    
-    this->LastNeedleTime = needleTime;
+
+    this->LastNeedleTransform->SetMatrix( m );
+    this->LastNeedleTime = time;
+
   }
   
   
-    // Record the transform.
-  
+  // Record the transform.  
   std::stringstream mss;
   for ( int row = 0; row < 4; ++ row )
   {
@@ -747,39 +599,30 @@ void vtkMRMLTransformRecorderNode::AddNewTransform( const char* TransformNodeID 
     }
   }
   
-  TransformRecord rec;
-    rec.DeviceName = deviceName;
-    rec.TimeStampSec = sec;
-    rec.TimeStampNSec = nsec;
-    rec.Transform = mss.str();
+  vtkTransformRecord* transformRecord = vtkTransformRecord::New();
+  transformRecord->SetTransform( mss.str() );
+  transformRecord->SetDeviceName( deviceName );
+  transformRecord->SetTime( time );
+ 
   
-  if ( this->Recording == false )
-  {
-    return;
-  }
-  
-  
-    // Look for the most recent value of this transform.
-    // If the value hasn't changed, we don't record.
-  
-  std::vector< TransformRecord >::iterator trIt;
-  trIt = this->TransformsBuffer.end();
+  // Look for the most recent value of this transform.
+  // If the value hasn't changed, we don't record.
   bool duplicate = false;
-  while ( trIt != this->TransformsBuffer.begin() )
+  for ( int i = this->TransformBuffer->GetNumTransforms() - 1; i >= 0; i-- )
   {
-    trIt --;
-    if ( rec.DeviceName.compare( (*trIt).DeviceName ) == 0 )
-    {
-      if ( rec.Transform.compare( (*trIt).Transform ) == 0 )
-      {
+    if ( this->TransformBuffer->GetTransformAt(i)->GetDeviceName().compare( transformRecord->GetDeviceName() ) == 0 )
+	{
+      if ( this->TransformBuffer->GetTransformAt(i)->GetTransform().compare( transformRecord->GetTransform() ) == 0 )
+	  {
         duplicate = true;
-      }
-      break;
-    }
+	  }
+	  break;
+	}
   }
-  
-  if ( duplicate == false )
+
+  if ( ! duplicate )
   {
-    this->TransformsBuffer.push_back( rec );
+    this->TransformBuffer->AddTransform( transformRecord );
   }
+
 }

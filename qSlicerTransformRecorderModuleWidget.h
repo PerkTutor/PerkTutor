@@ -41,8 +41,8 @@ protected slots:
   void onStopButtonPressed();
   void onStartButtonPressed();
   void onClearBufferButtonPressed();
-  void addAnnotation();
-  void clearAnnotations();
+  void addMessage();
+  void clearMessages();
   void onModuleNodeSelected();
   void updateWidget();
 

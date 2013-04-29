@@ -15,176 +15,104 @@
 #ifndef __vtkMRMLTransformRecorderNode_h
 #define __vtkMRMLTransformRecorderNode_h
 
+// Standard includes
 #include <ctime>
 #include <iostream>
 #include <utility>
 #include <vector>
 
-
+// VTK includes
 #include "vtkMRMLModelNode.h"
 #include "vtkTransform.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
+#include "vtkMRMLLinearTransformNode.h"
 
 // TransformRecorder includes
 #include "vtkSlicerTransformRecorderModuleMRMLExport.h"
 
-class vtkActor;
-class vtkImageActor;
-class vtkMatrix4x4;
-class vtkPolyData;
-class vtkRenderer;
-class vtkTransform;
+// Includes from this module
+#include "vtkMRMLTransformBufferNode.h"
 
 
-class vtkImageData;
-class vtkMRMLLinearTransformNode;
-class vtkMRMLModelNode;
-class vtkMRMLViewNode;
-class vtkMRMLVolumeNode;
-
-/**
- * Struct to store a recorded transform.
- */
-class TransformRecord
+class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
+vtkMRMLTransformRecorderNode : public vtkMRMLNode
 {
 public:
-  std::string DeviceName;
-  std::string Transform;
-  long int TimeStampSec; 
-  int TimeStampNSec;     // Nanoseconds from TimeStampSec to the real timestamp.
-};
-
-
-
-class MessageRecord
-{
-public:
-  std::string Message;
-  long int TimeStampSec;
-  int TimeStampNSec;
-};
-//ETX
-
-
-class
-VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
-vtkMRMLTransformRecorderNode
-: public vtkMRMLNode
-{
-public:
+ 
+  vtkTypeMacro( vtkMRMLTransformRecorderNode, vtkMRMLNode );
   
-  //BTX
-  // Events.
-  enum {
-    TransformChangedEvent = 201001,
-    RecordingStartEvent   = 200901,
-    RecordingStopEvent    = 200902
-  };
-  //ETX
-  
-  
-    // Standard MRML node methods
+  // Standard MRML node methods
   
   static vtkMRMLTransformRecorderNode *New();
-  vtkTypeMacro( vtkMRMLTransformRecorderNode, vtkMRMLNode );
   virtual vtkMRMLNode* CreateNodeInstance();
   virtual const char* GetNodeTagName() { return "TransformRecorder"; };
   void PrintSelf( ostream& os, vtkIndent indent );
   virtual void ReadXMLAttributes( const char** atts );
   virtual void WriteXML( ostream& of, int indent );
   virtual void Copy( vtkMRMLNode *node );
-  virtual void UpdateScene( vtkMRMLScene * );
   void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
-  
-  
-  virtual void UpdateReferenceID( const char *oldID, const char *newID );
-  void UpdateReferences();
-  void StartReceiveServer();
-  void StopReceiveServer();
-  
+
   
 protected:
 
-    // Constructor/desctructor
+  // Constructor/desctructor
 
   vtkMRMLTransformRecorderNode();
   virtual ~vtkMRMLTransformRecorderNode();
   vtkMRMLTransformRecorderNode ( const vtkMRMLTransformRecorderNode& );
   void operator=( const vtkMRMLTransformRecorderNode& );
-
-  void RemoveMRMLObservers();
   
   
-    // Reference to observed transform nodes.
+  // Reference to observed transform nodes.
   
 public:
   void AddObservedTransformNode( const char* TransformNodeID );
   void RemoveObservedTransformNode( const char* TransformNodeID );
   void ClearObservedTranformNodes();
   vtkMRMLLinearTransformNode* GetObservedTransformNode( const char* TransformNodeID );
+
 protected:
   std::vector< char* > ObservedTransformNodeIDs;
   std::vector< vtkMRMLLinearTransformNode* > ObservedTransformNodes;
   
-  
 public:
-  unsigned int GetTransformsBufferSize();
-  unsigned int GetMessagesBufferSize();
 
+  void SetRecording( bool newRecording );
+  bool GetRecording();
+  void Clear();
+
+  void GetCurrentTimestamp( int &sec, int &nsec );
+  double GetCurrentTimestamp();
+
+  void SetFileName( std::string newFileName );
+  std::string GetFileName();
+  void SaveToFile( std::string fileName );
+  
   double GetTotalTime();
   double GetTotalPath();
   double GetTotalPathInside();
+
+  void AddMessage( std::string message, double time = -1 );
+  void AddTransform( const char* TransformNodeID ); 
+  vtkMRMLTransformBufferNode* TransformBuffer;
   
-  vtkGetMacro( Recording, bool );
-  void SetRecording( bool newState );
+protected:  
+
+  std::string fileName;
   
-  //BTX
-  void SetTransformSelections( std::vector< int > selections );
-  void SetLogFileName( std::string fileName );
-  void SaveIntoFile( std::string fileName );
-  std::string GetLogFileName();
-  void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
-  //ETX
-  
-  void UpdateFileFromBuffer();
-  void ClearBuffer();
-  
-  void GetTimestamp( int &sec, int &nsec );
-  
-  
-protected:
-  
-  void AddNewTransform( const char* TransformNodeID );
-  
-  
-  //BTX
-  std::vector< int > TransformSelections;
-  
-  std::string LogFileName;
-  std::vector< TransformRecord > TransformsBuffer;
-  std::vector< MessageRecord > MessagesBuffer;
-  //ETX
-  
+  // Set a zero timestamp in the constructor using the system clock.  
+  clock_t Clock0;  
+
   bool Recording;
   bool NeedleInside;
   
-  
-    // Time.
-    // Set a zero timestamp in the constructor using the system clock.
-  
-  clock_t Clock0;
-  
-  double IGTLTimeOffsetSeconds;  // Adding this to the IGTL timestamp synchronizes it with the clock.
-  bool IGTLTimeSynchronized;
-  
-  
   double TotalNeedlePath;
   double TotalNeedlePathInside;
+
   vtkTransform* LastNeedleTransform;
   double LastNeedleTime;
-  bool Active;
   
 };  
 

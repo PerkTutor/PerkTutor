@@ -209,7 +209,7 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
 vtkTransformRecord* vtkMRMLTransformBufferNode
 ::GetCurrentTransform()
 {
-  return this->transforms.at( this->GetNumTransforms() );
+  return this->transforms.at( this->GetNumTransforms() - 1 );
 }
 
 
@@ -223,7 +223,7 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
 vtkMessageRecord* vtkMRMLTransformBufferNode
 ::GetCurrentMessage()
 {
-  return this->messages.at( this->GetNumMessages() );
+  return this->messages.at( this->GetNumMessages() - 1 );
 }
 
 

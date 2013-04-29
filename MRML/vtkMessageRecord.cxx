@@ -78,14 +78,14 @@ void vtkMessageRecord
 ::SetTime( double newTime )
 {
   this->TimeStampSec = floor( newTime );
-  this->TimeStampNSec = 1e-9 * ( newTime - floor( newTime ) ); 
+  this->TimeStampNSec = 1.0e+9 * ( newTime - floor( newTime ) ); 
 }
 
 
 double vtkMessageRecord
 ::GetTime()
 {
-  return ( this->TimeStampSec + 1.0e-9 * TimeStampNSec );
+  return ( this->TimeStampSec + 1.0e-9 * this->TimeStampNSec );
 }
 
 
