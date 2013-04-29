@@ -400,7 +400,6 @@ void vtkMRMLTransformRecorderNode
   }
 
   this->TransformBuffer->Clear();
-
 }
 
 
@@ -450,7 +449,17 @@ void vtkMRMLTransformRecorderNode
 void vtkMRMLTransformRecorderNode::SaveToFile( std::string newFileName )
 {
   this->fileName = newFileName;
-  this->TransformBuffer->WriteToFile( newFileName );
+  std::ofstream output( this->fileName.c_str() );
+  
+  if ( ! output.is_open() )
+  {
+    vtkErrorMacro( "Record file could not be opened!" );
+    return;
+  }
+
+  output << this->TransformBuffer->ToXMLString();
+
+  output.close();
 }
 
 

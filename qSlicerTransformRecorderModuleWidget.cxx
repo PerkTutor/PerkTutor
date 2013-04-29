@@ -185,7 +185,6 @@ void qSlicerTransformRecorderModuleWidget::saveToFile()
   if ( filename.isEmpty() == false )
   {
     d->logic()->SaveToFile( filename.toStdString() );
-    d->AnnotationListWidget->clear();
   }
   
   this->updateWidget();
@@ -272,7 +271,8 @@ void qSlicerTransformRecorderModuleWidget
   Q_D( qSlicerTransformRecorderModuleWidget );
   
   d->logic()->ClearBuffer();
-   
+  d->AnnotationListWidget->clear();
+
   this->updateWidget();
 }
 
@@ -315,7 +315,8 @@ void qSlicerTransformRecorderModuleWidget::clearMessages()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
-  d->AnnotationListWidget->clear(); // This only hides the annotations, does not clear them (could be important for inside/outside tissue)
+  d->AnnotationListWidget->clear();
+  d->logic()->ClearMessages();
 }
 
 

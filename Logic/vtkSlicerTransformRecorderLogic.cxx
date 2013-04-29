@@ -195,6 +195,16 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
+::ClearMessages()
+{
+  if ( this->ModuleNode != NULL )
+  {
+	this->GetBuffer()->ClearMessages();
+  }
+}
+
+
+void vtkSlicerTransformRecorderLogic
 ::SaveToFile( std::string fileName )
 {
   if ( this->ModuleNode != NULL )
@@ -256,7 +266,7 @@ int vtkSlicerTransformRecorderLogic
 {
   if ( this->ModuleNode != NULL )
   {
-    return this->ModuleNode->TransformBuffer->GetNumTransforms() + this->ModuleNode->TransformBuffer->GetNumMessages();
+    return this->GetBuffer()->GetNumTransforms() + this->GetBuffer()->GetNumMessages();
   }
   return NULL;
 }

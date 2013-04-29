@@ -87,18 +87,18 @@ public:
   int GetNumMessages();
 
   void Clear();
+  void ClearTransforms();
+  void ClearMessages();
 
-  void WriteToFile( std::string fileName );
-  void ReadFromFile( std::string fileName );
+  std::string ToXMLString();
+  void FromXMLElement( vtkXMLDataElement* element );
 
 
 private:
   
   std::vector<vtkTransformRecord*> transforms;
   std::vector<vtkMessageRecord*> messages;
-  
-  std::string fileName;
-  
+
 };  
 
 #endif

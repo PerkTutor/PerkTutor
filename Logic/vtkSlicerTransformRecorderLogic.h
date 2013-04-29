@@ -75,6 +75,8 @@ public:
   double GetCurrentTimestamp();
 
   void AddMessage( std::string annotationName, double time );
+  void ClearMessages();
+
   void SaveToFile( std::string fileName );
   vtkMRMLTransformBufferNode* GetBuffer();
   int GetBufferSize();

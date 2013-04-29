@@ -38,7 +38,6 @@ void vtkMRMLTransformBufferNode
 ::PrintSelf( ostream& os, vtkIndent indent )
 {
   vtkMRMLNode::PrintSelf(os,indent);
-  os << indent << "FileName: " << this->fileName << "\n";
 }
 
 
@@ -46,8 +45,7 @@ void vtkMRMLTransformBufferNode
 ::WriteXML( ostream& of, int nIndent )
 {
   Superclass::WriteXML(of, nIndent);
-  vtkIndent indent(nIndent);  
-  of << indent << " FileName=\"" << this->fileName << "\"";
+  vtkIndent indent(nIndent);
 }
 
 
@@ -55,21 +53,6 @@ void vtkMRMLTransformBufferNode
 ::ReadXMLAttributes( const char** atts )
 {
   Superclass::ReadXMLAttributes(atts);
-
-  // Read all MRML node attributes from two arrays of names and values
-  const char* attName;
-  const char* attValue;
-
-  while (*atts != NULL)
-  {
-    attName  = *(atts++);
-    attValue = *(atts++);
-    
-    if ( ! strcmp( attName, "FileName" ) )
-    {
-	  this->ReadFromFile( std::string( attValue ) );
-    }
-  }
 }
 
 
@@ -80,7 +63,6 @@ void vtkMRMLTransformBufferNode
   vtkMRMLTransformBufferNode *node = ( vtkMRMLTransformBufferNode* ) anode;
 
   this->Clear();
-  this->fileName = node->fileName;
 
   for ( int i = 0; i < node->GetNumTransforms(); i++ )
   {
@@ -101,7 +83,6 @@ void vtkMRMLTransformBufferNode
 vtkMRMLTransformBufferNode
 ::vtkMRMLTransformBufferNode()
 {
-  this->fileName = "";
   // No need to initialize the vectors
 }
 
@@ -109,7 +90,6 @@ vtkMRMLTransformBufferNode
 vtkMRMLTransformBufferNode
 ::~vtkMRMLTransformBufferNode()
 {
-  this->fileName = "";
   this->transforms.clear(); // Clear function automatically deconstructs all objects in the vector
   this->messages.clear();
 }
@@ -331,46 +311,45 @@ void vtkMRMLTransformBufferNode
 
 
 void vtkMRMLTransformBufferNode
-::WriteToFile( std::string fileName )
+::ClearTransforms()
 {
-  this->fileName = fileName;
-
-  std::ofstream output( this->fileName.c_str() );
-  
-  if ( ! output.is_open() )
-  {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-  }
-  
-  output << "<TransformRecorderLog>" << std::endl;
-
-  for ( int i = 0; i < this->GetNumTransforms(); i++ )
-  {
-    output << this->GetTransformAt(i)->ToXMLString();
-  }
-
-  for ( int i = 0; i < this->GetNumMessages(); i++ )
-  {
-    output << this->GetMessageAt(i)->ToXMLString();
-  }
-
-  output << "</TransformRecorderLog>" << std::endl;
-  output.close();
-
+  this->transforms.clear();
 }
 
 
 void vtkMRMLTransformBufferNode
-::ReadFromFile( std::string fileName )
+::ClearMessages()
 {
-  this->fileName = fileName;
+  this->messages.clear();
+}
 
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( fileName.c_str() );
-  parser->Parse();
+
+std::string vtkMRMLTransformBufferNode
+::ToXMLString()
+{
+  std::stringstream xmlstring;
   
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
+  xmlstring << "<TransformRecorderLog>" << std::endl;
+
+  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  {
+    xmlstring << this->GetTransformAt(i)->ToXMLString();
+  }
+
+  for ( int i = 0; i < this->GetNumMessages(); i++ )
+  {
+    xmlstring << this->GetMessageAt(i)->ToXMLString();
+  }
+
+  xmlstring << "</TransformRecorderLog>" << std::endl;
+
+  return xmlstring.str();
+}
+
+
+void vtkMRMLTransformBufferNode
+::FromXMLElement( vtkXMLDataElement* rootElement )
+{
   if ( ! rootElement || strcmp( rootElement->GetName(), "TransformRecorderLog" ) != 0 ) 
   {
     return;
