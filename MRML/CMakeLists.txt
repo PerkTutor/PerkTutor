@@ -26,6 +26,12 @@ set(module_mrml_include_directories
 set(module_mrml_SRCS
   vtkMRMLTransformRecorderNode.cxx
   vtkMRMLTransformRecorderNode.h
+  vtkMRMLTransformBufferNode.cxx
+  vtkMRMLTransformBufferNode.h
+  vtkTransformRecord.cxx
+  vtkTransformRecord.h
+  vtkMessageRecord.cxx
+  vtkMessageRecord.h
   )
 
 # Additional Target libraries
