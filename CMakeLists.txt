@@ -14,6 +14,24 @@ set( EXTENSION_BUILD_SUBDIRECTORY inner-build )
 find_package( Slicer REQUIRED )
 include( ${Slicer_USE_FILE} )
 
+# Option to enable the experimental modules
+OPTION(PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES "Enable the building of work-in-progress, experimental modules." OFF)
+IF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
+  set( PerkTutor_Modules
+    PerkEvaluator
+    TransformRecorder
+    WorkflowSegmentation 
+    TargetFiducials
+  )
+ELSE( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
+  set( PerkTutor_Modules
+    PerkEvaluator
+    TransformRecorder
+    WorkflowSegmentation 
+  )
+ENDIF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
+
+
 # Run superbuild in the first round of configuration.
 option(${EXTENSION_NAME}_SUPERBUILD "Build ${EXTENSION_NAME} and the projects it depends on via SuperBuild.cmake." ON)
 mark_as_advanced(${EXTENSION_NAME}_SUPERBUILD)
@@ -27,10 +45,10 @@ set( MODULE_NAME ${EXTENSION_NAME} )
 set( MODULE_TITLE ${MODULE_NAME} )
 string( TOUPPER ${MODULE_NAME} MODULE_NAME_UPPER )
 
-add_subdirectory( ${PerkEvaluator_SOURCE_DIR} ${PerkEvaluator_BINARY_DIR} )
-add_subdirectory( ${TargetFiducials_SOURCE_DIR} ${TargetFiducials_BINARY_DIR} )
-add_subdirectory( ${TransformRecorder_SOURCE_DIR} ${TransformRecorder_BINARY_DIR} )
-add_subdirectory( ${WorkflowSegmentation_SOURCE_DIR} ${WorkflowSegmentation_BINARY_DIR} )
+
+foreach( proj ${PerkTutor_Modules} )
+  add_subdirectory( ${${proj}_SOURCE_DIR} ${${proj}_BINARY_DIR} )
+endforeach( proj )
 
 set(CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${CMAKE_BINARY_DIR};${EXTENSION_NAME};ALL;/")
 

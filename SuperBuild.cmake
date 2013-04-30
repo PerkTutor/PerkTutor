@@ -20,19 +20,16 @@ endif()
 #-----------------------------------------------------------------------------
 
 set( inner_DEPENDENCIES "" )
-  
-set( PerkTutor_Modules
-  PerkEvaluator
-  TargetFiducials
-  TransformRecorder
-  WorkflowSegmentation
-  )
 
-  
 foreach( proj ${PerkTutor_Modules} )
   set( inner_DEPENDENCIES ${proj}Download ${inner_DEPENDENCIES} )
   set( ${proj}_SOURCE_DIR ${CMAKE_BINARY_DIR}/${proj} )
   set( ${proj}_BINARY_DIR ${${proj}_SOURCE_DIR}-build )
+  set( MODULE_COMMANDS
+    ${MODULE_COMMANDS}
+    -D${proj}_SOURCE_DIR:PATH=${${proj}_SOURCE_DIR}
+    -D${proj}_BINARY_DIR:PATH=${${proj}_BINARY_DIR}
+  )
   message( STATUS "Source: "${${proj}_SOURCE_DIR} )
   ExternalProject_Add(
     ${proj}Download
@@ -67,14 +64,8 @@ ExternalProject_Add( ${proj}
     -DADDITIONAL_CXX_FLAGS:STRING=${ADDITIONAL_CXX_FLAGS}
     -D${EXTENSION_NAME}_SUPERBUILD:BOOL=OFF
     -DEXTENSION_SUPERBUILD_BINARY_DIR:PATH=${${EXTENSION_NAME}_BINARY_DIR}
-    -DPerkEvaluator_SOURCE_DIR:PATH=${PerkEvaluator_SOURCE_DIR}
-    -DPerkEvaluator_BINARY_DIR:PATH=${PerkEvaluator_BINARY_DIR}
-    -DTargetFiducials_SOURCE_DIR:PATH=${TargetFiducials_SOURCE_DIR}
-    -DTargetFiducials_BINARY_DIR:PATH=${TargetFiducials_BINARY_DIR}      
-    -DTransformRecorder_SOURCE_DIR:PATH=${TransformRecorder_SOURCE_DIR}
-    -DTransformRecorder_BINARY_DIR:PATH=${TransformRecorder_BINARY_DIR}      
-    -DWorkflowSegmentation_SOURCE_DIR:PATH=${WorkflowSegmentation_SOURCE_DIR}
-    -DWorkflowSegmentation_BINARY_DIR:PATH=${WorkflowSegmentation_BINARY_DIR}      
+    ${MODULE_COMMANDS}
+    -DPERKTUTOR_ENABLE_EXPERIMENTAL_MODULES:BOOL=${PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES}
     -DSlicer_DIR:PATH=${Slicer_DIR}
     -DCTK_DIR:PATH=${CTK_DIR}
     -DQtTesting_DIR:PATH=${QtTesting_DIR}
