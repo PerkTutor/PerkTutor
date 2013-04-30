@@ -74,11 +74,15 @@ public:
 
   void RemoveTransformAt( int index );
   void RemoveMessageAt( int index );
+  void RemoveTransformsByName( std::string name );
+  void RemoveMessagesByName( std::string name );
 
   vtkTransformRecord* GetTransformAt( int index );
-  vtkTransformRecord* GetCurrentTransform();  
-  vtkMessageRecord* GetCurrentMessage();
+  vtkTransformRecord* GetCurrentTransform();
+  vtkTransformRecord* GetTransformByName( std::string name );
   vtkMessageRecord* GetMessageAt( int index );
+  vtkMessageRecord* GetCurrentMessage();
+  vtkMessageRecord* GetMessageByName( std::string name );
 
   vtkTransformRecord* GetTransformAtTime( double time );
   vtkMessageRecord* GetMessageAtTime( double time );
@@ -89,6 +93,9 @@ public:
   void Clear();
   void ClearTransforms();
   void ClearMessages();
+
+  std::vector<vtkMRMLTransformBufferNode*> SplitBufferByName();
+  vtkMRMLTransformBufferNode* GetBufferByName( std::string name );
 
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );

@@ -173,9 +173,37 @@ void vtkMRMLTransformBufferNode
 
 
 void vtkMRMLTransformBufferNode
+::RemoveTransformsByName( std::string name )
+{
+  for ( int i = 0; i < this->transforms.size(); i++ )
+  {
+    if ( this->GetTransformAt(i)->GetDeviceName().compare( name ) == 0 )
+	{
+	  this->transforms.erase( transforms.begin() + i );
+	  i--;
+	}
+  }
+}
+
+
+void vtkMRMLTransformBufferNode
 ::RemoveMessageAt( int index )
 {
   this->messages.erase( messages.begin() + index );
+}
+
+
+void vtkMRMLTransformBufferNode
+::RemoveMessagesByName( std::string name )
+{
+  for ( int i = 0; i < this->messages.size(); i++ )
+  {
+    if ( this->GetMessageAt(i)->GetMessage().compare( name ) == 0 )
+	{
+	  this->messages.erase( messages.begin() + i );
+	  i--;
+	}
+  }
 }
 
 
@@ -193,6 +221,20 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
 }
 
 
+vtkTransformRecord* vtkMRMLTransformBufferNode
+::GetTransformByName( std::string name )
+{
+  for ( int i = 0; i < this->transforms.size(); i++ )
+  {
+    if ( this->GetTransformAt(i)->GetDeviceName().compare( name ) == 0 )
+	{
+	  return this->GetTransformAt(i);
+	}
+  }
+  return NULL;
+}
+
+
 vtkMessageRecord* vtkMRMLTransformBufferNode
 ::GetMessageAt( int index )
 {
@@ -204,6 +246,20 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
 ::GetCurrentMessage()
 {
   return this->messages.at( this->GetNumMessages() - 1 );
+}
+
+
+vtkMessageRecord* vtkMRMLTransformBufferNode
+::GetMessageByName( std::string name )
+{
+  for ( int i = 0; i < this->messages.size(); i++ )
+  {
+    if ( this->GetMessageAt(i)->GetMessage().compare( name ) == 0 )
+	{
+	  return this->GetMessageAt(i);
+	}
+  }
+  return NULL;
 }
 
 
@@ -321,6 +377,71 @@ void vtkMRMLTransformBufferNode
 ::ClearMessages()
 {
   this->messages.clear();
+}
+
+
+// We store many transforms of many different devices here possibly
+// This method will return an array of buffers that each only refer to one tool
+std::vector<vtkMRMLTransformBufferNode*> vtkMRMLTransformBufferNode
+::SplitBufferByName()
+{
+  std::vector<vtkMRMLTransformBufferNode*> deviceBuffers;
+
+  // Separate the transforms by their device name
+  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  {
+    bool deviceExists = false;
+    for ( int j = 0; j < deviceBuffers.size(); j++ )
+	{
+	  // Observe that a device buffer only exists if it has a transform, thus, the current transform is always available
+      if ( deviceBuffers.at(j)->GetCurrentTransform()->GetDeviceName().compare( this->GetTransformAt(i)->GetDeviceName() ) == 0 )
+	  {
+        deviceBuffers.at(j)->AddTransform( this->GetTransformAt(i)->DeepCopy() );
+		deviceExists = true;
+	  }
+	}
+
+	if ( ! deviceExists )
+	{
+		vtkMRMLTransformBufferNode* newDeviceBuffer = vtkMRMLTransformBufferNode::New();
+		newDeviceBuffer->AddTransform( this->GetTransformAt(i)->DeepCopy() );
+		deviceBuffers.push_back( newDeviceBuffer );
+	}
+
+  }
+
+  // Add the messages to all of the device buffers
+  for ( int i = 0; i < this->GetNumMessages(); i++ )
+  {
+    for ( int j = 0; j < deviceBuffers.size(); j++ )
+	{
+      deviceBuffers.at(j)->AddMessage( this->GetMessageAt(i)->DeepCopy() );
+	}
+  }
+
+  return deviceBuffers;
+  
+}
+
+
+// This method makes a buffer out of everything with the specified device name
+vtkMRMLTransformBufferNode* vtkMRMLTransformBufferNode
+::GetBufferByName( std::string name )
+{
+  std::vector<vtkMRMLTransformBufferNode*> deviceBuffers = this->SplitBufferByName();
+
+  vtkMRMLTransformBufferNode* outputBuffer = NULL;
+  for ( int j = 0; j < deviceBuffers.size(); j++ )
+  {
+    if ( deviceBuffers.at(j)->GetCurrentTransform()->GetDeviceName().compare( name ) == 0 )
+	{
+	  outputBuffer->Copy( deviceBuffers.at(j) );
+	}
+  }
+
+  deviceBuffers.clear();
+  return outputBuffer;
+
 }
 
 
