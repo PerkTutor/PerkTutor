@@ -44,6 +44,7 @@ protected slots:
   void addMessage();
   void clearMessages();
   void onModuleNodeSelected();
+  void updateSelectionsFromObservedNodes();
   void updateWidget();
 
 private:

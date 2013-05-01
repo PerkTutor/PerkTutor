@@ -109,6 +109,10 @@ void vtkMRMLTransformRecorderNode
 {
   vtkMRMLNode::PrintSelf(os,indent);
   os << indent << "FileName: " << this->fileName << "\n";
+  for ( int i = 0; i < this->ObservedTransformNodes.size(); i++ )
+  {
+    os << indent << " ObservedTransformNode=\"" << this->ObservedTransformNodes.at(i)->GetName() << "\"";
+  }
 }
 
 
@@ -122,16 +126,22 @@ void vtkMRMLTransformRecorderNode
   const char* attValue;
 
   while (*atts != NULL)
-    {
+  {
     attName  = *(atts++);
     attValue = *(atts++);
     
     // TODO: Handle observed transform nodes and connector node.   
     if ( ! strcmp( attName, "FileName" ) )
-      {
+    {
       this->SetFileName( attValue );
-      }
     }
+	if ( ! strcmp( attName, "ObservedTransformNode" ) )
+    {
+	  StoredTransformNodeNames.push_back( std::string( attValue ) );
+    }
+
+  }
+
 }
 
 
@@ -144,6 +154,10 @@ void vtkMRMLTransformRecorderNode
   vtkIndent indent(nIndent);
   
   of << indent << " FileName=\"" << this->fileName << "\"";
+  for ( int i = 0; i < this->ObservedTransformNodes.size(); i++ )
+  {
+    of << indent << " ObservedTransformNode=\"" << this->ObservedTransformNodes.at(i)->GetName() << "\"";
+  }
 }
 
 
@@ -302,28 +316,24 @@ void vtkMRMLTransformRecorderNode
   }
   
   
-    // Remove observer, and erase node from the observed node vector.
+  // Remove observer, and erase node from the observed node vector.
   
   std::vector< vtkMRMLLinearTransformNode* >::iterator nodeIt;
-  for ( nodeIt = this->ObservedTransformNodes.begin();
-        nodeIt != this->ObservedTransformNodes.end();
-        nodeIt ++ )
+  for ( nodeIt = this->ObservedTransformNodes.begin(); nodeIt != this->ObservedTransformNodes.end(); nodeIt++ )
   {
     if ( strcmp( TransformNodeID, (*nodeIt)->GetID() ) == 0 )
     {
       (*nodeIt)->RemoveObserver( (vtkCommand*)this->MRMLCallbackCommand );
       vtkSetAndObserveMRMLObjectMacro( *nodeIt, NULL );
       this->ObservedTransformNodes.erase( nodeIt );
+	  break; // Otherwise the iterator will run out of bounds
     }
   }
   
   
-    // Remove node ID and reference.
-  
+  // Remove node ID and reference.
   std::vector< char* >::iterator transformIt;
-  for ( transformIt = this->ObservedTransformNodeIDs.begin();
-        transformIt != this->ObservedTransformNodeIDs.end();
-        transformIt ++ )
+  for ( transformIt = this->ObservedTransformNodeIDs.begin(); transformIt != this->ObservedTransformNodeIDs.end(); transformIt ++ )
   {
     if ( strcmp( TransformNodeID, *transformIt ) == 0 )
     {
@@ -333,9 +343,10 @@ void vtkMRMLTransformRecorderNode
       }
       
       this->ObservedTransformNodeIDs.erase( transformIt );
-      break;
+      break; // Otherwise the iterator will run out of bounds
     }
   }
+
 }
 
 
@@ -343,12 +354,10 @@ void vtkMRMLTransformRecorderNode
 void vtkMRMLTransformRecorderNode
 ::ClearObservedTranformNodes()
 {
-  std::vector< char* >::iterator transformIDIt;
-  for ( transformIDIt = this->ObservedTransformNodeIDs.begin();
-        transformIDIt != this->ObservedTransformNodeIDs.end();
-        transformIDIt ++ )
+  // Observe that the elements keep sliding to fill the 0th slot, so just keep removing from the zeroth slot
+  while ( this->ObservedTransformNodeIDs.size() > 0 )
   {
-    this->RemoveObservedTransformNode( *transformIDIt );
+    this->RemoveObservedTransformNode( *this->ObservedTransformNodeIDs.begin() );
   }
 }
 
@@ -358,8 +367,7 @@ vtkMRMLLinearTransformNode* vtkMRMLTransformRecorderNode
 ::GetObservedTransformNode( const char* TransformNodeID )
 {
   vtkMRMLLinearTransformNode* node = NULL;
-  if ( this->GetScene()
-       && TransformNodeID != NULL )
+  if ( this->GetScene() && TransformNodeID != NULL )
   {
     vtkMRMLNode* snode = this->GetScene()->GetNodeByID( TransformNodeID );
     node = vtkMRMLLinearTransformNode::SafeDownCast( snode );
@@ -368,6 +376,42 @@ vtkMRMLLinearTransformNode* vtkMRMLTransformRecorderNode
 }
 
 
+bool vtkMRMLTransformRecorderNode
+::IsObservedTransformNode( const char* TransformNodeID )
+{
+  for ( int i = 0; i < this->ObservedTransformNodeIDs.size(); i++ )
+  {
+    if ( strcmp( this->ObservedTransformNodeIDs.at(i), TransformNodeID ) == 0 )
+	{
+	  return true;
+	}
+  }
+  return false;
+}
+
+void vtkMRMLTransformRecorderNode
+::AddObservedTransformNodesFromStoredNames()
+{
+  // Create a new node if none exists with this name
+  // Then add the node to the list of observed transform nodes
+  for ( int i = 0; i < this->StoredTransformNodeNames.size(); i++ )
+  {
+    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->GetFirstNode( StoredTransformNodeNames.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
+    if ( node == NULL )
+    {
+      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
+	  this->GetScene()->AddNode( node );
+	  node->SetName( StoredTransformNodeNames.at(i).c_str() );
+    }
+    const char* nodeID = node->GetID();
+    this->AddObservedTransformNode( nodeID );
+
+	// Remove
+	StoredTransformNodeNames.erase( StoredTransformNodeNames.begin() + i );
+	i--;
+  }
+
+}
 
 
 

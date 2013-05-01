@@ -67,6 +67,7 @@ public:
   // Functions to control recording.
   void AddObservedTransformNode( char* id );
   void RemoveObservedTransformNode( char* id );
+  bool IsObservedTransformNode( char* id );
 
   void SetRecording( bool isRecording );
   bool GetRecording();

@@ -214,6 +214,7 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
   }
   
   d->logic()->SetModuleNode( TRNode );
+  this->updateSelectionsFromObservedNodes();
   this->updateWidget();
 }
 
@@ -223,28 +224,20 @@ void qSlicerTransformRecorderModuleWidget
 ::onStartButtonPressed()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
-  
-  
-    // Go through transform types (ie ProbeToReference, StylusTipToReference, etc) 
-    // Save selected state as 1 and unselected state as 0 of each transform type in transformSelections vector.
-  
-  std::vector< int > transformSelections;
-  const int unselected = 0;
-  const int selected = 1;
-  
+    
+  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-	  if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
-	  {
-	    d->logic()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
-	  }
-	  else
-	  {
-	    d->logic()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
-	  }
-	}
-  
-  
+    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
+    {
+      d->logic()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+    }
+    else
+    {
+      d->logic()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+    }
+  }
+    
   d->logic()->SetRecording( true );
   
   this->updateWidget();
@@ -320,6 +313,23 @@ void qSlicerTransformRecorderModuleWidget::clearMessages()
 }
 
 
+void qSlicerTransformRecorderModuleWidget
+::updateSelectionsFromObservedNodes()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+
+  // Assume the default is not checked, and check all those that are observed
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  {
+    if( d->logic()->IsObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() ) )
+    {
+	  d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex( i ), Qt::Checked );
+    }
+  }
+
+}
+
+
 
 void qSlicerTransformRecorderModuleWidget::updateWidget()
 {
@@ -372,10 +382,5 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   ss.precision( 2 );
   ss << std::fixed << d->logic()->GetTotalPathInside();
   d->InsideNeedlePathResultsLabel->setText( ss.str().c_str() );
-  
-
-  
-
-  
-  
+   
 }

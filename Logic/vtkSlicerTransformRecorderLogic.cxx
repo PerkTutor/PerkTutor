@@ -138,6 +138,19 @@ void vtkSlicerTransformRecorderLogic
 
 
 
+bool vtkSlicerTransformRecorderLogic
+::IsObservedTransformNode( char* id )
+{
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->AddObservedTransformNodesFromStoredNames();
+    return this->ModuleNode->IsObservedTransformNode( id );
+  }
+  return false;
+}
+
+
+
 void vtkSlicerTransformRecorderLogic
 ::SetRecording( bool isRecording )
 {

@@ -403,9 +403,9 @@ std::vector<vtkMRMLTransformBufferNode*> vtkMRMLTransformBufferNode
 
 	if ( ! deviceExists )
 	{
-		vtkMRMLTransformBufferNode* newDeviceBuffer = vtkMRMLTransformBufferNode::New();
-		newDeviceBuffer->AddTransform( this->GetTransformAt(i)->DeepCopy() );
-		deviceBuffers.push_back( newDeviceBuffer );
+	  vtkMRMLTransformBufferNode* newDeviceBuffer = vtkMRMLTransformBufferNode::New();
+	  newDeviceBuffer->AddTransform( this->GetTransformAt(i)->DeepCopy() );
+	  deviceBuffers.push_back( newDeviceBuffer );
 	}
 
   }

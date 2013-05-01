@@ -72,8 +72,11 @@ public:
   void RemoveObservedTransformNode( const char* TransformNodeID );
   void ClearObservedTranformNodes();
   vtkMRMLLinearTransformNode* GetObservedTransformNode( const char* TransformNodeID );
+  bool IsObservedTransformNode( const char* TransformNodeID );
+  void AddObservedTransformNodesFromStoredNames();
 
 protected:
+  std::vector< std::string > StoredTransformNodeNames;
   std::vector< char* > ObservedTransformNodeIDs;
   std::vector< vtkMRMLLinearTransformNode* > ObservedTransformNodes;
   
