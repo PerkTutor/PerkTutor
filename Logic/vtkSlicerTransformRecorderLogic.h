@@ -76,6 +76,7 @@ public:
   double GetCurrentTimestamp();
 
   void AddMessage( std::string annotationName, double time );
+  void RemoveMessage( int index );
   void ClearMessages();
 
   void SaveToFile( std::string fileName );

@@ -6,6 +6,7 @@
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
 #include "qSlicerTransformRecorderModuleExport.h"
+#include "qSlicerMessagesWidget.h"
 
 class qSlicerTransformRecorderModuleWidgetPrivate;
 class vtkMRMLNode;
@@ -41,8 +42,6 @@ protected slots:
   void onStopButtonPressed();
   void onStartButtonPressed();
   void onClearBufferButtonPressed();
-  void addMessage();
-  void clearMessages();
   void onModuleNodeSelected();
   void updateSelectionsFromObservedNodes();
   void updateWidget();

@@ -208,6 +208,16 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
+::RemoveMessage( int index )
+{
+  if ( this->ModuleNode != NULL )
+  {
+	this->GetBuffer()->RemoveMessageAt( index );
+  }
+}
+
+
+void vtkSlicerTransformRecorderLogic
 ::ClearMessages()
 {
   if ( this->ModuleNode != NULL )

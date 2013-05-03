@@ -30,7 +30,7 @@
 // MRMLWidgets includes
 #include <qMRMLUtils.h>
 
-
+#include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkMRMLTransformRecorderNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 
@@ -107,7 +107,9 @@ void qSlicerTransformRecorderModuleWidget::setup()
   d->InsideNeedlePathResultsLabel=NULL;
 
   d->setupUi(this);
+  d->verticalLayout->addWidget( qSlicerMessagesWidget::New( d->logic() ) );  
   this->Superclass::setup();
+
 
   d->ModuleComboBox->setNoneEnabled( true );
 
@@ -124,14 +126,6 @@ void qSlicerTransformRecorderModuleWidget::setup()
   QTimer *t = new QTimer( this );
   connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
   t->start(10); 
-  
-  // onTransformsNodeSelected( 0 );
-
-  //Annotations
-  d->AnnotationListWidget->setSelectionMode( QAbstractItemView::SingleSelection );
-
-  connect( d->InsertAnnotationButton, SIGNAL( pressed() ), this, SLOT( addMessage() ) );
-  connect( d->ClearAnnotationButton, SIGNAL( pressed() ), this, SLOT( clearMessages() ) );
 
 }
 
@@ -264,52 +258,8 @@ void qSlicerTransformRecorderModuleWidget
   Q_D( qSlicerTransformRecorderModuleWidget );
   
   d->logic()->ClearBuffer();
-  d->AnnotationListWidget->clear();
 
   this->updateWidget();
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget::addMessage()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget ); 
-
-  double time = d->logic()->GetCurrentTimestamp();
-  
-  // Get the timestamp for this annotation.   
-  QString message = QInputDialog::getText( this, tr("Insert Message"), tr("Input text for the new message:") );
-
-  if ( message.isNull() )
-  {
-    return;
-  }
-  
-  
-  QListWidgetItem *newMessage = new QListWidgetItem;
-  newMessage->setText( message );
-  
-  QString toolTipText = tr( "Tooltip:" ) + message;
-  QString statusTipText = tr( "Status tip:" ) + message;
-  QString whatsThisText = tr( "What's This?:" ) + message;
-
-  newMessage->setToolTip( toolTipText );
-  newMessage->setStatusTip( toolTipText );
-  newMessage->setWhatsThis( whatsThisText );
-
-  d->AnnotationListWidget->addItem( newMessage );
-  d->logic()->AddMessage( message.toStdString(), time );
-
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget::clearMessages()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-
-  d->AnnotationListWidget->clear();
-  d->logic()->ClearMessages();
 }
 
 
@@ -336,8 +286,7 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   Q_D( qSlicerTransformRecorderModuleWidget );
   
   
-  // Disableing node selector widgets if there is no module node to reference input nodes.
-    
+  // Disableing node selector widgets if there is no module node to reference input nodes.    
   if ( d->logic()->GetModuleNode() == NULL )
   {
     d->TransformCheckableComboBox->setEnabled( false );

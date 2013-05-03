@@ -18,6 +18,7 @@ endif()
 # Build module sub libraries
 add_subdirectory(MRML)
 add_subdirectory(Logic)
+add_subdirectory(Widgets)
 
 set(MODULE_EXPORT_DIRECTIVE "Q_SLICER_QTMODULES_${MODULE_NAME_UPPER}_EXPORT")
 
@@ -53,6 +54,7 @@ set(MODULE_UI_SRCS
 
 # Additional Target libraries
 set(MODULE_TARGET_LIBRARIES
+  qSlicer${MODULE_NAME}ModuleWidgets
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
   ${MRML_LIBRARIES}

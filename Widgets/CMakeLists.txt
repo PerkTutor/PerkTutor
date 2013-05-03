@@ -8,20 +8,20 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  qSlicerFooBarWidget.cxx
-  qSlicerFooBarWidget.h
+  qSlicerMessagesWidget.h
+  qSlicerMessagesWidget.cxx
   )
 
 set(${KIT}_MOC_SRCS
-  qSlicerFooBarWidget.h
+  qSlicerMessagesWidget.h
   )
 
 set(${KIT}_UI_SRCS
-  ../Resources/UI/qSlicerFooBarWidget.ui
+  Resources/UI/qSlicerMessagesWidget.ui
   )
 
 set(${KIT}_RESOURCES
-  ../Resources/UI/qSlicerFooBarWidget.ui
+  Resources/UI/qSlicerMessagesWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES
@@ -41,3 +41,7 @@ SlicerMacroBuildModuleWidgets(
   WRAP_PYTHONQT
   )
 
+#-----------------------------------------------------------------------------
+
+
+#-----------------------------------------------------------------------------
