@@ -141,7 +141,7 @@ void vtkMRMLTransformBufferNode
     this->messages.push_back( newMessage );
 	return;
   }
-  if ( newMessage->GetTime() > this->GetCurrentTransform()->GetTime() )
+  if ( newMessage->GetTime() > this->GetCurrentMessage()->GetTime() )
   {
     this->messages.push_back( newMessage );
 	return;

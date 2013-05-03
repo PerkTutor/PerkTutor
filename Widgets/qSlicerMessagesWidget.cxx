@@ -118,7 +118,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);  
 
-  double time = this->trLogic->GetCurrentTimestamp();
+
 
   QString message = QInputDialog::getText( this, tr("Add Message"), tr("Input text for the new message:") );
 
@@ -127,8 +127,12 @@ void qSlicerMessagesWidget
     return;
   }
 
+  // Record the timestamp
+  double time = this->trLogic->GetCurrentTimestamp();
   this->trLogic->AddMessage( message.toStdString(), time );
   
+  // But display the total time -> This makes more sense to a user than the timestamp
+  time = this->trLogic->GetTotalTime();
   QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( time ) );
   QTableWidgetItem* messageItem = new QTableWidgetItem( message );
 
