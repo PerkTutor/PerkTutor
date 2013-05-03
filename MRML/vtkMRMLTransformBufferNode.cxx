@@ -198,7 +198,7 @@ void vtkMRMLTransformBufferNode
 {
   for ( int i = 0; i < this->messages.size(); i++ )
   {
-    if ( this->GetMessageAt(i)->GetMessage().compare( name ) == 0 )
+    if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
 	{
 	  this->messages.erase( messages.begin() + i );
 	  i--;
@@ -254,7 +254,7 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
 {
   for ( int i = 0; i < this->messages.size(); i++ )
   {
-    if ( this->GetMessageAt(i)->GetMessage().compare( name ) == 0 )
+    if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
 	{
 	  return this->GetMessageAt(i);
 	}

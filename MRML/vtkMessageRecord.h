@@ -53,8 +53,8 @@ public:
 
   vtkMessageRecord* DeepCopy();
   
-  void SetMessage( std::string newMessage );
-  std::string GetMessage();
+  void SetName( std::string newName );
+  std::string GetName();
 
   void SetTimeStampSec( int newTimeStampSec );
   int GetTimeStampSec();
@@ -71,7 +71,7 @@ public:
 
 private:
   
-  std::string Message;
+  std::string Name;
   long int TimeStampSec; 
   int TimeStampNSec;
   

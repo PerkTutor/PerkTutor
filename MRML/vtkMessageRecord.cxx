@@ -7,7 +7,7 @@ vtkStandardNewMacro( vtkMessageRecord );
 vtkMessageRecord
 ::vtkMessageRecord()
 {
-  this->Message = "";
+  this->Name = "";
   this->TimeStampSec = 0;
   this->TimeStampNSec = 0;
 }
@@ -24,7 +24,7 @@ vtkMessageRecord* vtkMessageRecord
 ::DeepCopy()
 {
   vtkMessageRecord* copy = vtkMessageRecord::New();
-  copy->SetMessage( this->Message );
+  copy->SetName( this->Name );
   copy->SetTimeStampSec( this->TimeStampSec );
   copy->SetTimeStampNSec( this->TimeStampNSec );
   return copy;
@@ -33,16 +33,16 @@ vtkMessageRecord* vtkMessageRecord
 
 
 void vtkMessageRecord
-::SetMessage( std::string newMessage )
+::SetName( std::string newName )
 {
-  this->Message = newMessage;
+  this->Name = newName;
 }
 
 
 std::string vtkMessageRecord
-::GetMessage()
+::GetName()
 {
-  return this->Message;
+  return this->Name;
 }
 
 
@@ -98,7 +98,7 @@ std::string vtkMessageRecord
   xmlstring << " TimeStampSec=\"" << this->TimeStampSec << "\"";
   xmlstring << " TimeStampNSec=\"" << this->TimeStampNSec << "\"";
   xmlstring << " type=\"message\"";
-  xmlstring << " message=\"" << this->Message << "\"";
+  xmlstring << " message=\"" << this->Name << "\"";
   xmlstring << " />" << std::endl;
   return xmlstring.str();
 }
@@ -112,7 +112,7 @@ void vtkMessageRecord
     return;
   }
 
-  this->Message = element->GetAttribute( "message" );
+  this->Name = element->GetAttribute( "message" );
   this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
   this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
 }

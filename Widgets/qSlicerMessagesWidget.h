@@ -53,20 +53,19 @@ protected slots:
   void onAddMessageButtonClicked();
   void onRemoveMessageButtonClicked();
   void onClearMessagesButtonClicked();
-
-  virtual void setup();
-  virtual void enter();
+  void updateWidget();
 
 protected:
   QScopedPointer<qSlicerMessagesWidgetPrivate> d_ptr;
+
+  virtual void setup();
+  virtual void enter();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerMessagesWidget);
   Q_DISABLE_COPY(qSlicerMessagesWidget);
 
   vtkSlicerTransformRecorderLogic* trLogic;
-
-  void resetTable();
 };
 
 #endif

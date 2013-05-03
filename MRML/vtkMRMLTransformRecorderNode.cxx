@@ -547,7 +547,7 @@ double vtkMRMLTransformRecorderNode::GetTotalPathInside()
 // Add transform or message -----------------------------------------------------------------------------------
 
 void vtkMRMLTransformRecorderNode
-::AddMessage( std::string message, double time )
+::AddMessage( std::string name, double time )
 {
   if ( time == -1 )
   {
@@ -555,17 +555,17 @@ void vtkMRMLTransformRecorderNode
   }
 
   vtkMessageRecord* messageRecord = vtkMessageRecord::New();
-  messageRecord->SetMessage( message );
+  messageRecord->SetName( name );
   messageRecord->SetTime( time );
   TransformBuffer->AddMessage( messageRecord ); 
   
   // This should probably be redesigned at some point.
   
-  if ( message.compare( "IN" ) == 0 )
+  if ( name.compare( "IN" ) == 0 )
   {
     this->NeedleInside = true;
   }
-  else if ( message.compare( "OUT" ) == 0 )
+  else if ( name.compare( "OUT" ) == 0 )
   {
     this->NeedleInside = false;
   }

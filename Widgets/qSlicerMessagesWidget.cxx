@@ -102,7 +102,7 @@ void qSlicerMessagesWidget
   connect( d->RemoveMessageButton, SIGNAL( clicked() ), this, SLOT( onRemoveMessageButtonClicked() ) ); 
   connect( d->ClearMessagesButton, SIGNAL( clicked() ), this, SLOT( onClearMessagesButtonClicked() ) );
 
-  this->resetTable();  
+  this->updateWidget();  
 }
 
 
@@ -118,30 +118,18 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);  
 
+  QString messageName = QInputDialog::getText( this, tr("Add Message"), tr("Input text for the new message:") );
 
-
-  QString message = QInputDialog::getText( this, tr("Add Message"), tr("Input text for the new message:") );
-
-  if ( message.isNull() )
+  if ( messageName.isNull() )
   {
     return;
   }
 
   // Record the timestamp
   double time = this->trLogic->GetCurrentTimestamp();
-  this->trLogic->AddMessage( message.toStdString(), time );
+  this->trLogic->AddMessage( messageName.toStdString(), time );
   
-  // But display the total time -> This makes more sense to a user than the timestamp
-  time = this->trLogic->GetTotalTime();
-  QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( time ) );
-  QTableWidgetItem* messageItem = new QTableWidgetItem( message );
-
-  int prevRowCount = d->MessagesTableWidget->rowCount();
-
-  d->MessagesTableWidget->setRowCount( d->MessagesTableWidget->rowCount() + 1 );
-  d->MessagesTableWidget->setItem( prevRowCount, 0, timeItem );
-  d->MessagesTableWidget->setItem( prevRowCount, 1, messageItem ); 
-
+  this->updateWidget();
 }
 
 
@@ -152,7 +140,7 @@ void qSlicerMessagesWidget
 
   this->trLogic->RemoveMessage( d->MessagesTableWidget->currentRow() );
 
-  d->MessagesTableWidget->removeRow( d->MessagesTableWidget->currentRow() );
+  this->updateWidget();
 }
 
 
@@ -162,16 +150,17 @@ void qSlicerMessagesWidget
   Q_D(qSlicerMessagesWidget);
 
   this->trLogic->ClearMessages();
-  d->MessagesTableWidget->clear();
-  this->resetTable();
+  
+  this->updateWidget();
 }
 
 
 void qSlicerMessagesWidget
-::resetTable()
+::updateWidget()
 {
   Q_D(qSlicerMessagesWidget);
-
+  
+  // The only thing to do is update the table entries. Must ensure they are in sorted order (that's how they are stored in the buffer).
   d->MessagesTableWidget->clear();
   QStringList MessagesTableHeaders;
   MessagesTableHeaders << "Time" << "Message";
@@ -179,4 +168,20 @@ void qSlicerMessagesWidget
   d->MessagesTableWidget->setColumnCount( 2 );
   d->MessagesTableWidget->setHorizontalHeaderLabels( MessagesTableHeaders ); 
   d->MessagesTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+
+  if ( this->trLogic->GetModuleNode() == NULL )
+  {
+    return;
+  }
+
+  // Iterate over all the messages in the buffer and add them in order
+  d->MessagesTableWidget->setRowCount( this->trLogic->GetBuffer()->GetNumMessages() );
+  for ( int i = 0; i < this->trLogic->GetBuffer()->GetNumMessages(); i++ )
+  {
+    QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( this->trLogic->GetBuffer()->GetMessageAt(i)->GetTime() ) );
+	QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->trLogic->GetBuffer()->GetMessageAt(i)->GetName() ) );
+    d->MessagesTableWidget->setItem( i, 0, timeItem );
+    d->MessagesTableWidget->setItem( i, 1, messageItem ); 
+  }
+
 }
