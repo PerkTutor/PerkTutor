@@ -44,11 +44,14 @@ protected slots:
   void onClearBufferButtonPressed();
   void onModuleNodeSelected();
   void updateSelectionsFromObservedNodes();
+  void updateObservedNodesFromSelections();
   void updateWidget();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerTransformRecorderModuleWidget);
   Q_DISABLE_COPY(qSlicerTransformRecorderModuleWidget);
+
+  bool checkedNodesInitialized;
 };
 
 #endif

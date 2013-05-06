@@ -112,6 +112,12 @@ void vtkSlicerTransformRecorderLogic
 {
   vtkSetMRMLNodeMacro( this->ModuleNode, node );
   this->Modified();
+
+  if ( this->ModuleNode != NULL )
+  {
+    this->ModuleNode->AddObservedTransformNodesFromStoredNames();
+  }
+
 }
 
 
@@ -143,7 +149,6 @@ bool vtkSlicerTransformRecorderLogic
 {
   if ( this->ModuleNode != NULL )
   {
-    this->ModuleNode->AddObservedTransformNodesFromStoredNames();
     return this->ModuleNode->IsObservedTransformNode( id );
   }
   return false;

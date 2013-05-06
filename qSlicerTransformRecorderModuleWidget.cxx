@@ -118,14 +118,14 @@ void qSlicerTransformRecorderModuleWidget::setup()
   connect( d->StartButton, SIGNAL( pressed() ), this, SLOT( onStartButtonPressed() ) );
   connect( d->StopButton, SIGNAL( pressed() ), this, SLOT( onStopButtonPressed() ) );
   connect( d->ClearBufferButton, SIGNAL( pressed() ), this, SLOT( onClearBufferButtonPressed() ) );
-  connect( d->TransformCheckableComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ),
-           this, SLOT( onTransformsNodeSelected( vtkMRMLNode* ) ) );
+
+  connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( updateObservedNodesFromSelections() ) );
   
   
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
   connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
-  t->start(10); 
+  t->start(10);
 
 }
 
@@ -208,6 +208,7 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
   }
   
   d->logic()->SetModuleNode( TRNode );
+  this->checkedNodesInitialized = false;
   this->updateSelectionsFromObservedNodes();
   this->updateWidget();
 }
@@ -219,19 +220,7 @@ void qSlicerTransformRecorderModuleWidget
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
     
-  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
-  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
-  {
-    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
-    {
-      d->logic()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
-    }
-    else
-    {
-      d->logic()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
-    }
-  }
-    
+  this->updateObservedNodesFromSelections();
   d->logic()->SetRecording( true );
   
   this->updateWidget();
@@ -277,7 +266,34 @@ void qSlicerTransformRecorderModuleWidget
     }
   }
 
+  this->checkedNodesInitialized = true;
 }
+
+
+void qSlicerTransformRecorderModuleWidget
+::updateObservedNodesFromSelections()
+{
+  Q_D( qSlicerTransformRecorderModuleWidget );
+
+  if ( ! this->checkedNodesInitialized )
+  {
+    return;
+  }
+    
+  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  {
+    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
+    {
+      d->logic()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+    }
+    else
+    {
+      d->logic()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
+    }
+  }
+}
+
 
 
 

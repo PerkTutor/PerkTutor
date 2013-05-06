@@ -111,7 +111,7 @@ void vtkMRMLTransformRecorderNode
   os << indent << "FileName: " << this->fileName << "\n";
   for ( int i = 0; i < this->ObservedTransformNodes.size(); i++ )
   {
-    os << indent << " ObservedTransformNode=\"" << this->ObservedTransformNodes.at(i)->GetName() << "\"";
+    os << indent << " ObservedTransformNode" << i << "=\"" << this->ObservedTransformNodes.at(i)->GetName() << "\"";
   }
 }
 
@@ -135,7 +135,7 @@ void vtkMRMLTransformRecorderNode
     {
       this->SetFileName( attValue );
     }
-	if ( ! strcmp( attName, "ObservedTransformNode" ) )
+	if ( std::string( attName ).find( "ObservedTransformNode" ) != std::string::npos )
     {
 	  StoredTransformNodeNames.push_back( std::string( attValue ) );
     }
@@ -156,7 +156,7 @@ void vtkMRMLTransformRecorderNode
   of << indent << " FileName=\"" << this->fileName << "\"";
   for ( int i = 0; i < this->ObservedTransformNodes.size(); i++ )
   {
-    of << indent << " ObservedTransformNode=\"" << this->ObservedTransformNodes.at(i)->GetName() << "\"";
+    of << indent << " ObservedTransformNode" << i << "=\"" << this->ObservedTransformNodes.at(i)->GetName() << "\"";
   }
 }
 
@@ -394,21 +394,20 @@ void vtkMRMLTransformRecorderNode
 {
   // Create a new node if none exists with this name
   // Then add the node to the list of observed transform nodes
-  for ( int i = 0; i < this->StoredTransformNodeNames.size(); i++ )
+  while( this->StoredTransformNodeNames.size() > 0 )
   {
-    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->GetFirstNode( StoredTransformNodeNames.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
+    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->GetFirstNode( StoredTransformNodeNames.at(0).c_str(), "vtkMRMLLinearTransformNode" ) );
     if ( node == NULL )
     {
       node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
 	  this->GetScene()->AddNode( node );
-	  node->SetName( StoredTransformNodeNames.at(i).c_str() );
+	  node->SetName( StoredTransformNodeNames.at(0).c_str() );
     }
     const char* nodeID = node->GetID();
     this->AddObservedTransformNode( nodeID );
 
 	// Remove
-	StoredTransformNodeNames.erase( StoredTransformNodeNames.begin() + i );
-	i--;
+	StoredTransformNodeNames.erase( StoredTransformNodeNames.begin() );
   }
 
 }
@@ -466,7 +465,7 @@ void vtkMRMLTransformRecorderNode
 double vtkMRMLTransformRecorderNode
 ::GetCurrentTimestamp()
 {
-  clock_t clock1 = clock();
+  clock_t clock1 = clock();  
   return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
 }
 
