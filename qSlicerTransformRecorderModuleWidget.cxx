@@ -106,8 +106,8 @@ void qSlicerTransformRecorderModuleWidget::setup()
   d->InsideNeedlePathResultsLabel=NULL;
 
   d->setupUi(this);
-  d->verticalLayout->addWidget( qSlicerRecorderControlsWidget::New( d->logic() ) );
-  d->verticalLayout->addWidget( qSlicerMessagesWidget::New( d->logic() ) ); 
+  d->ControlsGroupBox->layout()->addWidget( qSlicerRecorderControlsWidget::New( d->logic() ) );
+  d->MessagesGroupBox->layout()->addWidget( qSlicerMessagesWidget::New( d->logic() ) ); 
   this->Superclass::setup();
 
 
