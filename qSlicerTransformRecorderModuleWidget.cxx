@@ -208,7 +208,6 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
   }
   
   d->logic()->SetModuleNode( TRNode );
-  this->checkedNodesInitialized = false;
   this->updateSelectionsFromObservedNodes();
   this->updateWidget();
 }
@@ -257,6 +256,10 @@ void qSlicerTransformRecorderModuleWidget
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
+  // Disable to the onCheckedChanged listener when initializing the selections
+  // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
+  this->selectionsInitialized = false;
+
   // Assume the default is not checked, and check all those that are observed
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
@@ -266,7 +269,7 @@ void qSlicerTransformRecorderModuleWidget
     }
   }
 
-  this->checkedNodesInitialized = true;
+  this->selectionsInitialized = true;
 }
 
 
@@ -275,7 +278,7 @@ void qSlicerTransformRecorderModuleWidget
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
-  if ( ! this->checkedNodesInitialized )
+  if ( ! this->selectionsInitialized )
   {
     return;
   }

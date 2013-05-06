@@ -115,7 +115,7 @@ void vtkSlicerTransformRecorderLogic
 
   if ( this->ModuleNode != NULL )
   {
-    this->ModuleNode->AddObservedTransformNodesFromStoredNames();
+    this->ModuleNode->AddObservedTransformNodesFromSavedNames();
   }
 
 }

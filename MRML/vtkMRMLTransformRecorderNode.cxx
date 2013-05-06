@@ -137,7 +137,7 @@ void vtkMRMLTransformRecorderNode
     }
 	if ( std::string( attName ).find( "ObservedTransformNode" ) != std::string::npos )
     {
-	  StoredTransformNodeNames.push_back( std::string( attValue ) );
+	  SavedTransformNodeNames.push_back( std::string( attValue ) );
     }
 
   }
@@ -389,25 +389,26 @@ bool vtkMRMLTransformRecorderNode
   return false;
 }
 
+
 void vtkMRMLTransformRecorderNode
-::AddObservedTransformNodesFromStoredNames()
+::AddObservedTransformNodesFromSavedNames()
 {
   // Create a new node if none exists with this name
   // Then add the node to the list of observed transform nodes
-  while( this->StoredTransformNodeNames.size() > 0 )
+  while( this->SavedTransformNodeNames.size() > 0 )
   {
-    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->GetFirstNode( StoredTransformNodeNames.at(0).c_str(), "vtkMRMLLinearTransformNode" ) );
+    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->GetFirstNode( SavedTransformNodeNames.at(0).c_str(), "vtkMRMLLinearTransformNode" ) );
     if ( node == NULL )
     {
       node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
 	  this->GetScene()->AddNode( node );
-	  node->SetName( StoredTransformNodeNames.at(0).c_str() );
+	  node->SetName( SavedTransformNodeNames.at(0).c_str() );
     }
     const char* nodeID = node->GetID();
     this->AddObservedTransformNode( nodeID );
 
-	// Remove
-	StoredTransformNodeNames.erase( StoredTransformNodeNames.begin() );
+	// Remove from list so we don't try to add these again
+	SavedTransformNodeNames.erase( SavedTransformNodeNames.begin() );
   }
 
 }
@@ -442,7 +443,7 @@ void vtkMRMLTransformRecorderNode
     this->LastNeedleTransform = NULL;
   }
 
-  this->TransformBuffer->Clear();
+  this->TransformBuffer->ClearTransforms();
 }
 
 

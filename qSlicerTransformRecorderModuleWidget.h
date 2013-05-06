@@ -51,7 +51,7 @@ private:
   Q_DECLARE_PRIVATE(qSlicerTransformRecorderModuleWidget);
   Q_DISABLE_COPY(qSlicerTransformRecorderModuleWidget);
 
-  bool checkedNodesInitialized;
+  bool selectionsInitialized;
 };
 
 #endif
