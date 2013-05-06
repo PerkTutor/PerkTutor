@@ -10,18 +10,23 @@ set(${KIT}_INCLUDE_DIRECTORIES
 set(${KIT}_SRCS
   qSlicerMessagesWidget.h
   qSlicerMessagesWidget.cxx
+  qSlicerRecorderControlsWidget.h
+  qSlicerRecorderControlsWidget.cxx
   )
 
 set(${KIT}_MOC_SRCS
   qSlicerMessagesWidget.h
+  qSlicerRecorderControlsWidget.h
   )
 
 set(${KIT}_UI_SRCS
   Resources/UI/qSlicerMessagesWidget.ui
+  Resources/UI/qSlicerRecorderControlsWidget.ui
   )
 
 set(${KIT}_RESOURCES
   Resources/UI/qSlicerMessagesWidget.ui
+  Resources/UI/qSlicerRecorderControlsWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES

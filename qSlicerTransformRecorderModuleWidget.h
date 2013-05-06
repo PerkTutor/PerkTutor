@@ -7,6 +7,7 @@
 #include <QtGui>
 #include "qSlicerTransformRecorderModuleExport.h"
 #include "qSlicerMessagesWidget.h"
+#include "qSlicerRecorderControlsWidget.h"
 
 class qSlicerTransformRecorderModuleWidgetPrivate;
 class vtkMRMLNode;
@@ -25,11 +26,6 @@ public:
   qSlicerTransformRecorderModuleWidget(QWidget *parent=0);
   virtual ~qSlicerTransformRecorderModuleWidget();
   
-
-
-public slots:
-  void saveToFile();
-
 protected:
   QScopedPointer<qSlicerTransformRecorderModuleWidgetPrivate> d_ptr;
   
@@ -37,11 +33,6 @@ protected:
   virtual void enter();
 
 protected slots:
-  void onTransformsNodeSelected(vtkMRMLNode* node);
-  void onMRMLTransformNodeModified(vtkObject* caller);
-  void onStopButtonPressed();
-  void onStartButtonPressed();
-  void onClearBufferButtonPressed();
   void onModuleNodeSelected();
   void updateSelectionsFromObservedNodes();
   void updateObservedNodesFromSelections();

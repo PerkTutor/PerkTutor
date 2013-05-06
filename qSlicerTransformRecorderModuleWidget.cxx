@@ -100,25 +100,20 @@ void qSlicerTransformRecorderModuleWidget::setup()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
 
-  d->StatusResultLabel= NULL;
   d->NumRecordsResultLabel=NULL;
   d->TotalTimeResultsLabel=NULL;
   d->TotaNeedlelPathResultsLabel=NULL;
   d->InsideNeedlePathResultsLabel=NULL;
 
   d->setupUi(this);
-  d->verticalLayout->addWidget( qSlicerMessagesWidget::New( d->logic() ) );  
+  d->verticalLayout->addWidget( qSlicerRecorderControlsWidget::New( d->logic() ) );
+  d->verticalLayout->addWidget( qSlicerMessagesWidget::New( d->logic() ) ); 
   this->Superclass::setup();
 
 
   d->ModuleComboBox->setNoneEnabled( true );
 
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
-  connect( d->LoadLogButton, SIGNAL( clicked() ), this, SLOT ( saveToFile() ) );
-  connect( d->StartButton, SIGNAL( pressed() ), this, SLOT( onStartButtonPressed() ) );
-  connect( d->StopButton, SIGNAL( pressed() ), this, SLOT( onStopButtonPressed() ) );
-  connect( d->ClearBufferButton, SIGNAL( pressed() ), this, SLOT( onClearBufferButtonPressed() ) );
-
   connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( updateObservedNodesFromSelections() ) );
   
   
@@ -128,62 +123,6 @@ void qSlicerTransformRecorderModuleWidget::setup()
   t->start(10);
 
 }
-
-
-
-void qSlicerTransformRecorderModuleWidget
-::onTransformsNodeSelected( vtkMRMLNode* node )
-{
-  Q_D(qSlicerTransformRecorderModuleWidget);
-  /*
-  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( node );
-  
-  if ( transformNode != NULL
-       && d->logic()->GetModuleNode() != NULL )
-  {
-    d->logic()->GetModuleNode()->AddObservedTransformNode( node->GetID() );
-  }
-  */
-  
-    // TODO: Why was this here?
-    // Listen for Transform node changes
-  /*
-  this->qvtkReconnect( d->MRMLTransformNode, transformNode, vtkMRMLTransformableNode::TransformModifiedEvent,
-                       this, SLOT( onMRMLTransformNodeModified( vtkObject* ) ) ); 
-  */
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget::onMRMLTransformNodeModified( vtkObject* caller )
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-  
-  // TODO: I'm not sure this function is needed at all.
-  /*
-  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
-  if (!transformNode) { return; }
-  
-  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-  */
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget::saveToFile()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-  
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save record"), "", tr("XML Files (*.xml)") );
-  
-  if ( filename.isEmpty() == false )
-  {
-    d->logic()->SaveToFile( filename.toStdString() );
-  }
-  
-  this->updateWidget();
-}
-
 
 
 void qSlicerTransformRecorderModuleWidget::enter()
@@ -209,44 +148,6 @@ void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
   
   d->logic()->SetModuleNode( TRNode );
   this->updateSelectionsFromObservedNodes();
-  this->updateWidget();
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget
-::onStartButtonPressed()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-    
-  this->updateObservedNodesFromSelections();
-  d->logic()->SetRecording( true );
-  
-  this->updateWidget();
-  
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget
-::onStopButtonPressed()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-
-  d->logic()->SetRecording( false );
-   
-  this->updateWidget();
-}
-
-
-
-void qSlicerTransformRecorderModuleWidget
-::onClearBufferButtonPressed() 
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-  
-  d->logic()->ClearBuffer();
-
   this->updateWidget();
 }
 
@@ -321,12 +222,10 @@ void qSlicerTransformRecorderModuleWidget::updateWidget()
   
   if ( d->logic()->GetRecording() )
   {
-    d->StatusResultLabel->setText( "Recording" );
     d->TransformCheckableComboBox->setEnabled( false );
   }
   else
   {
-    d->StatusResultLabel->setText( "Waiting" );
     d->TransformCheckableComboBox->setEnabled( true );
   }
   
