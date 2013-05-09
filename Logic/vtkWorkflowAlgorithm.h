@@ -29,7 +29,7 @@ public:
   //vtkWorkflowAlgorithm* DeepCopy();
 
   // Set the associated MRML node
-  void setMRMLNode( vtkMRMLWorkflowSegmentationNode* MRMLNode );
+  void SetModuleNode( vtkMRMLWorkflowSegmentationNode* newModulNode );
   void GetProcedureDefinitionFromMRMLNode();
   void GetInputParamtersFromMRMLNode();
   void GetTrainingParametersFromMRMLNode();
@@ -41,10 +41,13 @@ public:
 
   // Training and testing phases
   void Reset();
-  bool train();
-  void addRecord( TransformRecord t );
-  void addSegmentRecord( TransformRecord t );
+  bool Train();
+  void AddRecord( TransformRecord t );
+  void AddSegmentRecord( TransformRecord t );
   void UpdateTask();
+
+  void SetToolName( std::string );
+  Tool GetTool();
 
   std::string getCurrentTask();
   std::string getCurrentInstruction();
@@ -63,7 +66,7 @@ private:
   static const int TRACKINGRECORD_SIZE = 7;
 
   // The associated MRML node
-  vtkMRMLWorkflowSegmentationNode* MRMLNode;
+  vtkMRMLWorkflowSegmentationNode* ModuleNode;
 
   // List of procedures for training
   std::vector<vtkRecordLog*> procedures;
@@ -82,26 +85,8 @@ private:
   int currentTask;
   int prevTask;
 
-  // Procedure definition
-  int NumTasks;
-  std::vector<std::string> TaskName;
-  std::vector<std::string> TaskInstruction;
-  std::vector<std::string> TaskNext;
-
-  // All the input parameters
-  double FilterWidth;
-  int OrthogonalOrder;
-  int OrthogonalWindow;
-  int Derivative;
-  int NumCentroids;
-  int NumPrinComps;
-  double MarkovPseudoScalePi, MarkovPseudoScaleA, MarkovPseudoScaleB;
-
-  // All the training parameters
-  std::vector<LabelRecord> PrinComps; // Size: NumPrinComps, ( Orthogonal Order + 1 ) * 7 * numTools
-  LabelRecord Mean; // Size: 7
-  std::vector<LabelRecord> Centroids; // Size: NumCentroids, NumPrinComps
-  vtkMarkovModel* Markov; // Size: NumTasks, NumCentroids
+  // Keep track of the tool this algorithm works for
+  std::string toolName;  
 
 };
 

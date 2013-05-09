@@ -20,66 +20,6 @@
 // Helper Functions
 //----------------------------------------------------------------
 
-std::string
-LabelRecordVectorToString( std::vector<LabelRecord> records )
-{
-  std::stringstream ss;
-
-  for ( int i = 0; i < records.size(); i++ )
-  {
-    ss << records[i].getLabel() << " ";
-    for ( int j = 0; j < records[i].size(); j++ )
-	{
-      ss << records[i].get(j) << " ";
-	}
-  }
-
-  return ss.str();
-
-}
-
-
-std::vector<LabelRecord>
-StringToLabelRecordVector( std::string s, int numRecords, int recordSize )
-{
-  std::stringstream ss( s );
-  std::vector<LabelRecord> recordVector;
-  double val;
-
-  for ( int i = 0; i < numRecords; i++ )
-  {
-    LabelRecord currRecord;
-	ss >> val;
-    currRecord.setLabel( val );
-    for ( int j = 0; j < recordSize; j++ )
-	{
-      ss >> val;
-	  currRecord.add( val );
-	}
-	recordVector.push_back( currRecord );
-  }
-
-  return recordVector;
-}
-
-
-
-std::string
-LabelRecordToString( LabelRecord record )
-{
-  std::vector<LabelRecord> records;
-  records.push_back( record );
-  return LabelRecordVectorToString( records );
-}
-
-
-
-LabelRecord
-StringToLabelRecord( std::string s, int recordSize )
-{
-  return StringToLabelRecordVector( s, 1, recordSize ).at(0);
-}
-
 
 //-------------------------------------------------------------------------
 // Class functions
@@ -98,24 +38,12 @@ vtkWorkflowAlgorithm
   this->principalProcedureRT = NULL;
   this->centroidProcedureRT = NULL;
   this->MarkovRT = NULL;
-  this->Markov = vtkMarkovModel::New();
 
   this->indexLastProcessed = 0;
   this->currentTask = -1;
   this->prevTask = -1;
 
-  this->NumTasks = 0;
-
-  this->FilterWidth = 0.0;
-  this->OrthogonalOrder = 0;
-  this->OrthogonalWindow = 0;
-  this->Derivative = 0;
-  this->NumCentroids = 0;
-  this->NumPrinComps = 0;
-  this->MarkovPseudoScalePi = 0.0;
-  this->MarkovPseudoScaleA = 0.0;
-  this->MarkovPseudoScaleB = 0.0;
-
+  this->toolName = "";
 }
 
 
@@ -140,107 +68,30 @@ vtkWorkflowAlgorithm
     this->MarkovRT->Delete();
   }
 
-  this->Markov->Delete();
-
-  TaskName.clear();
-  TaskInstruction.clear();
-  TaskNext.clear();
-
-  this->MRMLNode = NULL;
-}
-
-
-
-
-void vtkWorkflowAlgorithm
-::setMRMLNode( vtkMRMLWorkflowSegmentationNode* newMRMLNode )
-{
-  this->MRMLNode = newMRMLNode;
+  this->ModuleNode = NULL;
 }
 
 
 
 void vtkWorkflowAlgorithm
-::GetProcedureDefinitionFromMRMLNode()
+::SetModuleNode( vtkMRMLWorkflowSegmentationNode* newModuleNode )
 {
-  // Make sure the procedure is defined in the node
-  if ( ! this->MRMLNode->GetProcedureDefined() )
-  {
-    return;
-  }
-
-  this->NumTasks = this->MRMLNode->procDefn.NumTasks;
-  this->TaskName = this->MRMLNode->procDefn.TaskName;
-  this->TaskInstruction = this->MRMLNode->procDefn.TaskInstruction;
-  this->TaskNext = this->MRMLNode->procDefn.TaskNext;
-
+  this->ModuleNode = newModuleNode;
 }
-
 
 
 void vtkWorkflowAlgorithm
-::GetInputParamtersFromMRMLNode()
+::SetToolName( std::string newToolName )
 {
-  // Make sure the input parameters are in the node
-  if ( ! this->MRMLNode->GetParametersInputted() )
-  {
-    return;
-  }
-
-  this->Derivative = this->MRMLNode->inputParam.Derivative;
-  this->FilterWidth = this->MRMLNode->inputParam.FilterWidth;
-  this->OrthogonalWindow = this->MRMLNode->inputParam.OrthogonalWindow;
-  this->OrthogonalOrder = this->MRMLNode->inputParam.OrthogonalOrder;
-  this->NumPrinComps = this->MRMLNode->inputParam.NumPrinComps;
-  this->NumCentroids = this->MRMLNode->inputParam.NumCentroids;
-  this->MarkovPseudoScalePi = this->MRMLNode->inputParam.MarkovPseudoScalePi;
-  this->MarkovPseudoScaleA = this->MRMLNode->inputParam.MarkovPseudoScaleA;
-  this->MarkovPseudoScaleB = this->MRMLNode->inputParam.MarkovPseudoScaleB;
+  this->toolName = newToolName;
 }
 
 
-
-void vtkWorkflowAlgorithm
-::GetTrainingParametersFromMRMLNode()
+Tool vtkWorkflowAlgorithm
+::GetTool()
 {
-  // Make sure the input parameters are in the node
-  if ( ! this->MRMLNode->GetAlgorithmTrained() )
-  {
-    return;
-  }
-
-  int SizePrinComps = ( this->OrthogonalOrder + 1 ) * ( TRACKINGRECORD_SIZE ) * ( this->Derivative + 1 ); // TODO: * this->MRMLNode->numTools;
-
-  this->PrinComps = StringToLabelRecordVector( this->MRMLNode->trainingParam.PrinComps, NumPrinComps, SizePrinComps );
-  this->Mean = StringToLabelRecord( this->MRMLNode->trainingParam.Mean, SizePrinComps );
-  this->Centroids = StringToLabelRecordVector( this->MRMLNode->trainingParam.Centroids, NumCentroids, NumPrinComps );
-
-  this->Markov->SetSize( NumTasks, NumCentroids );
-  this->Markov->SetPi( StringToLabelRecord( this->MRMLNode->trainingParam.MarkovPi, NumTasks ) );
-  this->Markov->SetA( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovA, NumTasks, NumTasks ) );
-  this->Markov->SetB( StringToLabelRecordVector( this->MRMLNode->trainingParam.MarkovB, NumTasks, NumCentroids ) );
+  return this->ModuleNode->toolCollection.GetTool( this->toolName );
 }
-
-
-
-
-int vtkWorkflowAlgorithm
-::FindTaskIndex( std::string name )
-{
-  // Just iterate through all of them... otherwise assign -1
-  for ( int i = 0; i < NumTasks; i++ )
-  {
-    if ( strcmp( TaskName.at(i).c_str(), name.c_str() ) == 0 )
-	{
-	  return i;
-	}
-  }
-
-  return -1;
-}
-
-
-
 
 
 std::vector<double> vtkWorkflowAlgorithm
@@ -248,7 +99,7 @@ std::vector<double> vtkWorkflowAlgorithm
 {
   // Create a vector of counts for each label
   std::vector<int> taskCounts;
-  for ( int i = 0; i < this->NumTasks; i++ )
+  for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
   {
     taskCounts.push_back( 0 );
   }
@@ -267,7 +118,7 @@ std::vector<double> vtkWorkflowAlgorithm
 
   std::vector<double> taskProportions;
   // Calculate the proportion of each task
-  for ( int i = 0; i < this->NumTasks; i++ )
+  for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
   {
     taskProportions.push_back( ( 1.0 * taskCounts[i] ) / sum );
   }
@@ -283,26 +134,26 @@ std::vector<int> vtkWorkflowAlgorithm
 {
   // Create a vector of counts for each label
   std::vector<double> taskProportions = this->CalculateTaskProportions();
-  std::vector<double> taskRawCentroids ( this->NumTasks, 0 );
-  std::vector<double> fracPart ( this->NumTasks, 0 );
+  std::vector<double> taskRawCentroids ( this->GetTool().perkProc.GetNumTasks(), 0 );
+  std::vector<double> fracPart ( this->GetTool().perkProc.GetNumTasks(), 0 );
 
-  for ( int i = 0; i < this->NumTasks; i++ )
+  for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
   {
-    taskRawCentroids[i] = taskProportions[i] * this->NumCentroids;
+    taskRawCentroids[i] = taskProportions[i] * this->GetTool().inputParam.NumCentroids;
   }
 
   bool rounded = true;
   int sumCentroids = 0;
-  for ( int i = 0; i < this->NumTasks; i++ )
+  for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
   {
     sumCentroids += floor( taskRawCentroids[i] );
   }    
 
-  while ( sumCentroids < this->NumCentroids )
+  while ( sumCentroids < this->GetTool().inputParam.NumCentroids )
   {
 
     rounded = true;
-    for ( int i = 0; i < this->NumTasks; i++ )
+    for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
 	{
       if ( floor( taskRawCentroids[i] ) != ceil( taskRawCentroids[i] ) )
 	  {
@@ -317,7 +168,7 @@ std::vector<int> vtkWorkflowAlgorithm
 
     // Find the highest "priority" (with largest fractional part) centroid count to increase
 	int priority = 0;
-    for ( int i = 0; i < this->NumTasks; i++ )
+    for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
     {
       fracPart[i] = taskRawCentroids[i] - floor( taskRawCentroids[i] );
 	  if ( fracPart[i] > fracPart[priority] )
@@ -330,15 +181,15 @@ std::vector<int> vtkWorkflowAlgorithm
 
 	sumCentroids = 0;
 
-	for ( int i = 0; i < this->NumTasks; i++ )
+	for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
 	{
       sumCentroids += taskRawCentroids[i];
 	}    
 
   }
 
-  std::vector<int> taskCentroids ( this->NumTasks, 0 );
-  for ( int i = 0; i < this->NumTasks; i++ )
+  std::vector<int> taskCentroids ( this->GetTool().perkProc.GetNumTasks(), 0 );
+  for ( int i = 0; i < this->GetTool().perkProc.GetNumTasks(); i++ )
   {
     taskCentroids[i] = floor( taskRawCentroids[i] );
   } 
@@ -365,90 +216,57 @@ void vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::ReadProcedure( std::string fileName )
 {
-  // Create vectors of time records and message records
-  std::vector<TimeLabelRecord> messages;
-  std::vector<TimeLabelRecord> records;
+  // Create a new tool with the same attributes as the tool associated with this algorithm instance
+  Tool tempTool; // This should be a deep copy (since we refer to the object, not pointer)
 
   // Create a parser to parse the XML data from TransformRecorderLog
   vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
   parser->SetFileName( fileName.c_str() );
   parser->Parse();
-  
-  // Get the root element (and check it exists)
+
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement )
-  {
-    return;
-  }
   
-  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
+  tempTool.transBuff.FromXMLElement( rootElement, this->toolName );
+  tempTool.segBuff.FromXMLElement( rootElement, this->GetTool().perkProc );
   
-  for ( int i = 0; i < num; ++ i )
-  {
-
-    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "log" ) != 0 )
-    {
-      continue;  // If it's not a "log", jump to the next.
-    }
-
-	const char* elementType = noteElement->GetAttribute( "type" );
-   
-	int timeSec = atoi( noteElement->GetAttribute( "TimeStampSec" ) );
-	int timeNSec = atoi( noteElement->GetAttribute( "TimeStampNSec" ) );
-	double elementTime = timeSec + 1.0e-9 * timeNSec;
-    
-    
-    if ( strcmp( elementType, "message" ) == 0 )
-    {
-	  TimeLabelRecord currMessage;
-	  currMessage.setLabel( FindTaskIndex( std::string( noteElement->GetAttribute( "message" ) ) ) );
-	  currMessage.setTime( elementTime );
-      messages.push_back( currMessage );
-    }
-
-    if ( strcmp( elementType, "transform" ) == 0 )
-    {
-	  TimeLabelRecord currRecord;
-	  std::string transformString = std::string( noteElement->GetAttribute( "transform" ) );
-	  vtkTrackingRecord* currTrackingRecord = vtkTrackingRecord::New();
-	  currTrackingRecord->fromMatrixString( transformString );
-	  currRecord.values = currTrackingRecord->GetVector();
-	  currRecord.setTime( elementTime );
-	  records.push_back( currRecord );
-	  currTrackingRecord->Delete();
-    }
-
-  }
 
   // Now, use the records messages (manual segmentation) to determine the label (task) at each recorded transform
-  for ( int i = 0; i < records.size(); i++ )
+  vtkTrackingRecord* conversionRecord = vtkTrackingRecord::New();
+  vtkRecordLog* currProcedure = vtkRecordLog::New();
+
+  for ( int i = 0; i < tempTool.transBuff.GetBufferSize(); i++ )
   {
+
+    // Convert the transform in the transform buffer to a label record
+    TransformRecord currTransform = tempTool.transBuff.GetTransformAt(i);
+    TimeLabelRecord currRecord;
+
+	conversionRecord->fromMatrixString( tempTool.transBuff.GetTransformAt(i).Transform )
+	currRecord.values = conversionRecord->GetVector();
+	currRecord.setTime( currTransform.TimeStampSec + 1.0e-9 * currTransform.TimeStampNSec );
+
     // Find the record with the largest smaller time stamp
-    int currTask = -1;
-	double currTimeDiff = ( records[records.size()-1].getTime() - records[0].getTime() );
-	for ( int j = 0; j < messages.size(); j++ )
+	std::string currTask = "";
+	double currTimeDiff = tempTool.transBuff.GetTotalTime();
+
+	for ( int j = 0; j < tempTool.segBuff.GetBufferSize(); j++ )
 	{
-      if ( messages[j].getTime() < records[i].getTime() && records[i].getTime() - messages[j].getTime() < currTimeDiff )
+      if ( tempTool.segBuff.GetTimeAt(j) < tempTool.transBuff.GetTimeAt(i) && tempTool.transBuff.GetTimeAt(i) - tempTool.segBuff.GetTimeAt(j) < currTimeDiff )
 	  {
-        currTask = messages[j].getLabel();
-		currTimeDiff = records[i].getTime() - messages[j].getTime();
+        currTask = tempTool.segBuff.GetMessageAt(j).Message;
+		currTimeDiff = tempTool.transBuff.GetTimeAt(i) - tempTool.segBuff.GetTimeAt(j);
 	  }
 	}
-	// Set the label
-	records[i].setLabel( currTask );
-	// We shall represent tasks starting at zero here
-  }
-  
-  // Only add the record to the log if there is a previous message or before stop message(otherwise task undefinfed -> discard)
-  vtkRecordLog* currProcedure = vtkRecordLog::New();
-  for ( int i = 0; i < records.size(); i++ )
-  {
-    if ( records[i].getLabel() >= 0 && records[i].getLabel() < NumTasks )
+
+	if ( strcmp( currTask.c_str(), "" ) != 0 )
 	{
-      currProcedure->AddRecord( records[i] );
+	  currRecord.setLabel( currTask );
+	  currProcedure->AddRecord( currRecord );
 	}
+
   }
+
+  conversionRecord->Delete();
 
   procedures.push_back( currProcedure );
 
@@ -460,46 +278,23 @@ void vtkWorkflowAlgorithm
 ::SegmentProcedure( std::string fileName )
 {
 
+  // Create a new tool with the same attributes as the tool associated with this algorithm instance
+  Tool tempTool; // This should be a deep copy (since we refer to the object, not pointer)
+
   // Create a parser to parse the XML data from TransformRecorderLog
   vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
   parser->SetFileName( fileName.c_str() );
   parser->Parse();
-  
-  // Get the root element (and check it exists)
+
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement )
-  {
-    return;
-  }
   
-  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
-  
-  for ( int i = 0; i < num; ++ i )
+  tempTool.transBuff.FromXMLElement( rootElement, this->toolName );
+
+  // Now, iterate over all transforms and add to the corresponding tool in the MRML
+  for ( int i = 0; i < tempTool.transBuff.GetBufferSize(); i++ )
   {
-
-    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "log" ) != 0 )
-    {
-      continue;  // If it's not a "log", jump to the next.
-    }
-
-	const char* elementType = noteElement->GetAttribute( "type" );
-   
-	int timeSec = atoi( noteElement->GetAttribute( "TimeStampSec" ) );
-	int timeNSec = atoi( noteElement->GetAttribute( "TimeStampNSec" ) );
-	double elementTime = timeSec + 1.0e-9 * timeNSec;
-    
-    if ( strcmp( elementType, "transform" ) == 0 )
-    {
-	  TransformRecord rec;
-	  rec.DeviceName = "Test";
-	  rec.Transform = std::string( noteElement->GetAttribute( "transform" ) );
-	  rec.TimeStampNSec = timeNSec;
-	  rec.TimeStampSec = timeSec;
-	  this->MRMLNode->AddNewTransform( rec );
-	  this->UpdateTask();
-    }
-
+    this->ModuleNode->toolCollection.GetTool( this->toolName ).transBuff.AddTransform( tempTool.transBuff.GetTransformAt(i) );
+	this->UpdateTask();
   }
 
 
@@ -510,7 +305,7 @@ void vtkWorkflowAlgorithm
 
 // Return whether or not training was successful
 bool vtkWorkflowAlgorithm
-::train()
+::Train()
 {
   // There must exist procedures
   if ( procedures.empty() )
@@ -526,7 +321,7 @@ bool vtkWorkflowAlgorithm
   taskCentroids = this->CalculateTaskCentroids();
 
   // Calculate the cumulative number of centroids for cluster numbering
-  for ( int i = 0; i < NumTasks; i ++ )
+  for ( int i = 0; i < this->GetTool().perkProc.NumTasks; i ++ )
   {
 	// Make sure that every task is represented in the procedures
 	if ( taskCentroids[i] == 0 )
@@ -539,11 +334,10 @@ bool vtkWorkflowAlgorithm
   }
 
   // Apply Gaussian filtering to each record log
-  // TODO: This is very slow, can we make it faster by only using "nearby" time stamps
   std::vector<vtkRecordLog*> filterProcedures;
   for ( int i = 0; i < procedures.size(); i++ )
   {
-    filterProcedures.push_back( procedures[i]->GaussianFilter( this->FilterWidth ) );
+    filterProcedures.push_back( procedures[i]->GaussianFilter( this->GetTool().inputParam.FilterWidth ) );
   }
 
 
@@ -552,7 +346,7 @@ bool vtkWorkflowAlgorithm
   for ( int i = 0; i < procedures.size(); i++ )
   {
     derivativeProcedures.push_back( filterProcedures[i]->DeepCopy() );
-    for ( int d = 1; d <= this->Derivative; d++ )
+    for ( int d = 1; d <= this->GetTool().inputParam.Derivative; d++ )
 	{
 	  vtkRecordLog* currDerivativeProcedure = derivativeProcedures[i];
 	  vtkRecordLog* orderDerivativeProcedure = filterProcedures[i]->Derivative(d);	  
@@ -567,7 +361,7 @@ bool vtkWorkflowAlgorithm
   std::vector<vtkRecordLog*> orthogonalProcedures;
   for ( int i = 0; i < filterProcedures.size(); i++ )
   {
-    orthogonalProcedures.push_back( derivativeProcedures[i]->OrthogonalTransformation( OrthogonalWindow, OrthogonalOrder ) );
+    orthogonalProcedures.push_back( derivativeProcedures[i]->OrthogonalTransformation( this->GetTool().inputParam.OrthogonalWindow, this->GetTool().inputParam.OrthogonalOrder ) );
   }
 
   // Concatenate all of the record logs into one record log
@@ -581,28 +375,28 @@ bool vtkWorkflowAlgorithm
   }
 
   // Calculate and apply the PCA transform
-  this->Mean.values = orthogonalCat->Mean().values;
-  this->Mean.setLabel( 0 );
-  this->PrinComps = orthogonalCat->CalculatePCA( this->NumPrinComps );
+  this->GetTool().trainingParam.Mean.values = orthogonalCat->Mean().values;
+  this->GetTool().trainingParam.Mean.setLabel( 0 );
+  this->GetTool().trainingParam.PrinComps = orthogonalCat->CalculatePCA( this->GetTool().inputParam.NumPrinComps );
   std::vector<vtkRecordLog*> principalProcedures;
   for ( int i = 0; i < orthogonalProcedures.size(); i++ )
   {
-    principalProcedures.push_back( orthogonalProcedures[i]->TransformPCA( this->PrinComps, this->Mean ) );
+    principalProcedures.push_back( orthogonalProcedures[i]->TransformPCA( this->GetTool().trainingParam.PrinComps, this->GetTool().trainingParam.Mean ) );
   }
-  vtkRecordLog* principalCat = orthogonalCat->TransformPCA( this->PrinComps, this->Mean );
+  vtkRecordLog* principalCat = orthogonalCat->TransformPCA( this->GetTool().trainingParam.PrinComps, this->GetTool().trainingParam.Mean );
 
   // Put together all the tasks together for task by task clustering
-  std::vector<vtkRecordLog*> recordsByTask = principalCat->GroupRecordsByLabel( this->NumTasks );
+  std::vector<vtkRecordLog*> recordsByTask = principalCat->GroupRecordsByLabel( this->GetTool().perkProc.NumTasks );
 
   // Add the centroids from each task
   // TODO: Change NumCentroids back to 700
-  for ( int i = 0; i < this->NumTasks; i++ )
+  for ( int i = 0; i < this->GetTool().perkProc.NumTasks; i++ )
   {
 	std::vector<LabelRecord> currTaskCentroids = recordsByTask[i]->fwdkmeans( taskCentroids[i] );
 	for ( int j = 0; j < taskCentroids[i]; j++ )
 	{
 	  currTaskCentroids[j].setLabel( currTaskCentroids[j].getLabel() + cumulativeCentroids[i] );
-      this->Centroids.push_back( currTaskCentroids[j] );
+      this->GetTool().trainingParam.Centroids.push_back( currTaskCentroids[j] );
 	}
   }
 
@@ -610,14 +404,14 @@ bool vtkWorkflowAlgorithm
   std::vector<vtkRecordLog*> centroidProcedures;
   for ( int i = 0; i < principalProcedures.size(); i++ )
   {
-    centroidProcedures.push_back( principalProcedures[i]->fwdkmeansTransform( this->Centroids ) );
+    centroidProcedures.push_back( principalProcedures[i]->fwdkmeansTransform( this->GetTool().trainingParam.Centroids ) );
   }
 
   // Assume that all the estimation matrices are ones
   LabelRecord PseudoPi;
   for ( int j = 0; j < NumTasks; j++ )
   {
-    PseudoPi.add( 1.0 * this->MarkovPseudoScalePi );
+    PseudoPi.add( 1.0 * this->GetTool().inputParam.MarkovPseudoScalePi );
   }
   PseudoPi.setLabel(0);
 
@@ -627,7 +421,7 @@ bool vtkWorkflowAlgorithm
 	LabelRecord currPseudoA;
 	for ( int j = 0; j < NumTasks; j++ )
 	{
-      currPseudoA.add( 1.0 * this->MarkovPseudoScaleA );
+      currPseudoA.add( 1.0 * this->GetTool().inputParam.MarkovPseudoScaleA );
 	}
 	currPseudoA.setLabel(i);
 	PseudoA.push_back( currPseudoA );
@@ -639,21 +433,26 @@ bool vtkWorkflowAlgorithm
 	LabelRecord currPseudoB;
 	for ( int j = 0; j < NumCentroids; j++ )
 	{
-      currPseudoB.add( 1.0 * this->MarkovPseudoScaleB );
+      currPseudoB.add( 1.0 * this->GetTool().inputParam.MarkovPseudoScaleB );
 	}
 	currPseudoB.setLabel(i);
 	PseudoB.push_back( currPseudoB );
   }
 
   // Create a new Markov Model, and estimate its parameters
-  this->Markov->SetSize( this->NumTasks, this->NumCentroids );
-  this->Markov->InitializeEstimation( NumTasks, this->NumCentroids );
-  this->Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
+  vtkMarkovModel* Markov = vtkMarkovModel::New();
+  Markov->SetSize( this->GetTool().perkProc.NumTasks, this->GetTool().inputParam.NumCentroids );
+  Markov->InitializeEstimation( this->GetTool().perkProc.NumTasks, this->GetTool().inputParam.NumCentroids );
+  Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
   for ( int i = 0; i < centroidProcedures.size(); i++ )
   {
     this->Markov->AddEstimationData( centroidProcedures[i]->ToMarkovRecordVector() );
   }
   this->Markov->EstimateParameters();
+
+  this->GetTool().trainingParam.MarkovPi = Markov.GetPi();
+  this->GetTool().trainingParam.MarkovA = Markov.GetA();
+  this->GetTool().trainingParam.MarkovB = Markov.GetB();
 
 
   // Delete objects we have created
@@ -691,16 +490,7 @@ bool vtkWorkflowAlgorithm
 
   orthogonalCat->Delete();
   principalCat->Delete();
-  
-
-  // Now, change the associated values in the MRML
-  // Assume that the input parameters are ok (if they are not then this whole training procedure was useless anyway)
-  this->MRMLNode->trainingParam.PrinComps = LabelRecordVectorToString( this->PrinComps );
-  this->MRMLNode->trainingParam.Mean = LabelRecordToString( this->Mean );
-  this->MRMLNode->trainingParam.Centroids = LabelRecordVectorToString( this->Centroids );
-  this->MRMLNode->trainingParam.MarkovA = LabelRecordVectorToString( this->Markov->GetA() );
-  this->MRMLNode->trainingParam.MarkovB = LabelRecordVectorToString( this->Markov->GetB() );
-  this->MRMLNode->trainingParam.MarkovPi = LabelRecordToString( this->Markov->GetPi() );
+  Markov->Delete();
 
   return true;
 
@@ -712,12 +502,8 @@ void vtkWorkflowAlgorithm
 ::Reset()
 {
 
-  // Make sure we grab the parameters from the MRML Node
-  this->GetProcedureDefinitionFromMRMLNode();
-  this->GetInputParamtersFromMRMLNode();  
-
   // If the algorithm isn't trained, then we can't initialize it for real-time segmentation
-  if ( ! this->MRMLNode->GetAlgorithmTrained() )
+  if ( ! this->ModuleNode->toolCollection.GetTrained() )
   {
     return;
   }
@@ -743,10 +529,10 @@ void vtkWorkflowAlgorithm
   
   this->GetTrainingParametersFromMRMLNode();
 
-  MarkovRT->SetSize( this->NumTasks, this->NumCentroids );
-  MarkovRT->SetPi( this->Markov->GetPi() );
-  MarkovRT->SetA( this->Markov->GetA() );
-  MarkovRT->SetB( this->Markov->GetB() );
+  MarkovRT->SetSize( this->GetTool().perkProc.NumTasks, this->GetTool().inputParam.NumCentroids );
+  MarkovRT->SetPi( this->GetTool().trainingParam.MarkovPi );
+  MarkovRT->SetA( this->GetTool().trainingParam.MarkovA );
+  MarkovRT->SetB( this->GetTool().trainingParam.MarkovB );
 
   indexLastProcessed = 0;
   currentTask = -1;
@@ -784,14 +570,14 @@ void vtkWorkflowAlgorithm
   double currTime = this->MRMLNode->GetTimestamp();
 
   // Apply Gaussian filtering to each previous records
-  filterProcedureRT->AddRecord( procedureRT->GaussianFilterRT( this->FilterWidth ) );
+  filterProcedureRT->AddRecord( procedureRT->GaussianFilterRT( this->GetTool().inputParam.FilterWidth ) );
 
   elapseTime[0] = currTime - this->MRMLNode->GetTimestamp();
   currTime = this->MRMLNode->GetTimestamp();
   
   // Concatenate with derivative (velocity, acceleration, etc...)
   TimeLabelRecord derivativeRecord = filterProcedureRT->GetRecordRT();
-  for ( int d = 1; d <= this->Derivative; d++ )
+  for ( int d = 1; d <= this->GetTool().inputParam.Derivative; d++ )
   {
     TimeLabelRecord currDerivativeRecord = procedureRT->DerivativeRT(d);
 	for ( int j = 0; j < currDerivativeRecord.size(); j++ )
@@ -805,19 +591,19 @@ void vtkWorkflowAlgorithm
   currTime = this->MRMLNode->GetTimestamp();
 
   // Apply orthogonal transformation
-  orthogonalProcedureRT->AddRecord( derivativeProcedureRT->OrthogonalTransformationRT( this->OrthogonalWindow, this->OrthogonalOrder ) );
+  orthogonalProcedureRT->AddRecord( derivativeProcedureRT->OrthogonalTransformationRT( this->GetTool().inputParam.OrthogonalWindow, this->GetTool().inputParam.OrthogonalOrder ) );
 
   elapseTime[2] = currTime - this->MRMLNode->GetTimestamp();
   currTime = this->MRMLNode->GetTimestamp();
 
   // Apply PCA transformation
-  principalProcedureRT->AddRecord( orthogonalProcedureRT->TransformPCART( this->PrinComps, this->Mean ) );
+  principalProcedureRT->AddRecord( orthogonalProcedureRT->TransformPCART( this->GetTool().trainingParam.PrinComps, this->GetTool().trainingParam.Mean ) );
 
   elapseTime[3] = currTime - this->MRMLNode->GetTimestamp();
   currTime = this->MRMLNode->GetTimestamp();
 
   // Apply centroid transformation
-  centroidProcedureRT->AddRecord( principalProcedureRT->fwdkmeansTransformRT( this->Centroids ) );
+  centroidProcedureRT->AddRecord( principalProcedureRT->fwdkmeansTransformRT( this->GetTool().trainingParam.Centroids ) );
 
   elapseTime[4] = currTime - this->MRMLNode->GetTimestamp();
   currTime = this->MRMLNode->GetTimestamp();
@@ -848,12 +634,12 @@ void vtkWorkflowAlgorithm
 ::UpdateTask()
 {
   // Check if there are any new transforms to process
-  if ( this->MRMLNode->GetTransformsBufferSize() > indexLastProcessed )
+  if ( this->GetTool().transBuff.GetBufferSize() > indexLastProcessed )
   {
 
-    TransformRecord currentTransform = this->MRMLNode->GetTransformAt( indexLastProcessed );
+    TransformRecord currentTransform = this->GetTool().transBuff.GetTransformAt( indexLastProcessed );
 
-    if ( this->MRMLNode->GetAlgorithmTrained() )
+    if ( this->ModuleNode->toolCollection.GetTrained() )
 	{
 	  addSegmentRecord( currentTransform );
 	}
@@ -865,7 +651,7 @@ void vtkWorkflowAlgorithm
 	if ( this->currentTask != this->prevTask )
 	{
       prevTask = currentTask;
-	  this->MRMLNode->AddSegmentation( this->getCurrentTask(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
+	  this->GetTool().segBuff.AddMessage( this->getCurrentTask(), currentTransform.TimeStampSec, currentTransform.TimeStampNSec );
 	}
 
 	indexLastProcessed++;

@@ -111,9 +111,6 @@ vtkMRMLWorkflowSegmentationNode
   // this->SetModifiedSinceRead( true );
   
   this->Recording = false;
-  this->ProcedureDefined = false;
-  this->ParametersInputted = false;
-  this->AlgorithmTrained = false;
   
   this->TrackingLogFileName = "-";
   this->SegmentationLogFileName = "-";
@@ -129,25 +126,6 @@ vtkMRMLWorkflowSegmentationNode
   this->LastNeedleTransform = NULL;
   this->LastNeedleTime = -1.0;
 
-  // Initialize our parameters and definitions objects
-  this->procDefn.NumTasks = 0;
-
-  this->inputParam.FilterWidth = 0.0;
-  this->inputParam.OrthogonalOrder = 0;
-  this->inputParam.OrthogonalWindow = 0;
-  this->inputParam.Derivative = 0;
-  this->inputParam.NumCentroids = 0;
-  this->inputParam.NumPrinComps = 0;
-  this->inputParam.MarkovPseudoScalePi = 0.0;
-  this->inputParam.MarkovPseudoScaleA = 0.0;
-  this->inputParam.MarkovPseudoScaleB = 0.0;
-
-  this->trainingParam.PrinComps = "";
-  this->trainingParam.Mean = "";
-  this->trainingParam.Centroids = "";
-  this->trainingParam.MarkovPi = "";
-  this->trainingParam.MarkovA = "";
-  this->trainingParam.MarkovB = "";
 }
 
 
@@ -264,95 +242,17 @@ vtkMRMLWorkflowSegmentationNode
   std::ofstream output( this->TrackingLogFileName.c_str() );
   
   if ( ! output.is_open() )
-    {
+  {
     vtkErrorMacro( "Record file could not be opened!" );
     return;
-    }
-  
-  output << "<TransformRecorderLog>" << std::endl;
-  
-    // Save transforms.
-  
-  for ( unsigned int i = 0; i < this->GetTransformsBufferSize(); ++ i )
-    {
-    output << "  <log";
-    output << " TimeStampSec=\"" << this->TransformsBuffer[ i ].TimeStampSec << "\"";
-    output << " TimeStampNSec=\"" << this->TransformsBuffer[ i ].TimeStampNSec << "\"";
-    output << " type=\"transform\"";
-    output << " DeviceName=\"" << this->TransformsBuffer[ i ].DeviceName << "\"";
-    output << " transform=\"" << this->TransformsBuffer[ i ].Transform << "\"";
-    output << " />" << std::endl;
-    }
-  
-  
-    // Save messages.
-  
-  for ( unsigned int i = 0; i < this->GetMessagesBufferSize(); ++ i )
-    {
-    output << "  <log";
-    output << " TimeStampSec=\"" << this->MessagesBuffer[ i ].TimeStampSec << "\"";
-    output << " TimeStampNSec=\"" << this->MessagesBuffer[ i ].TimeStampNSec << "\"";
-    output << " type=\"message\"";
-    output << " message=\"" << this->MessagesBuffer[ i ].Message << "\"";
-    output << " />" << std::endl;
-    }
-  
-  
-  output << "</TransformRecorderLog>" << std::endl;
+  }
+
+  output << this->toolCollection.BuffersToXMLString();
+
   output.close();
-  // this->ClearBuffer(); Don't do this, the user may want to save the task segmentation also
   
 }
 
-
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::SaveSegmentation()
-{
-  std::ofstream output( this->SegmentationLogFileName.c_str() );
-  
-  if ( ! output.is_open() )
-    {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-    }
-  
-  output << "<TransformRecorderLog>" << std::endl;
-  
-    // Save transforms.
-  
-  for ( unsigned int i = 0; i < this->GetTransformsBufferSize(); ++ i )
-    {
-    output << "  <log";
-    output << " TimeStampSec=\"" << this->TransformsBuffer[ i ].TimeStampSec << "\"";
-    output << " TimeStampNSec=\"" << this->TransformsBuffer[ i ].TimeStampNSec << "\"";
-    output << " type=\"transform\"";
-    output << " DeviceName=\"" << this->TransformsBuffer[ i ].DeviceName << "\"";
-    output << " transform=\"" << this->TransformsBuffer[ i ].Transform << "\"";
-    output << " />" << std::endl;
-    }
-  
-  
-    // Save messages.
-  
-  for ( unsigned int i = 0; i < this->GetSegmentationBufferSize(); ++ i )
-    {
-    output << "  <log";
-    output << " TimeStampSec=\"" << this->SegmentationBuffer[ i ].TimeStampSec << "\"";
-    output << " TimeStampNSec=\"" << this->SegmentationBuffer[ i ].TimeStampNSec << "\"";
-    output << " type=\"message\"";
-    output << " message=\"" << this->SegmentationBuffer[ i ].Message << "\"";
-    output << " />" << std::endl;
-    }
-  
-  
-  output << "</TransformRecorderLog>" << std::endl;
-  output.close();
-  // this->ClearBuffer(); Don't do this, the user may want to save the annotations also
-  
-}
 
 
 
@@ -364,21 +264,12 @@ vtkMRMLWorkflowSegmentationNode
   std::ofstream output( this->TrainingParameterFileName.c_str() );
   
   if ( ! output.is_open() )
-    {
+  {
     vtkErrorMacro( "Record file could not be opened!" );
     return;
-    }
+  }
   
-  output << "<WorkflowSegmentationParameters>" << std::endl; 
-
-  output << "  <Parameter Type=\"PrinComps\" Value=\"" << this->trainingParam.PrinComps << "\" />" << std::endl;
-  output << "  <Parameter Type=\"Mean\" Value=\"" << this->trainingParam.Mean << "\" />" << std::endl;
-  output << "  <Parameter Type=\"Centroids\" Value=\"" << this->trainingParam.Centroids << "\" />" << std::endl;
-  output << "  <Parameter Type=\"MarkovPi\" Value=\"" << this->trainingParam.MarkovPi << "\" />" << std::endl;
-  output << "  <Parameter Type=\"MarkovA\" Value=\"" << this->trainingParam.MarkovA << "\" />" << std::endl;
-  output << "  <Parameter Type=\"MarkovB\" Value=\"" << this->trainingParam.MarkovB << "\" />" << std::endl;
-
-  output << "</WorkflowSegmentationParameters>" << std::endl;
+  output << this->toolCollection.TrainingParameterToXMLString();
 
   output.close();
   
@@ -398,37 +289,8 @@ vtkMRMLWorkflowSegmentationNode
   
   // Get the root element (and check it exists)
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement || strcmp( rootElement->GetName(), "PerkProcedure" ) != 0 )
-  {
-    return;
-  }
-  
-  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
 
-  // Must re-initialize everything in case we load a new procedure
-  this->procDefn.NumTasks = 0;
-  this->procDefn.TaskName.clear();
-  this->procDefn.TaskInstruction.clear();
-  this->procDefn.TaskNext.clear();
-
-  
-  for ( int i = 0; i < num; ++ i )
-  {
-
-    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Task" ) != 0 )
-    {
-      continue;  // If it's not a "Parameter", jump to the next.
-    }
-	
-	this->procDefn.NumTasks ++;
-	this->procDefn.TaskName.push_back( std::string( noteElement->GetAttribute( "Name" ) ) );
-    this->procDefn.TaskInstruction.push_back( std::string( noteElement->GetAttribute( "Instruction" ) ) );
-	this->procDefn.TaskNext.push_back( std::string( noteElement->GetAttribute( "Next" ) ) );
-
-  }
-
-  this->SetProcedureDefined( true );
+  this->toolCollection.PerkProcedureFromXMLElement( rootElement );
 
 }
 
@@ -447,68 +309,8 @@ vtkMRMLWorkflowSegmentationNode
   
   // Get the root element (and check it exists)
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement || strcmp( rootElement->GetName(), "WorkflowSegmentationParameters" ) != 0 )
-  {
-    return;
-  }
-  
-  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
-  
-  for ( int i = 0; i < num; ++ i )
-  {
 
-    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 )
-    {
-      continue;  // If it's not a "Parameter", jump to the next.
-    }
-
-	const char* elementType = noteElement->GetAttribute( "Type" );
-	
-	std::stringstream ss( std::string( noteElement->GetAttribute( "Value" ) ) );
-	double value;
-	ss >> value;
-
-	if ( strcmp( elementType, "Derivative" ) == 0 )
-    {
-	  this->inputParam.Derivative = value;
-    }
-	if ( strcmp( elementType, "FilterWidth" ) == 0 )
-    {
-	  this->inputParam.FilterWidth = value;
-    }
-	if ( strcmp( elementType, "OrthogonalOrder" ) == 0 )
-    {
-	  this->inputParam.OrthogonalOrder = value;
-    }
-	if ( strcmp( elementType, "OrthogonalWindow" ) == 0 )
-    {
-	  this->inputParam.OrthogonalWindow = value;
-    }
-	if ( strcmp( elementType, "NumPrinComps" ) == 0 )
-    {
-	  this->inputParam.NumPrinComps = value;
-    }
-    if ( strcmp( elementType, "NumCentroids" ) == 0 )
-    {
-	  this->inputParam.NumCentroids = value;
-    }
-	if ( strcmp( elementType, "MarkovPseudoScalePi" ) == 0 )
-    {
-	  this->inputParam.MarkovPseudoScalePi = value;
-    }
-	if ( strcmp( elementType, "MarkovPseudoScaleA" ) == 0 )
-    {
-	  this->inputParam.MarkovPseudoScaleA = value;
-    }
-	if ( strcmp( elementType, "MarkovPseudoScaleB" ) == 0 )
-    {
-	  this->inputParam.MarkovPseudoScaleB = value;
-    }
-
-  }
-
-  this->SetParametersInputted( true );
+  this->toolCollection.InputParameterFromXMLElement( rootElement );
 
 }
 
@@ -525,54 +327,8 @@ vtkMRMLWorkflowSegmentationNode
   
   // Get the root element (and check it exists)
   vtkXMLDataElement* rootElement = parser->GetRootElement();
-  if ( ! rootElement || strcmp( rootElement->GetName(), "WorkflowSegmentationParameters" ) != 0 )
-  {
-    return;
-  }
-  
-  int num = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
-  
-  for ( int i = 0; i < num; ++ i )
-  {
 
-    vtkXMLDataElement* noteElement = rootElement->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 )
-    {
-      continue;  // If it's not a "Parameter", jump to the next.
-    }
-
-	const char* elementType = noteElement->GetAttribute( "Type" );
-	
-	std::string value = std::string( noteElement->GetAttribute( "Value" ) );
-
-    if ( strcmp( elementType, "PrinComps" ) == 0 )
-    {
-	  this->trainingParam.PrinComps = value;
-    }
-	if ( strcmp( elementType, "Mean" ) == 0 )
-    {
-	  this->trainingParam.Mean = value;
-    }
-	if ( strcmp( elementType, "Centroids" ) == 0 )
-    {
-	  this->trainingParam.Centroids = value;
-    }
-	if ( strcmp( elementType, "MarkovPi" ) == 0 )
-    {
-	  this->trainingParam.MarkovPi = value;
-    }
-	if ( strcmp( elementType, "MarkovA" ) == 0 )
-    {
-	  this->trainingParam.MarkovA = value;
-    }
-	if ( strcmp( elementType, "MarkovB" ) == 0 )
-    {
-	  this->trainingParam.MarkovB = value;
-    }
-
-  }
-
-  this->SetAlgorithmTrained( true );
+  this->toolCollection.TrainingParameterFromXMLElement( rootElement );
 
 }
 
@@ -580,23 +336,9 @@ vtkMRMLWorkflowSegmentationNode
 void vtkMRMLWorkflowSegmentationNode
 ::ImportAvailableData()
 {
-
   this->ImportProcedureDefinition();
-
-  if ( ! this->GetProcedureDefined() )
-  {
-    return;
-  }
-
   this->ImportInputParameters();
-
-  if ( ! this->GetParametersInputted() )
-  {
-    return;
-  }
-
   this->ImportTrainingParameters();
-
 }
 
 
@@ -623,37 +365,6 @@ void vtkMRMLWorkflowSegmentationNode::SetRecording( bool newState )
   }
 }
 
-
-bool vtkMRMLWorkflowSegmentationNode::GetProcedureDefined()
-{
-  return this->ProcedureDefined;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetProcedureDefined( bool newState )
-{
-  this->ProcedureDefined = newState;
-}
-
-
-bool vtkMRMLWorkflowSegmentationNode::GetParametersInputted()
-{
-  return this->ParametersInputted;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetParametersInputted( bool newState )
-{
-  this->ParametersInputted = newState;
-}
-
-bool vtkMRMLWorkflowSegmentationNode::GetAlgorithmTrained()
-{
-  return this->AlgorithmTrained;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetAlgorithmTrained( bool newState )
-{
-  this->AlgorithmTrained = newState;
-}
 
 std::string vtkMRMLWorkflowSegmentationNode::GetTrackingLogFileName()
 {
@@ -967,133 +678,10 @@ double vtkMRMLWorkflowSegmentationNode
 }
 
 
-double vtkMRMLWorkflowSegmentationNode::GetTotalTime()
-{
-  double totalTime = 0.0;
-  unsigned int n = this->TransformsBuffer.size();
-  
-  if ( n < 2 )
-  {
-    return totalTime;
-  }
-  
-  double diffSec = double( this->TransformsBuffer[ n - 1 ].TimeStampSec - this->TransformsBuffer[ 0 ].TimeStampSec );
-  double diffNSec = double( this->TransformsBuffer[ n - 1 ].TimeStampNSec - this->TransformsBuffer[ 0 ].TimeStampNSec );
-  
-  totalTime = diffSec + 1.0e-9 * diffNSec;
-  
-  return totalTime;
-}
-
 
 
 // Buffers
 // ----------------------------------------------------------------------------
-
-TransformRecord vtkMRMLWorkflowSegmentationNode
-::GetTransformAt( int index )
-{
-  return TransformsBuffer.at(index);
-}
-
-unsigned int vtkMRMLWorkflowSegmentationNode::GetTransformsBufferSize()
-{
-  return this->TransformsBuffer.size();
-
-}
-
-unsigned int vtkMRMLWorkflowSegmentationNode::GetMessagesBufferSize()
-{
-  return this->MessagesBuffer.size();
-}
-
-unsigned int vtkMRMLWorkflowSegmentationNode::GetSegmentationBufferSize()
-{
-  return this->SegmentationBuffer.size();
-}
-
-
-// Note: This clears all of the buffers (tracking, message, segmentation)
-void
-vtkMRMLWorkflowSegmentationNode
-::ClearBuffer()
-{
-  this->TransformsBuffer.clear();
-  this->MessagesBuffer.clear();
-  this->SegmentationBuffer.clear();
-  
-  if ( this->LastNeedleTransform != NULL )
-  {
-    this->LastNeedleTransform->Delete();
-    this->LastNeedleTransform = NULL;
-  }
-}
-
-
-void vtkMRMLWorkflowSegmentationNode::CustomMessage( std::string message, int sec, int nsec )
-{
-  if ( sec == -1  &&  nsec == -1 )
-  {
-    this->GetTimestamp( sec, nsec );
-  }
-  
-  MessageRecord rec;
-    rec.Message = message;
-    rec.TimeStampSec = sec;
-    rec.TimeStampNSec = nsec;
-  
-  this->MessagesBuffer.push_back( rec );
-
-}
-
-
-void vtkMRMLWorkflowSegmentationNode::AddSegmentation( std::string task, int sec, int nsec )
-{
-  if ( sec == -1  &&  nsec == -1 )
-  {
-    this->GetTimestamp( sec, nsec );
-  }
-  
-  MessageRecord rec;
-    rec.Message = task;
-    rec.TimeStampSec = sec;
-    rec.TimeStampNSec = nsec;
-  
-  this->SegmentationBuffer.push_back( rec );
-
-}
-
-
-void vtkMRMLWorkflowSegmentationNode::AddNewTransform( TransformRecord rec )
-{
- 
-  
-    // Look for the most recent value of this transform.
-    // If the value hasn't changed, we don't record.
-  
-  std::vector< TransformRecord >::iterator trIt;
-  trIt = this->TransformsBuffer.end();
-  bool duplicate = false;
-  while ( trIt != this->TransformsBuffer.begin() )
-  {
-    trIt --;
-    if ( rec.DeviceName.compare( (*trIt).DeviceName ) == 0 )
-    {
-      if ( rec.Transform.compare( (*trIt).Transform ) == 0 )
-      {
-        duplicate = true;
-      }
-      break;
-    }
-  }
-  
-  if ( duplicate == false )
-  {
-    this->TransformsBuffer.push_back( rec );
-  }
-
-}
-
 
 void vtkMRMLWorkflowSegmentationNode::AddNewTransform( const char* TransformNodeID )
 {
@@ -1134,20 +722,21 @@ void vtkMRMLWorkflowSegmentationNode::AddNewTransform( const char* TransformNode
       mss << m->GetElement( row, col ) << " ";
     }
   }
-  
-  TransformRecord rec;
-    rec.DeviceName = deviceName;
-    rec.TimeStampSec = sec;
-    rec.TimeStampNSec = nsec;
-    rec.Transform = mss.str();
 
-	
+  // May be this should go higher
   if ( this->Recording == false )
   {
     return;
   }
-  
-  this->AddNewTransform( rec );
+
+  // Check if the transform has changed from the last time stamp. If it hasn't, then don't record
+  Tool currTool = this->toolCollection.GetTool( deviceName );
+  TransformRecord prevTransform = currTool.transBuff.GetTransformLast();
+  if ( strcmp( mss.str().c_str(), prevTransform.Transform.c_str() ) != 0 )
+  {
+    currTool.transBuff.AddTransform( mss.str(), sec, nsec );
+  }
+
 
 }
 

@@ -25,6 +25,8 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
+// #include "RecordType.h"
+// #include "ToolData.h"
 
 // WorkflowSegmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
@@ -42,73 +44,6 @@ class vtkMRMLLinearTransformNode;
 class vtkMRMLModelNode;
 class vtkMRMLViewNode;
 class vtkMRMLVolumeNode;
-
-
-
-//-------------------------------------------------------------------------
-// Helper classes for MRML
-//-------------------------------------------------------------------------
-
-// Class to store observed transforms
-class TransformRecord
-{
-public:
-  std::string DeviceName;
-  std::string Transform;
-  long int TimeStampSec; 
-  int TimeStampNSec;     // Nanoseconds from TimeStampSec to the real timestamp.
-};
-
-// Class to store recorded messages
-class MessageRecord
-{
-public:
-  std::string Message;
-  long int TimeStampSec;
-  int TimeStampNSec;
-};
-
-// Class to store the definition of a procedure
-class ProcedureDefinition
-{
-public:
-  int NumTasks;
-  std::vector<std::string> TaskName;
-  std::vector<std::string> TaskInstruction;
-  std::vector<std::string> TaskNext;
-};
-
-// Class to store algorithm input parameters
-class InputParameter
-{
-public:
-  double FilterWidth;
-  int OrthogonalOrder;
-  int OrthogonalWindow;
-  int Derivative;
-  int NumCentroids;
-  int NumPrinComps;
-  double MarkovPseudoScalePi;
-  double MarkovPseudoScaleA;
-  double MarkovPseudoScaleB;
-};
-
-// Class to store algorithm training parameters
-class TrainingParameter
-{
-public:
-  std::string PrinComps;
-  std::string Mean;
-  std::string Centroids;
-  std::string MarkovPi;
-  std::string MarkovA;
-  std::string MarkovB;
-};
-
-
-
-
-
 
 //-------------------------------------------------------------------------
 // MRML Node classes
@@ -176,21 +111,9 @@ protected:
   
 public:
 
-  // Statistics associated with recorded transforms
-  unsigned int GetTransformsBufferSize();
-  unsigned int GetMessagesBufferSize();
-  unsigned int GetSegmentationBufferSize();
-  double GetTotalTime();
-  
-  // State setters and getters
+  // Whether we are recording
   bool GetRecording();
   void SetRecording( bool newState );
-  bool GetProcedureDefined();
-  void SetProcedureDefined( bool newState );
-  bool GetParametersInputted();
-  void SetParametersInputted( bool newState );
-  bool GetAlgorithmTrained();
-  void SetAlgorithmTrained( bool newState );
 
   // File name setters and getters
   std::string GetTrackingLogFileName();
@@ -204,14 +127,10 @@ public:
   std::string GetTrainingParameterFileName();
   void SetTrainingParameterFileName( std::string name );
 
-
-
   
   // Setters for saving the scene
   //BTX
   void SetTransformSelections( std::vector< int > selections );
-  void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
-  void AddSegmentation( std::string task, int sec = -1, int nsec = -1 );
   //ETX
   
   // File IO methods
@@ -222,9 +141,6 @@ public:
   void ImportInputParameters();
   void ImportTrainingParameters();
   void ImportAvailableData();
-
-  TransformRecord GetTransformAt( int index );
-  void ClearBuffer();
   
   // Get the current time stamp sec, nanosec
   void GetTimestamp( int &sec, int &nsec );
@@ -241,9 +157,6 @@ protected:
   // Variables associated with recording
   //BTX
   std::vector< int > TransformSelections;  
-  std::vector< TransformRecord > TransformsBuffer;
-  std::vector< MessageRecord > MessagesBuffer;
-  std::vector< MessageRecord > SegmentationBuffer;
   //ETX
 
   // Input/output files
@@ -255,10 +168,6 @@ protected:
  
   // Active recording
   bool Recording;
-
-  bool ProcedureDefined;
-  bool ParametersInputted;
-  bool AlgorithmTrained;
   
   // Time.
   // Set a zero timestamp in the constructor using the system clock.  
@@ -271,12 +180,10 @@ protected:
   // Keep track of the last recorded transform to avoid repeats
   vtkTransform* LastNeedleTransform;
   double LastNeedleTime;
+  
 
 public:
-  // Parameter variables
-  ProcedureDefinition procDefn;
-  InputParameter inputParam;
-  TrainingParameter trainingParam;
+  ToolCollection toolCollection;
   
 };  
 
