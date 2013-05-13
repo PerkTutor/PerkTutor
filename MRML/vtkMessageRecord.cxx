@@ -16,6 +16,9 @@ vtkMessageRecord
 vtkMessageRecord
 ::~vtkMessageRecord()
 {
+  this->Name = "";
+  this->TimeStampSec = 0;
+  this->TimeStampNSec = 0;
 }
 
 

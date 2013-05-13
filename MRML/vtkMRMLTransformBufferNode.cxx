@@ -90,8 +90,7 @@ vtkMRMLTransformBufferNode
 vtkMRMLTransformBufferNode
 ::~vtkMRMLTransformBufferNode()
 {
-  this->transforms.clear(); // Clear function automatically deconstructs all objects in the vector
-  this->messages.clear();
+  this->Clear();
 }
 
 
@@ -108,12 +107,12 @@ void vtkMRMLTransformBufferNode
     this->transforms.push_back( newTransform );
 	return;
   }
-  if ( newTransform->GetTime() > this->GetCurrentTransform()->GetTime() )
+  if ( newTransform->GetTime() >= this->GetCurrentTransform()->GetTime() )
   {
     this->transforms.push_back( newTransform );
 	return;
   }
-  if ( newTransform->GetTime() < this->GetTransformAt(0)->GetTime() )
+  if ( newTransform->GetTime() <= this->GetTransformAt(0)->GetTime() )
   {
     this->transforms.insert( transforms.begin() + 0, newTransform );
 	return;
@@ -122,7 +121,7 @@ void vtkMRMLTransformBufferNode
   // TODO: Use binary search
   for ( int i = this->GetNumTransforms() - 1; i >= 0; i-- )
   {
-    if ( newTransform->GetTime() > this->GetTransformAt(i)->GetTime() )
+    if ( newTransform->GetTime() >= this->GetTransformAt(i)->GetTime() )
 	{
       this->transforms.insert( transforms.begin() + i + 1, newTransform );
 	  return;
@@ -141,12 +140,12 @@ void vtkMRMLTransformBufferNode
     this->messages.push_back( newMessage );
 	return;
   }
-  if ( newMessage->GetTime() > this->GetCurrentMessage()->GetTime() )
+  if ( newMessage->GetTime() >= this->GetCurrentMessage()->GetTime() )
   {
     this->messages.push_back( newMessage );
 	return;
   }
-  if ( newMessage->GetTime() < this->GetMessageAt(0)->GetTime() )
+  if ( newMessage->GetTime() <= this->GetMessageAt(0)->GetTime() )
   {
     this->messages.insert( messages.begin() + 0, newMessage );
 	return;
@@ -155,7 +154,7 @@ void vtkMRMLTransformBufferNode
   // TODO: Use binary search
   for ( int i = this->GetNumMessages() - 1; i >= 0; i-- )
   {
-    if ( newMessage->GetTime() > this->GetMessageAt(i)->GetTime() )
+    if ( newMessage->GetTime() >= this->GetMessageAt(i)->GetTime() )
 	{
       this->messages.insert( messages.begin() + i + 1, newMessage );
 	  return;
@@ -168,6 +167,7 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::RemoveTransformAt( int index )
 {
+  this->GetTransformAt(index)->Delete();
   this->transforms.erase( transforms.begin() + index );
 }
 
@@ -179,6 +179,7 @@ void vtkMRMLTransformBufferNode
   {
     if ( this->GetTransformAt(i)->GetDeviceName().compare( name ) == 0 )
 	{
+	  this->GetTransformAt(i)->Delete();
 	  this->transforms.erase( transforms.begin() + i );
 	  i--;
 	}
@@ -189,6 +190,7 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::RemoveMessageAt( int index )
 {
+  this->GetMessageAt(index)->Delete();
   this->messages.erase( messages.begin() + index );
 }
 
@@ -200,6 +202,7 @@ void vtkMRMLTransformBufferNode
   {
     if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
 	{
+      this->GetMessageAt(i)->Delete();
 	  this->messages.erase( messages.begin() + i );
 	  i--;
 	}
@@ -360,15 +363,19 @@ int vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::Clear()
 {
-  // Note that the clear function calls the destructor for all of the objects in the vector
-  this->transforms.clear();
-  this->messages.clear();
+  this->ClearTransforms();
+  this->ClearMessages();
 }
 
 
 void vtkMRMLTransformBufferNode
 ::ClearTransforms()
 {
+  // Need to explicitly call the VTK delete function on each of these VTK objects
+  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  {
+    this->GetTransformAt(i)->Delete();
+  }
   this->transforms.clear();
 }
 
@@ -376,6 +383,11 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::ClearMessages()
 {
+  // Need to explicitly call the VTK delete function on each of these VTK objects
+  for ( int i = 0; i < this->GetNumMessages(); i++ )
+  {
+    this->GetMessageAt(i)->Delete();
+  }
   this->messages.clear();
 }
 

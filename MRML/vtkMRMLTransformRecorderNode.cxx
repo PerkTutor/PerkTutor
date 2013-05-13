@@ -651,11 +651,6 @@ void vtkMRMLTransformRecorderNode::AddTransform( const char* TransformNodeID )
       mss << m->GetElement( row, col ) << " ";
     }
   }
-  
-  vtkTransformRecord* transformRecord = vtkTransformRecord::New();
-  transformRecord->SetTransform( mss.str() );
-  transformRecord->SetDeviceName( deviceName );
-  transformRecord->SetTime( time );
  
   
   // Look for the most recent value of this transform.
@@ -663,9 +658,9 @@ void vtkMRMLTransformRecorderNode::AddTransform( const char* TransformNodeID )
   bool duplicate = false;
   for ( int i = this->TransformBuffer->GetNumTransforms() - 1; i >= 0; i-- )
   {
-    if ( this->TransformBuffer->GetTransformAt(i)->GetDeviceName().compare( transformRecord->GetDeviceName() ) == 0 )
+    if ( this->TransformBuffer->GetTransformAt(i)->GetDeviceName().compare( deviceName ) == 0 )
 	{
-      if ( this->TransformBuffer->GetTransformAt(i)->GetTransform().compare( transformRecord->GetTransform() ) == 0 )
+      if ( this->TransformBuffer->GetTransformAt(i)->GetTransform().compare( mss.str() ) == 0 )
 	  {
         duplicate = true;
 	  }
@@ -675,7 +670,11 @@ void vtkMRMLTransformRecorderNode::AddTransform( const char* TransformNodeID )
 
   if ( ! duplicate )
   {
-    this->TransformBuffer->AddTransform( transformRecord );
+    vtkTransformRecord* transformRecord = vtkTransformRecord::New();
+    transformRecord->SetTransform( mss.str() );
+    transformRecord->SetDeviceName( deviceName );
+    transformRecord->SetTime( time );
+	this->TransformBuffer->AddTransform( transformRecord );
   }
 
 }

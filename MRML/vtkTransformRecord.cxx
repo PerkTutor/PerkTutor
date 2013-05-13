@@ -17,6 +17,10 @@ vtkTransformRecord
 vtkTransformRecord
 ::~vtkTransformRecord()
 {
+  this->Transform = "";
+  this->DeviceName = "";
+  this->TimeStampSec = 0;
+  this->TimeStampNSec = 0;
 }
 
 
