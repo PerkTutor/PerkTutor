@@ -16,17 +16,19 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkLabelRecord.h"
+#include "vtkLabelVector.h"
 
 // A label record is a label vector plus a time attribute
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
-vtkLabelRecord : public vtkObject
+vtkLabelRecord : public vtkLabelVector
 {
 public:
   vtkTypeMacro( vtkLabelRecord, vtkObject );
 
   // Standard MRML methods
   static vtkLabelRecord* New();
+
+  vtkLabelRecord* DeepCopy();
 
 protected:
 
@@ -47,7 +49,7 @@ public:
   void SetTime( int newSec, int newNSec );
 
   std::string ToXMLString( std::string name );
-  void FromXMLElement( vtkXMLDataElement* element, std::string name, int size );
+  void FromXMLElement( vtkXMLDataElement* element, std::string name );
 
 };
 

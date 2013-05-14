@@ -27,6 +27,8 @@ public:
   // Standard MRML methods
   static vtkMarkovRecord* New();
 
+  vtkMarkovRecord* DeepCopy();
+
 protected:
 
   // Constructo/destructor

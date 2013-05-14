@@ -18,6 +18,16 @@ vtkMarkovRecord
 }
 
 
+vtkMarkovRecord* vtkMarkovRecord
+::DeepCopy()
+{
+  vtkMarkovRecord* newMarkovRecord = vtkMarkovRecord::New();
+  newMarkovRecord->SetState( this->GetState() );
+  newMarkovRecord->SetSymbol( this->GetSymbol() );
+  return newMarkovRecord;
+}
+
+
 std::string vtkMarkovRecord
 ::GetState()
 {

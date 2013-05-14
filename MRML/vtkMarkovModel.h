@@ -18,6 +18,7 @@
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 #include "vtkTrackingRecord.h"
+#include "vtkMarkovRecord.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -29,15 +30,25 @@ public:
   // Standard MRML methods
   static vtkMarkovModel* New();
 
+  vtkMarkovModel* DeepCopy();
+
 protected:
 
   // Constructo/destructor
   vtkMarkovModel();
   virtual ~vtkMarkovModel();
 
-  vtkMarkovModel* DeepCopy();
+public:
 
-  void SetSize( int numNewStates, int numNewSymbols );
+  void SetStates( std::vector<std::string> newStateNames );
+  void SetSymbols( std::vector<std::string> newSymbolsNames );
+
+  void AddState( std::string newStateName );
+  void AddSymbol( std::string newSymbolName );
+
+  int LookupState( std::string newStateName );
+  int LookupSymbol( std::string newSymbolName );
+
   int GetNumStates();
   int GetNumSymbols();
 
@@ -56,28 +67,28 @@ protected:
   vtkLabelVector* GetZeroPi();
   vtkLabelVector* GetLogPi();
 
-  void InitializeEstimation( int numEstStates, int numEstSymbols );
+  void InitializeEstimation();
   void AddEstimationData( std::vector<vtkMarkovRecord*> sequence );
   void AddPseudoData( vtkLabelVector* pseudoPi, std::vector<vtkLabelVector*> pseudoA, std::vector<vtkLabelVector*> pseudoB );
   void EstimateParameters();
   std::vector<vtkMarkovRecord*> CalculateStates( std::vector<vtkMarkovRecord*> sequence );
 
-  std::string ToString();
-  void FromString( std::string s );
+  std::string ToXMLString();
+  void FromXMLElement( vtkXMLDataElement* element );
 
 private:
 
-	void ZeroParameters();
-	void NormalizeParameters();
+  void ZeroParameters();
+  void NormalizeParameters();
 
 protected:
 
-	std::vector<vtkLabelVector*> A; // State transition matrix
-	std::vector<vtkLabelVector*> B; // Observation matrix
-	LabelRecord pi;	// Initial state vector
+  std::vector<vtkLabelVector*> A; // State transition matrix
+  std::vector<vtkLabelVector*> B; // Observation matrix
+  vtkLabelVector* pi;	// Initial state vector
 
-	int numStates;
-	int numSymbols;
+  std::vector<std::string> stateNames;
+  std::vector<std::string> symbolNames;
 
 };
 

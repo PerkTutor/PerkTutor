@@ -21,6 +21,19 @@ vtkWorkflowTask
 }
 
 
+vtkWorkflowTask* vtkWorkflowTask
+::DeepCopy()
+{
+  vtkWorkflowTask* newWorkflowTask = vtkWorkflowTask::New();
+  newWorkflowTask->Name = this->Name;
+  newWorkflowTask->Instruction = this->Instruction;
+  newWorkflowTask->Next = this->Next;
+  newWorkflowTask->Prerequisite = this->Prerequisite;
+  newWorkflowTask->Recovery = this->Recovery;
+  return newWorkflowTask;
+}
+
+
 std::string vtkWorkflowTask
 ::ToXMLString()
 {

@@ -21,30 +21,31 @@
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
-vtkMarkovModelRT : public vtkObject
+vtkMarkovModelRT : public vtkMarkovModel
 {
 public:
-  vtkTypeMacro( vtkMarkovModel, vtkObject );
+  vtkTypeMacro( vtkMarkovModelRT, vtkObject );
 
   // Standard MRML methods
-  static vtkMarkovModel* New();
+  static vtkMarkovModelRT* New();
+
+  vtkMarkovModelRT* DeepCopy();
 
 protected:
 
   // Constructo/destructor
-  vtkMarkovModel();
-  virtual ~vtkMarkovModel();
+  vtkMarkovModelRT();
+  virtual ~vtkMarkovModelRT();
 
-  static vtkMarkovModelRT *New();
-  vtkTypeMacro(vtkMarkovModelRT,vtkMarkovModel);
+public:
 
-  MarkovRecord CalculateStateRT( MarkovRecord element );
+  vtkMarkovRecord* CalculateStateRT( vtkMarkovRecord* element );
 
 protected:
 
-  std::vector<MarkovRecord> sequence;
-  LabelRecord currDelta;
-  LabelRecord currPsi;
+  std::vector<vtkMarkovRecord*> sequence;
+  vtkLabelVector* currDelta;
+  vtkLabelVector* currPsi;
 
 };
 

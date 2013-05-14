@@ -15,11 +15,14 @@
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
 
+// VNL includes
+#include "vnl/vnl_matrix.h"
+#include "vnl/algo/vnl_symmetric_eigensystem.h"
+
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-
-// Includes from this module
-#include "vtkLabelRecord.h"
+#include "vtkTrackingRecord.h"
+#include "vtkMarkovRecord.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -31,6 +34,8 @@ public:
   // Standard MRML methods
   static vtkRecordBuffer* New();
 
+  vtkRecordBuffer* DeepCopy();
+
 protected:
 
   // Constructo/destructor
@@ -41,6 +46,7 @@ protected:
 public:
   
   // Traditional methods for dealing with buffers
+  void Initialize( int newNumRecords, int newRecordSize );
   void AddRecord( vtkLabelRecord* newRecord );
   void SetRecordAt( int index, vtkLabelRecord* newRecord );
   void RemoveRecordAt( int index );
@@ -62,8 +68,9 @@ public:
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );
 
-private:
-  
+protected:
+
+  static const int STDEV_CUTOFF = 5;
   std::vector<vtkLabelRecord*> records;
   std::string name; // This buffer should be associated with exactly one tool
 
@@ -72,19 +79,19 @@ public:
   // Methods explicitly for workflow segmentation
   vtkRecordBuffer* Trim( int start, int end );
 
-  ValueRecord Mean();
+  vtkLabelVector* Mean();
 
   std::vector<vtkLabelVector*> Distances( vtkRecordBuffer* otherRecLog );
-  std::vector<vtkLabelVector*> Distances( std::vector<ValueRecord> valueRecords );
-  int ClosestRecord( ValueRecord valueRecord );
+  std::vector<vtkLabelVector*> Distances( std::vector<vtkLabelVector*> vectors );
+  vtkLabelRecord* ClosestRecord( vtkLabelVector* vector );
 
   vtkRecordBuffer* Derivative( int order = 1 );
-  ValueRecord Integrate();
+  vtkLabelVector* Integrate();
   
   vtkRecordBuffer* PadStart( int window );
   vtkRecordBuffer* Concatenate( vtkRecordBuffer* otherRecLog );
   vtkRecordBuffer* ConcatenateValues( vtkRecordBuffer* otherRecLog );
-  vtkRecordBuffer* ConcatenateValues( ValueRecord record );
+  vtkRecordBuffer* ConcatenateValues( vtkLabelVector* vector );
 
   vtkRecordBuffer* GaussianFilter( double width );
 
@@ -93,13 +100,13 @@ public:
 
   vnl_matrix<double>* CovarianceMatrix();
   std::vector<vtkLabelVector*> CalculatePCA( int numComp );
-  vtkRecordBuffer* TransformPCA( std::vector<vtkLabelVector*> prinComps, ValueRecord mean );
+  vtkRecordBuffer* TransformPCA( std::vector<vtkLabelVector*> prinComps, vtkLabelVector* mean );
 
   std::vector<vtkLabelVector*> fwdkmeans( int numClusters );
   vtkRecordBuffer* fwdkmeansTransform( std::vector<vtkLabelVector*> centroids );
 
-  std::vector<vtkRecordBuffer*> GroupRecordsByLabel( int MaxLabel );
-  std::vector<MarkovRecord> ToMarkovRecordVector();
+  std::vector<vtkRecordBuffer*> GroupRecordsByLabel( std::vector<std::string> labels );
+  std::vector<vtkMarkovRecord*> ToMarkovRecordVector();
 
 private:
 

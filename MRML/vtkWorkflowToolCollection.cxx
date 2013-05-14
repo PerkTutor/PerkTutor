@@ -20,6 +20,19 @@ vtkWorkflowToolCollection
 }
 
 
+vtkWorkflowToolCollection* vtkWorkflowToolCollection
+::DeepCopy()
+{
+  vtkWorkflowToolCollection* newWorkflowToolCollection = vtkWorkflowToolCollection::New();
+  for ( int i = 0; i < this->GetNumTools(); i++ )
+  {
+    newWorkflowToolCollection->tools.push_back( this->GetToolAt(i)->DeepCopy() );
+  }
+
+  return newWorkflowToolCollection;
+}
+
+
 int vtkWorkflowToolCollection
 ::GetNumTools()
 {
@@ -98,12 +111,12 @@ bool vtkWorkflowToolCollection
 double vtkWorkflowToolCollection
 ::GetMinTime()
 {
-  double minTime = this->GetToolAt(0)->Buffer->GetMinTime(); 
+  double minTime = this->GetToolAt(0)->Buffer->GetRecordAt(0)->GetTime(); 
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
-    if ( this->GetToolAt(i)->Buffer->GetMinTime() < minTime )
+    if ( this->GetToolAt(i)->Buffer->GetRecordAt(0)->GetTime() < minTime )
 	{
-      minTime = this->GetToolAt(i)->Buffer->GetMinTime();
+      minTime = this->GetToolAt(i)->Buffer->GetRecordAt(0)->GetTime();
 	}
   }
   return minTime;
@@ -113,12 +126,12 @@ double vtkWorkflowToolCollection
 double vtkWorkflowToolCollection
 ::GetMaxTime()
 {
-  double maxTime = this->GetToolAt(0)->Buffer->GetMaxTime(); 
+  double maxTime = this->GetToolAt(0)->Buffer->GetCurrentRecord()->GetTime(); 
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
-    if ( this->GetToolAt(i)->Buffer->GetMaxTime() < maxTime )
+    if ( this->GetToolAt(i)->Buffer->GetCurrentRecord()->GetTime() > maxTime )
 	{
-      maxTime = this->GetToolAt(i)->Buffer->GetMaxTime();
+      maxTime = this->GetToolAt(i)->Buffer->GetCurrentRecord()->GetTime();
 	}
   }
   return maxTime;
@@ -133,14 +146,14 @@ double vtkWorkflowToolCollection
 
 
 std::string vtkWorkflowToolCollection
-::PerkProcedureToXMLString()
+::ProcedureToXMLString()
 {
   std::stringstream xmlstring;
 
   xmlstring << "<PerkProcedure>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
-    xmlstring << this->GetToolAt(i)->PerkProcedureToXMLString();
+    xmlstring << this->GetToolAt(i)->ProcedureToXMLString();
   }
   xmlstring << "</PerkProcedure>" << std::endl;
 
@@ -149,7 +162,7 @@ std::string vtkWorkflowToolCollection
 
 
 void vtkWorkflowToolCollection
-::PerkProcedureFromXMLElement( vtkXMLDataElement* element )
+::ProcedureFromXMLElement( vtkXMLDataElement* element )
 {
 
   if ( ! element || strcmp( element->GetName(), "PerkProcedure" ) != 0 )
@@ -168,7 +181,7 @@ void vtkWorkflowToolCollection
       continue;  // If it's not a "Tool", jump to the next.
     }
 
-	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->PerkProcedureFromXMLElement( noteElement );
+	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->ProcedureFromXMLElement( noteElement );
 
   }
 
@@ -176,14 +189,14 @@ void vtkWorkflowToolCollection
 
 
 std::string vtkWorkflowToolCollection
-::InputParameterToXMLString()
+::InputToXMLString()
 {
   std::stringstream xmlstring;
 
   xmlstring << "<WorkflowSegmentationParameters>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
-    xmlstring << this->GetToolAt(i)->InputParameterToXMLString();
+    xmlstring << this->GetToolAt(i)->InputToXMLString();
   }
   xmlstring << "</WorkflowSegmentationParameters>" << std::endl;
 
@@ -192,7 +205,7 @@ std::string vtkWorkflowToolCollection
 
 
 void vtkWorkflowToolCollection
-::InputParameterFromXMLElement( vtkXMLDataElement* element )
+::InputFromXMLElement( vtkXMLDataElement* element )
 {
 
   if ( ! element || strcmp( element->GetName(), "WorkflowSegmentationParameters" ) != 0 || ! this->GetDefined() )
@@ -211,7 +224,7 @@ void vtkWorkflowToolCollection
       continue;  // If it's not a "Tool", jump to the next.
     }
 
-	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->InputParameterFromXMLElement( noteElement );
+	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->InputFromXMLElement( noteElement );
 
   }
 
@@ -219,14 +232,14 @@ void vtkWorkflowToolCollection
 
 
 std::string vtkWorkflowToolCollection
-::TrainingParameterToXMLString()
+::TrainingToXMLString()
 {
   std::stringstream xmlstring;
 
   xmlstring << "<WorkflowSegmentationParameters>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
-    xmlstring << this->GetToolAt(i)->TrainingParameterToXMLString();
+    xmlstring << this->GetToolAt(i)->TrainingToXMLString();
   }
   xmlstring << "</WorkflowSegmentationParameters>" << std::endl;
 
@@ -235,7 +248,7 @@ std::string vtkWorkflowToolCollection
 
 
 void vtkWorkflowToolCollection
-::TrainingParameterFromXMLElement( vtkXMLDataElement* element )
+::TrainingFromXMLElement( vtkXMLDataElement* element )
 {
 
   if ( ! element || strcmp( element->GetName(), "WorkflowSegmentationParameters" ) != 0 || ! this->GetInputted() )
@@ -254,7 +267,7 @@ void vtkWorkflowToolCollection
       continue;  // If it's not a "Tool", jump to the next.
     }
 
-	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->TrainingParameterFromXMLElement( noteElement );
+	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->TrainingFromXMLElement( noteElement );
 
   }
 
@@ -297,10 +310,11 @@ void vtkWorkflowToolCollection
 
   // For this one, check all tools each of which will handle all elements
   vtkMRMLTransformBufferNode* transformBufferNode = vtkMRMLTransformBufferNode::New();
-  std::vector<vtkMRMLTransformBufferNode*> transformBufferNodeVector = transformBufferNode->FromXMLElement( element );
+  transformBufferNode->FromXMLElement( element );
+  std::vector<vtkMRMLTransformBufferNode*> transformBufferNodeVector = transformBufferNode->SplitBufferByName();
   for ( int i = 0; i < transformBufferNodeVector.size(); i++ )
   {
-    vtkWorkflowTool* currentTool = this->GetToolByName( transformBufferNodeVector.at(i)->GetCurrentTranform()->GetDeviceName() );
+    vtkWorkflowTool* currentTool = this->GetToolByName( transformBufferNodeVector.at(i)->GetCurrentTransform()->GetDeviceName() );
 	vtkRecordBuffer* currentBuffer = vtkRecordBuffer::New();
 	currentBuffer->FromTransformBufferNode( transformBufferNodeVector.at(i) );
     currentTool->Buffer = currentBuffer;

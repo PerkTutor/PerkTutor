@@ -17,6 +17,17 @@ vtkLabelRecord
 }
 
 
+vtkLabelRecord* vtkLabelRecord
+::DeepCopy()
+{
+  vtkLabelRecord* newLabelRecord = vtkLabelRecord::New();
+  newLabelRecord->SetValues( this->GetValues() ); // Observe that this does a deep copy
+  newLabelRecord->SetLabel( this->GetLabel() );
+  newLabelRecord->SetTime( this->GetTime() );
+  return newLabelRecord;
+}
+
+
 double vtkLabelRecord
 ::GetTime()
 {

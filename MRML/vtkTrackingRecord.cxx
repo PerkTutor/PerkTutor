@@ -13,10 +13,21 @@ vtkTrackingRecord
 }
 
 
+vtkTrackingRecord* vtkTrackingRecord
+::DeepCopy()
+{
+  vtkTrackingRecord* newTrackingRecord = vtkTrackingRecord::New();
+  newTrackingRecord->SetValues( this->GetValues() ); // Observe that this does a deep copy
+  newTrackingRecord->SetLabel( this->GetLabel() );
+  newTrackingRecord->SetTime( this->GetTime() );
+  return newTrackingRecord;
+}
+
+
 void vtkTrackingRecord
 ::FromString( std::string s )
 {
-  this->LabelRecord::FromString( s, TRACKINGRECORD_SIZE );
+  this->vtkLabelRecord::FromString( s, TRACKINGRECORD_SIZE );
 }
 
 

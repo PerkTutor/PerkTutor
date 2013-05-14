@@ -35,6 +35,23 @@ vtkWorkflowInput
 }
 
 
+vtkWorkflowInput* vtkWorkflowInput
+::DeepCopy()
+{
+  vtkWorkflowInput* newWorkflowInput = vtkWorkflowInput::New();
+  newWorkflowInput->FilterWidth = this->FilterWidth;
+  newWorkflowInput->OrthogonalOrder = this->OrthogonalOrder;
+  newWorkflowInput->OrthogonalWindow = this->OrthogonalWindow;
+  newWorkflowInput->Derivative = this->Derivative;
+  newWorkflowInput->NumCentroids = this->NumCentroids;
+  newWorkflowInput->NumPrinComps = this->NumPrinComps;
+  newWorkflowInput->MarkovPseudoScalePi = this->MarkovPseudoScalePi;
+  newWorkflowInput->MarkovPseudoScaleA = this->MarkovPseudoScaleA;
+  newWorkflowInput->MarkovPseudoScaleB = this->MarkovPseudoScaleB;
+  return newWorkflowInput;
+}
+
+
 std::string vtkWorkflowInput
 ::ToXMLString()
 {

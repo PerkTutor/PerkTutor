@@ -30,6 +30,8 @@ public:
   // Standard MRML methods
   static vtkWorkflowTraining* New();
 
+  vtkWorkflowTraining* DeepCopy();
+
 protected:
 
   // Constructo/destructor
@@ -46,7 +48,7 @@ public:
   std::vector<vtkLabelVector*> MarkovB;
 
   std::string ToXMLString();
-  void FromXMLElement( vtkXMLDataElement* element, vtkWorkflowProcedure* perkProc, vtkWorklfowInput* inputParam );
+  void FromXMLElement( vtkXMLDataElement* element, vtkWorkflowProcedure* procedure, vtkWorkflowInput* input );
 
 };
 

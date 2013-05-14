@@ -17,19 +17,19 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-
-// Includes from this module
 #include "vtkRecordBuffer.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
-vtkRecordBufferRT : public vtkMRMLNode
+vtkRecordBufferRT : public vtkRecordBuffer
 {
 public:
   vtkTypeMacro( vtkRecordBufferRT, vtkObject );
 
   // Standard MRML methods
   static vtkRecordBufferRT* New();
+
+  vtkRecordBufferRT* DeepCopy();
 
 protected:
 
@@ -55,6 +55,8 @@ public:
 
   vtkLabelRecord* fwdkmeansTransformRT( std::vector<vtkLabelVector*> centroids );
 
-  MarkovRecord ToMarkovRecordRT();
+  vtkMarkovRecord* ToMarkovRecordRT();
 
-};  
+};
+
+#endif

@@ -16,7 +16,7 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkTrackingRecord.h"
+#include "vtkLabelRecord.h"
 #include "vtkMRMLTransformBufferNode.h"
 
 // A tracking record is a label record that uses the ( tx ty tz q1 q2 q3 q4 ) format
@@ -28,6 +28,8 @@ public:
 
   // Standard MRML methods
   static vtkTrackingRecord* New();
+
+  vtkTrackingRecord* DeepCopy();
 
 protected:
 

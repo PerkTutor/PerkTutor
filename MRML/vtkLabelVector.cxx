@@ -18,6 +18,16 @@ vtkLabelVector
 }
 
 
+vtkLabelVector* vtkLabelVector
+::DeepCopy()
+{
+  vtkLabelVector* newLabelVector = vtkLabelVector::New();
+  newLabelVector->SetValues( this->GetValues() ); // Observe that this does a deep copy
+  newLabelVector->SetLabel( this->GetLabel() );
+  return newLabelVector;
+}
+
+
 void vtkLabelVector
 ::Initialize( int size, double value )
 {
@@ -40,7 +50,7 @@ void vtkLabelVector
 
 
 void vtkLabelVector
-::Crement( int index, int step = 1 )
+::Crement( int index, int step )
 {
   this->Set( index, this->Get(index) + step );
 }

@@ -19,16 +19,19 @@
 #include "vtkWorkflowProcedure.h"
 #include "vtkWorkflowInput.h"
 #include "vtkWorkflowTraining.h"
+#include "vtkRecordBuffer.h"
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
 vtkWorkflowTool : public vtkObject
 {
 public:
-  vtkTypMacro( vtkWorkflowTool, vtkObject );
+  vtkTypeMacro( vtkWorkflowTool, vtkObject );
 
   // Standard MRML methods
   static vtkWorkflowTool* New();
+
+  vtkWorkflowTool* DeepCopy();
 
 protected:
 
@@ -36,26 +39,24 @@ protected:
   vtkWorkflowTool();
   virtual ~vtkWorkflowTool();
 
-private:
+public:
 
   std::string Name;
   bool Defined, Inputted, Trained;
-
-public:
 
   vtkWorkflowProcedure* Procedure;
   vtkWorkflowInput* Input;
   vtkWorkflowTraining* Training;
   vtkRecordBuffer* Buffer;
 
-  std::string WorkflowProcedureToXMLString();
-  void WorkflowProcedureFromXMLElement( vtkXMLDataElement* element );
+  std::string ProcedureToXMLString();
+  void ProcedureFromXMLElement( vtkXMLDataElement* element );
 
-  std::string InputParameterToXMLString();
-  void InputParameterFromXMLElement( vtkXMLDataElement* element );
+  std::string InputToXMLString();
+  void InputFromXMLElement( vtkXMLDataElement* element );
 
-  std::string TrainingParameterToXMLString();
-  void TrainingParameterFromXMLElement( vtkXMLDataElement* element );
+  std::string TrainingToXMLString();
+  void TrainingFromXMLElement( vtkXMLDataElement* element );
 
 };
 

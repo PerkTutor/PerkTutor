@@ -6,8 +6,7 @@ vtkStandardNewMacro( vtkRecordBufferRT );
 vtkRecordBufferRT
 ::vtkRecordBufferRT()
 {
-  this->numRecords = 0;
-  this->recordSize = 0;
+  this->name = "";
 }
 
 
@@ -18,34 +17,49 @@ vtkRecordBufferRT
 }
 
 
+vtkRecordBufferRT* vtkRecordBufferRT
+::DeepCopy()
+{
+  vtkRecordBufferRT* newRecordBufferRT = vtkRecordBufferRT::New();
+
+  newRecordBufferRT->SetName( this->GetName() );
+  for ( int i = 0; i < this->GetNumRecords(); i++ )
+  {
+    newRecordBufferRT->AddRecord( this->GetRecordAt(i) );
+  }
+
+  return newRecordBufferRT;
+}
+
+
 vtkLabelRecord* vtkRecordBufferRT
 ::GetRecordRT()
 {
-  return GetRecordAt( numRecords - 1 );
+  return GetRecordAt( this->records.size() - 1 );
 }
 
 
 void vtkRecordBufferRT
 ::SetRecordRT( vtkLabelRecord* newRecord )
 {
-  return SetRecord( numRecords - 1, newRecord );
+  return SetRecordAt( this->GetNumRecords() - 1, newRecord );
 }
 
 
 vtkLabelVector* vtkRecordBufferRT
-::DistancesRT( std::vector<ValueRecord> valueRecords )
+::DistancesRT( std::vector<vtkLabelVector*> vectors )
 {
   // Create a new order record
   vtkLabelVector* distRecord;
-  distRecord.initialize( valueRecords.size(), 0.0 );
+  distRecord->Initialize( vectors.size(), 0.0 );
 
   double currSum;
 
-  for ( int j = 0; j < valueRecords.size(); j++ )
+  for ( int j = 0; j < vectors.size(); j++ )
   {
       
     // First, ensure that the records are the same size
-    if ( this->recordSize != valueRecords[j].size() )
+    if ( this->GetRecordAt(0)->Size() != vectors[j]->Size() )
     {
       return distRecord;
     }
@@ -53,16 +67,16 @@ vtkLabelVector* vtkRecordBufferRT
     // Initialize the sum to zero
     currSum = 0.0;
 
-    for ( int d = 0; d < recordSize; d++ )
+    for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
     {
-      currSum = currSum + ( this->GetRecordRT().get(d) - valueRecords[j].get(d) ) * ( this->GetRecordRT().get(d) - valueRecords[j].get(d) );
+      currSum = currSum + ( this->GetRecordRT()->Get(d) - vectors[j]->Get(d) ) * ( this->GetRecordRT()->Get(d) - vectors[j]->Get(d) );
 	}
 	// Add to the current order record
-	distRecord.set( j, currSum );
+	distRecord->Set( j, currSum );
   }
 
   // Add the current order record to the vector
-  distRecord.setLabel( 0 );
+  distRecord->SetLabel( 0 );
 
   return distRecord;
 
@@ -74,17 +88,17 @@ vtkLabelRecord* vtkRecordBufferRT
 {
   // To calculate a derivative of arbitrary order, we need arbitrarily many time stamps
   // Just calculate zeroth order first order derivative here, otherwise use other method
-  if ( numRecords < 2 )
+  if ( this->records.size() < 2 )
   {
     vtkLabelRecord* derivRecord;
 
-    for( int d = 0; d < recordSize; d++ )
+    for( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
     {
-      derivRecord.add( 0.0 );
+      derivRecord->Add( 0.0 );
     }
 	
-    derivRecord.setTime( GetRecordAt(numRecords-1).getTime() );
-    derivRecord.setLabel( GetRecordAt(numRecords-1).getLabel() );
+    derivRecord->SetTime( GetRecordRT()->GetTime() );
+    derivRecord->SetLabel( GetRecordRT()->GetLabel() );
     
 	return derivRecord;
   }
@@ -96,22 +110,22 @@ vtkLabelRecord* vtkRecordBufferRT
 
   if ( order == 1 )
   {
-    double DT = GetRecordAt(numRecords-1).getTime() - GetRecordAt(numRecords-2).getTime();
+    double DT = GetRecordAt( this->GetNumRecords() - 1 )->GetTime() - GetRecordAt( this->GetNumRecords() - 2 )->GetTime();
     vtkLabelRecord* derivRecord;
 
-    for( int d = 0; d < recordSize; d++ )
+    for( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
     {
-      derivRecord.add( ( GetRecordAt(numRecords-1).get(d) - GetRecordAt(numRecords-2).get(d) ) / DT );
+      derivRecord->Add( ( GetRecordAt( this->GetNumRecords() - 1 )->Get(d) - GetRecordAt( this->GetNumRecords() - 2 )->Get(d) ) / DT );
     }
 	
-    derivRecord.setTime( GetRecordAt(numRecords-1).getTime() );
-    derivRecord.setLabel( GetRecordAt(numRecords-1).getLabel() );
+    derivRecord->SetTime( GetRecordAt( this->GetNumRecords() - 1 )->GetTime() );
+    derivRecord->SetLabel( GetRecordAt( this->GetNumRecords() - 1 )->GetLabel() );
     
 	return derivRecord;
   }
 
-  vtkRecordLog* derivRecordLog = Derivative( order );
-  return derivRecordLog->GetRecordAt( derivRecordLog->Size() - 1 );
+  vtkRecordBuffer* derivRecordBuffer = this->Derivative( order );
+  return derivRecordBuffer->GetRecordAt( this->GetNumRecords() - 1 );
 
 }
 
@@ -122,10 +136,10 @@ vtkLabelRecord* vtkRecordBufferRT
 {
   // Create a new record valuestor
   vtkLabelRecord* gaussRecord;
-  gaussRecord.initialize( recordSize, 0.0 );
+  gaussRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
 
   // Iterate over all dimensions
-  for ( int d = 0; d < recordSize; d++ )
+  for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
   {
     double weightSum = 0;
     double normSum = 0;
@@ -133,11 +147,11 @@ vtkLabelRecord* vtkRecordBufferRT
 	double normDist;
 
     // Iterate over all records nearby
-	int j = numRecords - 1;
+	int j = this->GetNumRecords() - 1;
 	while ( j >= 0 ) // Iterate backward
     {
 	  // If too far from "peak" of distribution, the stop - we're just wasting time
-	  normDist = ( GetRecordAt(j).getTime() - GetRecordRT().getTime() ) / width;
+	  normDist = ( GetRecordAt(j)->GetTime() - GetRecordRT()->GetTime() ) / width;
 	  if ( abs( normDist ) > STDEV_CUTOFF )
 	  {
 	    break;
@@ -146,7 +160,7 @@ vtkLabelRecord* vtkRecordBufferRT
       // Calculate the values of the Gaussian distribution at this time
 	  gaussWeight = exp( - normDist * normDist / 2 );
 	  // Add the product with the values to function sum
-      weightSum = weightSum + GetRecordAt(j).get(d) * gaussWeight;
+      weightSum = weightSum + GetRecordAt(j)->Get(d) * gaussWeight;
 	  // Add the values to normSum
 	  normSum = normSum + gaussWeight;
 
@@ -154,13 +168,13 @@ vtkLabelRecord* vtkRecordBufferRT
     }
 
     // Add to the new values
-    gaussRecord.set( d, weightSum / normSum );
+    gaussRecord->Set( d, weightSum / normSum );
 
   }
 
   // Add the new record vector to the record log
-  gaussRecord.setTime( GetRecordRT().getTime() );
-  gaussRecord.setLabel( GetRecordRT().getLabel() );
+  gaussRecord->SetTime( GetRecordRT()->GetTime() );
+  gaussRecord->SetLabel( GetRecordRT()->GetLabel() );
 
   return gaussRecord;
 }
@@ -171,50 +185,50 @@ vtkLabelRecord* vtkRecordBufferRT
 ::OrthogonalTransformationRT( int window, int order )
 {
   // Pad the recordlog with values at the beginning (only if necessary)
-  vtkRecordLog* padRecordLog;
-  vtkRecordLog* padCatRecordLog;
-  if ( numRecords <= window )
+  vtkRecordBuffer* padRecordBuffer;
+  vtkRecordBuffer* padCatRecordBuffer;
+  if ( this->GetNumRecords() <= window )
   {
-    padRecordLog = this->PadStart( window );
-	padCatRecordLog = padRecordLog->Concatenate( this );
+    padRecordBuffer = this->PadStart( window );
+	padCatRecordBuffer = padRecordBuffer->Concatenate( this );
   }
   else
   {
-    padRecordLog = NULL;
-    padCatRecordLog = this;
+    padRecordBuffer = NULL;
+    padCatRecordBuffer = this;
   }
 
   // Calculate the record log to include
-  vtkRecordLog* trimRecordLog = padCatRecordLog->Trim( padCatRecordLog->Size() - 1 - window, padCatRecordLog->Size() - 1 );
+  vtkRecordBuffer* trimRecordBuffer = padCatRecordBuffer->Trim( padCatRecordBuffer->GetNumRecords() - 1 - window, padCatRecordBuffer->GetNumRecords() - 1 );
 	
   // Create a new matrix to which the Legendre coefficients will be assigned
-  std::vector<vtkLabelVector*> legCoeffMatrix = trimRecordLog->LegendreTransformation( order );
+  std::vector<vtkLabelVector*> legCoeffMatrix = trimRecordBuffer->LegendreTransformation( order );
   
   vtkLabelRecord* legRecord;
-  legRecord.initialize( this->recordSize * ( order + 1 ), 0.0 );
+  legRecord->Initialize( this->GetRecordAt(0)->Size() * ( order + 1 ), 0.0 );
 
   // Calculate the Legendre coefficients: 2D -> 1D
   int count = 0;
   for ( int o = 0; o <= order; o++ )
   {
-    for ( int d = 0; d < recordSize; d++ )
+    for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
     {
-      legRecord.set( count, legCoeffMatrix[o].get(d) );
+      legRecord->Set( count, legCoeffMatrix[o]->Get(d) );
 	  count++;
     }
   }
 
   // New value record to add to the record log
-  legRecord.setTime( GetRecordRT().getTime() );
-  legRecord.setLabel( GetRecordRT().getLabel() );
+  legRecord->SetTime( GetRecordRT()->GetTime() );
+  legRecord->SetLabel( GetRecordRT()->GetLabel() );
 
 
-  if ( numRecords <= window )
+  if ( this->GetNumRecords() <= window )
   {
-    padRecordLog->Delete();
-	padCatRecordLog->Delete();
+    padRecordBuffer->Delete();
+	padCatRecordBuffer->Delete();
   }
-  trimRecordLog->Delete();
+  trimRecordBuffer->Delete();
 
   return legRecord;
 
@@ -222,25 +236,25 @@ vtkLabelRecord* vtkRecordBufferRT
 
 
 vtkLabelRecord* vtkRecordBufferRT
-::TransformPCART( std::vector<vtkLabelVector*> prinComps, ValueRecord mean )
+::TransformPCART( std::vector<vtkLabelVector*> prinComps, vtkLabelVector* mean )
 {
   // Create a vtkLabelRecord* for the transformed record log
   vtkLabelRecord* transRecord;
-  transRecord.initialize( prinComps.size(), 0.0 );
+  transRecord->Initialize( prinComps.size(), 0.0 );
 
   // Initialize the components of the transformed time record to be zero
   for ( int o = 0; o < prinComps.size(); o++ )
   {	  
     // Iterate over all dimensions, and perform the transformation (ie vector multiplcation)
-    for ( int d = 0; d < recordSize; d++ )
+    for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
-      transRecord.set( o, transRecord.get(o) + ( GetRecordRT().get(d) - mean.get(d) ) * prinComps[o].get(d) );
+      transRecord->Set( o, transRecord->Get(o) + ( GetRecordRT()->Get(d) - mean->Get(d) ) * prinComps[o]->Get(d) );
 	}
   }
 
   // Add the time record to the new transformed record log
-  transRecord.setTime( GetRecordRT().getTime() );
-  transRecord.setLabel( GetRecordRT().getLabel() );
+  transRecord->SetTime( GetRecordRT()->GetTime() );
+  transRecord->SetLabel( GetRecordRT()->GetLabel() );
 
   return transRecord;
 
@@ -254,38 +268,40 @@ vtkLabelRecord* vtkRecordBufferRT
   // Calculate closest cluster centroid to last
   // Find the record farthest from any centroid
   // Tricky way to cast vector of vtkLabelVector* to vector of ValeuRecord
-  vtkLabelVector* centDist = this->DistancesRT( std::vector<ValueRecord>( centroids.begin(), centroids.end() ) );
+  vtkLabelVector* centDist = this->DistancesRT( centroids );
 
-  double currMinDist = centDist.get(0);
+  double currMinDist = centDist->Get(0);
   int currMinCentroid = 0;
   // Minimum for each point
   for ( int c = 0; c < centroids.size(); c++ )
   {
-    if ( centDist.get(c) < currMinDist )
+    if ( centDist->Get(c) < currMinDist )
 	{
-      currMinDist = centDist.get(c);
+      currMinDist = centDist->Get(c);
 	  currMinCentroid = c;
 	}
   }
 
   vtkLabelRecord* clustRecord;
-  clustRecord.add( currMinCentroid );
-  clustRecord.setTime( GetRecordRT().getTime() );
-  clustRecord.setLabel( GetRecordRT().getLabel() );
+  clustRecord->Add( currMinCentroid );
+  clustRecord->SetTime( GetRecordRT()->GetTime() );
+  clustRecord->SetLabel( GetRecordRT()->GetLabel() );
   
   return clustRecord;
 
 }
 
 
-MarkovRecord vtkRecordBufferRT
+vtkMarkovRecord* vtkRecordBufferRT
 ::ToMarkovRecordRT()
 {
-  MarkovRecord markovRecord;
+  vtkMarkovRecord* markovRecord;
 
   // We will assume that: label -> state, values[0] -> symbol
-  markovRecord.setState( this->GetRecordRT().getLabel() );
-  markovRecord.setSymbol( this->GetRecordRT().get(0) );
+  markovRecord->SetState( this->GetRecordRT()->GetLabel() );
+  std::stringstream symbolstring;
+  symbolstring << this->GetRecordRT()->Get(0);
+  markovRecord->SetSymbol( symbolstring.str() );
 
   return markovRecord;
 

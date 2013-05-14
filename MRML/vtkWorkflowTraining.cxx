@@ -17,7 +17,7 @@ LabelRecordVectorToXMLString( std::string name, std::vector<vtkLabelVector*> rec
   xmlstring << "<Parameter Type=\"" << name << "\" />" << std::endl;
   for ( int i = 0; i < records.size(); i++ )
   {
-    xmlstring << records.at(i)->ToXMLString( std::string name );
+    xmlstring << records.at(i)->ToXMLString( name );
   }
   xmlstring << "</Parameter>" << std::endl;
 
@@ -73,6 +73,9 @@ LabelRecordFromXMLElement( std::string name, vtkXMLDataElement* element, int rec
 }
 
 
+
+// Object Functions --------------------------------------------------------------------------
+
 vtkWorkflowTraining
 ::vtkWorkflowTraining()
 {
@@ -98,6 +101,32 @@ vtkWorkflowTraining
 }
 
 
+vtkWorkflowTraining* vtkWorkflowTraining
+::DeepCopy()
+{
+  vtkWorkflowTraining* newWorkflowTraining = vtkWorkflowTraining::New();
+  for ( int i = 0; i < this->PrinComps.size(); i++ )
+  {
+    newWorkflowTraining->PrinComps.push_back( this->PrinComps.at(i)->DeepCopy() );
+  }
+  newWorkflowTraining->Mean = this->Mean->DeepCopy();
+  for ( int i = 0; i < this->Centroids.size(); i++ )
+  {
+    newWorkflowTraining->Centroids.push_back( this->Centroids.at(i)->DeepCopy() );
+  }
+  newWorkflowTraining->MarkovPi = this->MarkovPi->DeepCopy();
+  for ( int i = 0; i < this->MarkovA.size(); i++ )
+  {
+    newWorkflowTraining->MarkovA.push_back( this->MarkovA.at(i)->DeepCopy() );
+  }
+  for ( int i = 0; i < this->MarkovB.size(); i++ )
+  {
+    newWorkflowTraining->MarkovB.push_back( this->MarkovB.at(i)->DeepCopy() );
+  }
+  return newWorkflowTraining;
+}
+
+
 std::string vtkWorkflowTraining
 ::ToXMLString()
 {
@@ -119,7 +148,7 @@ void vtkWorkflowTraining
 ::FromXMLElement( vtkXMLDataElement* element, vtkWorkflowProcedure* procedure, vtkWorkflowInput* input )
 {
   int numElements = element->GetNumberOfNestedElements();
-  int SizePrinComps = ( input->OrthogonalOrder + 1 ) * ( TRACKINGRECORD_SIZE ) * ( input->Derivative );
+  int SizePrinComps = ( input->OrthogonalOrder + 1 ) * ( vtkTrackingRecord::TRACKINGRECORD_SIZE ) * ( input->Derivative );
 
   for ( int i = 0; i < numElements; i++ )
   {

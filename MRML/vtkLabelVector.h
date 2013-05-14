@@ -27,6 +27,8 @@ public:
   // Standard MRML methods
   static vtkLabelVector* New();
 
+  vtkLabelVector* DeepCopy();
+
 protected:
 
   // Constructo/destructor
@@ -44,7 +46,7 @@ public:
 
   void Add( double newValue );
   void Set( int index, double newValue );
-  void Crement( int index, int step );
+  void Crement( int index, int step = 1 );
   double Get( int index );
   int Size();
 
@@ -58,7 +60,7 @@ public:
   void SetLabel( std::string newLabel );
 
   std::string ToXMLString( std::string name );
-  void FromXMLElement( vtkXMLDataElement* element, std::string name, int size );
+  void FromXMLElement( vtkXMLDataElement* element, std::string name );
 
 };
 

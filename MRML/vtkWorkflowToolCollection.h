@@ -23,10 +23,12 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
 vtkWorkflowToolCollection : public vtkObject
 {
 public:
-  vtkTypMacro( vtkWorkflowToolCollection, vtkObject );
+  vtkTypeMacro( vtkWorkflowToolCollection, vtkObject );
 
   // Standard MRML methods
   static vtkWorkflowToolCollection* New();
+
+  vtkWorkflowToolCollection* DeepCopy();
 
 protected:
 
@@ -54,14 +56,14 @@ public:
   double GetMaxTime();
   double GetTotalTime();
 
-  std::string PerkProcedureToXMLString();
-  void PerkProcedureFromXMLElement( vtkXMLDataElement* element );
+  std::string ProcedureToXMLString();
+  void ProcedureFromXMLElement( vtkXMLDataElement* element );
 
-  std::string InputParameterToXMLString();
-  void InputParameterFromXMLElement( vtkXMLDataElement* element );
+  std::string InputToXMLString();
+  void InputFromXMLElement( vtkXMLDataElement* element );
 
-  std::string TrainingParameterToXMLString();
-  void TrainingParameterFromXMLElement( vtkXMLDataElement* element );
+  std::string TrainingToXMLString();
+  void TrainingFromXMLElement( vtkXMLDataElement* element );
 
   std::string BuffersToXMLString();
   void BuffersFromXMLElement( vtkXMLDataElement* element );

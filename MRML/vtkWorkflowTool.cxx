@@ -11,6 +11,10 @@ vtkWorkflowTool
   this->Defined = false;
   this->Inputted = false;
   this->Trained = false;
+  this->Procedure = NULL;
+  this->Input = NULL;
+  this->Training = NULL;
+  this->Buffer = NULL;
 }
 
 
@@ -18,19 +22,48 @@ vtkWorkflowTool
 ::~vtkWorkflowTool()
 {
   this->Name = "";
-  this->Defined = false;
-  this->Inputted = false;
-  this->Trained = false;
+  if ( this->Procedure != NULL )
+  {
+    this->Procedure->Delete();
+  }
+  if ( this->Input != NULL )
+  {
+    this->Input->Delete();
+  }
+  if ( this->Training != NULL )
+  {
+    this->Training->Delete();
+  }
+  if ( this->Buffer != NULL )
+  {
+    this->Buffer->Delete();
+  }
+}
+
+
+vtkWorkflowTool* vtkWorkflowTool
+::DeepCopy()
+{
+  vtkWorkflowTool* newWorkflowTool = vtkWorkflowTool::New();
+  newWorkflowTool->Name = this->Name;
+  newWorkflowTool->Defined = this->Defined;
+  newWorkflowTool->Inputted = this->Inputted;
+  newWorkflowTool->Trained = this->Trained;
+  newWorkflowTool->Procedure = this->Procedure->DeepCopy();
+  newWorkflowTool->Input = this->Input->DeepCopy();
+  newWorkflowTool->Training = this->Training->DeepCopy();
+  newWorkflowTool->Buffer = this->Buffer->DeepCopy();
+  return newWorkflowTool;
 }
 
 
 std::string vtkWorkflowTool
-::PerkProcedureToXMLString()
+::ProcedureToXMLString()
 {
   std::stringstream xmlstring;
 
   xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
-  xmlstring << this->Procedure.ToXMLString() << std::endl;
+  xmlstring << this->Procedure->ToXMLString() << std::endl;
   xmlstring << "  </Tool>" << std::endl;
 
   return xmlstring.str();
@@ -38,23 +71,23 @@ std::string vtkWorkflowTool
 
 
 void vtkWorkflowTool
-::PerkProcedureFromXMLElement( vtkXMLDataElement* element )
+::ProcedureFromXMLElement( vtkXMLDataElement* element )
 {
   if ( strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
-    this->Procedure.FromXMLElement( element );
+    this->Procedure->FromXMLElement( element );
 	this->Defined = true;
   }
 }
 
 
 std::string vtkWorkflowTool
-::InputParameterToXMLString()
+::InputToXMLString()
 {
   std::stringstream xmlstring;
 
   xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
-  xmlstring << this->Input.ToXMLString() << std::endl;
+  xmlstring << this->Input->ToXMLString() << std::endl;
   xmlstring << "  </Tool>" << std::endl;
 
   return xmlstring.str();
@@ -62,23 +95,23 @@ std::string vtkWorkflowTool
 
 
 void vtkWorkflowTool
-::InputParameterFromXMLElement( vtkXMLDataElement* element )
+::InputFromXMLElement( vtkXMLDataElement* element )
 {
   if ( strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
-    this->Input.FromXMLElement( element );
+    this->Input->FromXMLElement( element );
 	this->Inputted = true;
   }
 }
 
 
 std::string vtkWorkflowTool
-::TrainingParameterToXMLString()
+::TrainingToXMLString()
 {
   std::stringstream xmlstring;
 
   xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
-  xmlstring << this->Training.ToXMLString() << std::endl;
+  xmlstring << this->Training->ToXMLString() << std::endl;
   xmlstring << "  </Tool>" << std::endl;
 
   return xmlstring.str();
@@ -86,11 +119,11 @@ std::string vtkWorkflowTool
 
 
 void vtkWorkflowTool
-::TrainingParameterFromXMLElement( vtkXMLDataElement* element )
+::TrainingFromXMLElement( vtkXMLDataElement* element )
 {
   if ( strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
-    this->Training.FromXMLElement( element, this->Procedure, this->Input );
+    this->Training->FromXMLElement( element, this->Procedure, this->Input );
 	this->Trained = true;
   }
 }

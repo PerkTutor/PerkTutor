@@ -27,6 +27,8 @@ public:
   // Standard MRML methods
   static vtkWorkflowInput* New();
 
+  vtkWorkflowInput* DeepCopy();
+
 protected:
 
   // Constructo/destructor
