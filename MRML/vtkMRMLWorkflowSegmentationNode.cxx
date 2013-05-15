@@ -109,23 +109,10 @@ vtkMRMLWorkflowSegmentationNode
   this->HideFromEditorsOff();
   this->SetSaveWithScene( true );
   // this->SetModifiedSinceRead( true );
-  
-  this->Recording = false;
-  
-  this->TrackingLogFileName = "-";
-  this->SegmentationLogFileName = "-";
-  this->ProcedureDefinitionFileName = "-";
-  this->InputParameterFileName = "-";
-  this->TrainingParameterFileName = "-";
-  
-  // Initialize zero time point.
-  this->Clock0 = clock();
-  this->IGTLTimeOffsetSeconds = 0.0;
-  this->IGTLTimeSynchronized = false;
-  
-  this->LastNeedleTransform = NULL;
-  this->LastNeedleTime = -1.0;
 
+  this->WorkflowProcedureFileName = "";
+  this->WorkflowInputFileName = "";
+  this->WorkflowTrainingFileName = "";
 }
 
 
@@ -133,13 +120,6 @@ vtkMRMLWorkflowSegmentationNode
 vtkMRMLWorkflowSegmentationNode
 ::~vtkMRMLWorkflowSegmentationNode()
 {
-  this->ClearObservedTranformNodes();
-  
-  if ( this->LastNeedleTransform != NULL )
-  {
-    this->LastNeedleTransform->Delete();
-    this->LastNeedleTransform = NULL;
-  }
 }
 
 
@@ -170,12 +150,9 @@ void vtkMRMLWorkflowSegmentationNode::WriteXML( ostream& of, int nIndent )
 
   vtkIndent indent(nIndent);
   
-  of << indent << " Recording=\"" << this->Recording << "\"";
-  of << indent << " TrackingLogFileName=\"" << this->TrackingLogFileName << "\"";
-  of << indent << " SegmentationLogFileName=\"" << this->SegmentationLogFileName << "\"";
-  of << indent << " ProcedureDefinitionFileName=\"" << this->ProcedureDefinitionFileName << "\"";
-  of << indent << " InputParameterFileName=\"" << this->InputParameterFileName << "\"";
-  of << indent << " TrainingParameterFileName=\"" << this->TrainingParameterFileName << "\"";
+  of << indent << " WorkflowProcedureFileName=\"" << this->WorkflowProcedureFileName << "\"";
+  of << indent << " WorkflowInputFileName=\"" << this->WorkflowInputFileName << "\"";
+  of << indent << " WorkflowTrainingFileName=\"" << this->WorkflowTrainingFileName << "\"";
 
 }
 
@@ -194,227 +171,26 @@ void vtkMRMLWorkflowSegmentationNode::ReadXMLAttributes( const char** atts )
     attName  = *(atts++);
     attValue = *(atts++);
     
-    // todo: Handle observed transform nodes and connector node.
-    
-    if ( ! strcmp( attName, "Recording" ) )
+	if ( ! strcmp( attName, "WorkflowProcedureFileName" ) )
     {
-      this->SetRecording( StringToBool( std::string( attValue ) ) );
+      this->WorkflowProcedureFileName = std::string( attValue );
     }
-	if ( ! strcmp( attName, "TrackingLogFileName" ) )
+	if ( ! strcmp( attName, "WorkflowInputFileName" ) )
     {
-      this->TrackingLogFileName = std::string( attValue );
+      this->WorkflowInputFileName = std::string( attValue );
     }
-    if ( ! strcmp( attName, "SegmentationLogFileName" ) )
+	if ( ! strcmp( attName, "WorkflowTrainingFileName" ) )
     {
-      this->SegmentationLogFileName = std::string( attValue );
-    }
-	if ( ! strcmp( attName, "ProcedureDefinitionFileName" ) )
-    {
-      this->ProcedureDefinitionFileName = std::string( attValue );
-    }
-	if ( ! strcmp( attName, "InputParameterFileName" ) )
-    {
-      this->InputParameterFileName = std::string( attValue );
-    }
-	if ( ! strcmp( attName, "TrainingParameterFileName" ) )
-    {
-      this->TrainingParameterFileName = std::string( attValue );
+      this->WorkflowTrainingFileName = std::string( attValue );
     }
 
   }
 
   // Now, read from file if the files are specified
-  this->ImportAvailableData();
+  this->ImportAllWorkflowData();
 
 }
 
-
-
-// File I/O: Saving and loading
-// ----------------------------------------------------------------------------
-
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::SaveTrackingLog()
-{
-  std::ofstream output( this->TrackingLogFileName.c_str() );
-  
-  if ( ! output.is_open() )
-  {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-  }
-
-  output << this->toolCollection.BuffersToXMLString();
-
-  output.close();
-  
-}
-
-
-
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::SaveTrainingParameters()
-{
-  std::ofstream output( this->TrainingParameterFileName.c_str() );
-  
-  if ( ! output.is_open() )
-  {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-  }
-  
-  output << this->toolCollection.TrainingParameterToXMLString();
-
-  output.close();
-  
-}
-
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::ImportProcedureDefinition()
-{
-
-  // Create a parser to parse the XML data from TransformRecorderLog
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( this->ProcedureDefinitionFileName.c_str() );
-  parser->Parse();
-  
-  // Get the root element (and check it exists)
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
-
-  this->toolCollection.PerkProcedureFromXMLElement( rootElement );
-
-}
-
-
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::ImportInputParameters()
-{
-
-  // Create a parser to parse the XML data from TransformRecorderLog
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( this->InputParameterFileName.c_str() );
-  parser->Parse();
-  
-  // Get the root element (and check it exists)
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
-
-  this->toolCollection.InputParameterFromXMLElement( rootElement );
-
-}
-
-
-void
-vtkMRMLWorkflowSegmentationNode
-::ImportTrainingParameters()
-{
-
-  // Create a parser to parse the XML data from TransformRecorderLog
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( this->TrainingParameterFileName.c_str() );
-  parser->Parse();
-  
-  // Get the root element (and check it exists)
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
-
-  this->toolCollection.TrainingParameterFromXMLElement( rootElement );
-
-}
-
-
-void vtkMRMLWorkflowSegmentationNode
-::ImportAvailableData()
-{
-  this->ImportProcedureDefinition();
-  this->ImportInputParameters();
-  this->ImportTrainingParameters();
-}
-
-
-// Local variable getters and setters
-// ----------------------------------------------------------------------------
-
-
-bool vtkMRMLWorkflowSegmentationNode::GetRecording()
-{
-  return this->Recording;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetRecording( bool newState )
-{
-  this->Recording = newState;
-  // TODO: I don't think we need anything below
-  if ( this->Recording )
-  {
-    this->InvokeEvent( this->RecordingStartEvent, NULL );
-  }
-  else
-  {
-    this->InvokeEvent( this->RecordingStopEvent, NULL );
-  }
-}
-
-
-std::string vtkMRMLWorkflowSegmentationNode::GetTrackingLogFileName()
-{
-  return this->TrackingLogFileName;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetTrackingLogFileName( std::string name )
-{
-  this->TrackingLogFileName = name;
-}
-
-std::string vtkMRMLWorkflowSegmentationNode::GetSegmentationLogFileName()
-{
-  return this->SegmentationLogFileName;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetSegmentationLogFileName( std::string name )
-{
-  this->SegmentationLogFileName = name;
-}
-
-std::string vtkMRMLWorkflowSegmentationNode::GetProcedureDefinitionFileName()
-{
-  return this->ProcedureDefinitionFileName;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetProcedureDefinitionFileName( std::string name )
-{
-  this->ProcedureDefinitionFileName = name;
-}
-
-std::string vtkMRMLWorkflowSegmentationNode::GetInputParameterFileName()
-{
-  return this->InputParameterFileName;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetInputParameterFileName( std::string name )
-{
-  this->InputParameterFileName = name;
-}
-
-std::string vtkMRMLWorkflowSegmentationNode::GetTrainingParameterFileName()
-{
-  return this->TrainingParameterFileName;
-}
-
-void vtkMRMLWorkflowSegmentationNode::SetTrainingParameterFileName( std::string name )
-{
-  this->TrainingParameterFileName = name;
-}
 
 
 // Slicer Scene
@@ -424,59 +200,14 @@ void vtkMRMLWorkflowSegmentationNode::Copy( vtkMRMLNode *anode )
 {  
   Superclass::Copy( anode );
   vtkMRMLWorkflowSegmentationNode *node = ( vtkMRMLWorkflowSegmentationNode* ) anode;
-
-    // Observers must be removed here, otherwise MRML updates would activate nodes on the undo stack
-  
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
-    {
-    this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLLinearTransformNode::TransformModifiedEvent );
-    }
   
   // Note: It seems that the WriteXML function copies the node then writes the copied node to file
   // So, anything we want in the MRML file we must copy here (I don't think we need to copy other things)
-  this->SetRecording( node->GetRecording() );
-  this->SetTrackingLogFileName( node->GetTrackingLogFileName() );
-  this->SetSegmentationLogFileName( node->GetSegmentationLogFileName() );
-  this->SetProcedureDefinitionFileName( node->GetProcedureDefinitionFileName() );
-  this->SetInputParameterFileName( node->GetInputParameterFileName() );
-  this->SetTrainingParameterFileName( node->GetTrainingParameterFileName() );
-  this->ImportAvailableData();
+  this->SetWorkflowProcedureFileName( node->GetWorkflowProcedureFileName() );
+  this->SetWorkflowInputFileName( node->GetWorkflowInputFileName() );
+  this->SetWorkflowTrainingFileName( node->GetWorkflowTrainingFileName() );
+  this->ImportAllWorkflowData();
 
-}
-
-
-void vtkMRMLWorkflowSegmentationNode::UpdateReferences()
-{
-  Superclass::UpdateReferences();
-      // MRML node ID's should be checked. If Scene->GetNodeByID( id ) returns NULL,
-    // the reference should be deleted (set to NULL).
-  
-}
-
-
-
-void vtkMRMLWorkflowSegmentationNode::UpdateReferenceID( const char *oldID, const char *newID )
-{
-  Superclass::UpdateReferenceID( oldID, newID );
-  
-  /*
-  if ( this->ConnectorNodeID && !strcmp( oldID, this->ConnectorNodeID ) )
-    {
-    this->SetAndObserveConnectorNodeID( newID );
-    }
-  */
-  
-  // TODO: This needs to be written for observed transforms.
-  
-}
-
-
-
-void vtkMRMLWorkflowSegmentationNode::UpdateScene( vtkMRMLScene *scene )
-{
-  Superclass::UpdateScene( scene );
-  // this->SetAndObserveConnectorNodeID( this->ConnectorNodeID );
-  // TODO: Deal with observed transforms.
 }
 
 
@@ -484,281 +215,151 @@ void vtkMRMLWorkflowSegmentationNode::UpdateScene( vtkMRMLScene *scene )
 void vtkMRMLWorkflowSegmentationNode::PrintSelf( ostream& os, vtkIndent indent )
 {
   vtkMRMLNode::PrintSelf(os,indent);
-  os << indent << "TrackingLogFileName: " << this->TrackingLogFileName << "\n";
-}
-
-
-// MRML Observers
-// ----------------------------------------------------------------------------
-
-void vtkMRMLWorkflowSegmentationNode::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData )
-{
-  if ( this->Recording == false )
-  {
-    return;
-  }
-  
-  
-    // Handle modified event of any observed transform node.
-  
-  std::vector< vtkMRMLLinearTransformNode* >::iterator tIt;
-  for ( tIt = this->ObservedTransformNodes.begin();
-        tIt != this->ObservedTransformNodes.end();
-        tIt ++ )
-  {
-    if ( *tIt == vtkMRMLLinearTransformNode::SafeDownCast( caller )
-         && event == vtkMRMLLinearTransformNode::TransformModifiedEvent )
-    {
-      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
-      if ( transformNode != NULL )
-      {
-        this->AddNewTransform( transformNode->GetID() );
-      }
-    }
-  }
-}
-
-
-
-void vtkMRMLWorkflowSegmentationNode::RemoveMRMLObservers()
-{
-  for ( unsigned int i = 0; i < this->ObservedTransformNodes.size(); ++ i )
-  {
-    this->ObservedTransformNodes[ i ]->RemoveObservers( vtkMRMLLinearTransformNode::TransformModifiedEvent );
-  }
+  os << indent << "WorkflowProcedureFileName: " << this->WorkflowProcedureFileName << "\n";
+  os << indent << "WorkflowInputFileName: " << this->WorkflowInputFileName << "\n";
+  os << indent << "WorkflowTrainingFileName: " << this->WorkflowTrainingFileName << "\n";
 }
 
 
 
 
-
-// Observed transforms
+// File I/O: Saving and loading
 // ----------------------------------------------------------------------------
 
 void vtkMRMLWorkflowSegmentationNode
-::AddObservedTransformNode( const char* TransformNodeID )
+::SaveWorkflowTraining( std::string newWorkflowTrainingFileName )
 {
-  if ( TransformNodeID == NULL )
+  if ( newWorkflowTrainingFileName.compare( "" ) != 0 )
   {
+    this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
+  }
+
+  std::ofstream output( this->WorkflowTrainingFileName.c_str() );  
+  if ( ! output.is_open() )
+  {
+    vtkErrorMacro( "Record file could not be opened!" );
     return;
-  }
-  
-  
-    // Check if this ID is already observed.
-  
-  bool alreadyObserved = false;  
-  
-  for ( unsigned int i = 0; i < this->ObservedTransformNodeIDs.size(); ++ i )
-  {
-    if ( strcmp( TransformNodeID, this->ObservedTransformNodeIDs[ i ] ) == 0 )
-    {
-    alreadyObserved = true;
-    }
-  }
-  
-  if ( alreadyObserved == true )
-  {
-    return;  // No need to add this node again.
-  }
-  
-  
-  if ( this->GetScene() )
-  {
-    this->GetScene()->AddReferencedNodeID( TransformNodeID, this );
-  }
-  
-  
-  vtkMRMLLinearTransformNode* transformNode = NULL;
-  this->ObservedTransformNodeIDs.push_back( (char*)TransformNodeID );
-  vtkMRMLLinearTransformNode* tnode = this->GetObservedTransformNode( TransformNodeID );
-  vtkSetAndObserveMRMLObjectMacro( transformNode, tnode );
-  this->ObservedTransformNodes.push_back( transformNode );
-  if ( tnode )
-  {
-    tnode->AddObserver( vtkMRMLLinearTransformNode::TransformModifiedEvent, (vtkCommand*)this->MRMLCallbackCommand );
-  }
+  }  
+  output << this->ToolCollection->TrainingToXMLString();
+
+  output.close();  
 }
 
 
 
 void vtkMRMLWorkflowSegmentationNode
-::RemoveObservedTransformNode( const char* TransformNodeID )
+::ImportWorkflowProcedure( std::string newWorkflowProcedureFileName )
 {
-  if ( TransformNodeID == NULL )
+  if ( newWorkflowProcedureFileName.compare( "" ) != 0 )
   {
-    return;
+    this->WorkflowProcedureFileName = newWorkflowProcedureFileName;
   }
+
+  // Create a parser to parse the XML data from TransformRecorderLog
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( this->WorkflowProcedureFileName.c_str() );
+  parser->Parse();
   
-  
-    // Remove observer, and erase node from the observed node vector.
-  
-  std::vector< vtkMRMLLinearTransformNode* >::iterator nodeIt;
-  for ( nodeIt = this->ObservedTransformNodes.begin();
-        nodeIt != this->ObservedTransformNodes.end();
-        nodeIt ++ )
-  {
-    if ( strcmp( TransformNodeID, (*nodeIt)->GetID() ) == 0 )
-    {
-      (*nodeIt)->RemoveObserver( (vtkCommand*)this->MRMLCallbackCommand );
-      vtkSetAndObserveMRMLObjectMacro( *nodeIt, NULL );
-      this->ObservedTransformNodes.erase( nodeIt );
-    }
-  }
-  
-  
-    // Remove node ID and reference.
-  
-  std::vector< char* >::iterator transformIt;
-  for ( transformIt = this->ObservedTransformNodeIDs.begin();
-        transformIt != this->ObservedTransformNodeIDs.end();
-        transformIt ++ )
-  {
-    if ( strcmp( TransformNodeID, *transformIt ) == 0 )
-    {
-      if ( this->GetScene() )
-      {
-        this->GetScene()->RemoveReferencedNodeID( TransformNodeID, this );
-      }
-      
-      this->ObservedTransformNodeIDs.erase( transformIt );
-      break;
-    }
-  }
+  // Get the root element (and check it exists)
+  vtkXMLDataElement* rootElement = parser->GetRootElement();
+
+  this->ToolCollection->ProcedureFromXMLElement( rootElement );
+
 }
 
+
+
+
+void
+vtkMRMLWorkflowSegmentationNode
+::ImportWorkflowInput( std::string newWorkflowInputFileName )
+{
+  if ( newWorkflowInputFileName.compare( "" ) != 0 )
+  {
+    this->WorkflowInputFileName = newWorkflowInputFileName;
+  }
+
+  // Create a parser to parse the XML data from TransformRecorderLog
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( this->WorkflowInputFileName.c_str() );
+  parser->Parse();
+  
+  // Get the root element (and check it exists)
+  vtkXMLDataElement* rootElement = parser->GetRootElement();
+
+  this->ToolCollection->InputFromXMLElement( rootElement );
+
+}
+
+
+void
+vtkMRMLWorkflowSegmentationNode
+::ImportWorkflowTraining( std::string newWorkflowTrainingFileName )
+{
+  if ( newWorkflowTrainingFileName.compare( "" ) != 0 )
+  {
+    this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
+  }
+
+  // Create a parser to parse the XML data from TransformRecorderLog
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( this->WorkflowTrainingFileName.c_str() );
+  parser->Parse();
+  
+  // Get the root element (and check it exists)
+  vtkXMLDataElement* rootElement = parser->GetRootElement();
+
+  this->ToolCollection->TrainingFromXMLElement( rootElement );
+
+}
 
 
 void vtkMRMLWorkflowSegmentationNode
-::ClearObservedTranformNodes()
+::ImportAllWorkflowData()
 {
-  std::vector< char* >::iterator transformIDIt;
-  for ( transformIDIt = this->ObservedTransformNodeIDs.begin();
-        transformIDIt != this->ObservedTransformNodeIDs.end();
-        transformIDIt ++ )
-  {
-    this->RemoveObservedTransformNode( *transformIDIt );
-  }
+  this->ImportWorkflowProcedure();
+  this->ImportWorkflowInput();
+  this->ImportWorkflowTraining();
 }
 
 
 
-vtkMRMLLinearTransformNode* vtkMRMLWorkflowSegmentationNode
-::GetObservedTransformNode( const char* TransformNodeID )
-{
-  vtkMRMLLinearTransformNode* node = NULL;
-  if ( this->GetScene()
-       && TransformNodeID != NULL )
-  {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID( TransformNodeID );
-    node = vtkMRMLLinearTransformNode::SafeDownCast( snode );
-  }
-  return node;
-}
 
-
-
-// Time
+// File I/O: Getters and setters
 // ----------------------------------------------------------------------------
+
+std::string vtkMRMLWorkflowSegmentationNode
+::GetWorkflowProcedureFileName()
+{
+  return this->WorkflowProcedureFileName;
+}
 
 void vtkMRMLWorkflowSegmentationNode
-::GetTimestamp( int &sec, int &nsec )
+::SetWorkflowProcedureFileName( std::string newWorkflowTrainingFileName )
 {
-  clock_t clock1 = clock();
-  double seconds = double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-  sec = floor( seconds );
-  nsec = ( seconds - sec ) * 1e9;    
+  this->WorkflowProcedureFileName = newWorkflowTrainingFileName;
 }
 
-
-double vtkMRMLWorkflowSegmentationNode
-::GetTimestamp()
+std::string vtkMRMLWorkflowSegmentationNode
+::GetWorkflowInputFileName()
 {
-  clock_t clock1 = clock();
-  return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+  return this->WorkflowInputFileName;
 }
 
-
-
-
-// Buffers
-// ----------------------------------------------------------------------------
-
-void vtkMRMLWorkflowSegmentationNode::AddNewTransform( const char* TransformNodeID )
+void vtkMRMLWorkflowSegmentationNode
+::SetWorkflowInputFileName( std::string newWorkflowProcedureFileName )
 {
-  int sec = 0;
-  int nsec = 0;
-  vtkSmartPointer< vtkMatrix4x4 > m = vtkSmartPointer< vtkMatrix4x4 >::New();
-  std::string deviceName;
-  
-  this->GetTimestamp( sec, nsec );
-  
-  
-    // Get the new transform matrix.
-  
-  vtkMRMLLinearTransformNode* ltn = this->GetObservedTransformNode( TransformNodeID );
-  
-  if ( ltn != NULL )
-  {
-    m->DeepCopy( ltn->GetMatrixTransformToParent() );
-  }
-  else
-  {
-    vtkErrorMacro( "Transform node not found." );
-  }
-  
-    
-    // Get the device name for the new transform.
-  
-  deviceName = std::string( ltn->GetName() );
-  
-
-    // Record the transform.
-  
-  std::stringstream mss;
-  for ( int row = 0; row < 4; ++ row )
-  {
-    for ( int col = 0; col < 4; ++ col )
-    {
-      mss << m->GetElement( row, col ) << " ";
-    }
-  }
-
-  // May be this should go higher
-  if ( this->Recording == false )
-  {
-    return;
-  }
-
-  // Check if the transform has changed from the last time stamp. If it hasn't, then don't record
-  Tool currTool = this->toolCollection.GetTool( deviceName );
-  TransformRecord prevTransform = currTool.transBuff.GetTransformLast();
-  if ( strcmp( mss.str().c_str(), prevTransform.Transform.c_str() ) != 0 )
-  {
-    currTool.transBuff.AddTransform( mss.str(), sec, nsec );
-  }
-
-
+  this->WorkflowInputFileName = newWorkflowProcedureFileName;
 }
 
-
-
-
-
-
-// TODO: I don't think this function is needed at all
-/**
- * @param selections Should contain as many elements as the number of incoming
- *        transforms throught the active connector. Order follows the order in
- *        the connector node. 0 means transform is not tracked, 1 means it's tracked.
- */
-void vtkMRMLWorkflowSegmentationNode::SetTransformSelections( std::vector< int > selections )
+std::string vtkMRMLWorkflowSegmentationNode
+::GetWorkflowTrainingFileName()
 {
-  this->TransformSelections.clear();
-  
-  for ( unsigned int i = 0; i < selections.size(); ++ i )
-  {
-    this->TransformSelections.push_back( selections[ i ] );
-  }
+  return this->WorkflowTrainingFileName;
+}
 
-
+void vtkMRMLWorkflowSegmentationNode
+::SetWorkflowTrainingFileName( std::string newWorkflowTrainingFileName )
+{
+  this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
 }

@@ -1,6 +1,9 @@
 
 #include "vtkTrackingRecord.h"
 
+vtkStandardNewMacro( vtkTrackingRecord );
+
+
 vtkTrackingRecord
 ::vtkTrackingRecord()
 {

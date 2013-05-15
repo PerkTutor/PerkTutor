@@ -237,6 +237,7 @@ vtkMRMLTransformBufferNode* vtkRecordBuffer
 
 // Only transforms of one type will be stored here
 // This method will take those transform from a transform buffer
+// TODO: Move to logic
 void vtkRecordBuffer
 ::FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
 {
