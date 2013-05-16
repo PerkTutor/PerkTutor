@@ -105,7 +105,7 @@ public:
   std::vector<vtkLabelVector*> fwdkmeans( int numClusters );
   vtkRecordBuffer* fwdkmeansTransform( std::vector<vtkLabelVector*> centroids );
 
-  std::vector<vtkRecordBuffer*> GroupRecordsByLabel( std::vector<std::string> labels );
+  std::vector<vtkRecordBuffer*> SplitBufferByLabel( std::vector<std::string> labels );
   std::vector<vtkMarkovRecord*> ToMarkovRecordVector();
 
 private:

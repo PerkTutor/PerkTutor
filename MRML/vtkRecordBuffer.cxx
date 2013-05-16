@@ -1368,7 +1368,7 @@ vtkRecordBuffer* vtkRecordBuffer
 
 
 std::vector<vtkRecordBuffer*> vtkRecordBuffer
-::GroupRecordsByLabel( std::vector<std::string> labels )
+::SplitBufferByLabel( std::vector<std::string> labels )
 {
   std::vector<vtkRecordBuffer*> labelBuffers;
 

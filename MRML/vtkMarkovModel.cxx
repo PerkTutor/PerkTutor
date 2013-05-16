@@ -80,9 +80,37 @@ void vtkMarkovModel
 
 
 void vtkMarkovModel
+::SetStates( int newStates )
+{
+  std::vector<std::string> stateNameVector;
+  for ( int i = 0; i < newStates; i++ )
+  {
+    std::stringstream statestring;
+	statestring << i;
+	stateNameVector.push_back( statestring.str() );
+  }
+  this->SetStates( stateNameVector );
+}
+
+
+void vtkMarkovModel
 ::SetSymbols( std::vector<std::string> newSymbolNames )
 {
   this->symbolNames = newSymbolNames;
+}
+
+
+void vtkMarkovModel
+::SetSymbols( int newSymbols )
+{
+  std::vector<std::string> symbolNameVector;
+  for ( int i = 0; i < newSymbols; i++ )
+  {
+    std::stringstream symbolstring;
+	symbolstring << i;
+	symbolNameVector.push_back( symbolstring.str() );
+  }
+  this->SetSymbols( symbolNameVector );
 }
 
 

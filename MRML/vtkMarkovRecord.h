@@ -43,9 +43,11 @@ public:
 
   std::string GetState();
   void SetState( std::string newState );
+  void SetState( int newState );
 
   std::string GetSymbol();
   void SetSymbol( std::string newSymbol );
+  void SetSymbol( int newSymbol );
 
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );

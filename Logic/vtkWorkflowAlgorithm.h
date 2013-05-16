@@ -2,19 +2,24 @@
 #ifndef VTKWORKFLOWALGORITHM_H
 #define VTKWORKFLOWALGORITHM_H
 
-#include "vtkMatrix4x4.h"
-#include "vtkSmartPointer.h"
-#include "vtkObject.h"
-#include "vtkRecordLog.h"
-#include "vtkRecordLogRT.h"
-#include "vtkMarkovModel.h"
-#include "vtkMarkovModelRT.h"
-#include "vtkMRMLWorkflowSegmentationNode.h"
-#include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
-#include "RecordType.h"
-
+// Standard Includes
+#include <string>
+#include <sstream>
 #include <vector>
-#include <iostream>
+#include <cmath>
+
+// VTK includes
+#include "vtkObject.h"
+#include "vtkObjectBase.h"
+#include "vtkObjectFactory.h"
+#include "vtkXMLDataElement.h"
+
+// Workflow Segmentation includes
+#include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
+#include "vtkRecordBufferRT.h"
+#include "vtkMarkovModelRT.h"
+#include "vtkMRMLTransformBufferNode.h"
+#include "vtkWorkflowTool.h"
 
 
 // Class representing a particular record for tracking data
@@ -22,71 +27,62 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT
   vtkWorkflowAlgorithm : public vtkObject
 {
 public:
+  vtkTypeMacro(vtkWorkflowAlgorithm,vtkObject);
 
   static vtkWorkflowAlgorithm *New();
-  vtkTypeMacro(vtkWorkflowAlgorithm,vtkObject);
 
   //vtkWorkflowAlgorithm* DeepCopy();
 
-  // Set the associated MRML node
-  void SetModuleNode( vtkMRMLWorkflowSegmentationNode* newModulNode );
-  void GetProcedureDefinitionFromMRMLNode();
-  void GetInputParamtersFromMRMLNode();
-  void GetTrainingParametersFromMRMLNode();
+protected:
+
+  // Constructo/destructor
+  vtkWorkflowAlgorithm();
+  virtual ~vtkWorkflowAlgorithm();
+
+public:
 
   // Read training procedures from file
-  void ReadAllProcedures( std::vector<std::string> fileNames );
-  void ReadProcedure( std::string fileName );
-  void SegmentProcedure( std::string fileName );
+  void AddTrainingProcedure( vtkRecordBuffer* newTrainingProcedure );
+  void SegmentProcedure( vtkRecordBuffer* newProcedure );
 
   // Training and testing phases
   void Reset();
   bool Train();
-  void AddRecord( TransformRecord t );
-  void AddSegmentRecord( TransformRecord t );
+  void AddRecord( vtkLabelRecord* newRecord );
+  void AddSegmentRecord( vtkLabelRecord* newRecord );
   void UpdateTask();
 
-  void SetToolName( std::string );
-  Tool GetTool();
+  void SetTool( vtkWorkflowTool* newTool );
+  vtkWorkflowTool* GetTool();
+  vtkWorkflowTool* Tool;
 
-  std::string getCurrentTask();
-  std::string getCurrentInstruction();
-  std::string getNextTask();
-  std::string getNextInstruction();
-  int FindTaskIndex( std::string name );
+  std::string GetCurrentTask();
+  std::string GetCurrentInstruction();
+  std::string GetNextTask();
+  std::string GetNextInstruction();
   
   std::vector<double> CalculateTaskProportions();
   std::vector<int> CalculateTaskCentroids();
 
-  vtkWorkflowAlgorithm();
-  ~vtkWorkflowAlgorithm();
 
 private:
 
-  static const int TRACKINGRECORD_SIZE = 7;
-
-  // The associated MRML node
-  vtkMRMLWorkflowSegmentationNode* ModuleNode;
-
   // List of procedures for training
-  std::vector<vtkRecordLog*> procedures;
+  std::vector<vtkRecordBuffer*> trainingProcedures;
 
   // The current procedure for real-time segmentation
-  vtkRecordLogRT* procedureRT;
-  vtkRecordLogRT* derivativeProcedureRT;
-  vtkRecordLogRT* filterProcedureRT;
-  vtkRecordLogRT* orthogonalProcedureRT;
-  vtkRecordLogRT* principalProcedureRT;
-  vtkRecordLogRT* centroidProcedureRT;
+  vtkRecordBufferRT* procedureRT;
+  vtkRecordBufferRT* derivativeProcedureRT;
+  vtkRecordBufferRT* filterProcedureRT;
+  vtkRecordBufferRT* orthogonalProcedureRT;
+  vtkRecordBufferRT* pcaProcedureRT;
+  vtkRecordBufferRT* centroidProcedureRT;
 
   vtkMarkovModelRT* MarkovRT;
 
-  int indexLastProcessed;
-  int currentTask;
-  int prevTask;
-
-  // Keep track of the tool this algorithm works for
-  std::string toolName;  
+  int IndexToProcess;
+  std::string CurrentTask;
+  std::string PrevTask;
 
 };
 

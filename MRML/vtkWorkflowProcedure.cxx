@@ -62,6 +62,46 @@ vtkWorkflowTask* vtkWorkflowProcedure
 }
 
 
+std::vector<std::string> vtkWorkflowProcedure
+::GetTaskNames()
+{
+  std::vector<std::string> taskNameVector;
+  for ( int i = 0; i < this->GetNumTasks(); i++ )
+  {
+    taskNameVector.push_back( this->GetTaskAt(i)->Name );
+  }
+  return taskNameVector;
+}
+
+
+bool vtkWorkflowProcedure
+::IsTask( std::string name )
+{
+  for ( int i = 0; i < this->GetNumTasks(); i++ )
+  {
+    if ( name.compare( this->GetTaskAt(i)->Name ) )
+	{
+      return true;
+	}
+  }
+  return false;
+}
+
+
+int vtkWorkflowProcedure
+::IndexByName( std::string name )
+{
+  for ( int i = 0; i < this->GetNumTasks(); i++ )
+  {
+    if ( name.compare( this->GetTaskAt(i)->Name ) )
+	{
+      return i;
+	}
+  }
+  return -1;
+}
+
+
 std::string vtkWorkflowProcedure
 ::ToXMLString()
 {

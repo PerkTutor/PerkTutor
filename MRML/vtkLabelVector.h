@@ -58,6 +58,7 @@ public:
 
   std::string GetLabel();
   void SetLabel( std::string newLabel );
+  void SetLabel( int newLabel );
 
   std::string ToXMLString( std::string name );
   void FromXMLElement( vtkXMLDataElement* element, std::string name );

@@ -122,6 +122,14 @@ void vtkLabelVector
   this->Label = newLabel;
 }
 
+void vtkLabelVector
+::SetLabel( int newLabel )
+{
+  std::stringstream labelstring;
+  labelstring << newLabel;
+  this->Label = labelstring.str();
+}
+
 
 std::string vtkLabelVector
 ::ToXMLString( std::string name )

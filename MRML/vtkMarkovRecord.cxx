@@ -41,6 +41,14 @@ void vtkMarkovRecord
   this->State = newState;
 }
 
+void vtkMarkovRecord
+::SetState( int newState )
+{
+  std::stringstream labelstring;
+  labelstring << newState;
+  this->State = labelstring.str();
+}
+
 
 std::string vtkMarkovRecord
 ::GetSymbol()
@@ -53,6 +61,14 @@ void vtkMarkovRecord
 ::SetSymbol( std::string newSymbol )
 {
   this->Symbol = newSymbol;
+}
+
+void vtkMarkovRecord
+::SetSymbol( int newSymbol )
+{
+  std::stringstream labelstring;
+  labelstring << newSymbol;
+  this->Symbol = labelstring.str();
 }
 
 

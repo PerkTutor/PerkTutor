@@ -41,7 +41,9 @@ protected:
 public:
 
   void SetStates( std::vector<std::string> newStateNames );
+  void SetStates( int newStates );
   void SetSymbols( std::vector<std::string> newSymbolsNames );
+  void SetSymbols( int newSymbols );
 
   void AddState( std::string newStateName );
   void AddSymbol( std::string newSymbolName );

@@ -41,6 +41,10 @@ public:
   int GetNumTasks();
   vtkWorkflowTask* GetTaskAt( int index );
   vtkWorkflowTask* GetTaskByName( std::string name );
+  std::vector<std::string> GetTaskNames();
+
+  bool IsTask( std::string name );
+  int IndexByName( std::string name );
 
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );
