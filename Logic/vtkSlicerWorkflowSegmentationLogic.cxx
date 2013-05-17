@@ -36,6 +36,9 @@ vtkStandardNewMacro(vtkSlicerWorkflowSegmentationLogic);
 vtkSlicerWorkflowSegmentationLogic::vtkSlicerWorkflowSegmentationLogic()
 {
   this->ModuleNode = NULL;
+  this->TransformRecorderLogic = NULL;
+  this->ToolCollection = vtkWorkflowToolCollection::New();
+  this->Parser = vtkXMLDataParser::New();
 }
 
 //----------------------------------------------------------------------------
@@ -46,6 +49,18 @@ vtkSlicerWorkflowSegmentationLogic::~vtkSlicerWorkflowSegmentationLogic()
     this->ModuleNode->Delete();
     this->ModuleNode = NULL;
   }
+  if ( this->TransformRecorderLogic != NULL )
+  {
+    this->TransformRecorderLogic->Delete();
+    this->TransformRecorderLogic = NULL;
+  }
+  this->ToolCollection->Delete();
+  for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
+  {
+    WorkflowAlgorithms.at(i)->Delete();
+  }
+  WorkflowAlgorithms.clear();
+  Parser->Delete();
 }
 
 
@@ -113,7 +128,7 @@ void vtkSlicerWorkflowSegmentationLogic
   this->ModuleNode->SetWorkflowProcedureFileName( fileName );
 
   vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  ToolCollection->ProcedureFromXMLElement( element);
+  ToolCollection->ProcedureFromXMLElement( element );
 }
 
 
@@ -206,10 +221,9 @@ vtkXMLDataElement* vtkSlicerWorkflowSegmentationLogic
 ::ParseXMLFile( std::string fileName )
 {
   // Parse the file here, not in the widget
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( fileName.c_str() );
-  parser->Parse();
-  return parser->GetRootElement();
+  Parser->SetFileName( fileName.c_str() );
+  Parser->Parse();
+  return Parser->GetRootElement();
 }
 
 

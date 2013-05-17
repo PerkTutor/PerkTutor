@@ -16,6 +16,10 @@ vtkWorkflowToolCollection
 vtkWorkflowToolCollection
 ::~vtkWorkflowToolCollection()
 {
+  for ( int i = 0; i < this->tools.size(); i++ )
+  {
+    this->tools.at(i)->Delete();
+  }
   this->tools.clear();
 }
 
@@ -65,7 +69,7 @@ vtkWorkflowTool* vtkWorkflowToolCollection
 void vtkWorkflowToolCollection
 ::AddTool( vtkWorkflowTool* newTool )
 {
-  if ( this->GetToolByName( newTool->Name ) != NULL )
+  if ( newTool != NULL )
   {
     this->tools.push_back( newTool );
   }
@@ -159,12 +163,12 @@ std::string vtkWorkflowToolCollection
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<WorkflowSegmentationProcedure>" << std::endl;
+  xmlstring << "<WorkflowProcedure>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
     xmlstring << this->GetToolAt(i)->ProcedureToXMLString();
   }
-  xmlstring << "</WorkflowSegmentationProcedure>" << std::endl;
+  xmlstring << "</WorkflowProcedure>" << std::endl;
 
   return xmlstring.str();
 }
@@ -174,7 +178,7 @@ void vtkWorkflowToolCollection
 ::ProcedureFromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( ! element || strcmp( element->GetName(), "WorkflowSegmentationProcedure" ) != 0 )
+  if ( ! element || strcmp( element->GetName(), "WorkflowProcedure" ) != 0 )
   {
     return;
   }
@@ -214,12 +218,12 @@ std::string vtkWorkflowToolCollection
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<WorkflowSegmentationParameters>" << std::endl;
+  xmlstring << "<WorkflowInput>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
     xmlstring << this->GetToolAt(i)->InputToXMLString();
   }
-  xmlstring << "</WorkflowSegmentationParameters>" << std::endl;
+  xmlstring << "</WorkflowInput>" << std::endl;
 
   return xmlstring.str();
 }
@@ -229,7 +233,7 @@ void vtkWorkflowToolCollection
 ::InputFromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( ! element || strcmp( element->GetName(), "WorkflowSegmentationParameters" ) != 0 || ! this->GetDefined() )
+  if ( ! element || strcmp( element->GetName(), "WorkflowInput" ) != 0 || ! this->GetDefined() )
   {
     return;
   }
@@ -261,12 +265,12 @@ std::string vtkWorkflowToolCollection
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<WorkflowSegmentationParameters>" << std::endl;
+  xmlstring << "<WorkflowTraining>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
     xmlstring << this->GetToolAt(i)->TrainingToXMLString();
   }
-  xmlstring << "</WorkflowSegmentationParameters>" << std::endl;
+  xmlstring << "</WorkflowTraining>" << std::endl;
 
   return xmlstring.str();
 }
@@ -276,7 +280,7 @@ void vtkWorkflowToolCollection
 ::TrainingFromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( ! element || strcmp( element->GetName(), "WorkflowSegmentationParameters" ) != 0 || ! this->GetInputted() )
+  if ( ! element || strcmp( element->GetName(), "WorkflowTraining" ) != 0 || ! this->GetInputted() )
   {
     return;
   }

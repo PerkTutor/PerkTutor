@@ -11,10 +11,11 @@ vtkWorkflowTool
   this->Defined = false;
   this->Inputted = false;
   this->Trained = false;
-  this->Procedure = NULL;
-  this->Input = NULL;
-  this->Training = NULL;
-  this->Buffer = NULL;
+
+  this->Procedure = vtkWorkflowProcedure::New();
+  this->Input = vtkWorkflowInput::New();
+  this->Training = vtkWorkflowTraining::New();
+  this->Buffer = vtkRecordBuffer::New();
 }
 
 
@@ -22,22 +23,10 @@ vtkWorkflowTool
 ::~vtkWorkflowTool()
 {
   this->Name = "";
-  if ( this->Procedure != NULL )
-  {
-    this->Procedure->Delete();
-  }
-  if ( this->Input != NULL )
-  {
-    this->Input->Delete();
-  }
-  if ( this->Training != NULL )
-  {
-    this->Training->Delete();
-  }
-  if ( this->Buffer != NULL )
-  {
-    this->Buffer->Delete();
-  }
+  this->Procedure->Delete();
+  this->Input->Delete();
+  this->Training->Delete();
+  this->Buffer->Delete();
 }
 
 
@@ -73,7 +62,7 @@ std::string vtkWorkflowTool
 void vtkWorkflowTool
 ::ProcedureFromXMLElement( vtkXMLDataElement* element )
 {
-  if ( strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
+  if ( strcmp( element->GetName(), "Tool" ) == 0 && strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
     this->Procedure->FromXMLElement( element );
 	this->Defined = true;
@@ -97,7 +86,7 @@ std::string vtkWorkflowTool
 void vtkWorkflowTool
 ::InputFromXMLElement( vtkXMLDataElement* element )
 {
-  if ( strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
+  if ( strcmp( element->GetName(), "Tool" ) == 0 && strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
     this->Input->FromXMLElement( element );
 	this->Inputted = true;
@@ -121,7 +110,7 @@ std::string vtkWorkflowTool
 void vtkWorkflowTool
 ::TrainingFromXMLElement( vtkXMLDataElement* element )
 {
-  if ( strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
+  if ( strcmp( element->GetName(), "Tool" ) == 0 && strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
     this->Training->FromXMLElement( element, this->Procedure, this->Input );
 	this->Trained = true;

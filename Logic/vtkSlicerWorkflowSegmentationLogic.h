@@ -97,6 +97,7 @@ public:
 
 private:
 
+  vtkXMLDataParser* Parser;
   vtkXMLDataElement* ParseXMLFile( std::string fileName );
 
 private:

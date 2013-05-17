@@ -80,10 +80,8 @@ vtkWorkflowTraining
 ::vtkWorkflowTraining()
 {
   // Give default values, don't need to initialize vectors
-  vtkLabelVector* blankRecord;
-  blankRecord->Initialize( 0, 0.0 );
-  this->Mean = blankRecord;
-  this->MarkovPi = blankRecord;
+  this->Mean = vtkLabelVector::New();
+  this->MarkovPi = vtkLabelVector::New();
 }
 
 

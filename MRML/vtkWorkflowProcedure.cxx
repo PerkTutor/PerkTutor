@@ -7,6 +7,7 @@ vtkStandardNewMacro( vtkWorkflowProcedure );
 vtkWorkflowProcedure
 ::vtkWorkflowProcedure()
 {
+  this->Name = "";
 }
 
 
@@ -57,8 +58,7 @@ vtkWorkflowTask* vtkWorkflowProcedure
 	}
   }
 
-  vtkWorkflowTask* task;
-  return task;
+  return NULL;
 }
 
 
@@ -107,14 +107,10 @@ std::string vtkWorkflowProcedure
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<Procedure ";
-  xmlstring << " Name=\"" << this->Name << "\""; 
-  xmlstring << ">" << std::endl;
   for ( int i = 0; i < this->GetNumTasks(); i++ )
   {
     xmlstring << this->GetTaskAt(i)->ToXMLString();
   }
-  xmlstring << "</Procedure>" << std::endl;
 
   return xmlstring.str();
 }
@@ -123,27 +119,18 @@ std::string vtkWorkflowProcedure
 void vtkWorkflowProcedure
 ::FromXMLElement( vtkXMLDataElement* element )
 {
-  if ( strcmp( element->GetName(), "Procedure" ) != 0 )
-  {
-    return;  // If it's not a "log" or is the wrong tool jump to the next.
-  }
 
   this->Name = std::string( element->GetAttribute( "Name" ) );
-
-  vtkWorkflowTask* blankTask;
-  this->Tasks = std::vector<vtkWorkflowTask*>( 0, blankTask );
-
   int numElements = element->GetNumberOfNestedElements();
 
   for ( int i = 0; i < numElements; i++ )
   {
-
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
 
-	vtkWorkflowTask* newTask;
+	vtkWorkflowTask* newTask = vtkWorkflowTask::New();
     newTask->FromXMLElement( noteElement );
 
 	this->Tasks.push_back( newTask );
-
   }
+
 }
