@@ -5,8 +5,6 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_MRML_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-    $(vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR)
-    $(vtkSlicerTransformRecorderModuleMRML_BINARY_DIR)
   ${Slicer_Base_INCLUDE_DIRS}
   )
 

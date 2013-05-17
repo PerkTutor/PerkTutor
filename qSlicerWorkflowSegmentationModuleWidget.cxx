@@ -99,6 +99,8 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   Q_D(qSlicerWorkflowSegmentationModuleWidget);
 
   d->setupUi(this);
+  d->ControlsGroupBox->layout()->addWidget( qSlicerRecorderControlsWidget::New( d->logic()->TransformRecorderLogic ) );
+  d->MessagesGroupBox->layout()->addWidget( qSlicerMessagesWidget::New( d->logic()->TransformRecorderLogic ) ); 
   this->Superclass::setup();
 
   // Module node selection

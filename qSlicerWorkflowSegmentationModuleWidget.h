@@ -6,6 +6,8 @@
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
 #include "qSlicerWorkflowSegmentationModuleExport.h"
+#include "qSlicerMessagesWidget.h"
+#include "qSlicerRecorderControlsWidget.h"
 
 class qSlicerWorkflowSegmentationModuleWidgetPrivate;
 class vtkMRMLNode;
