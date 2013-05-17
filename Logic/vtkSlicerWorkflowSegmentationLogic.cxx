@@ -36,7 +36,6 @@ vtkStandardNewMacro(vtkSlicerWorkflowSegmentationLogic);
 vtkSlicerWorkflowSegmentationLogic::vtkSlicerWorkflowSegmentationLogic()
 {
   this->ModuleNode = NULL;
-  this->workflowAlgorithm = vtkWorkflowAlgorithm::New();
 }
 
 //----------------------------------------------------------------------------
@@ -47,9 +46,6 @@ vtkSlicerWorkflowSegmentationLogic::~vtkSlicerWorkflowSegmentationLogic()
     this->ModuleNode->Delete();
     this->ModuleNode = NULL;
   }
-
-  this->workflowAlgorithm->Delete();
-  this->workflowAlgorithm = NULL;
 }
 
 
@@ -101,23 +97,132 @@ void vtkSlicerWorkflowSegmentationLogic
 
 }
 
-//---------------------------------------------------------------------------
 void vtkSlicerWorkflowSegmentationLogic
 ::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
 	assert(this->GetMRMLScene() != 0);
 }
 
+
+// Workflow Segmentation methods---------------------------------------------------------------------------
+
+
 void vtkSlicerWorkflowSegmentationLogic
-::SetModuleNode( vtkMRMLWorkflowSegmentationNode* node )
+::ImportWorkflowProcedure( std::string fileName )
 {
-  vtkSetMRMLNodeMacro( this->ModuleNode, node );
-  this->Modified();
+  this->ModuleNode->SetWorkflowProcedureFileName( fileName );
+
+  vtkXMLDataElement* element = this->ParseXMLFile( fileName );
+  ToolCollection->ProcedureFromXMLElement( element);
 }
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::ImportWorkflowInput( std::string fileName )
+{
+  this->ModuleNode->SetWorkflowInputFileName( fileName );
+
+  vtkXMLDataElement* element = this->ParseXMLFile( fileName );
+  ToolCollection->InputFromXMLElement( element );
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::ImportWorkflowTraining( std::string fileName )
+{
+  this->ModuleNode->SetWorkflowTrainingFileName( fileName );
+
+  vtkXMLDataElement* element = this->ParseXMLFile( fileName );
+  ToolCollection->TrainingFromXMLElement( element );
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::ResetWorkflowAlgorithms()
+{
+  for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
+  {
+    WorkflowAlgorithms.at(i)->Reset();
+  }
+}
+
+
+bool vtkSlicerWorkflowSegmentationLogic
+::Train()
+{
+  for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
+  {
+    WorkflowAlgorithms.at(i)->Train();
+  }
+
+  return this->ToolCollection->GetTrained();
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::AddTrainingBuffer( std::string fileName )
+{
+  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
+  transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );  
+  std::vector<vtkMRMLTransformBufferNode*> transformBufferVector = transformBuffer->SplitBufferByName();
+
+  for ( int i = 0; transformBufferVector.size(); i++ )
+  {
+    vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( transformBufferVector.at(i)->GetCurrentTransform()->GetDeviceName() );
+	if ( currentAlgorithm != NULL )
+	{
+      vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
+	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i) ); // Note that this assumes the tool names are ok
+	  currentAlgorithm->AddTrainingProcedure( currentRecordBuffer );
+	}
+  }
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::SegmentProcedure( std::string fileName )
+{
+  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
+  transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );  
+  std::vector<vtkMRMLTransformBufferNode*> transformBufferVector = transformBuffer->SplitBufferByName();
+
+  for ( int i = 0; transformBufferVector.size(); i++ )
+  {
+    vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( transformBufferVector.at(i)->GetCurrentTransform()->GetDeviceName() );
+	if ( currentAlgorithm != NULL )
+	{
+      vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
+	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i) ); // Note that this assumes the tool names are ok
+	  currentAlgorithm->SegmentProcedure( currentRecordBuffer );
+	}
+  }
+}
+
+
+// Private methods for accessing workflow algorithms -------------------------------------------------------
+
+
+vtkXMLDataElement* vtkSlicerWorkflowSegmentationLogic
+::ParseXMLFile( std::string fileName )
+{
+  // Parse the file here, not in the widget
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
+  parser->SetFileName( fileName.c_str() );
+  parser->Parse();
+  return parser->GetRootElement();
+}
+
 
 vtkWorkflowAlgorithm* vtkSlicerWorkflowSegmentationLogic
-::GetWorkflowAlgorithm()
+::GetWorkflowAlgorithmByName( std::string name )
 {
-  return this->workflowAlgorithm;
-}
+  for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
+  {
+    if ( WorkflowAlgorithms.at(i)->Tool->Name.compare( name ) == 0 )
+	{
+      return WorkflowAlgorithms.at(i);
+	}
+  }
 
+  return NULL;
+}

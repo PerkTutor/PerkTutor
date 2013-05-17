@@ -25,8 +25,6 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
-// #include "RecordType.h"
-// #include "ToolData.h"
 
 // WorkflowSegmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"

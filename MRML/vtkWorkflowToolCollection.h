@@ -47,6 +47,8 @@ public:
   vtkWorkflowTool* GetToolAt( int index );
   vtkWorkflowTool* GetToolByName( std::string name );
 
+  void AddTool( vtkWorkflowTool* newTool );
+
   bool GetDefined();
   bool GetInputted();
   bool GetTrained();

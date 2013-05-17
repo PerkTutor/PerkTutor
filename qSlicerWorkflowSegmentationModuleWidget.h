@@ -33,31 +33,20 @@ protected:
 
 protected slots:
 
-  void onTransformsNodeSelected(vtkMRMLNode* node);
-  void onMRMLTransformNodeModified(vtkObject* caller);
   void onModuleNodeSelected();
  
-  void onProcedureDefinitionButtonClicked();
-  void onInputParameterButtonClicked();
-  void onTrainingParameterButtonClicked();
-  void onTrainingDataButtonClicked();
+  void onWorkflowProcedureButtonClicked();
+  void onWorkflowInputButtonClicked();
+  void onWorkflowTrainingButtonClicked();
+  void onWorkflowTrainingFilesButtonClicked();
   void onTrainButtonClicked();
 
-  void onSaveTrackingLogButtonClicked();
-  void onSaveSegmentationButtonClicked();
-  void onSaveTrainingButtonClicked();
+  void onSaveWorkflowTrainingButtonClicked();
 
-  void onStopButtonClicked();
-  void onStartButtonClicked();
-  void onClearBufferButtonClicked();
-
-  void onSegmentTrackingLogButtonClicked();
-
-  void insertAnnotation();
-  void clearAnnotations();
+  void onSegmentTransformBufferButtonClicked();
 
   void enableButtons();  
-  void updateGUI();
+  void updateWidget();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationModuleWidget);

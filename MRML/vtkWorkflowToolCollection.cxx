@@ -58,8 +58,17 @@ vtkWorkflowTool* vtkWorkflowToolCollection
     }
   }
 
-  vtkWorkflowTool* tool = vtkWorkflowTool::New();
-  return tool;
+  return NULL;
+}
+
+
+void vtkWorkflowToolCollection
+::AddTool( vtkWorkflowTool* newTool )
+{
+  if ( this->GetToolByName( newTool->Name ) != NULL )
+  {
+    this->tools.push_back( newTool );
+  }
 }
 
 
@@ -150,12 +159,12 @@ std::string vtkWorkflowToolCollection
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<PerkProcedure>" << std::endl;
+  xmlstring << "<WorkflowSegmentationProcedure>" << std::endl;
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
     xmlstring << this->GetToolAt(i)->ProcedureToXMLString();
   }
-  xmlstring << "</PerkProcedure>" << std::endl;
+  xmlstring << "</WorkflowSegmentationProcedure>" << std::endl;
 
   return xmlstring.str();
 }
@@ -165,7 +174,7 @@ void vtkWorkflowToolCollection
 ::ProcedureFromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( ! element || strcmp( element->GetName(), "PerkProcedure" ) != 0 )
+  if ( ! element || strcmp( element->GetName(), "WorkflowSegmentationProcedure" ) != 0 )
   {
     return;
   }
@@ -180,8 +189,20 @@ void vtkWorkflowToolCollection
     {
       continue;  // If it's not a "Tool", jump to the next.
     }
-
-	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->ProcedureFromXMLElement( noteElement );
+    
+	// This should add tools to the collection if they don't already exist
+	vtkWorkflowTool* currentTool = this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) );
+	if ( currentTool == NULL || currentTool->Name.compare( "" ) == 0 )
+	{
+      vtkWorkflowTool* newTool = vtkWorkflowTool::New();
+      newTool->Name = std::string( noteElement->GetAttribute( "Name" ) );
+      newTool->ProcedureFromXMLElement( noteElement );
+	  this->AddTool( newTool );
+	}
+	else
+	{
+      currentTool->ProcedureFromXMLElement( noteElement );
+	}
 
   }
 
@@ -224,7 +245,11 @@ void vtkWorkflowToolCollection
       continue;  // If it's not a "Tool", jump to the next.
     }
 
-	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->InputFromXMLElement( noteElement );
+	vtkWorkflowTool* currentTool = this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) );
+	if ( currentTool != NULL )
+	{
+	  currentTool->InputFromXMLElement( noteElement );
+	}
 
   }
 
@@ -267,7 +292,11 @@ void vtkWorkflowToolCollection
       continue;  // If it's not a "Tool", jump to the next.
     }
 
-	this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) )->TrainingFromXMLElement( noteElement );
+    vtkWorkflowTool* currentTool = this->GetToolByName( std::string( noteElement->GetAttribute( "Name" ) ) );
+	if ( currentTool != NULL )
+	{
+	  currentTool->TrainingFromXMLElement( noteElement );
+	}
 
   }
 

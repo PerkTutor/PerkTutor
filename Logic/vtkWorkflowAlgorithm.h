@@ -18,8 +18,9 @@
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
 #include "vtkRecordBufferRT.h"
 #include "vtkMarkovModelRT.h"
-#include "vtkMRMLTransformBufferNode.h"
 #include "vtkWorkflowTool.h"
+
+#include "vtkMRMLTransformBufferNode.h"
 
 
 // Class representing a particular record for tracking data
