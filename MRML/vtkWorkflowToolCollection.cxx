@@ -87,7 +87,7 @@ bool vtkWorkflowToolCollection
 	}
   }
 
-  return true;
+  return ( this->GetNumTools() > 0 );
 }
 
 
@@ -102,7 +102,7 @@ bool vtkWorkflowToolCollection
 	}
   }
 
-  return true;
+  return ( this->GetNumTools() > 0 );
 }
 
 
@@ -117,7 +117,7 @@ bool vtkWorkflowToolCollection
 	}
   }
 
-  return true;
+  return ( this->GetNumTools() > 0 );
 }
 
 

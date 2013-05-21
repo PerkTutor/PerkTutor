@@ -155,10 +155,20 @@ void vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::ResetWorkflowAlgorithms()
 {
+  // For each tool, create a new workflow algorithm, and let it access that tool
   for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
   {
-    WorkflowAlgorithms.at(i)->Reset();
+    this->WorkflowAlgorithms.at(i)->Delete();
   }
+  this->WorkflowAlgorithms.clear();
+
+  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
+  {
+    vtkWorkflowAlgorithm* newWorkflowAlgorithm = vtkWorkflowAlgorithm::New();
+	newWorkflowAlgorithm->Tool = this->ToolCollection->GetToolAt(i);
+	this->WorkflowAlgorithms.push_back( newWorkflowAlgorithm );
+  }
+
 }
 
 
@@ -181,21 +191,22 @@ void vtkSlicerWorkflowSegmentationLogic
   transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );  
   std::vector<vtkMRMLTransformBufferNode*> transformBufferVector = transformBuffer->SplitBufferByName();
 
-  for ( int i = 0; transformBufferVector.size(); i++ )
+  for ( int i = 0; i < transformBufferVector.size(); i++ )
   {
     vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( transformBufferVector.at(i)->GetCurrentTransform()->GetDeviceName() );
 	if ( currentAlgorithm != NULL )
 	{
       vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
 	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i) ); // Note that this assumes the tool names are ok
-	  currentAlgorithm->AddTrainingProcedure( currentRecordBuffer );
+	  currentAlgorithm->AddTrainingBuffer( currentRecordBuffer );
 	}
   }
+
 }
 
 
 void vtkSlicerWorkflowSegmentationLogic
-::SegmentProcedure( std::string fileName )
+::SegmentBuffer( std::string fileName )
 {
   vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
   transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );  
@@ -208,7 +219,7 @@ void vtkSlicerWorkflowSegmentationLogic
 	{
       vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
 	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i) ); // Note that this assumes the tool names are ok
-	  currentAlgorithm->SegmentProcedure( currentRecordBuffer );
+	  currentAlgorithm->SegmentBuffer( currentRecordBuffer );
 	}
   }
 }

@@ -19,6 +19,10 @@ vtkRecordBuffer
 vtkRecordBuffer
 ::~vtkRecordBuffer()
 {
+  for ( int i = 0; i < this->GetNumRecords(); i++ )
+  {
+    this->records.at(i)->Delete();
+  }
   this->records.clear(); // Clear function automatically deconstructs all objects in the vector
   this->name = "";
 }
@@ -32,7 +36,7 @@ vtkRecordBuffer* vtkRecordBuffer
   newRecordBuffer->SetName( this->GetName() );
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
-    newRecordBuffer->AddRecord( this->GetRecordAt(i) );
+    newRecordBuffer->AddRecord( this->GetRecordAt(i)->DeepCopy() );
   }
 
   return newRecordBuffer;
@@ -72,12 +76,12 @@ void vtkRecordBuffer
     this->records.push_back( newRecord );
 	return;
   }
-  if ( newRecord->GetTime() > this->GetCurrentRecord()->GetTime() )
+  if ( newRecord->GetTime() >= this->GetCurrentRecord()->GetTime() )
   {
     this->records.push_back( newRecord );
 	return;
   }
-  if ( newRecord->GetTime() < this->GetRecordAt(0)->GetTime() )
+  if ( newRecord->GetTime() <= this->GetRecordAt(0)->GetTime() )
   {
     this->records.insert( records.begin() + 0, newRecord );
 	return;
@@ -86,7 +90,7 @@ void vtkRecordBuffer
   // TODO: Use binary search
   for ( int i = this->GetNumRecords() - 1; i >= 0; i-- )
   {
-    if ( newRecord->GetTime() > this->GetRecordAt(i)->GetTime() )
+    if ( newRecord->GetTime() >= this->GetRecordAt(i)->GetTime() )
 	{
       this->records.insert( records.begin() + i + 1, newRecord );
 	  return;
@@ -324,13 +328,13 @@ vtkRecordBuffer* vtkRecordBuffer
   vtkRecordBuffer* trimRecordBuffer = vtkRecordBuffer::New();
   trimRecordBuffer->Initialize( end - start + 1, this->GetRecordAt(0)->Size() );
 
-  vtkLabelRecord* currRecord;
-  currRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
-
   // Iterate over all tracking records in the current procedure, and add to new
   int count = 0;
   for ( int i = start; i <= end; i++ )
   {
+    vtkLabelRecord* currRecord = vtkLabelRecord::New();
+    currRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
+
 	for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
       currRecord->Set( d, this->GetRecordAt(i)->Get(d) );
@@ -352,36 +356,38 @@ vtkRecordBuffer* vtkRecordBuffer
 vtkRecordBuffer* vtkRecordBuffer
 ::Concatenate( vtkRecordBuffer* otherRecordBuffer )
 {
-  // First, deep copy the current record log and the concatenating one, so two record logs do not have access to the same record object
-  vtkRecordBuffer* currRecordBufferCopy = this->DeepCopy();
-  vtkRecordBuffer* otherRecordBufferCopy = otherRecordBuffer->DeepCopy();
+
+  // Ensure that the record size are the same
+  if ( this->GetNumRecords() < 1 )
+  {
+    return otherRecordBuffer->DeepCopy();
+  }
+  if ( otherRecordBuffer->GetNumRecords() < 1 )
+  {
+    return this->DeepCopy();
+  }
+  if ( this->GetRecordAt(0)->Size() != otherRecordBuffer->GetRecordAt(0)->Size() )
+  {
+    return NULL;
+  }
 
   // Create a new record log and assign the copies to it
   vtkRecordBuffer* catRecordBuffer = vtkRecordBuffer::New();
-
-  // Ensure that the record size are the same
-  if ( this->GetRecordAt(0)->Size() != otherRecordBuffer->GetRecordAt(0)->Size() )
-  {
-    return currRecordBufferCopy;
-  }
-
   catRecordBuffer->Initialize( this->GetNumRecords() + otherRecordBuffer->GetNumRecords(), this->GetRecordAt(0)->Size() );
+  catRecordBuffer->SetName( this->GetName() );
 
   int count = 0;
-  for( int i = 0; i < currRecordBufferCopy->GetNumRecords(); i++ )
+  for( int i = 0; i < this->GetNumRecords(); i++ )
   {
-    catRecordBuffer->SetRecordAt( count, currRecordBufferCopy->GetRecordAt(i) );
+    catRecordBuffer->SetRecordAt( count, this->GetRecordAt(i)->DeepCopy() );
 	count++;
   }
 
-  for( int i = 0; i < otherRecordBufferCopy->GetNumRecords(); i++ )
+  for( int i = 0; i < otherRecordBuffer->GetNumRecords(); i++ )
   {
-    catRecordBuffer->SetRecordAt( count, otherRecordBufferCopy->GetRecordAt(i) );
+    catRecordBuffer->SetRecordAt( count, otherRecordBuffer->GetRecordAt(i)->DeepCopy() );
 	count++;
   }
-
-  currRecordBufferCopy->Delete();
-  otherRecordBufferCopy->Delete();
 
   return catRecordBuffer;
 }
@@ -401,11 +407,11 @@ vtkRecordBuffer* vtkRecordBuffer
   vtkRecordBuffer* catRecordBuffer = vtkRecordBuffer::New();
   catRecordBuffer->Initialize( this->GetNumRecords(), this->GetRecordAt(0)->Size() + otherRecordBuffer->GetRecordAt(0)->Size() );
 
-  vtkLabelRecord* currRecord;
-  currRecord->Initialize( this->GetRecordAt(0)->Size() + otherRecordBuffer->GetRecordAt(0)->Size(), 0.0 );
-
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
+    vtkLabelRecord* currRecord = vtkLabelRecord::New();
+    currRecord->Initialize( this->GetRecordAt(0)->Size() + otherRecordBuffer->GetRecordAt(0)->Size(), 0.0 );
+
 	int count = 0;
     for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
@@ -435,11 +441,11 @@ vtkRecordBuffer* vtkRecordBuffer
   vtkRecordBuffer* catRecordBuffer = vtkRecordBuffer::New();
   catRecordBuffer->Initialize( this->GetNumRecords(), this->GetRecordAt(0)->Size() + vector->Size() );
 
-  vtkLabelRecord* currRecord;
-  currRecord->Initialize( this->GetRecordAt(0)->Size() + vector->Size(), 0.0 );
-
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
+    vtkLabelRecord* currRecord = vtkLabelRecord::New();
+    currRecord->Initialize( this->GetRecordAt(0)->Size() + vector->Size(), 0.0 );
+
     int count = 0;
     for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
@@ -470,30 +476,20 @@ vtkRecordBuffer* vtkRecordBuffer
   vtkRecordBuffer* padRecordBuffer = vtkRecordBuffer::New();
   padRecordBuffer->Initialize( window, this->GetRecordAt(0)->Size() );
 
-  vtkLabelRecord* padRecord;
-  padRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
-
   // Find the average time stamp
   // Divide by numRecords - 1 because there are one fewer differences than there are stamps
   double DT = 1.0; // TODO: Get a more intelligible default value (not a magic number)
   if ( this->GetNumRecords() > 1 )
   {
-    DT = ( GetCurrentRecord()->GetTime() - GetRecordAt(0)->GetTime() ) / ( this->GetNumRecords() - 1 );
+    DT = ( this->GetCurrentRecord()->GetTime() - this->GetRecordAt(0)->GetTime() ) / ( this->GetNumRecords() - 1 );
   }
 
   // Calculate the values and time stamp
   for ( int i = 0; i < window; i++ )
   {
-
-	for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
-	{
-	   padRecord->Set( d, this->GetRecordAt(0)->Get(d) );
-	}
-
-	padRecord->SetTime( this->GetRecordAt(0)->GetTime() - ( i + 1 ) * DT );
-	padRecord->SetLabel( this->GetRecordAt(0)->GetLabel() );
-	padRecordBuffer->SetRecordAt( window - ( i + 1 ), padRecord );
-
+    padRecordBuffer->SetRecordAt( i, this->GetRecordAt(0)->DeepCopy() );
+	padRecordBuffer->GetRecordAt(i)->SetTime( this->GetRecordAt(0)->GetTime() - ( i + 1 ) * DT );
+	padRecordBuffer->GetRecordAt(i)->SetLabel( this->GetRecordAt(0)->GetLabel() );
   }
 
   return padRecordBuffer;
@@ -504,7 +500,7 @@ vtkLabelVector* vtkRecordBuffer
 ::Mean()
 {
   // The record log will only hold one record at the end
-  vtkLabelVector* meanRecord;
+  vtkLabelVector* meanRecord = vtkLabelVector::New();
   meanRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
 
   // For each time
@@ -721,7 +717,7 @@ vtkLabelVector* vtkRecordBuffer
 ::Integrate()
 {
   // The record log will only hold one record at the end
-  vtkLabelVector* intVector;
+	vtkLabelVector* intVector = vtkLabelVector::New();
   intVector->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
 
   // For each time
@@ -759,7 +755,11 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
   
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
-    double newTime = ( shiftRecordBuffer->GetRecordAt(i)->GetTime() - startTime ) * 2.0 / rangeTime - 1; // tmin - tmax --> -1 - 1
+    double newTime = 0.0;
+    if ( rangeTime > 0 )
+	{
+      newTime = ( shiftRecordBuffer->GetRecordAt(i)->GetTime() - startTime ) * 2.0 / rangeTime - 1; // tmin - tmax --> -1 - 1
+	}
 	shiftRecordBuffer->GetRecordAt(i)->SetTime( newTime );
   }
 
@@ -769,12 +769,12 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 	vtkRecordBuffer* unintRecordBuffer = vtkRecordBuffer::New();
     unintRecordBuffer->Initialize( this->GetNumRecords(), this->GetRecordAt(0)->Size() );
 
-	vtkLabelRecord* unintRecord = vtkLabelRecord::New();
-	unintRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
-
     // Multiply the values by the Legendre polynomials
     for ( int i = 0; i < shiftRecordBuffer->GetNumRecords(); i++ )
     {
+	  vtkLabelRecord* unintRecord = vtkLabelRecord::New();
+	  unintRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
+
 	  double legPoly = LegendrePolynomial( shiftRecordBuffer->GetRecordAt(i)->GetTime(), o );
 
       for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
@@ -790,9 +790,7 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 
 	// Integrate to get the Legendre coefficients for the particular order
 	legVectors.at(o)->SetValues( unintRecordBuffer->Integrate()->GetValues() );
-	std::stringstream labelstring;
-	labelstring << o;
-	legVectors.at(o)->SetLabel( labelstring.str() );
+	legVectors.at(o)->SetLabel( o );
 
 	unintRecordBuffer->Delete();
   }
@@ -1092,9 +1090,7 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 ::fwdkmeans( int numClusters )
 {
   // Create a new vector of centroids
-  vtkLabelVector* blankVector = vtkLabelVector::New();
-  blankVector->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
-  std::vector<vtkLabelVector*> centroids( numClusters, blankVector );
+  std::vector<vtkLabelVector*> centroids;
 
   // A vector of cluster memberships
   std::vector<int> membership( this->GetNumRecords(), 0 );
@@ -1108,14 +1104,12 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 	{
 	  // An order record for the current cluster
       vtkLabelVector* currCentroid = this->Mean();
-	  std::stringstream labelstring;
-	  labelstring << k;
-	  currCentroid->SetLabel( labelstring.str() );
-	  centroids.at(k) = currCentroid;
+	  currCentroid->SetLabel(k);
+	  centroids.push_back( currCentroid );
 	  continue;
 	}
 
-	centroids.at(k) = this->FindNextCentroid( centroids );
+	centroids.push_back( this->FindNextCentroid( centroids ) );
 
 	// Iterate until there are no more changes in membership and no clusters are empty
     bool change = true;
@@ -1188,9 +1182,7 @@ vtkLabelVector* vtkRecordBuffer
   // Create new centroid for candidate
   vtkLabelVector* currCentroid = vtkLabelVector::New();
   currCentroid->SetValues( this->GetRecordAt(candidateRecord)->GetValues() );
-  std::stringstream labelstring;
-  labelstring << centroids.size();
-  currCentroid->SetLabel( labelstring.str() );
+  currCentroid->SetLabel( centroids.size() );
   return currCentroid;
 }
 
@@ -1307,10 +1299,16 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 {
 
   // For each cluster, have an order record and a count
-  vtkLabelVector* initCentroid = vtkLabelVector::New();
-  initCentroid->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
-  std::vector<vtkLabelVector*> centroids ( numClusters, initCentroid );
-  std::vector<int> memberCount ( numClusters, 0 );;
+  std::vector<vtkLabelVector*> centroids;
+  std::vector<int> memberCount( numClusters, 0 );
+
+  // Initialize the list of centroids
+  for ( int c = 0; c < numClusters; c++ )
+  {
+    vtkLabelVector* currCentroid = vtkLabelVector::New();
+	currCentroid->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
+	centroids.push_back( currCentroid );
+  }
 
   // Iterate over all time
   for ( int i = 0; i < this->GetNumRecords(); i++ )
@@ -1318,7 +1316,7 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
     // For each dimension
     for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
-	  centroids.at( membership.at(i) )->Set( d, centroids.at( membership.at(i) )->Get(d) + this->GetRecordAt(i)->Get(d) );
+	  centroids.at( membership.at(i) )->Crement( d, this->GetRecordAt(i)->Get(d) );
 	}
     memberCount.at( membership.at(i) ) = memberCount.at( membership.at(i) ) + 1;
   }
@@ -1331,9 +1329,7 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 	{
 	  centroids.at(c)->Set( d, centroids.at(c)->Get(d) / memberCount.at(c) );
 	}
-	std::stringstream labelstring;
-	labelstring << c;
-	centroids.at(c)->SetLabel( labelstring.str() );
+	centroids.at(c)->SetLabel( c );
   }
 
   return centroids;
@@ -1359,7 +1355,7 @@ vtkRecordBuffer* vtkRecordBuffer
 	clusterRecord->Add( membership.at(i) );
 	clusterRecord->SetTime( GetRecordAt(i)->GetTime() );
 	clusterRecord->SetLabel( GetRecordAt(i)->GetLabel() );
-    clusterRecordBuffer->AddRecord( clusterRecord );
+    clusterRecordBuffer->SetRecordAt( i, clusterRecord );
   }
   
   return clusterRecordBuffer;
@@ -1375,18 +1371,34 @@ std::vector<vtkRecordBuffer*> vtkRecordBuffer
   // Separate the transforms by their device name
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
+    // Ensure that the label for the current record is valid
     bool labelExists = false;
+    for ( int j = 0; j < labels.size(); j++ )
+	{
+      if ( labels.at(j).compare( this->GetRecordAt(i)->GetLabel() ) == 0 )
+	  {
+		labelExists = true;
+	  }
+	}
+
+	if ( ! labelExists )
+	{
+      continue;
+	}
+
+	// Add the current record to a buffer (or create a new buffer if the correct one doesn't already exist)
+    bool bufferExists = false;
     for ( int j = 0; j < labelBuffers.size(); j++ )
 	{
 	  // Observe that a device buffer only exists if it has a transform, thus, the current transform is always available
       if ( labelBuffers.at(j)->GetCurrentRecord()->GetLabel().compare( this->GetRecordAt(i)->GetLabel() ) == 0 )
 	  {
         labelBuffers.at(j)->AddRecord( this->GetRecordAt(i)->DeepCopy() );
-		labelExists = true;
+		bufferExists = true;
 	  }
 	}
 
-	if ( ! labelExists )
+	if ( ! bufferExists )
 	{
 	  vtkRecordBuffer* newLabelBuffer = vtkRecordBuffer::New();
 	  newLabelBuffer->AddRecord( this->GetRecordAt(i)->DeepCopy() );
@@ -1409,9 +1421,7 @@ std::vector<vtkMarkovRecord*> vtkRecordBuffer
   {
     vtkMarkovRecord* currMarkovRecord = vtkMarkovRecord::New();
     currMarkovRecord->SetState( this->GetRecordAt(i)->GetLabel() );
-	std::stringstream labelstring;
-	labelstring << this->GetRecordAt(i)->Get(0);
-	currMarkovRecord->SetSymbol( labelstring.str() );
+	currMarkovRecord->SetSymbol( this->GetRecordAt(i)->Get(0) );
 	markovRecords.push_back( currMarkovRecord );
   }
 

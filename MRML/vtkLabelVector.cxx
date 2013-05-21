@@ -50,7 +50,7 @@ void vtkLabelVector
 
 
 void vtkLabelVector
-::Crement( int index, int step )
+::Crement( int index, double step )
 {
   this->Set( index, this->Get(index) + step );
 }

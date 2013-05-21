@@ -79,7 +79,7 @@ bool vtkWorkflowProcedure
 {
   for ( int i = 0; i < this->GetNumTasks(); i++ )
   {
-    if ( name.compare( this->GetTaskAt(i)->Name ) )
+    if ( name.compare( this->GetTaskAt(i)->Name ) == 0 )
 	{
       return true;
 	}
@@ -93,7 +93,7 @@ int vtkWorkflowProcedure
 {
   for ( int i = 0; i < this->GetNumTasks(); i++ )
   {
-    if ( name.compare( this->GetTaskAt(i)->Name ) )
+    if ( name.compare( this->GetTaskAt(i)->Name ) == 0 )
 	{
       return i;
 	}

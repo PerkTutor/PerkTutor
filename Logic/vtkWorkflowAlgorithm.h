@@ -43,18 +43,15 @@ protected:
 public:
 
   // Read training procedures from file
-  void AddTrainingProcedure( vtkRecordBuffer* newTrainingProcedure );
-  void SegmentProcedure( vtkRecordBuffer* newProcedure );
+  void AddTrainingBuffer( vtkRecordBuffer* newTrainingProcedure );
+  void SegmentBuffer( vtkRecordBuffer* newProcedure );
 
   // Training and testing phases
-  void Reset();
   bool Train();
   void AddRecord( vtkLabelRecord* newRecord );
   void AddSegmentRecord( vtkLabelRecord* newRecord );
   void UpdateTask();
 
-  void SetTool( vtkWorkflowTool* newTool );
-  vtkWorkflowTool* GetTool();
   vtkWorkflowTool* Tool;
 
   std::string GetCurrentTask();
@@ -69,15 +66,15 @@ public:
 private:
 
   // List of procedures for training
-  std::vector<vtkRecordBuffer*> trainingProcedures;
+  std::vector<vtkRecordBuffer*> TrainingBuffers;
 
   // The current procedure for real-time segmentation
-  vtkRecordBufferRT* procedureRT;
-  vtkRecordBufferRT* derivativeProcedureRT;
-  vtkRecordBufferRT* filterProcedureRT;
-  vtkRecordBufferRT* orthogonalProcedureRT;
-  vtkRecordBufferRT* pcaProcedureRT;
-  vtkRecordBufferRT* centroidProcedureRT;
+  vtkRecordBufferRT* BufferRT;
+  vtkRecordBufferRT* DerivativeBufferRT;
+  vtkRecordBufferRT* FilterBufferRT;
+  vtkRecordBufferRT* OrthogonalBufferRT;
+  vtkRecordBufferRT* PcaBufferRT;
+  vtkRecordBufferRT* CentroidBufferRT;
 
   vtkMarkovModelRT* MarkovRT;
 

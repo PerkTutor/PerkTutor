@@ -133,7 +133,7 @@ int vtkMarkovModel
 {
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-    if ( newStateName.compare( this->stateNames.at(i) )== 0 )
+    if ( newStateName.compare( this->stateNames.at(i) ) == 0 )
 	{
       return i;
 	}
@@ -449,15 +449,15 @@ void vtkMarkovModel
 ::NormalizeParameters()
 {
   
-  vtkLabelVector* tempPi;
+  vtkLabelVector* tempPi = vtkLabelVector::New();
   std::vector<vtkLabelVector*> tempA;
   std::vector<vtkLabelVector*> tempB;
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
 
-	vtkLabelVector* currA;
-	vtkLabelVector* currB;
+    vtkLabelVector* currA = vtkLabelVector::New();
+	vtkLabelVector* currB = vtkLabelVector::New();
 	double sumA = 0;
 	double sumB = 0;
 	
@@ -533,8 +533,12 @@ void vtkMarkovModel
   for ( int i = 0; i < sequence.size(); i++ )
   {
     int currState = this->LookupState( sequence.at(i)->GetState() );
-	int prevState = this->LookupState( sequence.at(i-1)->GetState() );
-	int currSymbol =  this->LookupState( sequence.at(i)->GetSymbol() );
+	int currSymbol =  this->LookupSymbol( sequence.at(i)->GetSymbol() );
+
+	if ( currState < 0 || currSymbol < 0 )
+	{
+      continue;
+	}
 
     if ( i == 0 )
     {
@@ -542,11 +546,17 @@ void vtkMarkovModel
     }
 	else
     {
-      this->A.at( prevState )->Crement( currState );
+	  // Ensure that a previous state exists
+	  int prevState = this->LookupState( sequence.at(i-1)->GetState() );
+	  if ( prevState >= 0 )
+	  {
+        this->A.at( prevState )->Crement( currState );
+	  }
     }
 
     this->B.at( currState )->Crement( currSymbol );
   }
+
 }
 
 

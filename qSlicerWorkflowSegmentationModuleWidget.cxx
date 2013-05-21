@@ -233,6 +233,7 @@ void qSlicerWorkflowSegmentationModuleWidget
     dialog.setValue( 10 );
 
     // Add the buffers from each of the files to the workflow algorithms.
+	d->logic()->ResetWorkflowAlgorithms();
     for( int i = 0; i < files.size(); i++ )
     {    
       d->logic()->AddTrainingBuffer( files.at(i).toStdString() );
@@ -264,7 +265,7 @@ void qSlicerWorkflowSegmentationModuleWidget
     dialog.setValue( 10 );
 
     d->logic()->ResetWorkflowAlgorithms();
-    d->logic()->SegmentProcedure( fileName.toStdString() );
+    d->logic()->SegmentBuffer( fileName.toStdString() );
 
     dialog.close(); 
   }

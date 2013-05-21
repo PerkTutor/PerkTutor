@@ -46,7 +46,7 @@ public:
 
   void Add( double newValue );
   void Set( int index, double newValue );
-  void Crement( int index, int step = 1 );
+  void Crement( int index, double step = 1 );
   double Get( int index );
   int Size();
 

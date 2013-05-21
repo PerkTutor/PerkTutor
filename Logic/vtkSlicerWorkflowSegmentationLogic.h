@@ -93,7 +93,7 @@ public:
   bool Train();
 
   void AddTrainingBuffer( std::string fileName );
-  void SegmentProcedure( std::string fileName );
+  void SegmentBuffer( std::string fileName );
 
 private:
 
