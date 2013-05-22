@@ -116,8 +116,12 @@ void qSlicerPerkEvaluatorModuleWidget
     d->FileNameLabel->setText( pathInfo.fileName() );
     dialog.setValue( 70 );
     d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+    d->BeginSpinBox->setValue( 0 );
+	d->EndSpinBox->setValue( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
     dialog.close();
   }
+
+
   
   this->UpdateGUI();
 }
@@ -374,6 +378,7 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
+  // Playback slider
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );

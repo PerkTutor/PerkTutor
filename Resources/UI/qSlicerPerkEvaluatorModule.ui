@@ -113,7 +113,11 @@
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="BeginSpinBox"/>
+            <widget class="QDoubleSpinBox" name="BeginSpinBox">
+             <property name="maximum">
+              <double>9999.989999999999782</double>
+             </property>
+            </widget>
            </item>
            <item>
             <spacer name="horizontalSpacer">
@@ -155,7 +159,11 @@
             </spacer>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="EndSpinBox"/>
+            <widget class="QDoubleSpinBox" name="EndSpinBox">
+             <property name="maximum">
+              <double>9999.989999999999782</double>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QPushButton" name="MarkEndButton">
