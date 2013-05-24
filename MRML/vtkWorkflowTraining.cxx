@@ -14,7 +14,7 @@ VectorBufferToXMLString( std::string name, std::vector<vtkLabelVector*> vectors 
 {
   std::stringstream xmlstring;
 
-  xmlstring << "    <Parameter Type=\"" << name << "\" />" << std::endl;
+  xmlstring << "    <Parameter Type=\"" << name << "\" >" << std::endl;
   for ( int i = 0; i < vectors.size(); i++ )
   {
     xmlstring << vectors.at(i)->ToXMLString( name );
@@ -57,7 +57,7 @@ VectorBufferFromXMLElement( std::string name, vtkXMLDataElement* element )
       continue;  // If it's not a "Parameter", jump to the next.
     }
 
-	currentVector->FromString( std::string( noteElement->GetAttribute( "Value" ) ), atoi( noteElement->GetAttribute( "Size" ) ) );
+	currentVector->FromString( std::string( noteElement->GetAttribute( "Values" ) ), atoi( noteElement->GetAttribute( "Size" ) ) );
 	currentVector->SetLabel( std::string( noteElement->GetAttribute( "Label" ) ) );
 
 	vectors.push_back( currentVector );
@@ -82,12 +82,31 @@ vtkWorkflowTraining
 vtkWorkflowTraining
 ::~vtkWorkflowTraining()
 {
+  for ( int i = 0; i < this->PrinComps.size(); i++ )
+  {
+    this->PrinComps.at(i)->Delete();
+  }
+  for ( int i = 0; i < this->Centroids.size(); i++ )
+  {
+    this->Centroids.at(i)->Delete();
+  }
+  for ( int i = 0; i < this->MarkovA.size(); i++ )
+  {
+    this->MarkovA.at(i)->Delete();
+  }
+  for ( int i = 0; i < this->MarkovB.size(); i++ )
+  {
+    this->MarkovB.at(i)->Delete();
+  }
+
   this->PrinComps.clear();
-  this->Mean = blankRecord;
   this->Centroids.clear();
-  this->MarkovPi = blankRecord;
+
   this->MarkovA.clear();
   this->MarkovB.clear();
+
+  this->Mean->Delete();
+  this->MarkovPi->Delete();
 }
 
 

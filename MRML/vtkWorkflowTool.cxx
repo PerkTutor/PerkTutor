@@ -51,7 +51,7 @@ std::string vtkWorkflowTool
 {
   std::stringstream xmlstring;
 
-  xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
+  xmlstring << "  <Tool Name=\"" << this->Name << "\" >" << std::endl;
   xmlstring << this->Procedure->ToXMLString() << std::endl;
   xmlstring << "  </Tool>" << std::endl;
 
@@ -75,7 +75,7 @@ std::string vtkWorkflowTool
 {
   std::stringstream xmlstring;
 
-  xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
+  xmlstring << "  <Tool Name=\"" << this->Name << "\" >" << std::endl;
   xmlstring << this->Input->ToXMLString() << std::endl;
   xmlstring << "  </Tool>" << std::endl;
 
@@ -99,7 +99,7 @@ std::string vtkWorkflowTool
 {
   std::stringstream xmlstring;
 
-  xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
+  xmlstring << "  <Tool Name=\"" << this->Name << "\" >" << std::endl;
   xmlstring << this->Training->ToXMLString();
   xmlstring << "  </Tool>" << std::endl;
 

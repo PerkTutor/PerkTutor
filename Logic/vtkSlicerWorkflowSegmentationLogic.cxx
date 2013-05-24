@@ -151,6 +151,7 @@ void vtkSlicerWorkflowSegmentationLogic
   this->ToolCollection->TrainingFromXMLElement( element );
 }
 
+
 void vtkSlicerWorkflowSegmentationLogic
 ::SaveWorkflowTraining( std::string fileName )
 {
