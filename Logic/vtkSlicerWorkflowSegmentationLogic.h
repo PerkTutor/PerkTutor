@@ -88,6 +88,7 @@ public:
   void ImportWorkflowProcedure( std::string fileName );
   void ImportWorkflowInput( std::string fileName );
   void ImportWorkflowTraining( std::string fileName );
+  void SaveWorkflowTraining( std::string fileName );
 
   void ResetWorkflowAlgorithms();
   bool Train();

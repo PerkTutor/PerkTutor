@@ -128,7 +128,7 @@ void vtkSlicerWorkflowSegmentationLogic
   this->ModuleNode->SetWorkflowProcedureFileName( fileName );
 
   vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  ToolCollection->ProcedureFromXMLElement( element );
+  this->ToolCollection->ProcedureFromXMLElement( element );
 }
 
 
@@ -138,7 +138,7 @@ void vtkSlicerWorkflowSegmentationLogic
   this->ModuleNode->SetWorkflowInputFileName( fileName );
 
   vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  ToolCollection->InputFromXMLElement( element );
+  this->ToolCollection->InputFromXMLElement( element );
 }
 
 
@@ -148,7 +148,23 @@ void vtkSlicerWorkflowSegmentationLogic
   this->ModuleNode->SetWorkflowTrainingFileName( fileName );
 
   vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  ToolCollection->TrainingFromXMLElement( element );
+  this->ToolCollection->TrainingFromXMLElement( element );
+}
+
+void vtkSlicerWorkflowSegmentationLogic
+::SaveWorkflowTraining( std::string fileName )
+{
+  this->ModuleNode->SetWorkflowTrainingFileName( fileName );
+
+  std::ofstream output( fileName.c_str() );  
+  if ( ! output.is_open() )
+  {
+    vtkErrorMacro( "Record file could not be opened!" );
+    return;
+  }  
+  output << this->ToolCollection->TrainingToXMLString();
+
+  output.close();
 }
 
 

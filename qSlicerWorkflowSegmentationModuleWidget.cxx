@@ -309,7 +309,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->ModuleNode->SaveWorkflowTraining( fileName.toStdString() );
+	d->logic()->SaveWorkflowTraining( fileName.toStdString() );
   }
   
   this->updateWidget();

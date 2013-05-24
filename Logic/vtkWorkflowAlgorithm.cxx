@@ -160,7 +160,8 @@ std::vector<int> vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::AddTrainingBuffer( vtkRecordBuffer* newTrainingBuffer )
 {
-  this->TrainingBuffers.push_back( newTrainingBuffer );
+  vtkRecordBuffer* trimRecordBuffer = newTrainingBuffer->TrimBufferByLabel( this->Tool->Procedure->GetTaskNames() );
+  this->TrainingBuffers.push_back( trimRecordBuffer );
 }
 
 
@@ -238,6 +239,7 @@ bool vtkWorkflowAlgorithm
   }
 
   // Concatenate all of the record logs into one record log
+  // Observe that the concatenated buffers are sorted by time stamp - its order is not maintained by procedure, but this is ok
   vtkRecordBuffer* orthogonalCat = vtkRecordBuffer::New();
   orthogonalCat->Initialize( 0, orthogonalBuffers.at(0)->GetCurrentRecord()->Size() );
   for ( int i = 0; i < orthogonalBuffers.size(); i++ )
@@ -270,9 +272,7 @@ bool vtkWorkflowAlgorithm
 	for ( int j = 0; j < taskCentroids[i]; j++ )
 	{
 	  // Make the centroid numbering continuous over all centroids
-      std::stringstream labelstring;
-      labelstring << atoi( currTaskCentroids[j]->GetLabel().c_str() ) + cumulativeCentroids.at(i);
-	  currTaskCentroids.at(j)->SetLabel( labelstring.str() );
+	  currTaskCentroids.at(j)->SetLabel( atoi( currTaskCentroids[j]->GetLabel().c_str() ) + cumulativeCentroids.at(i) );
       this->Tool->Training->Centroids.push_back( currTaskCentroids.at(j) );
 	}
   }
@@ -359,8 +359,9 @@ bool vtkWorkflowAlgorithm
 
   orthogonalCat->Delete();
   pcaCat->Delete();
-  Markov->Delete();
+  // Markov->Delete();
 
+  this->Tool->Trained = true;
   return true;
 }
 

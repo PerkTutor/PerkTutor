@@ -10,35 +10,46 @@ vtkStandardNewMacro( vtkWorkflowTraining );
 
 
 std::string
-LabelRecordVectorToXMLString( std::string name, std::vector<vtkLabelVector*> records )
+VectorBufferToXMLString( std::string name, std::vector<vtkLabelVector*> vectors )
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<Parameter Type=\"" << name << "\" />" << std::endl;
-  for ( int i = 0; i < records.size(); i++ )
+  xmlstring << "    <Parameter Type=\"" << name << "\" />" << std::endl;
+  for ( int i = 0; i < vectors.size(); i++ )
   {
-    xmlstring << records.at(i)->ToXMLString( name );
+    xmlstring << vectors.at(i)->ToXMLString( name );
   }
-  xmlstring << "</Parameter>" << std::endl;
+  xmlstring << "    </Parameter>" << std::endl;
 
   return xmlstring.str();
+}
 
+
+std::string
+VectorBufferToXMLString( std::string name, vtkLabelVector* vector )
+{
+  std::vector<vtkLabelVector*> vectors;
+  vectors.push_back( vector );
+  return VectorBufferToXMLString( name, vectors );
 }
 
 
 std::vector<vtkLabelVector*>
-LabelRecordVectorFromXMLElement( std::string name, vtkXMLDataElement* element, int numRecords, int recordSize )
+VectorBufferFromXMLElement( std::string name, vtkXMLDataElement* element )
 {
+  // Initialize the vector of LabelRecords to improve speed
+  std::vector<vtkLabelVector*> vectors;
+
+  if ( name.compare( element->GetAttribute( "Type" ) ) != 0 )
+  {
+    return vectors;
+  }
 
   int numElements = element->GetNumberOfNestedElements();
 
-  // Initialize the vector of LabelRecords to improve speed
-  vtkLabelVector* blankRecord;
-  blankRecord->Initialize( recordSize, 0.0 );
-  std::vector<vtkLabelVector*> recordVector( numElements, blankRecord );
-
   for ( int i = 0; i < numElements; i++ )
   {
+    vtkLabelVector* currentVector = vtkLabelVector::New();
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
     if ( strcmp( noteElement->GetName(), name.c_str() ) != 0 )
@@ -46,30 +57,13 @@ LabelRecordVectorFromXMLElement( std::string name, vtkXMLDataElement* element, i
       continue;  // If it's not a "Parameter", jump to the next.
     }
 
-	recordVector.at(i)->SetLabel( std::string( noteElement->GetAttribute( "Label" ) ) );
-    recordVector.at(i)->FromString( std::string( noteElement->GetAttribute( "Value" ) ), recordSize );
+	currentVector->FromString( std::string( noteElement->GetAttribute( "Value" ) ), atoi( noteElement->GetAttribute( "Size" ) ) );
+	currentVector->SetLabel( std::string( noteElement->GetAttribute( "Label" ) ) );
 
+	vectors.push_back( currentVector );
   }
 
-  return recordVector;
-}
-
-
-
-std::string
-LabelRecordToXMLString( std::string name, vtkLabelVector* record )
-{
-  std::vector<vtkLabelVector*> records;
-  records.push_back( record );
-  return LabelRecordVectorToXMLString( name, records );
-}
-
-
-
-vtkLabelVector*
-LabelRecordFromXMLElement( std::string name, vtkXMLDataElement* element, int recordSize )
-{
-  return LabelRecordVectorFromXMLElement( name, element, 1, recordSize ).at(0);
+  return vectors;
 }
 
 
@@ -88,8 +82,6 @@ vtkWorkflowTraining
 vtkWorkflowTraining
 ::~vtkWorkflowTraining()
 {
-  vtkLabelVector* blankRecord;
-  blankRecord->Initialize( 0, 0.0 );
   this->PrinComps.clear();
   this->Mean = blankRecord;
   this->Centroids.clear();
@@ -130,12 +122,12 @@ std::string vtkWorkflowTraining
 {
   std::stringstream xmlstring;
 
-  xmlstring << LabelRecordVectorToXMLString( "PrinComps", this->PrinComps );
-  xmlstring << LabelRecordToXMLString( "Mean", this->Mean );
-  xmlstring << LabelRecordVectorToXMLString( "Centroids", this->Centroids );
-  xmlstring << LabelRecordToXMLString( "MarkovPi", this->MarkovPi );
-  xmlstring << LabelRecordVectorToXMLString( "MarkovA", this->MarkovA );
-  xmlstring << LabelRecordVectorToXMLString( "MarkovB", this->MarkovB );
+  xmlstring << VectorBufferToXMLString( "PrinComps", this->PrinComps );
+  xmlstring << VectorBufferToXMLString( "Mean", this->Mean );
+  xmlstring << VectorBufferToXMLString( "Centroids", this->Centroids );
+  xmlstring << VectorBufferToXMLString( "MarkovPi", this->MarkovPi );
+  xmlstring << VectorBufferToXMLString( "MarkovA", this->MarkovA );
+  xmlstring << VectorBufferToXMLString( "MarkovB", this->MarkovB );
 
   return xmlstring.str();
 
@@ -146,7 +138,6 @@ void vtkWorkflowTraining
 ::FromXMLElement( vtkXMLDataElement* element, vtkWorkflowProcedure* procedure, vtkWorkflowInput* input )
 {
   int numElements = element->GetNumberOfNestedElements();
-  int SizePrinComps = ( input->OrthogonalOrder + 1 ) * ( vtkTrackingRecord::TRACKINGRECORD_SIZE ) * ( input->Derivative );
 
   for ( int i = 0; i < numElements; i++ )
   {
@@ -161,27 +152,27 @@ void vtkWorkflowTraining
 
 	if ( strcmp( elementType, "PrinComps" ) == 0 )
     {
-	  this->PrinComps = LabelRecordVectorFromXMLElement( "PrinComps", noteElement, input->NumPrinComps, SizePrinComps );
+	  this->PrinComps = VectorBufferFromXMLElement( "PrinComps", noteElement );
     }
 	if ( strcmp( elementType, "Mean" ) == 0 )
     {
-	  this->Mean = LabelRecordFromXMLElement( "Mean", noteElement, SizePrinComps );
+	  this->Mean = VectorBufferFromXMLElement( "Mean", noteElement ).at(0);
     }
 	if ( strcmp( elementType, "Centroids" ) == 0 )
     {
-	  this->Centroids = LabelRecordVectorFromXMLElement( "Centroids", noteElement, input->NumCentroids, input->NumPrinComps );
+	  this->Centroids = VectorBufferFromXMLElement( "Centroids", noteElement );
     }
 	if ( strcmp( elementType, "MarkovPi" ) == 0 )
     {
-	  this->MarkovPi = LabelRecordFromXMLElement( "MarkovPi", noteElement, procedure->GetNumTasks() );
+	  this->MarkovPi = VectorBufferFromXMLElement( "MarkovPi", noteElement ).at(0);
     }
 	if ( strcmp( elementType, "MarkovA" ) == 0 )
     {
-	  this->MarkovA = LabelRecordVectorFromXMLElement( "MarkovA", noteElement, procedure->GetNumTasks(), procedure->GetNumTasks() );
+	  this->MarkovA = VectorBufferFromXMLElement( "MarkovA", noteElement );
     }
     if ( strcmp( elementType, "MarkovB" ) == 0 )
     {
-	  this->MarkovB = LabelRecordVectorFromXMLElement( "MarkovB", noteElement, procedure->GetNumTasks(), input->NumCentroids );
+	  this->MarkovB = VectorBufferFromXMLElement( "MarkovB", noteElement );
     }
 
   }

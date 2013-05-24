@@ -94,7 +94,7 @@ void vtkTrackingRecord
   qt.push_back( 1 + m11 + m22 + m33 );
 
   // Find the largest element
-  int maxIndex = 1;
+  int maxIndex = 0;
 
   for ( int i = 0; i < 4; i++ )
   {
@@ -131,7 +131,7 @@ void vtkTrackingRecord
 
   if (maxIndex == 3)
   {
-    this->Set( 3, m23 - m23 );
+    this->Set( 3, m23 - m32 );
 	this->Set( 4, m31 - m13 );
 	this->Set( 5, m12 - m21 );
 	this->Set( 6, 1 + m11 + m22 + m33 );

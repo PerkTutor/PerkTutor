@@ -100,7 +100,7 @@ std::string vtkWorkflowTool
   std::stringstream xmlstring;
 
   xmlstring << "  <Tool Name=\"" << this->Name << "\" />" << std::endl;
-  xmlstring << this->Training->ToXMLString() << std::endl;
+  xmlstring << this->Training->ToXMLString();
   xmlstring << "  </Tool>" << std::endl;
 
   return xmlstring.str();

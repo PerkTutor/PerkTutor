@@ -487,9 +487,10 @@ vtkRecordBuffer* vtkRecordBuffer
   // Calculate the values and time stamp
   for ( int i = 0; i < window; i++ )
   {
-    padRecordBuffer->SetRecordAt( i, this->GetRecordAt(0)->DeepCopy() );
-	padRecordBuffer->GetRecordAt(i)->SetTime( this->GetRecordAt(0)->GetTime() - ( i + 1 ) * DT );
-	padRecordBuffer->GetRecordAt(i)->SetLabel( this->GetRecordAt(0)->GetLabel() );
+    vtkLabelRecord* currentRecord = this->GetRecordAt(0)->DeepCopy();
+	currentRecord->SetTime( this->GetRecordAt(0)->GetTime() - ( i + 1 ) * DT );
+	currentRecord->SetLabel( this->GetRecordAt(0)->GetLabel() );
+	padRecordBuffer->SetRecordAt( window - ( i + 1 ), currentRecord );
   }
 
   return padRecordBuffer;
@@ -717,7 +718,7 @@ vtkLabelVector* vtkRecordBuffer
 ::Integrate()
 {
   // The record log will only hold one record at the end
-	vtkLabelVector* intVector = vtkLabelVector::New();
+  vtkLabelVector* intVector = vtkLabelVector::New();
   intVector->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
 
   // For each time
@@ -729,7 +730,7 @@ vtkLabelVector* vtkRecordBuffer
 	// Iterate over all dimensions
 	for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
-	  intVector->Set( d, intVector->Get(d) + DT * ( GetRecordAt(i)->Get(d) + GetRecordAt(i-1)->Get(d) ) / 2 );
+	  intVector->Crement( d, DT * ( GetRecordAt(i)->Get(d) + GetRecordAt(i-1)->Get(d) ) / 2 );
 	}
   }
 
@@ -744,13 +745,9 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
   // Create a copy of the current record log
   vtkRecordBuffer* shiftRecordBuffer = this->DeepCopy();
 
-  vtkLabelVector* blankVector = vtkLabelRecord::New();
-  blankVector->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
-  std::vector<vtkLabelVector*> legVectors( order + 1, blankVector );
-
   // Calculate the time adjustment (need range -1 to 1)
-  double startTime = GetRecordAt(0)->GetTime();
-  double endTime = GetRecordAt( this->GetNumRecords() - 1 )->GetTime();
+  double startTime = this->GetRecordAt(0)->GetTime();
+  double endTime = this->GetCurrentRecord()->GetTime();
   double rangeTime = endTime - startTime;
   
   for ( int i = 0; i < this->GetNumRecords(); i++ )
@@ -764,6 +761,8 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
   }
 
   // Create a copy of the record log for each degree of Legendre polynomial
+  std::vector<vtkLabelVector*> legCoeffMatrix;
+
   for ( int o = 0; o <= order; o++ )
   {
 	vtkRecordBuffer* unintRecordBuffer = vtkRecordBuffer::New();
@@ -772,14 +771,13 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
     // Multiply the values by the Legendre polynomials
     for ( int i = 0; i < shiftRecordBuffer->GetNumRecords(); i++ )
     {
-	  vtkLabelRecord* unintRecord = vtkLabelRecord::New();
-	  unintRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
+      double legPoly = LegendrePolynomial( shiftRecordBuffer->GetRecordAt(i)->GetTime(), o );
 
-	  double legPoly = LegendrePolynomial( shiftRecordBuffer->GetRecordAt(i)->GetTime(), o );
+	  vtkLabelRecord* unintRecord = vtkLabelRecord::New();
 
       for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	  {	    
-        unintRecord->Set( d, shiftRecordBuffer->GetRecordAt(i)->Get(d) * legPoly );
+        unintRecord->Add( shiftRecordBuffer->GetRecordAt(i)->Get(d) * legPoly );
 	  }
 
 	  unintRecord->SetTime( shiftRecordBuffer->GetRecordAt(i)->GetTime() );
@@ -789,14 +787,16 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
     }
 
 	// Integrate to get the Legendre coefficients for the particular order
-	legVectors.at(o)->SetValues( unintRecordBuffer->Integrate()->GetValues() );
-	legVectors.at(o)->SetLabel( o );
+	vtkLabelVector* legVector = vtkLabelVector::New();
+	legVector->SetValues( unintRecordBuffer->Integrate()->GetValues() );
+	legVector->SetLabel( o );
+	legCoeffMatrix.push_back( legVector );
 
 	unintRecordBuffer->Delete();
   }
 
   shiftRecordBuffer->Delete();
-  return legVectors;
+  return legCoeffMatrix;
 }
 
 
@@ -1363,12 +1363,33 @@ vtkRecordBuffer* vtkRecordBuffer
 }
 
 
+vtkRecordBuffer* vtkRecordBuffer
+::TrimBufferByLabel( std::vector<std::string> labels )
+{
+  vtkRecordBuffer* trimRecordBuffer = vtkRecordBuffer::New();
+
+  for ( int i = 0; i < this->GetNumRecords(); i++ )
+  {
+    // Check if the current record satisfies one of the labels
+    for ( int j = 0; j < labels.size(); j++ )
+	{
+      if ( labels.at(j).compare( this->GetRecordAt(i)->GetLabel() ) == 0 )
+	  {
+        trimRecordBuffer->AddRecord( this->GetRecordAt(i)->DeepCopy() );
+	  }
+	}
+  }
+
+  return trimRecordBuffer;
+}
+
+
 std::vector<vtkRecordBuffer*> vtkRecordBuffer
 ::SplitBufferByLabel( std::vector<std::string> labels )
 {
   std::vector<vtkRecordBuffer*> labelBuffers;
 
-  // Separate the transforms by their device name
+  // Separate the transforms by their task name
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
     // Ensure that the label for the current record is valid
@@ -1390,7 +1411,7 @@ std::vector<vtkRecordBuffer*> vtkRecordBuffer
     bool bufferExists = false;
     for ( int j = 0; j < labelBuffers.size(); j++ )
 	{
-	  // Observe that a device buffer only exists if it has a transform, thus, the current transform is always available
+	  // Observe that a buffer only exists if it has a transform, thus, the current transform is always available
       if ( labelBuffers.at(j)->GetCurrentRecord()->GetLabel().compare( this->GetRecordAt(i)->GetLabel() ) == 0 )
 	  {
         labelBuffers.at(j)->AddRecord( this->GetRecordAt(i)->DeepCopy() );
