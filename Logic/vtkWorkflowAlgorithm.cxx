@@ -15,9 +15,8 @@ vtkWorkflowAlgorithm
   this->CentroidBufferRT = vtkRecordBufferRT::New();
   this->MarkovRT = vtkMarkovModelRT::New();
 
-  this->IndexToProcess = 0;
-  this->CurrentTask = "";
-  this->PrevTask = "";
+  this->CurrentTask = NULL;
+  this->PrevTask = NULL;
 
   this->Tool = NULL;
 }
@@ -367,10 +366,10 @@ void vtkWorkflowAlgorithm
   // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
 
   // Apply Gaussian filtering to each previous records
-  this->FilterBufferRT->AddRecord( BufferRT->GaussianFilterRT( this->Tool->Input->FilterWidth ) );
+  this->FilterBufferRT->AddRecord( this->BufferRT->GaussianFilterRT( this->Tool->Input->FilterWidth ) );
   
   // Concatenate with derivative (velocity, acceleration, etc...)
-  vtkLabelRecord* derivativeRecord = this->FilterBufferRT->GetRecordRT();
+  vtkLabelRecord* derivativeRecord = this->FilterBufferRT->GetRecordRT()->DeepCopy();
   for ( int d = 1; d <= this->Tool->Input->Derivative; d++ )
   {
     vtkLabelRecord* currDerivativeRecord = this->BufferRT->DerivativeRT(d);
@@ -403,96 +402,7 @@ void vtkWorkflowAlgorithm
   // Now, we will keep a recording of the workflow segmentation in BufferRT - add the label
   this->BufferRT->GetRecordRT()->SetLabel( markovState->GetState() );
 
-  this->CurrentTask = markovState->GetState();
+  this->PrevTask = this->CurrentTask;
+  this->CurrentTask = this->Tool->Procedure->GetTaskByName( markovState->GetState() );
 
-}
-
-
-
-void vtkWorkflowAlgorithm
-::UpdateTask()
-{
-  // Check if there are any new transforms to process
-  if ( this->Tool->Buffer->GetNumRecords() > this->IndexToProcess )
-  {
-    vtkLabelRecord* currentRecord = this->Tool->Buffer->GetRecordAt( this->IndexToProcess );
-
-    if ( this->Tool->Trained )
-	{
-	  AddSegmentRecord( currentRecord );
-	}
-	else
-	{
-	  AddRecord( currentRecord );
-	}
-	// Add to the segmentation buffer
-	if ( this->CurrentTask.compare( this->PrevTask ) != 0 )
-	{
-      //this->Tool->Buffer->AddMessage( this->currentTask, currentRecord->GetTime() );
-      this->PrevTask = this->CurrentTask;
-	}
-
-	this->IndexToProcess++;
-  }
-
-}
-
-
-std::string vtkWorkflowAlgorithm
-::GetCurrentTask()
-{
-  if ( this->Tool->Procedure->IsTask( this->CurrentTask ) )
-  {
-    return "-";
-  }
-  return this->CurrentTask;
-}
-
-
-std::string vtkWorkflowAlgorithm
-::GetCurrentInstruction()
-{
-  if ( this->Tool->Procedure->IsTask( this->CurrentTask ) )
-  {
-    return "-";
-  }
-  return this->Tool->Procedure->GetTaskByName( this->CurrentTask )->Instruction;
-}
-
-
-std::string vtkWorkflowAlgorithm
-::GetNextTask()
-{
-  if ( this->Tool->Procedure->IsTask( this->CurrentTask ) )
-  {
-    return "-";
-  }
-
-  std::string nextTaskName = this->Tool->Procedure->GetTaskByName( this->CurrentTask )->Next;
-
-  if ( this->Tool->Procedure->IsTask( nextTaskName ) )
-  {
-    return "-";
-  }
-
-  return nextTaskName;
-}
-
-
-std::string vtkWorkflowAlgorithm
-::GetNextInstruction()
-{
-  if ( this->Tool->Procedure->IsTask( this->CurrentTask ) )
-  {
-    return "-";
-  }
-
-  std::string nextTaskName = this->Tool->Procedure->GetTaskByName( this->CurrentTask )->Next;
-
-  if ( this->Tool->Procedure->IsTask( nextTaskName ) )
-  {
-    return "-";
-  }
-
-  return this->Tool->Procedure->GetTaskByName( nextTaskName )->Instruction;
 }

@@ -49,14 +49,10 @@ public:
   bool Train();
   void AddRecord( vtkLabelRecord* newRecord );
   void AddSegmentRecord( vtkLabelRecord* newRecord );
-  void UpdateTask();
 
   vtkWorkflowTool* Tool;
-
-  std::string GetCurrentTask();
-  std::string GetCurrentInstruction();
-  std::string GetNextTask();
-  std::string GetNextInstruction();
+  vtkWorkflowTask* CurrentTask;
+  vtkWorkflowTask* PrevTask;
   
   std::vector<double> CalculateTaskProportions();
   std::vector<int> CalculateTaskCentroids();
@@ -76,10 +72,6 @@ private:
   vtkRecordBufferRT* CentroidBufferRT;
 
   vtkMarkovModelRT* MarkovRT;
-
-  int IndexToProcess;
-  std::string CurrentTask;
-  std::string PrevTask;
 
 };
 

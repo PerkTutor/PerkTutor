@@ -124,7 +124,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
 
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
-  connect( t,  SIGNAL( timeout() ), this, SLOT( updateGUI() ) );
+  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
   t->start(10); 
 
 }

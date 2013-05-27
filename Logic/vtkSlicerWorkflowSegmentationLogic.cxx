@@ -235,6 +235,7 @@ void vtkSlicerWorkflowSegmentationLogic
   while ( transformBuffer->GetNumTransforms() > this->IndexToProcess )
   {
     vtkTransformRecord* currentTransform = transformBuffer->GetTransformAt( this->IndexToProcess );
+	this->TransformRecorderLogic->GetBuffer()->AddTransform( currentTransform );
   
     vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
     currentRecord->FromTransformRecord( currentTransform );
@@ -242,8 +243,15 @@ void vtkSlicerWorkflowSegmentationLogic
     vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
     currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
 
+	// Add messages to the module node's buffer
+	if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
+    {
+      this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
+    }
+
     this->IndexToProcess++;
   }
+
 }
 
 
@@ -263,6 +271,11 @@ void vtkSlicerWorkflowSegmentationLogic
 
   vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
   currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
+
+  if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
+  {
+    this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
+  }
 
   this->IndexToProcess++;
 }
