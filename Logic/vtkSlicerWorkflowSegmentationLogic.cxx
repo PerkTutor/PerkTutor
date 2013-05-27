@@ -227,8 +227,6 @@ void vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::SegmentBuffer( std::string fileName )
 {
-  this->ResetWorkflowAlgorithms();
-
   vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
   transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );
 
@@ -258,7 +256,7 @@ void vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::Update()
 {
-  if ( this->TransformRecorderLogic->GetBuffer()->GetNumTransforms() <= this->IndexToProcess )
+  if ( this->TransformRecorderLogic == NULL || this->TransformRecorderLogic->GetBuffer() == NULL || this->TransformRecorderLogic->GetBuffer()->GetNumTransforms() <= this->IndexToProcess )
   {
     return;
   }

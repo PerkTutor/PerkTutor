@@ -207,6 +207,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
+	d->logic()->ResetWorkflowAlgorithms();
 	d->logic()->ImportWorkflowTraining( fileName.toStdString() );
   }
   
@@ -396,5 +397,8 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
   // For the moment, we display them just adding to the messages table
   // All the other things are taken care of by the TransformRecord logic/widgets
   enableButtons();
+
+  // This updates the tasks
+  d->logic()->Update();
 
 }
