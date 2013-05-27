@@ -14,6 +14,8 @@ vtkStandardNewMacro( vtkMarkovModelRT );
 vtkMarkovModelRT
 ::vtkMarkovModelRT()
 {
+  this->currDelta = vtkLabelVector::New();
+  this->currPsi = vtkLabelVector::New();
 }
 
 
@@ -111,7 +113,7 @@ vtkMarkovRecord* vtkMarkovModelRT
   }
 
   // Create a new MarkovRecord with the calculated state
-  vtkMarkovRecord* currMarkovRecord;
+  vtkMarkovRecord* currMarkovRecord = vtkMarkovRecord::New();
   currMarkovRecord->SetState( this->stateNames.at(endState) );
   currMarkovRecord->SetSymbol( element->GetSymbol() );
 

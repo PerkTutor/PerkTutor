@@ -50,7 +50,7 @@ vtkLabelVector* vtkRecordBufferRT
 ::DistancesRT( std::vector<vtkLabelVector*> vectors )
 {
   // Create a new order record
-  vtkLabelVector* distRecord;
+  vtkLabelVector* distRecord = vtkLabelVector::New();
   distRecord->Initialize( vectors.size(), 0.0 );
 
   double currSum;
@@ -90,13 +90,8 @@ vtkLabelRecord* vtkRecordBufferRT
   // Just calculate zeroth order first order derivative here, otherwise use other method
   if ( this->records.size() < 2 )
   {
-    vtkLabelRecord* derivRecord;
-
-    for( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
-    {
-      derivRecord->Add( 0.0 );
-    }
-	
+    vtkLabelRecord* derivRecord = vtkLabelRecord::New();
+	derivRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
     derivRecord->SetTime( GetRecordRT()->GetTime() );
     derivRecord->SetLabel( GetRecordRT()->GetLabel() );
     
@@ -111,7 +106,7 @@ vtkLabelRecord* vtkRecordBufferRT
   if ( order == 1 )
   {
     double DT = GetRecordAt( this->GetNumRecords() - 1 )->GetTime() - GetRecordAt( this->GetNumRecords() - 2 )->GetTime();
-    vtkLabelRecord* derivRecord;
+	vtkLabelRecord* derivRecord = vtkLabelRecord::New();
 
     for( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
     {
@@ -125,7 +120,7 @@ vtkLabelRecord* vtkRecordBufferRT
   }
 
   vtkRecordBuffer* derivRecordBuffer = this->Derivative( order );
-  return derivRecordBuffer->GetRecordAt( this->GetNumRecords() - 1 );
+  return derivRecordBuffer->GetCurrentRecord();
 
 }
 
@@ -135,7 +130,7 @@ vtkLabelRecord* vtkRecordBufferRT
 ::GaussianFilterRT( double width )
 {
   // Create a new record valuestor
-  vtkLabelRecord* gaussRecord;
+  vtkLabelRecord* gaussRecord = vtkLabelRecord::New();
   gaussRecord->Initialize( this->GetRecordAt(0)->Size(), 0.0 );
 
   // Iterate over all dimensions
@@ -185,6 +180,7 @@ vtkLabelRecord* vtkRecordBufferRT
 ::OrthogonalTransformationRT( int window, int order )
 {
   // Pad the recordlog with values at the beginning (only if necessary)
+  // Do not initialize, will be set by the condition below
   vtkRecordBuffer* padRecordBuffer;
   vtkRecordBuffer* padCatRecordBuffer;
   if ( this->GetNumRecords() <= window )
@@ -204,7 +200,7 @@ vtkLabelRecord* vtkRecordBufferRT
   // Create a new matrix to which the Legendre coefficients will be assigned
   std::vector<vtkLabelVector*> legCoeffMatrix = trimRecordBuffer->LegendreTransformation( order );
   
-  vtkLabelRecord* legRecord;
+  vtkLabelRecord* legRecord = vtkLabelRecord::New();
   legRecord->Initialize( this->GetRecordAt(0)->Size() * ( order + 1 ), 0.0 );
 
   // Calculate the Legendre coefficients: 2D -> 1D
@@ -239,7 +235,7 @@ vtkLabelRecord* vtkRecordBufferRT
 ::TransformPCART( std::vector<vtkLabelVector*> prinComps, vtkLabelVector* mean )
 {
   // Create a vtkLabelRecord* for the transformed record log
-  vtkLabelRecord* transRecord;
+  vtkLabelRecord* transRecord = vtkLabelRecord::New();
   transRecord->Initialize( prinComps.size(), 0.0 );
 
   // Initialize the components of the transformed time record to be zero
@@ -248,7 +244,7 @@ vtkLabelRecord* vtkRecordBufferRT
     // Iterate over all dimensions, and perform the transformation (ie vector multiplcation)
     for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
-      transRecord->Set( o, transRecord->Get(o) + ( GetRecordRT()->Get(d) - mean->Get(d) ) * prinComps[o]->Get(d) );
+      transRecord->Set( o, transRecord->Get(o) + ( GetRecordRT()->Get(d) - mean->Get(d) ) * prinComps.at(o)->Get(d) );
 	}
   }
 
@@ -282,7 +278,7 @@ vtkLabelRecord* vtkRecordBufferRT
 	}
   }
 
-  vtkLabelRecord* clustRecord;
+  vtkLabelRecord* clustRecord = vtkLabelRecord::New();
   clustRecord->Add( currMinCentroid );
   clustRecord->SetTime( GetRecordRT()->GetTime() );
   clustRecord->SetLabel( GetRecordRT()->GetLabel() );
@@ -295,7 +291,7 @@ vtkLabelRecord* vtkRecordBufferRT
 vtkMarkovRecord* vtkRecordBufferRT
 ::ToMarkovRecordRT()
 {
-  vtkMarkovRecord* markovRecord;
+  vtkMarkovRecord* markovRecord = vtkMarkovRecord::New();
 
   // We will assume that: label -> state, values[0] -> symbol
   markovRecord->SetState( this->GetRecordRT()->GetLabel() );

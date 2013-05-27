@@ -7,13 +7,13 @@ vtkStandardNewMacro( vtkWorkflowAlgorithm );
 vtkWorkflowAlgorithm
 ::vtkWorkflowAlgorithm()
 {
-  this->BufferRT = NULL;
-  this->DerivativeBufferRT = NULL;
-  this->FilterBufferRT = NULL;
-  this->OrthogonalBufferRT = NULL;
-  this->PcaBufferRT = NULL;
-  this->CentroidBufferRT = NULL;
-  this->MarkovRT = NULL;
+  this->BufferRT = vtkRecordBufferRT::New();
+  this->DerivativeBufferRT = vtkRecordBufferRT::New();
+  this->FilterBufferRT = vtkRecordBufferRT::New();
+  this->OrthogonalBufferRT = vtkRecordBufferRT::New();
+  this->PcaBufferRT = vtkRecordBufferRT::New();
+  this->CentroidBufferRT = vtkRecordBufferRT::New();
+  this->MarkovRT = vtkMarkovModelRT::New();
 
   this->IndexToProcess = 0;
   this->CurrentTask = "";
@@ -33,16 +33,13 @@ vtkWorkflowAlgorithm
   }
   TrainingBuffers.clear();
 
-  if ( this->BufferRT != NULL )
-  {
-    this->BufferRT->Delete();
-    this->DerivativeBufferRT->Delete();
-    this->FilterBufferRT->Delete();
-    this->OrthogonalBufferRT->Delete();
-    this->PcaBufferRT->Delete();
-    this->CentroidBufferRT->Delete();
-    this->MarkovRT->Delete();
-  }
+  this->BufferRT->Delete();
+  this->DerivativeBufferRT->Delete();
+  this->FilterBufferRT->Delete();
+  this->OrthogonalBufferRT->Delete();
+  this->PcaBufferRT->Delete();
+  this->CentroidBufferRT->Delete();
+  this->MarkovRT->Delete();
 }
 
 
@@ -163,19 +160,6 @@ void vtkWorkflowAlgorithm
   vtkRecordBuffer* trimRecordBuffer = newTrainingBuffer->TrimBufferByLabel( this->Tool->Procedure->GetTaskNames() );
   this->TrainingBuffers.push_back( trimRecordBuffer );
 }
-
-
-
-void vtkWorkflowAlgorithm
-::SegmentBuffer( vtkRecordBuffer* newBuffer )
-{
-  for ( int i = 0; i < newBuffer->GetNumRecords(); i++ )
-  {
-    this->AddSegmentRecord( newBuffer->GetRecordAt(i) );
-	this->UpdateTask();
-  }
-}
-
 
 
 
@@ -370,7 +354,7 @@ bool vtkWorkflowAlgorithm
 void vtkWorkflowAlgorithm
 ::AddRecord( vtkLabelRecord* newRecord )
 {
-  BufferRT->AddRecord( newRecord );
+  this->BufferRT->AddRecord( newRecord );
 }
 
 
@@ -383,35 +367,41 @@ void vtkWorkflowAlgorithm
   // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
 
   // Apply Gaussian filtering to each previous records
-  FilterBufferRT->AddRecord( BufferRT->GaussianFilterRT( this->Tool->Input->FilterWidth ) );
+  this->FilterBufferRT->AddRecord( BufferRT->GaussianFilterRT( this->Tool->Input->FilterWidth ) );
   
   // Concatenate with derivative (velocity, acceleration, etc...)
-  vtkLabelRecord* derivativeRecord = FilterBufferRT->GetRecordRT();
+  vtkLabelRecord* derivativeRecord = this->FilterBufferRT->GetRecordRT();
   for ( int d = 1; d <= this->Tool->Input->Derivative; d++ )
   {
-    vtkLabelRecord* currDerivativeRecord = BufferRT->DerivativeRT(d);
+    vtkLabelRecord* currDerivativeRecord = this->BufferRT->DerivativeRT(d);
 	for ( int j = 0; j < currDerivativeRecord->Size(); j++ )
 	{
       derivativeRecord->Add( currDerivativeRecord->Get(j) );
 	}
 	currDerivativeRecord->Delete();
   }
-  DerivativeBufferRT->AddRecord( derivativeRecord );
+  this->DerivativeBufferRT->AddRecord( derivativeRecord );
 
   // Apply orthogonal transformation
-  OrthogonalBufferRT->AddRecord( DerivativeBufferRT->OrthogonalTransformationRT( this->Tool->Input->OrthogonalWindow, this->Tool->Input->OrthogonalOrder ) );
+  this->OrthogonalBufferRT->AddRecord( this->DerivativeBufferRT->OrthogonalTransformationRT( this->Tool->Input->OrthogonalWindow, this->Tool->Input->OrthogonalOrder ) );
 
   // Apply PCA transformation
-  PcaBufferRT->AddRecord( OrthogonalBufferRT->TransformPCART( this->Tool->Training->PrinComps, this->Tool->Training->Mean ) );
+  this->PcaBufferRT->AddRecord( this->OrthogonalBufferRT->TransformPCART( this->Tool->Training->PrinComps, this->Tool->Training->Mean ) );
 
   // Apply centroid transformation
-  CentroidBufferRT->AddRecord( PcaBufferRT->fwdkmeansTransformRT( this->Tool->Training->Centroids ) );
+  this->CentroidBufferRT->AddRecord( this->PcaBufferRT->fwdkmeansTransformRT( this->Tool->Training->Centroids ) );
 
   // Use Markov Model calculate states to come up with the current most likely state...
-  vtkMarkovRecord* markovState = MarkovRT->CalculateStateRT( CentroidBufferRT->ToMarkovRecordRT() );
+  // TODO: This should only be done once
+  this->MarkovRT->SetStates( this->Tool->Procedure->GetTaskNames() );
+  this->MarkovRT->SetSymbols( this->Tool->Input->NumCentroids );
+  this->MarkovRT->SetPi( this->Tool->Training->MarkovPi );
+  this->MarkovRT->SetA( this->Tool->Training->MarkovA );
+  this->MarkovRT->SetB( this->Tool->Training->MarkovB );
+  vtkMarkovRecord* markovState = this->MarkovRT->CalculateStateRT( CentroidBufferRT->ToMarkovRecordRT() );
 
   // Now, we will keep a recording of the workflow segmentation in BufferRT - add the label
-  BufferRT->GetRecordRT()->SetLabel( markovState->GetState() );
+  this->BufferRT->GetRecordRT()->SetLabel( markovState->GetState() );
 
   this->CurrentTask = markovState->GetState();
 

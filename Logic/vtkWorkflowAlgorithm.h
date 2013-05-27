@@ -44,7 +44,6 @@ public:
 
   // Read training procedures from file
   void AddTrainingBuffer( vtkRecordBuffer* newTrainingProcedure );
-  void SegmentBuffer( vtkRecordBuffer* newProcedure );
 
   // Training and testing phases
   bool Train();

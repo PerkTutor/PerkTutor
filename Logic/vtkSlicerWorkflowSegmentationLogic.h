@@ -84,6 +84,7 @@ public:
   vtkWorkflowToolCollection* ToolCollection;
   vtkMRMLWorkflowSegmentationNode* ModuleNode;
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  int IndexToProcess;
 
   void ImportWorkflowProcedure( std::string fileName );
   void ImportWorkflowInput( std::string fileName );
@@ -95,6 +96,8 @@ public:
 
   void AddTrainingBuffer( std::string fileName );
   void SegmentBuffer( std::string fileName );
+
+  void Update();
 
 private:
 

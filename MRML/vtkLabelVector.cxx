@@ -122,6 +122,7 @@ void vtkLabelVector
   this->Label = newLabel;
 }
 
+
 void vtkLabelVector
 ::SetLabel( int newLabel )
 {

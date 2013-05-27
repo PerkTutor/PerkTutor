@@ -39,6 +39,7 @@ vtkSlicerWorkflowSegmentationLogic::vtkSlicerWorkflowSegmentationLogic()
   this->TransformRecorderLogic = NULL;
   this->ToolCollection = vtkWorkflowToolCollection::New();
   this->Parser = vtkXMLDataParser::New();
+  this->IndexToProcess = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -186,6 +187,7 @@ void vtkSlicerWorkflowSegmentationLogic
 	this->WorkflowAlgorithms.push_back( newWorkflowAlgorithm );
   }
 
+  this->IndexToProcess = 0;
 }
 
 
@@ -225,20 +227,44 @@ void vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::SegmentBuffer( std::string fileName )
 {
-  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
-  transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );  
-  std::vector<vtkMRMLTransformBufferNode*> transformBufferVector = transformBuffer->SplitBufferByName();
+  this->ResetWorkflowAlgorithms();
 
-  for ( int i = 0; transformBufferVector.size(); i++ )
+  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
+  transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );
+
+  while ( transformBuffer->GetNumTransforms() > this->IndexToProcess )
   {
-    vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( transformBufferVector.at(i)->GetCurrentTransform()->GetDeviceName() );
-	if ( currentAlgorithm != NULL )
-	{
-      vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
-	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i) ); // Note that this assumes the tool names are ok
-	  currentAlgorithm->SegmentBuffer( currentRecordBuffer );
-	}
+    vtkTransformRecord* currentTransform = transformBuffer->GetTransformAt( this->IndexToProcess );
+  
+    vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
+    currentRecord->FromTransformRecord( currentTransform );
+
+    vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
+    currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
+
+    this->IndexToProcess++;
   }
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::Update()
+{
+  if ( this->TransformRecorderLogic->GetBuffer()->GetNumTransforms() <= this->IndexToProcess )
+  {
+    return;
+  }
+
+  // If new transfrom, convert to label record and segment based on name
+  vtkTransformRecord* currentTransform = this->TransformRecorderLogic->GetBuffer()->GetTransformAt( this->IndexToProcess );
+  
+  vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
+  currentRecord->FromTransformRecord( currentTransform );
+
+  vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
+  currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
+
+  this->IndexToProcess++;
 }
 
 
