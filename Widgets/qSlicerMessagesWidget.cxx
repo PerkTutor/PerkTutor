@@ -102,6 +102,11 @@ void qSlicerMessagesWidget
   connect( d->RemoveMessageButton, SIGNAL( clicked() ), this, SLOT( onRemoveMessageButtonClicked() ) ); 
   connect( d->ClearMessagesButton, SIGNAL( clicked() ), this, SLOT( onClearMessagesButtonClicked() ) );
 
+  // GUI refresh: updates every 10ms
+  QTimer *t = new QTimer( this );
+  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
+  t->start(10); 
+
   this->updateWidget();  
 }
 

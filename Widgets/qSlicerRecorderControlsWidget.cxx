@@ -103,6 +103,11 @@ void qSlicerRecorderControlsWidget
   connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( onSaveButtonClicked() ) );
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
 
+  // GUI refresh: updates every 10ms
+  QTimer *t = new QTimer( this );
+  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
+  t->start(10); 
+
   this->updateWidget();  
 }
 
