@@ -64,6 +64,7 @@ public:
 
   vtkMRMLTransformBufferNode* ToTransformBufferNode();
   void FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode );
+  void FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode, std::vector<std::string> relevantMessages );
 
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );

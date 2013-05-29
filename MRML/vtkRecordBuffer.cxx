@@ -231,6 +231,7 @@ vtkMRMLTransformBufferNode* vtkRecordBuffer
 	  messageRecord->SetTime( this->GetRecordAt(i)->GetTime() );
 	  messageRecord->SetName( this->GetRecordAt(i)->GetLabel() );
 	  transformBufferNode->AddMessage( messageRecord );
+	  prevLabel = this->GetRecordAt(i)->GetLabel();
 	}
   }
 
@@ -239,9 +240,8 @@ vtkMRMLTransformBufferNode* vtkRecordBuffer
 }
 
 
-// Only transforms of one type will be stored here
+// Only transforms of one device will be stored here
 // This method will take those transform from a transform buffer
-// TODO: Move to logic
 void vtkRecordBuffer
 ::FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
 {
@@ -265,6 +265,53 @@ void vtkRecordBuffer
         this->GetRecordAt(j)->SetLabel( newTransformBufferNode->GetMessageAt(i)->GetName() );
 	  }
 	}
+  }
+
+}
+
+
+// Only keep the messages that are relevant for this tool
+// In addition, keep the "End"/"Done" message
+void vtkRecordBuffer
+::FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode, std::vector<std::string> relevantMessages )
+{
+  this->Clear();
+
+  for ( int i = 0; i < newTransformBufferNode->GetNumTransforms(); i++ )
+  {
+    vtkTrackingRecord* trackingRecord = vtkTrackingRecord::New();
+    trackingRecord->FromTransformRecord( newTransformBufferNode->GetTransformAt(i) );
+    this->AddRecord( trackingRecord );
+  }
+
+  // This is a NumTransforms by NumMessages order algorithm anyway...
+  // This will work because the messages are sorted by increased time
+  for ( int i = 0; i < newTransformBufferNode->GetNumMessages(); i++ )
+  {
+    // Only accept if message is relevant
+    bool relevant = false;
+    for ( int j = 0; j < relevantMessages.size(); j++ )
+	{
+      if ( newTransformBufferNode->GetMessageAt(i)->GetName().compare( relevantMessages.at(j) ) == 0 )
+	  {
+        relevant = true;
+	  }
+	}
+
+	// Skip if the message is not relevant or a finishing method
+	if ( ! relevant && newTransformBufferNode->GetMessageAt(i)->GetName().compare( "Done" ) != 0 && newTransformBufferNode->GetMessageAt(i)->GetName().compare( "End" ) != 0 )
+	{
+      continue;
+	}
+
+	for ( int j = 0; j < this->GetNumRecords(); j++ )
+	{
+      if ( this->GetRecordAt(j)->GetTime() > newTransformBufferNode->GetMessageAt(i)->GetTime() )
+	  {
+        this->GetRecordAt(j)->SetLabel( newTransformBufferNode->GetMessageAt(i)->GetName() );
+	  }
+	}
+
   }
 
 }

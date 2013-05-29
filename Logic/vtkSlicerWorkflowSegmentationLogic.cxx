@@ -216,7 +216,7 @@ void vtkSlicerWorkflowSegmentationLogic
 	if ( currentAlgorithm != NULL )
 	{
       vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
-	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i) ); // Note that this assumes the tool names are ok
+	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i), currentAlgorithm->Tool->Procedure->GetTaskNames() ); // Note that this assumes the tool names are ok
 	  currentAlgorithm->AddTrainingBuffer( currentRecordBuffer );
 	}
   }

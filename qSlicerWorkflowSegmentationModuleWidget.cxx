@@ -401,4 +401,6 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
   // This updates the tasks
   d->logic()->Update();
 
+
+
 }
