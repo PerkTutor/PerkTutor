@@ -24,12 +24,9 @@ vtkMarkovModel
 vtkMarkovModel
 ::~vtkMarkovModel()
 {
-  for ( int i = 0; i < this->GetNumStates(); i++ )
-  {
-    this->A.at(i)->Delete();
-	this->B.at(i)->Delete();
-  }
-  pi->Delete();
+  vtkDeleteVector( this->A );
+  vtkDeleteVector( this->B );
+  this->pi->Delete();
 
   this->stateNames.clear();
   this->symbolNames.clear();
@@ -333,25 +330,25 @@ std::string vtkMarkovModel
 
   std::stringstream xmlstring;
 
-  xmlstring << "<MarkovModel>" << std::endl;
+  xmlstring << "    <Parameter Type=\"Markov\" >" << std::endl;
 
-  xmlstring << "<States";
-  xmlstring << " Size=\"" << this->GetNumStates();
+  xmlstring << "      <States";
+  xmlstring << " Size=\"" << this->GetNumStates() << "\"";
   xmlstring << " Values=\"";
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
     xmlstring << this->stateNames.at(i) << " ";
   }
-  xmlstring << "\" />";
+  xmlstring << "\" />" << std::endl;
 
-  xmlstring << "<Symbols";
-  xmlstring << " Size=\"" << this->GetNumSymbols();
+  xmlstring << "      <Symbols";
+  xmlstring << " Size=\"" << this->GetNumSymbols() << "\"";
   xmlstring << " Values=\"";
   for ( int i = 0; i < this->GetNumSymbols(); i++ )
   {
     xmlstring << this->symbolNames.at(i) << " ";
   }
-  xmlstring << "\" />";
+  xmlstring << "\" />" << std::endl;
 
   xmlstring << this->pi->ToXMLString( "MarkovPi" );
 
@@ -365,7 +362,7 @@ std::string vtkMarkovModel
     xmlstring << this->B.at(i)->ToXMLString( "MarkovB" );
   }
 
-  xmlstring << "</MarkovModel>" << std::endl;
+  xmlstring << "    </Parameter>" << std::endl;
 
   return xmlstring.str();
 }
@@ -375,7 +372,7 @@ void vtkMarkovModel
 ::FromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( strcmp( element->GetName(), "MarkovModel" ) != 0 )
+  if ( strcmp( element->GetName(), "Parameter" ) != 0 || strcmp( element->GetAttribute( "Type" ), "Markov" ) != 0 )
   {
     return;  // If it's not a "log" or is the wrong tool jump to the next.
   }

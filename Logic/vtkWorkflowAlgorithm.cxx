@@ -13,7 +13,6 @@ vtkWorkflowAlgorithm
   this->OrthogonalBufferRT = vtkRecordBufferRT::New();
   this->PcaBufferRT = vtkRecordBufferRT::New();
   this->CentroidBufferRT = vtkRecordBufferRT::New();
-  this->MarkovRT = vtkMarkovModelRT::New();
 
   this->CurrentTask = NULL;
   this->PrevTask = NULL;
@@ -26,11 +25,7 @@ vtkWorkflowAlgorithm
 vtkWorkflowAlgorithm
 ::~vtkWorkflowAlgorithm()
 {
-  for ( int i = 0 ; i < TrainingBuffers.size(); i++ )
-  {
-    TrainingBuffers.at(i)->Delete();
-  }
-  TrainingBuffers.clear();
+  vtkDeleteVector( this->TrainingBuffers );
 
   this->BufferRT->Delete();
   this->DerivativeBufferRT->Delete();
@@ -38,7 +33,6 @@ vtkWorkflowAlgorithm
   this->OrthogonalBufferRT->Delete();
   this->PcaBufferRT->Delete();
   this->CentroidBufferRT->Delete();
-  this->MarkovRT->Delete();
 }
 
 
@@ -302,43 +296,19 @@ bool vtkWorkflowAlgorithm
   }
   Markov->EstimateParameters();
 
-  this->Tool->Training->MarkovPi = Markov->GetPi();
-  this->Tool->Training->MarkovA = Markov->GetA();
-  this->Tool->Training->MarkovB = Markov->GetB();
-
+  this->Tool->Training->Markov->SetStates( this->Tool->Procedure->GetTaskNames() );
+  this->Tool->Training->Markov->SetSymbols( this->Tool->Input->NumCentroids );
+  this->Tool->Training->Markov->SetPi( Markov->GetPi()->DeepCopy() );
+  this->Tool->Training->Markov->SetA( vtkDeepCopyVector( Markov->GetA() ) );
+  this->Tool->Training->Markov->SetB( vtkDeepCopyVector( Markov->GetB() ) );
 
   // Delete objects we have created
-  for ( int i = 0; i < filterBuffers.size(); i++ )
-  {
-    filterBuffers[i]->Delete();
-  }
-  for ( int i = 0; i < derivativeBuffers.size(); i++ )
-  {
-    derivativeBuffers[i]->Delete();
-  }
-  for ( int i = 0; i < orthogonalBuffers.size(); i++ )
-  {
-    orthogonalBuffers[i]->Delete();
-  }
-  for ( int i = 0; i < pcaBuffers.size(); i++ )
-  {
-    pcaBuffers[i]->Delete();
-  }
-  for ( int i = 0; i < buffersByLabel.size(); i++ )
-  {
-    buffersByLabel[i]->Delete();
-  }
-  for ( int i = 0; i < centroidBuffers.size(); i++ )
-  {
-    centroidBuffers[i]->Delete();
-  }
-  
-  filterBuffers.clear();
-  derivativeBuffers.clear();
-  orthogonalBuffers.clear();
-  pcaBuffers.clear();
-  buffersByLabel.clear();
-  centroidBuffers.clear();
+  vtkDeleteVector( filterBuffers );
+  vtkDeleteVector( derivativeBuffers );
+  vtkDeleteVector( orthogonalBuffers );
+  vtkDeleteVector( pcaBuffers );
+  vtkDeleteVector( buffersByLabel );
+  vtkDeleteVector( centroidBuffers );
 
   orthogonalCat->Delete();
   pcaCat->Delete();
@@ -391,13 +361,7 @@ void vtkWorkflowAlgorithm
   this->CentroidBufferRT->AddRecord( this->PcaBufferRT->fwdkmeansTransformRT( this->Tool->Training->Centroids ) );
 
   // Use Markov Model calculate states to come up with the current most likely state...
-  // TODO: This should only be done once
-  this->MarkovRT->SetStates( this->Tool->Procedure->GetTaskNames() );
-  this->MarkovRT->SetSymbols( this->Tool->Input->NumCentroids );
-  this->MarkovRT->SetPi( this->Tool->Training->MarkovPi );
-  this->MarkovRT->SetA( this->Tool->Training->MarkovA );
-  this->MarkovRT->SetB( this->Tool->Training->MarkovB );
-  vtkMarkovRecord* markovState = this->MarkovRT->CalculateStateRT( CentroidBufferRT->ToMarkovRecordRT() );
+  vtkMarkovRecord* markovState = this->Tool->Training->Markov->CalculateStateRT( CentroidBufferRT->ToMarkovRecordRT() );
 
   // Now, we will keep a recording of the workflow segmentation in BufferRT - add the label
   this->BufferRT->GetRecordRT()->SetLabel( markovState->GetState() );

@@ -17,8 +17,7 @@
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 #include "vtkTrackingRecord.h"
-#include "vtkWorkflowProcedure.h"
-#include "vtkWorkflowInput.h"
+#include "vtkMarkovModelRT.h"
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
@@ -43,12 +42,10 @@ public:
   std::vector<vtkLabelVector*> PrinComps;
   vtkLabelVector* Mean;
   std::vector<vtkLabelVector*> Centroids;
-  vtkLabelVector* MarkovPi;
-  std::vector<vtkLabelVector*> MarkovA;
-  std::vector<vtkLabelVector*> MarkovB;
+  vtkMarkovModelRT* Markov;
 
   std::string ToXMLString();
-  void FromXMLElement( vtkXMLDataElement* element, vtkWorkflowProcedure* procedure, vtkWorkflowInput* input );
+  void FromXMLElement( vtkXMLDataElement* element );
 
 };
 

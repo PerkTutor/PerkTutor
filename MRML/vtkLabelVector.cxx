@@ -4,6 +4,8 @@
 vtkStandardNewMacro( vtkLabelVector );
 
 
+// Class methods -----------------------------------------------------------------------
+
 vtkLabelVector
 ::vtkLabelVector()
 {

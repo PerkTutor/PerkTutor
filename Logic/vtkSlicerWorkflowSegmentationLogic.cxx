@@ -50,11 +50,7 @@ vtkSlicerWorkflowSegmentationLogic::~vtkSlicerWorkflowSegmentationLogic()
     this->ModuleNode->Delete();
     this->ModuleNode = NULL;
   }
-  if ( this->TransformRecorderLogic != NULL )
-  {
-    this->TransformRecorderLogic->Delete();
-    this->TransformRecorderLogic = NULL;
-  }
+  // The TransformRecorderLogic is already deleted in the TransformRecorder module itself
   this->ToolCollection->Delete();
   for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
   {
@@ -232,6 +228,11 @@ void vtkSlicerWorkflowSegmentationLogic
 
   while ( transformBuffer->GetNumTransforms() > this->IndexToProcess )
   {
+    if ( this->TransformRecorderLogic == NULL || this->TransformRecorderLogic->GetBuffer() == NULL )
+    {
+      return;
+    }
+
     vtkTransformRecord* currentTransform = transformBuffer->GetTransformAt( this->IndexToProcess );
 	this->TransformRecorderLogic->GetBuffer()->AddTransform( currentTransform );
   

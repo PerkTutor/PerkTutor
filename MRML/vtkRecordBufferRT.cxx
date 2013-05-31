@@ -13,7 +13,6 @@ vtkRecordBufferRT
 vtkRecordBufferRT
 ::~vtkRecordBufferRT()
 {
-  records.clear();
 }
 
 

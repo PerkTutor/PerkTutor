@@ -65,4 +65,32 @@ public:
 
 };
 
+
+template <class T> 
+void vtkDeleteVector( std::vector<T*> vector )
+{
+  for ( int i = 0; i < vector.size(); i++ )
+  {
+    if ( vector.at(i) != NULL )
+	{
+      vector.at(i)->Delete();
+	}
+  }
+  vector.clear();
+}
+
+template <class T>
+std::vector<T*> vtkDeepCopyVector( std::vector<T*> vector )
+{
+  std::vector<T*> copyVector;
+  for ( int i = 0; i < vector.size(); i++ )
+  {
+    if ( vector.at(i) != NULL )
+	{
+      copyVector.push_back( vector.at(i)->DeepCopy() );
+	}
+  }
+  return copyVector;
+}
+
 #endif

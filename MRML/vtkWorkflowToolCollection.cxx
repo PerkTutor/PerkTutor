@@ -16,11 +16,7 @@ vtkWorkflowToolCollection
 vtkWorkflowToolCollection
 ::~vtkWorkflowToolCollection()
 {
-  for ( int i = 0; i < this->tools.size(); i++ )
-  {
-    this->tools.at(i)->Delete();
-  }
-  this->tools.clear();
+  vtkDeleteVector( this->tools );
 }
 
 

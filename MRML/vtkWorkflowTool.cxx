@@ -112,7 +112,7 @@ void vtkWorkflowTool
 {
   if ( strcmp( element->GetName(), "Tool" ) == 0 && strcmp( element->GetAttribute( "Name" ), this->Name.c_str() ) == 0 )
   {
-    this->Training->FromXMLElement( element, this->Procedure, this->Input );
+    this->Training->FromXMLElement( element );
 	this->Trained = true;
   }
 }

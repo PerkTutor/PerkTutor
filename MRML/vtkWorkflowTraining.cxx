@@ -75,38 +75,17 @@ vtkWorkflowTraining
 {
   // Give default values, don't need to initialize vectors
   this->Mean = vtkLabelVector::New();
-  this->MarkovPi = vtkLabelVector::New();
+  this->Markov = vtkMarkovModelRT::New();
 }
 
 
 vtkWorkflowTraining
 ::~vtkWorkflowTraining()
 {
-  for ( int i = 0; i < this->PrinComps.size(); i++ )
-  {
-    this->PrinComps.at(i)->Delete();
-  }
-  for ( int i = 0; i < this->Centroids.size(); i++ )
-  {
-    this->Centroids.at(i)->Delete();
-  }
-  for ( int i = 0; i < this->MarkovA.size(); i++ )
-  {
-    this->MarkovA.at(i)->Delete();
-  }
-  for ( int i = 0; i < this->MarkovB.size(); i++ )
-  {
-    this->MarkovB.at(i)->Delete();
-  }
-
-  this->PrinComps.clear();
-  this->Centroids.clear();
-
-  this->MarkovA.clear();
-  this->MarkovB.clear();
-
+  vtkDeleteVector( this->PrinComps );
+  vtkDeleteVector( this->Centroids );
+  this->Markov->Delete();
   this->Mean->Delete();
-  this->MarkovPi->Delete();
 }
 
 
@@ -114,24 +93,9 @@ vtkWorkflowTraining* vtkWorkflowTraining
 ::DeepCopy()
 {
   vtkWorkflowTraining* newWorkflowTraining = vtkWorkflowTraining::New();
-  for ( int i = 0; i < this->PrinComps.size(); i++ )
-  {
-    newWorkflowTraining->PrinComps.push_back( this->PrinComps.at(i)->DeepCopy() );
-  }
+  newWorkflowTraining->PrinComps = vtkDeepCopyVector( this->PrinComps );
   newWorkflowTraining->Mean = this->Mean->DeepCopy();
-  for ( int i = 0; i < this->Centroids.size(); i++ )
-  {
-    newWorkflowTraining->Centroids.push_back( this->Centroids.at(i)->DeepCopy() );
-  }
-  newWorkflowTraining->MarkovPi = this->MarkovPi->DeepCopy();
-  for ( int i = 0; i < this->MarkovA.size(); i++ )
-  {
-    newWorkflowTraining->MarkovA.push_back( this->MarkovA.at(i)->DeepCopy() );
-  }
-  for ( int i = 0; i < this->MarkovB.size(); i++ )
-  {
-    newWorkflowTraining->MarkovB.push_back( this->MarkovB.at(i)->DeepCopy() );
-  }
+  newWorkflowTraining->Markov = this->Markov->DeepCopy();
   return newWorkflowTraining;
 }
 
@@ -144,9 +108,7 @@ std::string vtkWorkflowTraining
   xmlstring << VectorBufferToXMLString( "PrinComps", this->PrinComps );
   xmlstring << VectorBufferToXMLString( "Mean", this->Mean );
   xmlstring << VectorBufferToXMLString( "Centroids", this->Centroids );
-  xmlstring << VectorBufferToXMLString( "MarkovPi", this->MarkovPi );
-  xmlstring << VectorBufferToXMLString( "MarkovA", this->MarkovA );
-  xmlstring << VectorBufferToXMLString( "MarkovB", this->MarkovB );
+  xmlstring << this->Markov->ToXMLString();
 
   return xmlstring.str();
 
@@ -154,7 +116,7 @@ std::string vtkWorkflowTraining
 
 
 void vtkWorkflowTraining
-::FromXMLElement( vtkXMLDataElement* element, vtkWorkflowProcedure* procedure, vtkWorkflowInput* input )
+::FromXMLElement( vtkXMLDataElement* element )
 {
   int numElements = element->GetNumberOfNestedElements();
 
@@ -162,7 +124,7 @@ void vtkWorkflowTraining
   {
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 )
+    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 && strcmp( noteElement->GetName(), "MarkovModel" ) != 0 )
     {
       continue;  // If it's not a "Parameter", jump to the next.
     }
@@ -181,18 +143,10 @@ void vtkWorkflowTraining
     {
 	  this->Centroids = VectorBufferFromXMLElement( "Centroids", noteElement );
     }
-	if ( strcmp( elementType, "MarkovPi" ) == 0 )
+	if ( strcmp( elementType, "Markov" ) == 0 )
     {
-	  this->MarkovPi = VectorBufferFromXMLElement( "MarkovPi", noteElement ).at(0);
-    }
-	if ( strcmp( elementType, "MarkovA" ) == 0 )
-    {
-	  this->MarkovA = VectorBufferFromXMLElement( "MarkovA", noteElement );
-    }
-    if ( strcmp( elementType, "MarkovB" ) == 0 )
-    {
-	  this->MarkovB = VectorBufferFromXMLElement( "MarkovB", noteElement );
-    }
+	  this->Markov->FromXMLElement( noteElement );
+	}
 
   }
 

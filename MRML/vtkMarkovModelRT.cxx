@@ -22,7 +22,9 @@ vtkMarkovModelRT
 vtkMarkovModelRT
 ::~vtkMarkovModelRT()
 {
-  sequence.clear();
+  vtkDeleteVector( this->sequence );
+  this->currPsi->Delete();
+  this->currDelta->Delete();
 }
 
 
@@ -37,7 +39,7 @@ vtkMarkovModelRT* vtkMarkovModelRT
 	newMarkovModelRT->B.push_back( this->GetB().at(i)->DeepCopy() );
   }
 
-  newMarkovModelRT->pi = pi->DeepCopy();
+  newMarkovModelRT->pi = this->pi->DeepCopy();
 
   newMarkovModelRT->SetStates( this->stateNames );
   newMarkovModelRT->SetSymbols( this->symbolNames );

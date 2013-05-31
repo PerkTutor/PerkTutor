@@ -71,8 +71,6 @@ private:
   vtkRecordBufferRT* PcaBufferRT;
   vtkRecordBufferRT* CentroidBufferRT;
 
-  vtkMarkovModelRT* MarkovRT;
-
 };
 
 #endif

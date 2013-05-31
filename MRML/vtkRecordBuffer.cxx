@@ -19,11 +19,7 @@ vtkRecordBuffer
 vtkRecordBuffer
 ::~vtkRecordBuffer()
 {
-  for ( int i = 0; i < this->GetNumRecords(); i++ )
-  {
-    this->records.at(i)->Delete();
-  }
-  this->records.clear(); // Clear function automatically deconstructs all objects in the vector
+  vtkDeleteVector( this->records );
   this->name = "";
 }
 

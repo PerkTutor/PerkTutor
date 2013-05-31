@@ -18,6 +18,11 @@ vtkWorkflowTask
 vtkWorkflowTask
 ::~vtkWorkflowTask()
 {
+  this->Name = "";
+  this->Instruction = "";
+  this->Next = "";
+  this->Prerequisite = "";
+  this->Recovery = "";
 }
 
 
