@@ -151,7 +151,7 @@ void qSlicerWorkflowSegmentationModuleWidget::onModuleNodeSelected()
 
   if ( WSNode != NULL )
   {
-    d->logic()->ModuleNode = WSNode;
+    d->logic()->SetModuleNode( WSNode );
 	d->logic()->ResetWorkflowAlgorithms();
   }
 
@@ -323,7 +323,7 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
 
   // Disabling node selector widgets if there is no module node to reference input nodes.    
-  if ( d->logic()->ModuleNode == NULL )
+  if ( d->logic()->GetModuleNode() == NULL )
   {
 	d->WorkflowProcedureButton->setEnabled( false );
 	d->WorkflowInputButton->setEnabled( false );
@@ -334,6 +334,8 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
 	d->TrainButton->setEnabled( false );
 
 	d->SaveWorkflowTrainingButton->setEnabled( false );
+
+	return;
   }
   else
   {
@@ -341,12 +343,6 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
 
 	d->SegmentTransformBufferButton->setEnabled( true );
   }
-  
-  // The following code requires a module node.  
-  if ( d->logic()->ModuleNode == NULL )
-  {
-    return;
-  } 
   
   // If the algorithms are procedure defined
   if ( ! d->logic()->ToolCollection->GetDefined() )

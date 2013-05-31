@@ -118,6 +118,20 @@ void vtkSlicerWorkflowSegmentationLogic
 
 // Workflow Segmentation methods---------------------------------------------------------------------------
 
+void vtkSlicerWorkflowSegmentationLogic
+::SetModuleNode( vtkMRMLWorkflowSegmentationNode* node )
+{
+  vtkSetMRMLNodeMacro( this->ModuleNode, node );
+  this->Modified();
+}
+
+
+vtkMRMLWorkflowSegmentationNode* vtkSlicerWorkflowSegmentationLogic
+::GetModuleNode()
+{
+  return this->ModuleNode;
+}
+
 
 void vtkSlicerWorkflowSegmentationLogic
 ::ImportWorkflowProcedure( std::string fileName )

@@ -82,9 +82,10 @@ private:
 public:
 
   vtkWorkflowToolCollection* ToolCollection;
-  vtkMRMLWorkflowSegmentationNode* ModuleNode;
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
-  int IndexToProcess;
+
+  vtkMRMLWorkflowSegmentationNode* GetModuleNode();
+  void SetModuleNode( vtkMRMLWorkflowSegmentationNode* node );
 
   void ImportWorkflowProcedure( std::string fileName );
   void ImportWorkflowInput( std::string fileName );
@@ -100,6 +101,9 @@ public:
   void Update();
 
 private:
+
+  vtkMRMLWorkflowSegmentationNode* ModuleNode;
+  int IndexToProcess;
 
   vtkXMLDataParser* Parser;
   vtkXMLDataElement* ParseXMLFile( std::string fileName );
