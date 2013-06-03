@@ -160,13 +160,14 @@ int vtkMarkovModel
 void vtkMarkovModel
 ::SetA( std::vector<vtkLabelVector*> newA )
 {
-  A = newA;
+  vtkDeleteVector( this->A );
+  this->A = newA;
 }
 
 std::vector<vtkLabelVector*> vtkMarkovModel
 ::GetA()
 {
-  return A;
+  return this->A;
 }
 
 
@@ -221,13 +222,14 @@ std::vector<vtkLabelVector*> vtkMarkovModel
 void vtkMarkovModel
 ::SetB( std::vector<vtkLabelVector*> newB )
 {
-  B = newB;
+  vtkDeleteVector( this->B );
+  this->B = newB;
 }
 
 std::vector<vtkLabelVector*> vtkMarkovModel
 ::GetB()
 {
-  return B;
+  return this->B;
 }
 
 
@@ -282,13 +284,14 @@ std::vector<vtkLabelVector*> vtkMarkovModel
 void vtkMarkovModel
 ::SetPi( vtkLabelVector* newPi )
 {
-  pi = newPi;
+  this->pi->Delete();
+  this->pi = newPi;
 }
 
 vtkLabelVector* vtkMarkovModel
 ::GetPi()
 {
-  return pi;
+  return this->pi;
 }
 
 vtkLabelVector* vtkMarkovModel
@@ -434,9 +437,9 @@ void vtkMarkovModel
 
   }
 
-  this->pi = tempPi;
-  this->A = tempA;
-  this->B = tempB;
+  this->SetPi( tempPi );
+  this->SetA( tempA );
+  this->SetB( tempB );
 
 }
 
@@ -503,9 +506,9 @@ void vtkMarkovModel
 
   tempPi->SetLabel( this->pi->GetLabel() );
 
-  this->pi = tempPi;
-  this->A = tempA;
-  this->B = tempB;
+  this->SetPi( tempPi );
+  this->SetA( tempA );
+  this->SetB( tempB );
 
 }
 
@@ -517,9 +520,9 @@ void vtkMarkovModel
   // Doesn't make sense to have both values and values in training
   // Assume that the states and symbols have already been set
 
-  this->pi = this->GetZeroPi();
-  this->A = this->GetZeroA();
-  this->B = this->GetZeroB();
+  this->SetPi( this->GetZeroPi() );
+  this->SetA( this->GetZeroA() );
+  this->SetB( this->GetZeroB() );
 }
 
 
@@ -654,6 +657,11 @@ std::vector<vtkMarkovRecord*> vtkMarkovModel
     int currState = psi.at(i+1)->Get( this->LookupState( sequence.at(i+1)->GetState() ) );
     sequence.at(i)->SetState( this->stateNames.at( currState ) );
   }
+
+  // Delete stuff
+  logPi->Delete();
+  vtkDeleteVector( logA );
+  vtkDeleteVector( logB );
 
   return sequence;
 

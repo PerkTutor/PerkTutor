@@ -133,14 +133,17 @@ void vtkWorkflowTraining
 
 	if ( strcmp( elementType, "PrinComps" ) == 0 )
     {
+	  vtkDeleteVector( this->PrinComps );
 	  this->PrinComps = VectorBufferFromXMLElement( "PrinComps", noteElement );
     }
 	if ( strcmp( elementType, "Mean" ) == 0 )
     {
+	  this->Mean->Delete();
 	  this->Mean = VectorBufferFromXMLElement( "Mean", noteElement ).at(0);
     }
 	if ( strcmp( elementType, "Centroids" ) == 0 )
     {
+	  vtkDeleteVector( this->Centroids );
 	  this->Centroids = VectorBufferFromXMLElement( "Centroids", noteElement );
     }
 	if ( strcmp( elementType, "Markov" ) == 0 )

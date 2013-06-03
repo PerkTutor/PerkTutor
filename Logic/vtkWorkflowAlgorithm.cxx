@@ -1,6 +1,7 @@
 
 #include "vtkWorkflowAlgorithm.h"
 
+
 vtkStandardNewMacro( vtkWorkflowAlgorithm );
 
 
@@ -312,7 +313,10 @@ bool vtkWorkflowAlgorithm
 
   orthogonalCat->Delete();
   pcaCat->Delete();
-  // Markov->Delete();
+  Markov->Delete();
+  PseudoPi->Delete();
+  vtkDeleteVector( PseudoA );
+  vtkDeleteVector( PseudoB );
 
   this->Tool->Trained = true;
   return true;
@@ -365,6 +369,7 @@ void vtkWorkflowAlgorithm
 
   // Now, we will keep a recording of the workflow segmentation in BufferRT - add the label
   this->BufferRT->GetRecordRT()->SetLabel( markovState->GetState() );
+
 
   this->PrevTask = this->CurrentTask;
   this->CurrentTask = this->Tool->Procedure->GetTaskByName( markovState->GetState() );

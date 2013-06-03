@@ -14,8 +14,8 @@ vtkStandardNewMacro( vtkMarkovModelRT );
 vtkMarkovModelRT
 ::vtkMarkovModelRT()
 {
-  this->currDelta = vtkLabelVector::New();
-  this->currPsi = vtkLabelVector::New();
+  this->currDelta = NULL;
+  this->currPsi = NULL;
 }
 
 
@@ -67,13 +67,14 @@ vtkMarkovRecord* vtkMarkovModelRT
   // Case there are no previous elements in the sequence
   if ( this->sequence.size() == 0 )
   {
+    this->currDelta = vtkLabelVector::New();
     for ( int j = 0; j < this->GetNumStates(); j++ )
 	{
       this->currDelta->Add( logPi->Get(j) + logB.at(j)->Get( this->LookupSymbol( element->GetSymbol() ) ) );
 	}
-    this->currPsi = this->GetZeroPi();
-
 	this->currDelta->SetLabel( "Delta" );
+
+    this->currPsi = this->GetZeroPi();
 	this->currPsi->SetLabel( "Psi" );
   }
 
@@ -114,13 +115,16 @@ vtkMarkovRecord* vtkMarkovModelRT
 	}
   }
 
-  // Create a new MarkovRecord with the calculated state
-  vtkMarkovRecord* currMarkovRecord = vtkMarkovRecord::New();
-  currMarkovRecord->SetState( this->stateNames.at(endState) );
-  currMarkovRecord->SetSymbol( element->GetSymbol() );
+  // Delete stuff
+  logPi->Delete();
+  vtkDeleteVector( logA );
+  vtkDeleteVector( logB );
 
-  sequence.push_back( currMarkovRecord );
+  // Subsitute the calculated state into the inputted MarkovRecord (since the state originally won't make sense anyway)
+  element->SetState( this->stateNames.at(endState) );
 
-  return currMarkovRecord;
+  sequence.push_back( element );
+
+  return element;
 
 }

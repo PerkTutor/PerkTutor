@@ -14,7 +14,7 @@ vtkWorkflowProcedure
 vtkWorkflowProcedure
 ::~vtkWorkflowProcedure()
 {
-  //vtkDeleteVector( this->Tasks );
+  vtkDeleteVector( this->Tasks );
 }
 
 

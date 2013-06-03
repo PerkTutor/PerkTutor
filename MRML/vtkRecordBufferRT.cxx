@@ -22,10 +22,7 @@ vtkRecordBufferRT* vtkRecordBufferRT
   vtkRecordBufferRT* newRecordBufferRT = vtkRecordBufferRT::New();
 
   newRecordBufferRT->SetName( this->GetName() );
-  for ( int i = 0; i < this->GetNumRecords(); i++ )
-  {
-    newRecordBufferRT->AddRecord( this->GetRecordAt(i) );
-  }
+  vtkDeepCopyVector( this->records );
 
   return newRecordBufferRT;
 }
@@ -224,9 +221,9 @@ vtkLabelRecord* vtkRecordBufferRT
 	padCatRecordBuffer->Delete();
   }
   trimRecordBuffer->Delete();
+  vtkDeleteVector( legCoeffMatrix );
 
   return legRecord;
-
 }
 
 
@@ -243,7 +240,7 @@ vtkLabelRecord* vtkRecordBufferRT
     // Iterate over all dimensions, and perform the transformation (ie vector multiplcation)
     for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
 	{
-      transRecord->Set( o, transRecord->Get(o) + ( GetRecordRT()->Get(d) - mean->Get(d) ) * prinComps.at(o)->Get(d) );
+      transRecord->Crement( o, ( GetRecordRT()->Get(d) - mean->Get(d) ) * prinComps.at(o)->Get(d) );
 	}
   }
 
@@ -252,7 +249,6 @@ vtkLabelRecord* vtkRecordBufferRT
   transRecord->SetLabel( GetRecordRT()->GetLabel() );
 
   return transRecord;
-
 }
 
 
@@ -277,13 +273,14 @@ vtkLabelRecord* vtkRecordBufferRT
 	}
   }
 
+  centDist->Delete();
+
   vtkLabelRecord* clustRecord = vtkLabelRecord::New();
   clustRecord->Add( currMinCentroid );
   clustRecord->SetTime( GetRecordRT()->GetTime() );
   clustRecord->SetLabel( GetRecordRT()->GetLabel() );
   
   return clustRecord;
-
 }
 
 
@@ -294,10 +291,7 @@ vtkMarkovRecord* vtkRecordBufferRT
 
   // We will assume that: label -> state, values[0] -> symbol
   markovRecord->SetState( this->GetRecordRT()->GetLabel() );
-  std::stringstream symbolstring;
-  symbolstring << this->GetRecordRT()->Get(0);
-  markovRecord->SetSymbol( symbolstring.str() );
+  markovRecord->SetSymbol( this->GetRecordRT()->Get(0) );
 
   return markovRecord;
-
 }

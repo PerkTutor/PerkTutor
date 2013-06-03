@@ -248,7 +248,7 @@ void vtkSlicerWorkflowSegmentationLogic
     }
 
     vtkTransformRecord* currentTransform = transformBuffer->GetTransformAt( this->IndexToProcess );
-	this->TransformRecorderLogic->GetBuffer()->AddTransform( currentTransform );
+	this->TransformRecorderLogic->GetBuffer()->AddTransform( currentTransform->DeepCopy() );
   
     vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
     currentRecord->FromTransformRecord( currentTransform );
@@ -264,6 +264,8 @@ void vtkSlicerWorkflowSegmentationLogic
 
     this->IndexToProcess++;
   }
+
+  transformBuffer->Delete();
 
 }
 
