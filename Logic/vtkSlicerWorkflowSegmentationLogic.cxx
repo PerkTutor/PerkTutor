@@ -228,8 +228,12 @@ void vtkSlicerWorkflowSegmentationLogic
       vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
 	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i), currentAlgorithm->Tool->Procedure->GetTaskNames() ); // Note that this assumes the tool names are ok
 	  currentAlgorithm->AddTrainingBuffer( currentRecordBuffer );
+	  currentRecordBuffer->Delete(); // This is trimmed and a new copy is created and stored
 	}
   }
+
+  transformBuffer->Delete();
+  vtkDeleteVector( transformBufferVector );
 
 }
 

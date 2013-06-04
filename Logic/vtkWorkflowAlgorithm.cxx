@@ -162,7 +162,7 @@ bool vtkWorkflowAlgorithm
 ::Train()
 {
   // There must exist procedures
-  if ( TrainingBuffers.empty() )
+  if ( this->TrainingBuffers.empty() )
   {
     return false;
   }
@@ -219,7 +219,6 @@ bool vtkWorkflowAlgorithm
   // Concatenate all of the record logs into one record log
   // Observe that the concatenated buffers are sorted by time stamp - its order is not maintained by procedure, but this is ok
   vtkRecordBuffer* orthogonalCat = vtkRecordBuffer::New();
-  orthogonalCat->Initialize( 0, orthogonalBuffers.at(0)->GetCurrentRecord()->Size() );
   for ( int i = 0; i < orthogonalBuffers.size(); i++ )
   {
     vtkRecordBuffer* currOrthogonalCat = orthogonalCat;
@@ -228,7 +227,8 @@ bool vtkWorkflowAlgorithm
   }
 
   // Calculate and apply the PCA transform
-  this->Tool->Training->Mean->SetValues( orthogonalCat->Mean()->GetValues() );
+  this->Tool->Training->Mean->Delete();
+  this->Tool->Training->Mean = orthogonalCat->Mean();
   this->Tool->Training->Mean->SetLabel( "Mean" );
   this->Tool->Training->PrinComps = orthogonalCat->CalculatePCA( this->Tool->Input->NumPrinComps );
 
@@ -293,7 +293,9 @@ bool vtkWorkflowAlgorithm
   Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
   for ( int i = 0; i < centroidBuffers.size(); i++ )
   {
-    Markov->AddEstimationData( centroidBuffers.at(i)->ToMarkovRecordVector() );
+    std::vector<vtkMarkovRecord*> markovRecords = centroidBuffers.at(i)->ToMarkovRecordVector();
+    Markov->AddEstimationData( markovRecords );
+    vtkDeleteVector( markovRecords );
   }
   Markov->EstimateParameters();
 
@@ -310,6 +312,7 @@ bool vtkWorkflowAlgorithm
   vtkDeleteVector( pcaBuffers );
   vtkDeleteVector( buffersByLabel );
   vtkDeleteVector( centroidBuffers );
+
 
   orthogonalCat->Delete();
   pcaCat->Delete();

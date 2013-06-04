@@ -1035,6 +1035,7 @@ vnl_matrix<double>* vtkRecordBuffer
 	}
   }
 
+  meanRecord->Delete();
   zeroMeanBuffer->Delete();
   return cov;
 }
@@ -1160,6 +1161,7 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 	  }	  
 
 	  // Recalculate centroids
+	  vtkDeleteVector( centroids );
       centroids = this->RecalculateCentroids( membership, k + 1 );
 
 	}
@@ -1176,7 +1178,6 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
 vtkLabelVector* vtkRecordBuffer
 ::FindNextCentroid( std::vector<vtkLabelVector*> centroids )
 {
-
   // Find the record farthest from any centroid
   std::vector<vtkLabelVector*> centDist = this->Distances( centroids );
 	
@@ -1203,6 +1204,8 @@ vtkLabelVector* vtkRecordBuffer
 	}
   }
 
+  vtkDeleteVector( centDist );
+
   // Create new centroid for candidate
   vtkLabelVector* currCentroid = vtkLabelVector::New();
   currCentroid->SetValues( this->GetRecordAt(candidateRecord)->GetValues() );
@@ -1215,7 +1218,6 @@ vtkLabelVector* vtkRecordBuffer
 bool vtkRecordBuffer
 ::MembershipChanged( std::vector<int> oldMembership, std::vector<int> newMembership )
 {
-
   for ( int i = 0; i < oldMembership.size(); i++ )
   {
     if ( oldMembership[i] != newMembership[i] )
@@ -1241,7 +1243,7 @@ std::vector<bool> vtkRecordBuffer
   }
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
-    emptyVector[ membership[i] ] = false;
+    emptyVector.at( membership.at(i) ) = false;
   }
 
   return emptyVector;
@@ -1268,29 +1270,25 @@ bool vtkRecordBuffer
 std::vector<vtkLabelVector*> vtkRecordBuffer
 ::MoveEmptyClusters( std::vector<vtkLabelVector*> centroids, std::vector<bool> emptyVector )
 {
-
   // Remove any emptyness
   for ( int c = 0; c < centroids.size(); c++ )
   {
-    if ( emptyVector[c] == false )
+    if ( emptyVector.at(c) == false )
 	{
 	  continue;
 	}
 
-    centroids[c] = this->FindNextCentroid( ( centroids ) );
-
+	centroids.at(c)->Delete();
+    centroids.at(c) = this->FindNextCentroid( centroids );
   }
 
   return centroids;
-
 }
 
 
 std::vector<int> vtkRecordBuffer
 ::ReassignMembership( std::vector<vtkLabelVector*> centroids )
 {
-
-	
   // Find the record farthest from any centroid
   // Tricky way to cast vector of vtkLabelVector* to vector of ValeuRecord
   std::vector<vtkLabelVector*> centDist = this->Distances( centroids );
@@ -1312,6 +1310,8 @@ std::vector<int> vtkRecordBuffer
 	}
     membership.push_back( currMinCentroid );
   }
+
+  vtkDeleteVector( centDist );
 	
   return membership;
 }
@@ -1357,7 +1357,6 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
   }
 
   return centroids;
-
 }
 
 
@@ -1382,7 +1381,6 @@ vtkRecordBuffer* vtkRecordBuffer
   }
   
   return clusterRecordBuffer;
-
 }
 
 
