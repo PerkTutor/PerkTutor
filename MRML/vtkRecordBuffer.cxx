@@ -104,11 +104,6 @@ void vtkRecordBuffer
   {
     return;
   }
-  if ( this->GetRecordAt(index) != NULL )
-  {
-    this->GetRecordAt(index)->Delete();
-  }
-
   this->records.at(index) = newRecord;
 }
 
@@ -116,10 +111,6 @@ void vtkRecordBuffer
 void vtkRecordBuffer
 ::RemoveRecordAt( int index )
 {
-  if ( this->GetRecordAt(index) != NULL )
-  {
-    this->GetRecordAt(index)->Delete();
-  }
   this->records.erase( records.begin() + index );
 }
 
@@ -533,7 +524,7 @@ vtkRecordBuffer* vtkRecordBuffer
   for ( int i = window; i > 0; i-- )
   {
     vtkLabelRecord* currentRecord = this->GetRecordAt(0)->DeepCopy();
-	currentRecord->SetTime( this->GetRecordAt(0)->GetTime() - ( i + 1 ) * DT );
+	currentRecord->SetTime( this->GetRecordAt(0)->GetTime() - i * DT );
 	currentRecord->SetLabel( this->GetRecordAt(0)->GetLabel() );
 	padRecordBuffer->AddRecord( currentRecord );
   }
@@ -991,6 +982,7 @@ vtkRecordBuffer* vtkRecordBuffer
 	currLegRecord->SetLabel( GetRecordAt(i)->GetLabel() );
 	orthRecordBuffer->AddRecord( currLegRecord );
 
+    vtkDeleteVector( legCoeffMatrix );
   }
 
   padRecordBuffer->Delete();
@@ -1418,45 +1410,35 @@ vtkRecordBuffer* vtkRecordBuffer
 std::vector<vtkRecordBuffer*> vtkRecordBuffer
 ::SplitBufferByLabel( std::vector<std::string> labels )
 {
+  // Let us assume that all labels will exist
+  // The buffers must be in the same order as the labels
+  // Otherwise an empty buffer is ok
   std::vector<vtkRecordBuffer*> labelBuffers;
+  for ( int i = 0; i < labels.size(); i++ )
+  {
+    vtkRecordBuffer* currLabelBuffer = vtkRecordBuffer::New();
+	labelBuffers.push_back( currLabelBuffer );
+  }
 
   // Separate the transforms by their task name
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
     // Ensure that the label for the current record is valid
-    bool labelExists = false;
+    int labelIndex = -1;
     for ( int j = 0; j < labels.size(); j++ )
 	{
       if ( labels.at(j).compare( this->GetRecordAt(i)->GetLabel() ) == 0 )
 	  {
-		labelExists = true;
+		labelIndex = j;
 	  }
 	}
 
-	if ( ! labelExists )
+	if ( labelIndex < 0 )
 	{
       continue;
 	}
 
-	// Add the current record to a buffer (or create a new buffer if the correct one doesn't already exist)
-    bool bufferExists = false;
-    for ( int j = 0; j < labelBuffers.size(); j++ )
-	{
-	  // Observe that a buffer only exists if it has a transform, thus, the current transform is always available
-      if ( labelBuffers.at(j)->GetCurrentRecord()->GetLabel().compare( this->GetRecordAt(i)->GetLabel() ) == 0 )
-	  {
-        labelBuffers.at(j)->AddRecord( this->GetRecordAt(i)->DeepCopy() );
-		bufferExists = true;
-	  }
-	}
-
-	if ( ! bufferExists )
-	{
-	  vtkRecordBuffer* newLabelBuffer = vtkRecordBuffer::New();
-	  newLabelBuffer->AddRecord( this->GetRecordAt(i)->DeepCopy() );
-	  labelBuffers.push_back( newLabelBuffer );
-	}
-
+	labelBuffers.at(labelIndex)->AddRecord( this->GetRecordAt(i)->DeepCopy() );
   }
 
   return labelBuffers;

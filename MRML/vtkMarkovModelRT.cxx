@@ -23,8 +23,12 @@ vtkMarkovModelRT
 ::~vtkMarkovModelRT()
 {
   vtkDeleteVector( this->sequence );
-  this->currPsi->Delete();
-  this->currDelta->Delete();
+
+  if ( this->currPsi != NULL )
+  {
+    this->currPsi->Delete();
+    this->currDelta->Delete();
+  }
 }
 
 
