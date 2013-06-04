@@ -81,7 +81,6 @@ private:
   // These are methods specific to the Workflow Segmentation logic -------------------------------------------------------
 public:
 
-  vtkWorkflowToolCollection* ToolCollection;
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
   vtkMRMLWorkflowSegmentationNode* GetModuleNode();
@@ -93,6 +92,9 @@ public:
   void SaveWorkflowTraining( std::string fileName );
 
   void ResetWorkflowAlgorithms();
+  bool GetWorkflowAlgorithmsDefined();
+  bool GetWorkflowAlgorithmsInputted();
+  bool GetWorkflowAlgorithmsTrained();
   bool Train();
 
   void AddTrainingBuffer( std::string fileName );

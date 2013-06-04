@@ -1,40 +1,6 @@
 
-// VTK includes
-#include <vtkCleanPolyData.h>
-#include <vtkCommand.h>
-#include <vtkExtractPolyDataGeometry.h>
-#include <vtkExtractSelectedPolyDataIds.h>
-#include <vtkIdTypeArray.h>
-#include <vtkInformation.h>
-#include <vtkPlanes.h>
-#include <vtkSelection.h>
-#include <vtkSelectionNode.h>
-#include "vtkIntArray.h"
-#include "vtkMath.h"
-#include "vtkMatrix4x4.h"
-#include "vtkSmartPointer.h"
-#include "vtkObjectFactory.h"
-#include "vtkImageData.h"
-#include "vtkXMLDataParser.h"
-
 // WorkflowSegmentation MRML includes
 #include "vtkMRMLWorkflowSegmentationNode.h"
-
-// MRML includes
-#include <vtkMRMLDiffusionTensorDisplayPropertiesNode.h>
-#include <vtkMRMLScene.h>
-#include <vtkMRMLAnnotationNode.h>
-#include <vtkMRMLAnnotationROINode.h>
-#include "vtkMRMLLinearTransformNode.h"
-// STD includes
-#include <math.h>
-#include <vector>
-#include <algorithm>
-#include <cmath>
-#include <ctime>
-#include <fstream>
-#include <sstream>
-#include <string>
 
 
 // MACROS ---------------------------------------------------------------------
@@ -59,17 +25,6 @@
       this->Set##x( attValue ); \
       }
 
-
-// For testing.
-void fileOutput( std::string str, double num )
-{
-  std::ofstream output( "_vtkMRMLWorkflowSegmentationNode.txt", std::ios_base::app );
-  time_t seconds;
-  seconds = time( NULL );
-  
-  output << seconds << " : " << str << " - " << num << std::endl;
-  output.close();
-}
 
 
 
@@ -113,6 +68,9 @@ vtkMRMLWorkflowSegmentationNode
   this->WorkflowProcedureFileName = "";
   this->WorkflowInputFileName = "";
   this->WorkflowTrainingFileName = "";
+
+  this->ToolCollection = vtkWorkflowToolCollection::New();
+  this->Parser = vtkXMLDataParser::New();
 }
 
 
@@ -120,6 +78,8 @@ vtkMRMLWorkflowSegmentationNode
 vtkMRMLWorkflowSegmentationNode
 ::~vtkMRMLWorkflowSegmentationNode()
 {
+  this->ToolCollection->Delete();
+  this->Parser->Delete();
 }
 
 
@@ -246,7 +206,6 @@ void vtkMRMLWorkflowSegmentationNode
 }
 
 
-
 void vtkMRMLWorkflowSegmentationNode
 ::ImportWorkflowProcedure( std::string newWorkflowProcedureFileName )
 {
@@ -255,19 +214,10 @@ void vtkMRMLWorkflowSegmentationNode
     this->WorkflowProcedureFileName = newWorkflowProcedureFileName;
   }
 
-  // Create a parser to parse the XML data from TransformRecorderLog
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( this->WorkflowProcedureFileName.c_str() );
-  parser->Parse();
-  
-  // Get the root element (and check it exists)
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
-
-  this->ToolCollection->ProcedureFromXMLElement( rootElement );
-
+  // Create a parser to parse the XML data from the procedure definition
+  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowProcedureFileName );
+  this->ToolCollection->ProcedureFromXMLElement( element );
 }
-
-
 
 
 void
@@ -278,17 +228,14 @@ vtkMRMLWorkflowSegmentationNode
   {
     this->WorkflowInputFileName = newWorkflowInputFileName;
   }
+  if ( ! this->ToolCollection->GetDefined() )
+  {
+    return;
+  }
 
-  // Create a parser to parse the XML data from TransformRecorderLog
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( this->WorkflowInputFileName.c_str() );
-  parser->Parse();
-  
-  // Get the root element (and check it exists)
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
-
-  this->ToolCollection->InputFromXMLElement( rootElement );
-
+  // Create a parser to parse the XML data from the input parameters
+  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowInputFileName );
+  this->ToolCollection->InputFromXMLElement( element );
 }
 
 
@@ -300,16 +247,14 @@ vtkMRMLWorkflowSegmentationNode
   {
     this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
   }
+  if ( ! this->ToolCollection->GetInputted() )
+  {
+    return;
+  }
 
-  // Create a parser to parse the XML data from TransformRecorderLog
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( this->WorkflowTrainingFileName.c_str() );
-  parser->Parse();
-  
-  // Get the root element (and check it exists)
-  vtkXMLDataElement* rootElement = parser->GetRootElement();
-
-  this->ToolCollection->TrainingFromXMLElement( rootElement );
+  // Create a parser to parse the XML data from the training parameters
+  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowTrainingFileName );
+  this->ToolCollection->TrainingFromXMLElement( element );
 
 }
 
@@ -317,6 +262,7 @@ vtkMRMLWorkflowSegmentationNode
 void vtkMRMLWorkflowSegmentationNode
 ::ImportAllWorkflowData()
 {
+  // Checks already exist to make sure input has procedure and training has input
   this->ImportWorkflowProcedure();
   this->ImportWorkflowInput();
   this->ImportWorkflowTraining();
@@ -328,11 +274,13 @@ void vtkMRMLWorkflowSegmentationNode
 // File I/O: Getters and setters
 // ----------------------------------------------------------------------------
 
+
 std::string vtkMRMLWorkflowSegmentationNode
 ::GetWorkflowProcedureFileName()
 {
   return this->WorkflowProcedureFileName;
 }
+
 
 void vtkMRMLWorkflowSegmentationNode
 ::SetWorkflowProcedureFileName( std::string newWorkflowTrainingFileName )
@@ -340,11 +288,13 @@ void vtkMRMLWorkflowSegmentationNode
   this->WorkflowProcedureFileName = newWorkflowTrainingFileName;
 }
 
+
 std::string vtkMRMLWorkflowSegmentationNode
 ::GetWorkflowInputFileName()
 {
   return this->WorkflowInputFileName;
 }
+
 
 void vtkMRMLWorkflowSegmentationNode
 ::SetWorkflowInputFileName( std::string newWorkflowProcedureFileName )
@@ -352,14 +302,26 @@ void vtkMRMLWorkflowSegmentationNode
   this->WorkflowInputFileName = newWorkflowProcedureFileName;
 }
 
+
 std::string vtkMRMLWorkflowSegmentationNode
 ::GetWorkflowTrainingFileName()
 {
   return this->WorkflowTrainingFileName;
 }
 
+
 void vtkMRMLWorkflowSegmentationNode
 ::SetWorkflowTrainingFileName( std::string newWorkflowTrainingFileName )
 {
   this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
+}
+
+
+vtkXMLDataElement* vtkMRMLWorkflowSegmentationNode
+::ParseXMLFile( std::string fileName )
+{
+  // Parse the file here, not in the widget
+  this->Parser->SetFileName( fileName.c_str() );
+  this->Parser->Parse();
+  return Parser->GetRootElement();
 }

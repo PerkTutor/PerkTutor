@@ -345,7 +345,7 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   }
   
   // If the algorithms are procedure defined
-  if ( ! d->logic()->ToolCollection->GetDefined() )
+  if ( ! d->logic()->GetWorkflowAlgorithmsDefined() )
   {    
     d->WorkflowInputButton->setEnabled( false );
   }
@@ -355,7 +355,7 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   }
 
   // If the algorithms are parameters inputted
-  if ( ! d->logic()->ToolCollection->GetInputted() )
+  if ( ! d->logic()->GetWorkflowAlgorithmsInputted() )
   {
     d->WorkflowTrainingButton->setEnabled( false );
 	d->WorkflowTrainingFilesButton->setEnabled( false );
@@ -369,7 +369,7 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   }
 
   // If the algorithms are trained
-  if ( ! d->logic()->ToolCollection->GetTrained() )
+  if ( ! d->logic()->GetWorkflowAlgorithmsTrained() )
   {
     d->SaveWorkflowTrainingButton->setEnabled( false );
 	d->SegmentTransformBufferButton->setEnabled( false );

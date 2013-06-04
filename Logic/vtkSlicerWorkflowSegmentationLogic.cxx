@@ -37,7 +37,6 @@ vtkSlicerWorkflowSegmentationLogic::vtkSlicerWorkflowSegmentationLogic()
 {
   this->ModuleNode = NULL;
   this->TransformRecorderLogic = NULL;
-  this->ToolCollection = vtkWorkflowToolCollection::New();
   this->Parser = vtkXMLDataParser::New();
   this->IndexToProcess = 0;
 }
@@ -51,7 +50,6 @@ vtkSlicerWorkflowSegmentationLogic::~vtkSlicerWorkflowSegmentationLogic()
     this->ModuleNode = NULL;
   }
   // The TransformRecorderLogic is already deleted in the TransformRecorder module itself
-  this->ToolCollection->Delete();
   for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
   {
     WorkflowAlgorithms.at(i)->Delete();
@@ -136,47 +134,28 @@ vtkMRMLWorkflowSegmentationNode* vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::ImportWorkflowProcedure( std::string fileName )
 {
-  this->ModuleNode->SetWorkflowProcedureFileName( fileName );
-
-  vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  this->ToolCollection->ProcedureFromXMLElement( element );
+  this->ModuleNode->ImportWorkflowProcedure( fileName );
 }
 
 
 void vtkSlicerWorkflowSegmentationLogic
 ::ImportWorkflowInput( std::string fileName )
 {
-  this->ModuleNode->SetWorkflowInputFileName( fileName );
-
-  vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  this->ToolCollection->InputFromXMLElement( element );
+  this->ModuleNode->ImportWorkflowInput( fileName );
 }
 
 
 void vtkSlicerWorkflowSegmentationLogic
 ::ImportWorkflowTraining( std::string fileName )
 {
-  this->ModuleNode->SetWorkflowTrainingFileName( fileName );
-
-  vtkXMLDataElement* element = this->ParseXMLFile( fileName );
-  this->ToolCollection->TrainingFromXMLElement( element );
+  this->ModuleNode->ImportWorkflowTraining( fileName );
 }
 
 
 void vtkSlicerWorkflowSegmentationLogic
 ::SaveWorkflowTraining( std::string fileName )
 {
-  this->ModuleNode->SetWorkflowTrainingFileName( fileName );
-
-  std::ofstream output( fileName.c_str() );  
-  if ( ! output.is_open() )
-  {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-  }  
-  output << this->ToolCollection->TrainingToXMLString();
-
-  output.close();
+  this->ModuleNode->SaveWorkflowTraining( fileName );
 }
 
 
@@ -190,14 +169,35 @@ void vtkSlicerWorkflowSegmentationLogic
   }
   this->WorkflowAlgorithms.clear();
 
-  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
+  for ( int i = 0; i < this->ModuleNode->ToolCollection->GetNumTools(); i++ )
   {
     vtkWorkflowAlgorithm* newWorkflowAlgorithm = vtkWorkflowAlgorithm::New();
-	newWorkflowAlgorithm->Tool = this->ToolCollection->GetToolAt(i);
+	newWorkflowAlgorithm->Tool = this->ModuleNode->ToolCollection->GetToolAt(i);
 	this->WorkflowAlgorithms.push_back( newWorkflowAlgorithm );
   }
 
   this->IndexToProcess = 0;
+}
+
+
+bool vtkSlicerWorkflowSegmentationLogic
+::GetWorkflowAlgorithmsDefined()
+{
+  return this->ModuleNode->ToolCollection->GetDefined();
+}
+
+
+bool vtkSlicerWorkflowSegmentationLogic
+::GetWorkflowAlgorithmsInputted()
+{
+  return this->ModuleNode->ToolCollection->GetInputted();
+}
+
+
+bool vtkSlicerWorkflowSegmentationLogic
+::GetWorkflowAlgorithmsTrained()
+{
+  return this->ModuleNode->ToolCollection->GetTrained();
 }
 
 
@@ -209,7 +209,7 @@ bool vtkSlicerWorkflowSegmentationLogic
     WorkflowAlgorithms.at(i)->Train();
   }
 
-  return this->ToolCollection->GetTrained();
+  return this->ModuleNode->ToolCollection->GetTrained();
 }
 
 
@@ -234,7 +234,6 @@ void vtkSlicerWorkflowSegmentationLogic
 
   transformBuffer->Delete();
   vtkDeleteVector( transformBufferVector );
-
 }
 
 

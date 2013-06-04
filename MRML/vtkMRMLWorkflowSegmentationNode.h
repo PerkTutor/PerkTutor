@@ -25,6 +25,7 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
+#include "vtkXMLDataElement.h"
 
 // WorkflowSegmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
@@ -81,10 +82,13 @@ protected:
   std::string WorkflowInputFileName;
   std::string WorkflowTrainingFileName;
 
+  vtkXMLDataParser* Parser;
+  vtkXMLDataElement* ParseXMLFile( std::string fileName );
+
 public:
 
   vtkWorkflowToolCollection* ToolCollection;
-  
+
 };  
 
 #endif
