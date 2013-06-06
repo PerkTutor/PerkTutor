@@ -292,6 +292,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   dialog.setValue( 30 );
   
   d->logic()->Train();
+  this->onSaveWorkflowTrainingButtonClicked();
   d->logic()->ResetWorkflowAlgorithms();
 
   dialog.close();

@@ -108,6 +108,7 @@ public:
 
   vtkRecordBuffer* TrimBufferByLabel( std::vector<std::string> labels );
   std::vector<vtkRecordBuffer*> SplitBufferByLabel( std::vector<std::string> labels );
+  vtkRecordBuffer* AddCompletion( double completionTime );
   std::vector<vtkMarkovRecord*> ToMarkovRecordVector();
 
 private:

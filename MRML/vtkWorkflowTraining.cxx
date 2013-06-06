@@ -94,6 +94,7 @@ vtkWorkflowTraining* vtkWorkflowTraining
 {
   vtkWorkflowTraining* newWorkflowTraining = vtkWorkflowTraining::New();
   newWorkflowTraining->PrinComps = vtkDeepCopyVector( this->PrinComps );
+  newWorkflowTraining->Centroids = vtkDeepCopyVector( this->Centroids );
   newWorkflowTraining->Mean = this->Mean->DeepCopy();
   newWorkflowTraining->Markov = this->Markov->DeepCopy();
   return newWorkflowTraining;

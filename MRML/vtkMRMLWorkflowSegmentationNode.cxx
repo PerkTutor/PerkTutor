@@ -201,8 +201,19 @@ void vtkMRMLWorkflowSegmentationNode
   {
     vtkErrorMacro( "Record file could not be opened!" );
     return;
-  }  
-  output << this->ToolCollection->TrainingToXMLString();
+  }
+
+  vtkWorkflowToolCollection* mergedTools = vtkWorkflowToolCollection::New();
+  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
+  {
+    mergedTools->AddTool( this->ToolCollection->GetToolAt(i)->DeepCopy() );
+  }
+  for ( int i = 0; i < this->ToolCompletion->GetNumTools(); i++ )
+  {
+    mergedTools->AddTool( this->ToolCompletion->GetToolAt(i)->DeepCopy() );
+  }
+  output << mergedTools->TrainingToXMLString();
+  mergedTools->Delete();
 
   output.close();  
 }
@@ -282,6 +293,7 @@ void vtkMRMLWorkflowSegmentationNode
   {
 
     vtkWorkflowTool* currentTool = this->ToolCollection->GetToolAt(i)->DeepCopy();
+	currentTool->Name = currentTool->Name + "_Completion";
 
 	int numTasks = currentTool->Procedure->GetNumTasks();
 	for ( int j = 0; j < numTasks; j++ )

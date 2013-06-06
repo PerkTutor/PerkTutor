@@ -210,7 +210,7 @@ bool vtkSlicerWorkflowSegmentationLogic
 {
   for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
   {
-    WorkflowAlgorithms.at(i)->Train();
+    this->WorkflowAlgorithms.at(i)->Train();
   }
 
   return this->ModuleNode->ToolCollection->GetTrained();

@@ -46,6 +46,7 @@ public:
   double MarkovPseudoScalePi;
   double MarkovPseudoScaleA;
   double MarkovPseudoScaleB;
+  double CompletionTime;
 
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );

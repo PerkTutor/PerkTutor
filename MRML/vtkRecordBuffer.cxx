@@ -1443,6 +1443,56 @@ std::vector<vtkRecordBuffer*> vtkRecordBuffer
 }
 
 
+vtkRecordBuffer* vtkRecordBuffer
+::AddCompletion( double time )
+{
+  // Start from the back - if the label changes then start the completion label until time is expired or the next task
+  // Only do it for each instance of task
+  vtkRecordBuffer* CompletionBuffer = this->DeepCopy();
+  std::vector<std::string> completedLabels;
+  std::string finishLabel = "";
+  double finishTime = CompletionBuffer->GetCurrentRecord()->GetTime() + time;
+  bool completedLabel = false;
+
+  for ( int i = CompletionBuffer->GetNumRecords() - 1; i >= 0; i-- )
+  {
+    if ( CompletionBuffer->GetRecordAt(i)->GetLabel().compare( finishLabel ) != 0 )
+	{
+      finishLabel = CompletionBuffer->GetRecordAt(i)->GetLabel();
+	  finishTime = CompletionBuffer->GetRecordAt(i)->GetTime();
+
+	  /*
+	  bool completedLabel = false;
+	  for ( int i = 0; i < completedLabels.size(); i++ )
+	  {
+        if ( finishLabel.compare( completedLabels.at(i) ) == 0 )
+		{
+          completedLabel = true;
+		}
+	  }
+
+	  if ( completedLabel )
+	  {
+        finishTime += time;
+	  }
+	  else
+	  {
+	    completedLabels.push_back( finishLabel );
+	  }
+      */
+      completedLabels.push_back( finishLabel );
+	}
+
+    if ( finishTime - CompletionBuffer->GetRecordAt(i)->GetTime() < time )
+	{
+      CompletionBuffer->GetRecordAt(i)->SetLabel( finishLabel + "_Completion" );
+	}
+  }
+
+  return CompletionBuffer;
+}
+
+
 std::vector<vtkMarkovRecord*> vtkRecordBuffer
 ::ToMarkovRecordVector()
 {

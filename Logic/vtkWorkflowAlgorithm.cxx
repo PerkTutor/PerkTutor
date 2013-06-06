@@ -36,6 +36,11 @@ vtkWorkflowAlgorithm
   this->OrthogonalBufferRT->Delete();
   this->PcaBufferRT->Delete();
   this->CentroidBufferRT->Delete();
+
+  if ( this->CompletionAlgorithm != NULL )
+  {
+    this->CompletionAlgorithm->Delete();
+  }
 }
 
 
@@ -155,6 +160,14 @@ void vtkWorkflowAlgorithm
 {
   vtkRecordBuffer* trimRecordBuffer = newTrainingBuffer->TrimBufferByLabel( this->Tool->Procedure->GetTaskNames() );
   this->TrainingBuffers.push_back( trimRecordBuffer );
+
+  // Train the completion algorithm associated
+  if ( this->CompletionAlgorithm != NULL )
+  {
+    vtkRecordBuffer* completionTrainingBuffer = newTrainingBuffer->AddCompletion( this->CompletionAlgorithm->Tool->Input->CompletionTime );
+    this->CompletionAlgorithm->AddTrainingBuffer( completionTrainingBuffer );
+	completionTrainingBuffer->Delete(); // Because a deep copy is created in the above anyway
+  }
 }
 
 

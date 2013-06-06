@@ -17,6 +17,7 @@ vtkWorkflowInput
   this->MarkovPseudoScalePi = 0.0;
   this->MarkovPseudoScaleA = 0.0;
   this->MarkovPseudoScaleB = 0.0;
+  this->CompletionTime = 0;
 }
 
 
@@ -32,6 +33,7 @@ vtkWorkflowInput
   this->MarkovPseudoScalePi = 0.0;
   this->MarkovPseudoScaleA = 0.0;
   this->MarkovPseudoScaleB = 0.0;
+  this->CompletionTime = 0.0;
 }
 
 
@@ -48,6 +50,7 @@ vtkWorkflowInput* vtkWorkflowInput
   newWorkflowInput->MarkovPseudoScalePi = this->MarkovPseudoScalePi;
   newWorkflowInput->MarkovPseudoScaleA = this->MarkovPseudoScaleA;
   newWorkflowInput->MarkovPseudoScaleB = this->MarkovPseudoScaleB;
+  newWorkflowInput->CompletionTime = this->CompletionTime;
   return newWorkflowInput;
 }
 
@@ -66,6 +69,7 @@ std::string vtkWorkflowInput
   xmlstring << "<Parameter Type=\"MarkovPseudoScalePi\" Value=\"" << this->MarkovPseudoScalePi << "\" />" << std::endl;
   xmlstring << "<Parameter Type=\"MarkovPseudoScaleA\" Value=\"" << this->MarkovPseudoScaleA << "\" />" << std::endl;
   xmlstring << "<Parameter Type=\"MarkovPseudoScaleB\" Value=\"" << this->MarkovPseudoScaleB << "\" />" << std::endl;
+  xmlstring << "<Parameter Type=\"CompletionTime\" Value=\"" << this->CompletionTime << "\" />" << std::endl;
 
   return xmlstring.str();
 }
@@ -126,6 +130,10 @@ void vtkWorkflowInput
 	if ( strcmp( elementType, "MarkovPseudoScaleB" ) == 0 )
     {
 	  this->MarkovPseudoScaleB = value;
+    }
+	if ( strcmp( elementType, "CompletionTime" ) == 0 )
+    {
+	  this->CompletionTime = value;
     }
 
   }
