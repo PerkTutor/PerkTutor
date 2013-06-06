@@ -70,6 +70,7 @@ vtkMRMLWorkflowSegmentationNode
   this->WorkflowTrainingFileName = "";
 
   this->ToolCollection = vtkWorkflowToolCollection::New();
+  this->ToolCompletion = vtkWorkflowToolCollection::New();
   this->Parser = vtkXMLDataParser::New();
 }
 
@@ -78,6 +79,7 @@ vtkMRMLWorkflowSegmentationNode
 vtkMRMLWorkflowSegmentationNode
 ::~vtkMRMLWorkflowSegmentationNode()
 {
+  this->ToolCompletion->Delete();
   this->ToolCollection->Delete();
   this->Parser->Delete();
 }
@@ -266,6 +268,40 @@ void vtkMRMLWorkflowSegmentationNode
   this->ImportWorkflowProcedure();
   this->ImportWorkflowInput();
   this->ImportWorkflowTraining();
+}
+
+
+void vtkMRMLWorkflowSegmentationNode
+::PopulateCompletionTools()
+{
+  this->ToolCompletion->Delete();
+  this->ToolCompletion = vtkWorkflowToolCollection::New();
+
+  // Calculate the procedures with completions
+  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
+  {
+
+    vtkWorkflowTool* currentTool = this->ToolCollection->GetToolAt(i)->DeepCopy();
+
+	int numTasks = currentTool->Procedure->GetNumTasks();
+	for ( int j = 0; j < numTasks; j++ )
+	{
+	  vtkWorkflowTask* currentTask = currentTool->Procedure->GetTaskAt(j);
+	  vtkWorkflowTask* completionTask = currentTask->DeepCopy();
+	  completionTask->Name = completionTask->Name + "_Completion";
+	  currentTool->Procedure->AddTask( completionTask );
+	}
+
+    // Input parameters are deep copied - this is good
+
+    // Add to the collection of completion tools
+	this->ToolCompletion->AddTool( currentTool );
+  }
+
+  // Create a parser to parse the XML data from the training parameters
+  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowTrainingFileName );
+  this->ToolCompletion->TrainingFromXMLElement( element );
+
 }
 
 

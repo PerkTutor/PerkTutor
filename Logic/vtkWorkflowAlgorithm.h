@@ -47,12 +47,16 @@ public:
 
   // Training and testing phases
   bool Train();
+  void AddCompletionAlgorithm( vtkWorkflowAlgorithm* newCompletionAlgorithm );
   void AddRecord( vtkLabelRecord* newRecord );
   void AddSegmentRecord( vtkLabelRecord* newRecord );
 
   vtkWorkflowTool* Tool;
   vtkWorkflowTask* CurrentTask;
   vtkWorkflowTask* PrevTask;
+
+  vtkWorkflowAlgorithm* CompletionAlgorithm;
+  std::vector<bool> CompletionVector;
   
   std::vector<double> CalculateTaskProportions();
   std::vector<int> CalculateTaskCentroids();

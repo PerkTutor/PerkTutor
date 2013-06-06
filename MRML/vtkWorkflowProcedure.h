@@ -43,6 +43,8 @@ public:
   vtkWorkflowTask* GetTaskByName( std::string name );
   std::vector<std::string> GetTaskNames();
 
+  void AddTask( vtkWorkflowTask* newTask );
+
   bool IsTask( std::string name );
   int IndexByName( std::string name );
 

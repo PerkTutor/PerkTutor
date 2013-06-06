@@ -19,6 +19,8 @@ vtkWorkflowAlgorithm
   this->PrevTask = NULL;
 
   this->Tool = NULL;
+
+  this->CompletionAlgorithm = NULL;
 }
 
 
@@ -322,7 +324,28 @@ bool vtkWorkflowAlgorithm
   vtkDeleteVector( PseudoB );
 
   this->Tool->Trained = true;
+
+  // Train the completion algorithm associated
+  if ( this->CompletionAlgorithm != NULL )
+  {
+    this->CompletionAlgorithm->Train();
+  }
+
   return true;
+}
+
+
+
+void vtkWorkflowAlgorithm
+::AddCompletionAlgorithm( vtkWorkflowAlgorithm* newCompletionAlgorithm )
+{
+  if ( this->CompletionAlgorithm != NULL )
+  {
+    this->CompletionAlgorithm->Delete();
+  }
+  this->CompletionAlgorithm = newCompletionAlgorithm;
+  std::vector<bool> newCompletionVector( this->Tool->Procedure->GetNumTasks(), false );
+  this->CompletionVector = newCompletionVector;
 }
 
 
@@ -339,6 +362,11 @@ void vtkWorkflowAlgorithm
 ::AddSegmentRecord( vtkLabelRecord* newRecord )
 {
   AddRecord( newRecord );
+  // Add and segment record to completion algorithm
+  if ( this->CompletionAlgorithm != NULL )
+  {
+    this->CompletionAlgorithm->AddSegmentRecord( newRecord->DeepCopy() );
+  }
 
   // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
 

@@ -74,6 +74,13 @@ std::vector<std::string> vtkWorkflowProcedure
 }
 
 
+void vtkWorkflowProcedure
+::AddTask( vtkWorkflowTask* newTask )
+{
+  this->Tasks.push_back( newTask );
+}
+
+
 bool vtkWorkflowProcedure
 ::IsTask( std::string name )
 {
