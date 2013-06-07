@@ -475,11 +475,11 @@ void vtkWorkflowAlgorithm
   // Assign completion of a task appropriately
   for ( int i = 0; i < this->Tool->Procedure->GetNumTasks(); i++ )
   {
-    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) && currentCompletion.compare( currentTask ) == 0 )
+    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) == 0 && currentCompletion.compare( currentTask ) == 0 )
 	{
 	  this->CompletionVector.at(i) = false;
 	}
-    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) && currentCompletion.compare( currentTask + "_Completion" ) == 0 )
+    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) == 0 && currentCompletion.compare( currentTask + "_Completion" ) == 0 )
 	{
 	  this->CompletionVector.at(i) = true;
 	}
