@@ -306,6 +306,10 @@ void vtkMRMLWorkflowSegmentationNode
 
     // Input parameters are deep copied - this is good
 
+	// Reset the training
+	currentTool->Training->Delete();
+	currentTool->Training = vtkWorkflowTraining::New();
+
     // Add to the collection of completion tools
 	this->ToolCompletion->AddTool( currentTool );
   }

@@ -17,7 +17,8 @@ vtkWorkflowInput
   this->MarkovPseudoScalePi = 0.0;
   this->MarkovPseudoScaleA = 0.0;
   this->MarkovPseudoScaleB = 0.0;
-  this->CompletionTime = 0;
+  this->CompletionTime = 0.0;
+  this->Equalization = 0.0;
 }
 
 
@@ -34,6 +35,7 @@ vtkWorkflowInput
   this->MarkovPseudoScaleA = 0.0;
   this->MarkovPseudoScaleB = 0.0;
   this->CompletionTime = 0.0;
+  this->Equalization = 0.0;
 }
 
 
@@ -51,6 +53,7 @@ vtkWorkflowInput* vtkWorkflowInput
   newWorkflowInput->MarkovPseudoScaleA = this->MarkovPseudoScaleA;
   newWorkflowInput->MarkovPseudoScaleB = this->MarkovPseudoScaleB;
   newWorkflowInput->CompletionTime = this->CompletionTime;
+  newWorkflowInput->Equalization = this->Equalization;
   return newWorkflowInput;
 }
 
@@ -70,6 +73,7 @@ std::string vtkWorkflowInput
   xmlstring << "<Parameter Type=\"MarkovPseudoScaleA\" Value=\"" << this->MarkovPseudoScaleA << "\" />" << std::endl;
   xmlstring << "<Parameter Type=\"MarkovPseudoScaleB\" Value=\"" << this->MarkovPseudoScaleB << "\" />" << std::endl;
   xmlstring << "<Parameter Type=\"CompletionTime\" Value=\"" << this->CompletionTime << "\" />" << std::endl;
+  xmlstring << "<Parameter Type=\"Equalization\" Value=\"" << this->Equalization << "\" />" << std::endl;
 
   return xmlstring.str();
 }
@@ -134,6 +138,10 @@ void vtkWorkflowInput
 	if ( strcmp( elementType, "CompletionTime" ) == 0 )
     {
 	  this->CompletionTime = value;
+    }
+    if ( strcmp( elementType, "Equalization" ) == 0 )
+    {
+	  this->Equalization = value;
     }
 
   }

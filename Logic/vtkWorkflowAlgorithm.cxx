@@ -17,6 +17,8 @@ vtkWorkflowAlgorithm
 
   this->CurrentTask = NULL;
   this->PrevTask = NULL;
+  this->DoTask = NULL;
+  this->DoneTask = NULL;
 
   this->Tool = NULL;
 
@@ -58,11 +60,11 @@ std::vector<double> vtkWorkflowAlgorithm
   int sum = 0;
 
   // Iterate over all record logs and count label (task) instances
-  for ( int i = 0; i < TrainingBuffers.size(); i++ )
+  for ( int i = 0; i < this->TrainingBuffers.size(); i++ )
   {
-    for ( int j = 0; j < TrainingBuffers.at(i)->GetNumRecords(); j++ )
+    for ( int j = 0; j < this->TrainingBuffers.at(i)->GetNumRecords(); j++ )
 	{
-	  int taskIndex = this->Tool->Procedure->IndexByName( TrainingBuffers.at(i)->GetRecordAt(j)->GetLabel() );
+	  int taskIndex = this->Tool->Procedure->IndexByName( this->TrainingBuffers.at(i)->GetRecordAt(j)->GetLabel() );
 	  if ( taskIndex >= 0 && taskIndex < this->Tool->Procedure->GetNumTasks() )
 	  {
 	    taskCounts.at(taskIndex) += 1;
@@ -83,12 +85,36 @@ std::vector<double> vtkWorkflowAlgorithm
 
 
 
+std::vector<double> vtkWorkflowAlgorithm
+::EqualizeTaskProportions()
+{
+  //Find the mean and standard deviation of the task centroids
+  std::vector<double> taskProportions = this->CalculateTaskProportions();
+
+  double mean = 0;
+  for ( int i = 0; i < taskProportions.size(); i++ )
+  {
+    mean += taskProportions.at(i);
+  }
+  mean = mean / taskProportions.size();
+
+  // Reduce the standard deviation by the equalizing parameter
+  for ( int i = 0; i < taskProportions.size(); i++ )
+  {
+    taskProportions.at(i) = ( taskProportions.at(i) - mean ) / this->Tool->Input->Equalization + mean;
+  }
+
+  return taskProportions;
+}
+
+
+
 
 std::vector<int> vtkWorkflowAlgorithm
 ::CalculateTaskCentroids()
 {
   // Create a vector of counts for each label
-  std::vector<double> taskProportions = this->CalculateTaskProportions();
+  std::vector<double> taskProportions = this->EqualizeTaskProportions();
   std::vector<double> taskRawCentroids ( this->Tool->Procedure->GetNumTasks(), 0 );
   std::vector<double> fracPart ( this->Tool->Procedure->GetNumTasks(), 0 );
 
@@ -414,8 +440,62 @@ void vtkWorkflowAlgorithm
   // Now, we will keep a recording of the workflow segmentation in BufferRT - add the label
   this->BufferRT->GetRecordRT()->SetLabel( markovState->GetState() );
 
-
   this->PrevTask = this->CurrentTask;
   this->CurrentTask = this->Tool->Procedure->GetTaskByName( markovState->GetState() );
 
+
+  // Finally, calculate the appropriate instruction
+  if ( this->CompletionAlgorithm == NULL )
+  {
+    return;
+  }
+
+  this->SetCompletionVector( this->CurrentTask->Name, this->CompletionAlgorithm->CurrentTask->Name );
+
+  this->DoneTask = this->DoTask;
+  if ( ! this->GetCompletionVector( this->CurrentTask->Prerequisite ) )
+  {
+    this->DoTask = this->Tool->Procedure->GetTaskByName( this->CurrentTask->Recovery );
+  }
+  else if ( this->GetCompletionVector( this->CurrentTask->Name ) )
+  {
+    this->DoTask = this->Tool->Procedure->GetTaskByName( this->CurrentTask->Next );
+  }
+  else
+  {
+    this->DoTask = this->CurrentTask;
+  }
+
 }
+
+
+void vtkWorkflowAlgorithm
+::SetCompletionVector( std::string currentTask, std::string currentCompletion )
+{
+  // Assign completion of a task appropriately
+  for ( int i = 0; i < this->Tool->Procedure->GetNumTasks(); i++ )
+  {
+    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) && currentCompletion.compare( currentTask ) == 0 )
+	{
+	  this->CompletionVector.at(i) = false;
+	}
+    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) && currentCompletion.compare( currentTask + "_Completion" ) == 0 )
+	{
+	  this->CompletionVector.at(i) = true;
+	}
+  }
+}
+
+
+bool vtkWorkflowAlgorithm
+::GetCompletionVector( std::string currentTask )
+{
+  for ( int i = 0; i < this->Tool->Procedure->GetNumTasks(); i++ )
+  {
+    if ( this->Tool->Procedure->GetTaskAt(i)->Name.compare( currentTask ) == 0 )
+	{
+      return this->CompletionVector.at(i);
+	}
+  }
+}
+

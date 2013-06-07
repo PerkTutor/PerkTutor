@@ -54,11 +54,17 @@ public:
   vtkWorkflowTool* Tool;
   vtkWorkflowTask* CurrentTask;
   vtkWorkflowTask* PrevTask;
+  vtkWorkflowTask* DoTask;
+  vtkWorkflowTask* DoneTask;
 
   vtkWorkflowAlgorithm* CompletionAlgorithm;
   std::vector<bool> CompletionVector;
+
+  void SetCompletionVector( std::string currentTask, std::string currentCompletion );
+  bool GetCompletionVector( std::string currentTask );
   
   std::vector<double> CalculateTaskProportions();
+  std::vector<double> EqualizeTaskProportions();
   std::vector<int> CalculateTaskCentroids();
 
 

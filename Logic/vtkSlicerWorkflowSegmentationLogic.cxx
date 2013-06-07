@@ -268,6 +268,10 @@ void vtkSlicerWorkflowSegmentationLogic
     {
       this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
     }
+	if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
+    {
+      //this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
+    }
 
     this->IndexToProcess++;
   }
@@ -297,6 +301,10 @@ void vtkSlicerWorkflowSegmentationLogic
   if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
   {
     this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
+  }
+  if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
+  {
+    this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
   }
 
   this->IndexToProcess++;
