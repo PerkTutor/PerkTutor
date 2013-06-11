@@ -79,9 +79,9 @@ vtkMRMLWorkflowSegmentationNode
 vtkMRMLWorkflowSegmentationNode
 ::~vtkMRMLWorkflowSegmentationNode()
 {
-  this->ToolCompletion->Delete();
-  this->ToolCollection->Delete();
-  this->Parser->Delete();
+  vtkDelete( this->ToolCompletion );
+  vtkDelete( this->ToolCollection );
+  vtkDelete( this->Parser );
 }
 
 
@@ -285,8 +285,7 @@ void vtkMRMLWorkflowSegmentationNode
 void vtkMRMLWorkflowSegmentationNode
 ::PopulateCompletionTools()
 {
-  this->ToolCompletion->Delete();
-  this->ToolCompletion = vtkWorkflowToolCollection::New();
+  this->ToolCompletion = vtkDeleteAssign( this->ToolCompletion, vtkWorkflowToolCollection::New() );
 
   // Calculate the procedures with completions
   for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
@@ -298,8 +297,7 @@ void vtkMRMLWorkflowSegmentationNode
 	int numTasks = currentTool->Procedure->GetNumTasks();
 	for ( int j = 0; j < numTasks; j++ )
 	{
-	  vtkWorkflowTask* currentTask = currentTool->Procedure->GetTaskAt(j);
-	  vtkWorkflowTask* completionTask = currentTask->DeepCopy();
+	  vtkWorkflowTask* completionTask = currentTool->Procedure->GetTaskAt(j)->DeepCopy();
 	  completionTask->Name = completionTask->Name + "_Completion";
 	  currentTool->Procedure->AddTask( completionTask );
 	}
@@ -307,8 +305,7 @@ void vtkMRMLWorkflowSegmentationNode
     // Input parameters are deep copied - this is good
 
 	// Reset the training
-	currentTool->Training->Delete();
-	currentTool->Training = vtkWorkflowTraining::New();
+	currentTool->Training = vtkDeleteAssign( currentTool->Training, vtkWorkflowTraining::New() );
 
     // Add to the collection of completion tools
 	this->ToolCompletion->AddTool( currentTool );

@@ -43,7 +43,7 @@ vtkMarkovModelRT* vtkMarkovModelRT
 	newMarkovModelRT->B.push_back( this->GetB().at(i)->DeepCopy() );
   }
 
-  newMarkovModelRT->pi = this->pi->DeepCopy();
+  newMarkovModelRT->pi = vtkDeleteAssign( newMarkovModelRT->pi, this->pi->DeepCopy() );
 
   newMarkovModelRT->SetStates( this->stateNames );
   newMarkovModelRT->SetSymbols( this->symbolNames );

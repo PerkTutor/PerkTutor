@@ -84,8 +84,8 @@ vtkWorkflowTraining
 {
   vtkDeleteVector( this->PrinComps );
   vtkDeleteVector( this->Centroids );
-  this->Markov->Delete();
-  this->Mean->Delete();
+  vtkDelete( this->Markov );
+  vtkDelete( this->Mean );
 }
 
 
@@ -95,8 +95,8 @@ vtkWorkflowTraining* vtkWorkflowTraining
   vtkWorkflowTraining* newWorkflowTraining = vtkWorkflowTraining::New();
   newWorkflowTraining->PrinComps = vtkDeepCopyVector( this->PrinComps );
   newWorkflowTraining->Centroids = vtkDeepCopyVector( this->Centroids );
-  newWorkflowTraining->Mean = this->Mean->DeepCopy();
-  newWorkflowTraining->Markov = this->Markov->DeepCopy();
+  newWorkflowTraining->Mean = vtkDeleteAssign( newWorkflowTraining->Mean, this->Mean->DeepCopy() );
+  newWorkflowTraining->Markov = vtkDeleteAssign( newWorkflowTraining->Markov, this->Markov->DeepCopy() );
   return newWorkflowTraining;
 }
 

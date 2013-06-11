@@ -30,10 +30,7 @@ vtkRecordBuffer* vtkRecordBuffer
   vtkRecordBuffer* newRecordBuffer = vtkRecordBuffer::New();
 
   newRecordBuffer->SetName( this->GetName() );
-  for ( int i = 0; i < this->GetNumRecords(); i++ )
-  {
-    newRecordBuffer->AddRecord( this->GetRecordAt(i)->DeepCopy() );
-  }
+  newRecordBuffer->records = vtkDeepCopyVector( this->records );
 
   return newRecordBuffer;
 }

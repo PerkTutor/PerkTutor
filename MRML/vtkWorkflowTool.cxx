@@ -23,10 +23,10 @@ vtkWorkflowTool
 ::~vtkWorkflowTool()
 {
   this->Name = "";
-  this->Procedure->Delete();
-  this->Input->Delete();
-  this->Training->Delete();
-  this->Buffer->Delete();
+  vtkDelete( this->Procedure );
+  vtkDelete( this->Input );
+  vtkDelete( this->Training );
+  vtkDelete( this->Buffer );
 }
 
 
@@ -38,10 +38,10 @@ vtkWorkflowTool* vtkWorkflowTool
   newWorkflowTool->Defined = this->Defined;
   newWorkflowTool->Inputted = this->Inputted;
   newWorkflowTool->Trained = this->Trained;
-  newWorkflowTool->Procedure = this->Procedure->DeepCopy();
-  newWorkflowTool->Input = this->Input->DeepCopy();
-  newWorkflowTool->Training = this->Training->DeepCopy();
-  newWorkflowTool->Buffer = this->Buffer->DeepCopy();
+  newWorkflowTool->Procedure = vtkDeleteAssign( newWorkflowTool->Procedure, this->Procedure->DeepCopy() );
+  newWorkflowTool->Input = vtkDeleteAssign( newWorkflowTool->Input, this->Input->DeepCopy() );
+  newWorkflowTool->Training = vtkDeleteAssign( newWorkflowTool->Training, this->Training->DeepCopy() );
+  newWorkflowTool->Buffer = vtkDeleteAssign( newWorkflowTool->Buffer, this->Buffer->DeepCopy() );
   return newWorkflowTool;
 }
 

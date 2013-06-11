@@ -32,17 +32,14 @@ vtkWorkflowAlgorithm
 {
   vtkDeleteVector( this->TrainingBuffers );
 
-  this->BufferRT->Delete();
-  this->DerivativeBufferRT->Delete();
-  this->FilterBufferRT->Delete();
-  this->OrthogonalBufferRT->Delete();
-  this->PcaBufferRT->Delete();
-  this->CentroidBufferRT->Delete();
+  vtkDelete( this->BufferRT );
+  vtkDelete( this->DerivativeBufferRT );
+  vtkDelete( this->FilterBufferRT );
+  vtkDelete( this->OrthogonalBufferRT );
+  vtkDelete( this->PcaBufferRT );
+  vtkDelete( this->CentroidBufferRT );
 
-  if ( this->CompletionAlgorithm != NULL )
-  {
-    this->CompletionAlgorithm->Delete();
-  }
+  vtkDelete( this->CompletionAlgorithm );
 }
 
 

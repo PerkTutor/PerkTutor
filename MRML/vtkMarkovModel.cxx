@@ -26,7 +26,7 @@ vtkMarkovModel
 {
   vtkDeleteVector( this->A );
   vtkDeleteVector( this->B );
-  this->pi->Delete();
+  vtkDelete( pi );
 
   this->stateNames.clear();
   this->symbolNames.clear();
@@ -44,7 +44,7 @@ vtkMarkovModel* vtkMarkovModel
 	newMarkovModel->B.push_back( this->GetB().at(i)->DeepCopy() );
   }
 
-  newMarkovModel->pi = pi->DeepCopy();
+  newMarkovModel->pi = vtkDeleteAssign( newMarkovModel->pi, this->pi->DeepCopy() );
 
   newMarkovModel->SetStates( this->stateNames );
   newMarkovModel->SetSymbols( this->symbolNames );

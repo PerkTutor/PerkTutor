@@ -256,24 +256,31 @@ void vtkSlicerWorkflowSegmentationLogic
 
     vtkTransformRecord* currentTransform = transformBuffer->GetTransformAt( this->IndexToProcess );
 	this->TransformRecorderLogic->GetBuffer()->AddTransform( currentTransform->DeepCopy() );
+    this->IndexToProcess++;
   
     vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
     currentRecord->FromTransformRecord( currentTransform );
 
     vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
+
+	if ( currentWorkflowAlgorithm == NULL )
+    {
+      currentRecord->Delete();
+	  continue;
+	}
+
     currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
 
-	// Add messages to the module node's buffer
-	if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
+    // Add messages to the module node's buffer
+    if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
     {
       // this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
     }
-	if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
+    if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
     {
       this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
     }
 
-    this->IndexToProcess++;
   }
 
   transformBuffer->Delete();
@@ -291,23 +298,30 @@ void vtkSlicerWorkflowSegmentationLogic
 
   // If new transfrom, convert to label record and segment based on name
   vtkTransformRecord* currentTransform = this->TransformRecorderLogic->GetBuffer()->GetTransformAt( this->IndexToProcess );
+  this->IndexToProcess++;
   
   vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
   currentRecord->FromTransformRecord( currentTransform );
 
   vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
+
+  if ( currentWorkflowAlgorithm == NULL )
+  {
+    currentRecord->Delete();
+	return;
+  }
+
   currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
 
   if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
   {
-    this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
+    // this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
   }
   if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
   {
     this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
   }
 
-  this->IndexToProcess++;
 }
 
 

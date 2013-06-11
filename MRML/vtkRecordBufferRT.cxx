@@ -22,7 +22,7 @@ vtkRecordBufferRT* vtkRecordBufferRT
   vtkRecordBufferRT* newRecordBufferRT = vtkRecordBufferRT::New();
 
   newRecordBufferRT->SetName( this->GetName() );
-  vtkDeepCopyVector( this->records );
+  newRecordBufferRT->records = vtkDeepCopyVector( this->records );
 
   return newRecordBufferRT;
 }

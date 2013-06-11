@@ -71,13 +71,21 @@ void vtkDeleteVector( std::vector<T*> vector )
 {
   for ( int i = 0; i < vector.size(); i++ )
   {
-    if ( vector.at(i) != NULL )
-	{
-      vector.at(i)->Delete();
-	}
+    vtkDelete( vector.at(i) );
   }
   vector.clear();
 }
+
+
+template <class T>
+void vtkDelete( T* object )
+{
+  if ( object != NULL )
+  {
+    object->Delete();
+  }
+}
+
 
 template <class T>
 std::vector<T*> vtkDeepCopyVector( std::vector<T*> vector )
@@ -92,5 +100,15 @@ std::vector<T*> vtkDeepCopyVector( std::vector<T*> vector )
   }
   return copyVector;
 }
+
+
+template <class T>
+T* vtkDeleteAssign( T* assignTo, T* assignFrom )
+{
+  vtkDelete( assignTo );
+  return assignFrom;
+}
+
+
 
 #endif

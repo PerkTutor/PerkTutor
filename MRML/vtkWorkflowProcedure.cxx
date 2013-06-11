@@ -22,12 +22,9 @@ vtkWorkflowProcedure* vtkWorkflowProcedure
 ::DeepCopy()
 {
   vtkWorkflowProcedure* newWorkflowProcedure = vtkWorkflowProcedure::New();
-  newWorkflowProcedure->Name = this->Name;
 
-  for ( int i = 0; i < this->GetNumTasks(); i++ )
-  {
-    newWorkflowProcedure->Tasks.push_back( this->GetTaskAt(i)->DeepCopy() );
-  }
+  newWorkflowProcedure->Name = this->Name;
+  newWorkflowProcedure->Tasks = vtkDeepCopyVector( this->Tasks );
 
   return newWorkflowProcedure;
 }

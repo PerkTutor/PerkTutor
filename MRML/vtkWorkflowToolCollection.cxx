@@ -24,11 +24,7 @@ vtkWorkflowToolCollection* vtkWorkflowToolCollection
 ::DeepCopy()
 {
   vtkWorkflowToolCollection* newWorkflowToolCollection = vtkWorkflowToolCollection::New();
-  for ( int i = 0; i < this->GetNumTools(); i++ )
-  {
-    newWorkflowToolCollection->tools.push_back( this->GetToolAt(i)->DeepCopy() );
-  }
-
+  newWorkflowToolCollection->tools = vtkDeepCopyVector( this->tools ); 
   return newWorkflowToolCollection;
 }
 

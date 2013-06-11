@@ -207,8 +207,10 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->ResetWorkflowAlgorithms();
 	d->logic()->ImportWorkflowTraining( fileName.toStdString() );
+    d->logic()->ResetWorkflowAlgorithms();
+	    d->logic()->ResetWorkflowAlgorithms();
+		    d->logic()->ResetWorkflowAlgorithms();
   }
   
   this->updateWidget();
@@ -265,7 +267,6 @@ void qSlicerWorkflowSegmentationModuleWidget
     dialog.show();
     dialog.setValue( 10 );
 
-    d->logic()->ResetWorkflowAlgorithms();
     d->logic()->SegmentBuffer( fileName.toStdString() );
 
     dialog.close(); 
