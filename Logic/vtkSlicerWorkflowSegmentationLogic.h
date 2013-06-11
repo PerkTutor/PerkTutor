@@ -102,6 +102,8 @@ public:
 
   void Update();
 
+  std::string GetToolInstructions();
+
 private:
 
   vtkMRMLWorkflowSegmentationNode* ModuleNode;

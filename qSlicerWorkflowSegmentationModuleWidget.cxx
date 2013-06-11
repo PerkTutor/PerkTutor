@@ -25,6 +25,8 @@
 #include "qSlicerIO.h"
 #include "qSlicerIOManager.h"
 #include "qSlicerApplication.h"
+#include "qSlicerLayoutManager.h"
+#include "qMRMLThreeDWidget.h"
 #include <QtGui>
 
 // MRMLWidgets includes
@@ -122,6 +124,9 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   // Recording controls
   connect( d->SegmentTransformBufferButton, SIGNAL(clicked()), this, SLOT( onSegmentTransformBufferButtonClicked() ) );
 
+  // Setup the display of instructions
+  this->setupInstructions();
+
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
   connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
@@ -134,9 +139,16 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
 void qSlicerWorkflowSegmentationModuleWidget::enter()
 {
   this->Superclass::enter();
+  this->InstructionLabel->show();
   this->updateWidget();
 }
 
+
+void qSlicerWorkflowSegmentationModuleWidget::exit()
+{
+  this->InstructionLabel->hide();
+  this->Superclass::exit();
+}
 
 
 
@@ -209,8 +221,6 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
 	d->logic()->ImportWorkflowTraining( fileName.toStdString() );
     d->logic()->ResetWorkflowAlgorithms();
-	    d->logic()->ResetWorkflowAlgorithms();
-		    d->logic()->ResetWorkflowAlgorithms();
   }
   
   this->updateWidget();
@@ -319,6 +329,18 @@ void qSlicerWorkflowSegmentationModuleWidget
 }
 
 
+void qSlicerWorkflowSegmentationModuleWidget::setupInstructions()
+{
+  // Add the real time instructions to the 3D viewer widget
+  qSlicerApplication::application()->layoutManager()->threeDWidget( 0 );
+  this->InstructionLabel = new QLabel( "" );
+  QFont* InstructionFont= new QFont();
+  InstructionFont->setPointSize(24);
+  this->InstructionLabel->setFont( *InstructionFont );
+  this->InstructionLabel->setAlignment( Qt::AlignCenter );
+  qSlicerApplication::application()->layoutManager()->threeDWidget( 0 )->layout()->addWidget( this->InstructionLabel );
+}
+
 
 void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
 {
@@ -399,6 +421,9 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
   // This updates the tasks
   d->logic()->Update();
 
-
+  if ( d->logic() != NULL )
+  {
+    this->InstructionLabel->setText( d->logic()->GetToolInstructions().c_str() );
+  }
 
 }

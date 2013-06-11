@@ -325,6 +325,24 @@ void vtkSlicerWorkflowSegmentationLogic
 }
 
 
+std::string vtkSlicerWorkflowSegmentationLogic
+::GetToolInstructions()
+{
+  std::stringstream instructions;
+  for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
+  {
+    if ( this->WorkflowAlgorithms.at(i)->DoTask == NULL )
+	{
+      continue;
+	}
+    instructions << this->WorkflowAlgorithms.at(i)->Tool->Name << ": ";
+	instructions << this->WorkflowAlgorithms.at(i)->DoTask->Name << " - ";
+	instructions << this->WorkflowAlgorithms.at(i)->DoTask->Instruction << std::endl;
+  }
+  return instructions.str();
+}
+
+
 // Private methods for accessing workflow algorithms -------------------------------------------------------
 
 

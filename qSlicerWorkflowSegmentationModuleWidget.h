@@ -32,6 +32,7 @@ protected:
   
   virtual void setup();
   virtual void enter();
+  virtual void exit();
 
 protected slots:
 
@@ -47,12 +48,15 @@ protected slots:
 
   void onSegmentTransformBufferButtonClicked();
 
+  void setupInstructions();
   void enableButtons();  
   void updateWidget();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationModuleWidget);
   Q_DISABLE_COPY(qSlicerWorkflowSegmentationModuleWidget);
+
+  QLabel* InstructionLabel;
 };
 
 #endif
