@@ -337,7 +337,11 @@ std::string vtkSlicerWorkflowSegmentationLogic
 	}
     instructions << this->WorkflowAlgorithms.at(i)->Tool->Name << ": ";
 	instructions << this->WorkflowAlgorithms.at(i)->DoTask->Name << " - ";
-	instructions << this->WorkflowAlgorithms.at(i)->DoTask->Instruction << std::endl;
+    instructions << this->WorkflowAlgorithms.at(i)->DoTask->Instruction;
+	if ( i < this->WorkflowAlgorithms.size() - 1 )
+	{
+		instructions << std::endl;	
+	}
   }
   return instructions.str();
 }

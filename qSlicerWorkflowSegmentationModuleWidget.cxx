@@ -334,10 +334,8 @@ void qSlicerWorkflowSegmentationModuleWidget::setupInstructions()
   // Add the real time instructions to the 3D viewer widget
   qSlicerApplication::application()->layoutManager()->threeDWidget( 0 );
   this->InstructionLabel = new QLabel( "" );
-  QFont* InstructionFont= new QFont();
-  InstructionFont->setPointSize(24);
-  this->InstructionLabel->setFont( *InstructionFont );
   this->InstructionLabel->setAlignment( Qt::AlignCenter );
+  this->InstructionLabel->setStyleSheet("QLabel { background-color : white; color : black; font-size : 24px }");
   qSlicerApplication::application()->layoutManager()->threeDWidget( 0 )->layout()->addWidget( this->InstructionLabel );
 }
 
