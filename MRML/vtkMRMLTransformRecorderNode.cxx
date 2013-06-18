@@ -129,8 +129,7 @@ void vtkMRMLTransformRecorderNode
   {
     attName  = *(atts++);
     attValue = *(atts++);
-    
-    // TODO: Handle observed transform nodes and connector node.   
+ 
     if ( ! strcmp( attName, "FileName" ) )
     {
       this->SetFileName( attValue );

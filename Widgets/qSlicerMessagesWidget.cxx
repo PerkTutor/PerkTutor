@@ -117,7 +117,6 @@ void qSlicerMessagesWidget
 }
 
 
-// TODO: Implement these properly
 void qSlicerMessagesWidget
 ::onAddMessageButtonClicked()
 {

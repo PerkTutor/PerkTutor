@@ -118,7 +118,7 @@ void vtkMRMLTransformBufferNode
 	return;
   }
 
-  // TODO: Use binary search
+  // Records are probably near the end so this is more efficient than binary search
   for ( int i = this->GetNumTransforms() - 1; i >= 0; i-- )
   {
     if ( newTransform->GetTime() >= this->GetTransformAt(i)->GetTime() )
@@ -151,7 +151,7 @@ void vtkMRMLTransformBufferNode
 	return;
   }
 
-  // TODO: Use binary search
+  // Records are probably near the end, so this is more efficient than binary search
   for ( int i = this->GetNumMessages() - 1; i >= 0; i-- )
   {
     if ( newMessage->GetTime() >= this->GetMessageAt(i)->GetTime() )
@@ -190,8 +190,11 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::RemoveMessageAt( int index )
 {
-  this->GetMessageAt(index)->Delete();
-  this->messages.erase( messages.begin() + index );
+  if ( index >= 0 && index < this->GetNumMessages() )
+  {
+    this->GetMessageAt(index)->Delete();
+    this->messages.erase( messages.begin() + index );
+  }
 }
 
 
@@ -282,7 +285,7 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
     return this->GetCurrentTransform();
   }
 
-  // TODO: Use binary search
+  // Records are probably near the end, so this is more efficient than binary search
   int candidate1, candidate2;
   for ( int i = this->GetNumTransforms() - 1; i >= 0; i-- )
   {
@@ -322,7 +325,7 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
     return this->GetCurrentMessage();
   }
 
-  // TODO: Use binary search
+  // Records are probably near the end so this is more efficient than binary search
   int candidate1, candidate2;
   for ( int i = this->GetNumMessages() - 1; i >= 0; i-- )
   {
