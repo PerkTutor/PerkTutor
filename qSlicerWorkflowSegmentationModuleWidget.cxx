@@ -295,6 +295,8 @@ void qSlicerWorkflowSegmentationModuleWidget
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
 
+  QString fileName = QFileDialog::getSaveFileName( this, tr("Save training"), "", tr("XML Files (*.xml)") );
+
   // TODO: Make this time estimate accurate
   QProgressDialog dialog;
   dialog.setModal( true );
@@ -303,10 +305,14 @@ void qSlicerWorkflowSegmentationModuleWidget
   dialog.setValue( 30 );
   
   d->logic()->Train();
-  this->onSaveWorkflowTrainingButtonClicked();
-  d->logic()->ResetWorkflowAlgorithms();
 
   dialog.close();
+
+  if ( fileName.isEmpty() == false )
+  {
+	d->logic()->SaveWorkflowTraining( fileName.toStdString() );
+  }
+  d->logic()->ResetWorkflowAlgorithms();
 
   this->updateWidget();
 }
