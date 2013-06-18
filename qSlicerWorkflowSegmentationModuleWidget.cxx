@@ -118,9 +118,6 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   // Train algorithm
   connect( d->TrainButton, SIGNAL(clicked()), this, SLOT( onTrainButtonClicked() ) );
 
-  // Save tracking log and parameters
-  connect( d->SaveWorkflowTrainingButton, SIGNAL(clicked()),this, SLOT ( onSaveWorkflowTrainingButtonClicked() ) );
-
   // Recording controls
   connect( d->SegmentTransformBufferButton, SIGNAL(clicked()), this, SLOT( onSegmentTransformBufferButtonClicked() ) );
 
@@ -319,22 +316,6 @@ void qSlicerWorkflowSegmentationModuleWidget
 
 
 
-void qSlicerWorkflowSegmentationModuleWidget
-::onSaveWorkflowTrainingButtonClicked()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-  
-  QString fileName = QFileDialog::getSaveFileName( this, tr("Save training"), "", tr("XML Files (*.xml)") );
-  
-  if ( fileName.isEmpty() == false )
-  {
-	d->logic()->SaveWorkflowTraining( fileName.toStdString() );
-  }
-  
-  this->updateWidget();
-}
-
-
 void qSlicerWorkflowSegmentationModuleWidget::setupInstructions()
 {
   // Add the real time instructions to the 3D viewer widget
@@ -360,8 +341,6 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
 
 	d->WorkflowTrainingFilesButton->setEnabled( false );
 	d->TrainButton->setEnabled( false );
-
-	d->SaveWorkflowTrainingButton->setEnabled( false );
 
 	return;
   }
@@ -399,12 +378,10 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   // If the algorithms are trained
   if ( ! d->logic()->GetWorkflowAlgorithmsTrained() )
   {
-    d->SaveWorkflowTrainingButton->setEnabled( false );
 	d->SegmentTransformBufferButton->setEnabled( false );
   }
   else
   {
-    d->SaveWorkflowTrainingButton->setEnabled( true );
 	d->SegmentTransformBufferButton->setEnabled( true );
   }
 
@@ -422,9 +399,63 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
   // This updates the tasks
   d->logic()->Update();
 
-  if ( d->logic() != NULL )
+  if ( d->logic() == NULL )
   {
-    this->InstructionLabel->setText( d->logic()->GetToolInstructions().c_str() );
+    return;
+  }
+
+  this->InstructionLabel->setText( d->logic()->GetToolInstructions().c_str() );
+
+  QStringList TableHeaders;
+  TableHeaders << "Tools Available";
+  d->ToolsAvailableTableWidget->setRowCount( 0 );
+  d->ToolsAvailableTableWidget->setColumnCount( 1 );
+  d->ToolsAvailableTableWidget->setHorizontalHeaderLabels( TableHeaders ); 
+  d->ToolsAvailableTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+
+  if ( d->logic()->GetModuleNode() == NULL )
+  {
+    return;
+  }
+
+  d->ToolsAvailableTableWidget->setRowCount( d->logic()->GetModuleNode()->ToolCollection->GetNumTools() );
+
+  for ( int i = 0; i < d->logic()->GetModuleNode()->ToolCollection->GetNumTools(); i++ )
+  {
+    vtkWorkflowTool* currentTool = d->logic()->GetModuleNode()->ToolCollection->GetToolAt(i);
+    vtkWorkflowTool* completionTool = d->logic()->GetModuleNode()->GetCompletionTool( currentTool );
+    std::string currentString = "";
+
+    currentString += currentTool->Name + " - ";
+	if ( ! currentTool->Inputted )
+	{
+      currentString += "Not ";
+	}
+    currentString += "Inputted, ";
+	if ( ! currentTool->Trained )
+	{
+      currentString += "Not ";
+	}
+	currentString += "Trained (";
+
+	if ( completionTool == NULL )
+	{
+      currentString += "No ";
+	}
+	currentString += "Completion - ";
+	if ( completionTool == NULL || ! completionTool->Inputted )
+	{
+      currentString += "Not ";
+	}
+    currentString += "Inputted, ";
+	if ( completionTool == NULL || ! completionTool->Trained )
+	{
+      currentString += "Not ";
+	}
+	currentString += "Trained)";
+
+	QTableWidgetItem* toolWidget = new QTableWidgetItem( QString::fromStdString( currentString ) );
+	d->ToolsAvailableTableWidget->setItem( i, 0, toolWidget );
   }
 
 }

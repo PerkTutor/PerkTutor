@@ -271,8 +271,9 @@ vtkMRMLWorkflowSegmentationNode
   // The tool collections are constructed so that they have the same order
   for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
   {
-    this->ToolCompletion->GetToolAt(i)->Input = this->ToolCollection->GetToolAt(i)->Input->DeepCopy();
-	this->ToolCompletion->GetToolAt(i)->Inputted = true;
+    vtkWorkflowTool* currentCompletionTool = this->GetCompletionTool( this->ToolCollection->GetToolAt(i) );
+    currentCompletionTool->Input = this->ToolCollection->GetToolAt(i)->Input->DeepCopy();
+	currentCompletionTool->Inputted = true;
   }
 
 }
@@ -306,6 +307,21 @@ void vtkMRMLWorkflowSegmentationNode
   this->ImportWorkflowProcedure();
   this->ImportWorkflowInput();
   this->ImportWorkflowTraining();
+}
+
+
+vtkWorkflowTool* vtkMRMLWorkflowSegmentationNode
+::GetCompletionTool( vtkWorkflowTool* tool )
+{
+  for ( int i = 0; i < this->ToolCompletion->GetNumTools(); i++ )
+  {
+    if ( this->ToolCompletion->GetToolAt(i)->Name.compare( tool->Name + "_Completion" ) == 0 )
+	{
+      return this->ToolCompletion->GetToolAt(i);
+	}
+  }
+
+  return NULL;
 }
 
 

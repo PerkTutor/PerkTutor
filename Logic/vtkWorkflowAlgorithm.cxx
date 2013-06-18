@@ -491,5 +491,7 @@ bool vtkWorkflowAlgorithm
       return this->CompletionVector.at(i);
 	}
   }
+
+  return false;
 }
 

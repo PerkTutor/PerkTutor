@@ -44,8 +44,6 @@ protected slots:
   void onWorkflowTrainingFilesButtonClicked();
   void onTrainButtonClicked();
 
-  void onSaveWorkflowTrainingButtonClicked();
-
   void onSegmentTransformBufferButtonClicked();
 
   void setupInstructions();

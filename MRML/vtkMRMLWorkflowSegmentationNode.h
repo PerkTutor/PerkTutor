@@ -75,6 +75,8 @@ public:
   void ImportWorkflowTraining( std::string newWorkflowTrainingFileName = "" );
   void ImportAllWorkflowData();
 
+  vtkWorkflowTool* GetCompletionTool( vtkWorkflowTool* tool );
+
 protected:
 
   // Input/output files
