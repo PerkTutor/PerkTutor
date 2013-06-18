@@ -228,8 +228,26 @@ void vtkMRMLWorkflowSegmentationNode
   }
 
   // Create a parser to parse the XML data from the procedure definition
-  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowProcedureFileName );
-  this->ToolCollection->ProcedureFromXMLElement( element );
+  vtkXMLDataElement* element1 = this->ParseXMLFile( this->WorkflowProcedureFileName );
+  this->ToolCollection->ProcedureFromXMLElement( element1 );
+  vtkXMLDataElement* element2 = this->ParseXMLFile( this->WorkflowProcedureFileName );
+  this->ToolCompletion->ProcedureFromXMLElement( element2 );
+
+  // Change the names of the procedures and tasks associated with completion
+  for ( int i = 0; i < this->ToolCompletion->GetNumTools(); i++ )
+  {
+    vtkWorkflowTool* currentTool = this->ToolCompletion->GetToolAt(i);
+    currentTool->Name += "_Completion";
+    int numTasks = currentTool->Procedure->GetNumTasks();
+
+	for ( int j = 0; j < numTasks; j++ )
+	{
+	  vtkWorkflowTask* completionTask = currentTool->Procedure->GetTaskAt(j)->DeepCopy();
+	  completionTask->Name = completionTask->Name + "_Completion";
+	  currentTool->Procedure->AddTask( completionTask );
+	}
+  }
+
 }
 
 
@@ -249,6 +267,14 @@ vtkMRMLWorkflowSegmentationNode
   // Create a parser to parse the XML data from the input parameters
   vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowInputFileName );
   this->ToolCollection->InputFromXMLElement( element );
+
+  // TODO: This assumes that the completion tools are in the same order as the collection tools
+  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
+  {
+    this->ToolCompletion->GetToolAt(i)->Input = this->ToolCollection->GetToolAt(i)->Input->DeepCopy();
+	this->ToolCompletion->GetToolAt(i)->Inputted = true;
+  }
+
 }
 
 
@@ -266,9 +292,10 @@ vtkMRMLWorkflowSegmentationNode
   }
 
   // Create a parser to parse the XML data from the training parameters
-  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowTrainingFileName );
-  this->ToolCollection->TrainingFromXMLElement( element );
-
+  vtkXMLDataElement* element1 = this->ParseXMLFile( this->WorkflowTrainingFileName );
+  this->ToolCollection->TrainingFromXMLElement( element1 );
+  vtkXMLDataElement* element2 = this->ParseXMLFile( this->WorkflowTrainingFileName );
+  this->ToolCompletion->TrainingFromXMLElement( element2 );
 }
 
 
@@ -280,43 +307,6 @@ void vtkMRMLWorkflowSegmentationNode
   this->ImportWorkflowInput();
   this->ImportWorkflowTraining();
 }
-
-
-void vtkMRMLWorkflowSegmentationNode
-::PopulateCompletionTools()
-{
-  this->ToolCompletion = vtkDeleteAssign( this->ToolCompletion, vtkWorkflowToolCollection::New() );
-
-  // Calculate the procedures with completions
-  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
-  {
-
-    vtkWorkflowTool* currentTool = this->ToolCollection->GetToolAt(i)->DeepCopy();
-	currentTool->Name = currentTool->Name + "_Completion";
-
-	int numTasks = currentTool->Procedure->GetNumTasks();
-	for ( int j = 0; j < numTasks; j++ )
-	{
-	  vtkWorkflowTask* completionTask = currentTool->Procedure->GetTaskAt(j)->DeepCopy();
-	  completionTask->Name = completionTask->Name + "_Completion";
-	  currentTool->Procedure->AddTask( completionTask );
-	}
-
-    // Input parameters are deep copied - this is good
-
-	// Reset the training
-	currentTool->Training = vtkDeleteAssign( currentTool->Training, vtkWorkflowTraining::New() );
-
-    // Add to the collection of completion tools
-	this->ToolCompletion->AddTool( currentTool );
-  }
-
-  // Create a parser to parse the XML data from the training parameters
-  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowTrainingFileName );
-  this->ToolCompletion->TrainingFromXMLElement( element );
-
-}
-
 
 
 

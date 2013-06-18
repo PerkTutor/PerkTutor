@@ -169,7 +169,6 @@ void vtkSlicerWorkflowSegmentationLogic
   }
   this->WorkflowAlgorithms.clear();
 
-  this->ModuleNode->PopulateCompletionTools();
   for ( int i = 0; i < this->ModuleNode->ToolCollection->GetNumTools(); i++ )
   {
     vtkWorkflowAlgorithm* newWorkflowAlgorithm = vtkWorkflowAlgorithm::New();
