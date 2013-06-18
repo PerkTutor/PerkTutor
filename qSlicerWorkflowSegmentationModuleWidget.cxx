@@ -416,9 +416,6 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
 
-  // TODO: Display the task name and instruction on screen
-  // There is nothing to do here until we actually display the task on screen
-  // For the moment, we display them just adding to the messages table
   // All the other things are taken care of by the TransformRecord logic/widgets
   enableButtons();
 

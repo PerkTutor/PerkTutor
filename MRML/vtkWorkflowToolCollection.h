@@ -53,7 +53,6 @@ public:
   bool GetInputted();
   bool GetTrained();
 
-  // TODO: This timekeeping should take care of itself, and not need to be called explicitly
   double GetMinTime();
   double GetMaxTime();
   double GetTotalTime();

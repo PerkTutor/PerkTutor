@@ -81,7 +81,7 @@ void vtkRecordBuffer
 	return;
   }
 
-  // TODO: Use binary search
+  // Record is probably near the end - this is more efficient than binary search
   for ( int i = this->GetNumRecords() - 1; i >= 0; i-- )
   {
     if ( newRecord->GetTime() >= this->GetRecordAt(i)->GetTime() )
@@ -142,7 +142,7 @@ vtkLabelRecord* vtkRecordBuffer
     return this->GetCurrentRecord();
   }
 
-  // TODO: Use binary search
+  // Record is probably near the end - this is more efficient than binary search
   int candidate1, candidate2;
   for ( int i = this->GetNumRecords() - 1; i >= 0; i-- )
   {
@@ -209,8 +209,7 @@ vtkMRMLTransformBufferNode* vtkRecordBuffer
 
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
-    // TODO: This cast may be isn't safe
-    vtkTransformRecord* transformRecord = ( (vtkTrackingRecord*) this->GetRecordAt(i) )->ToTransformRecord();
+    vtkTransformRecord* transformRecord = ( vtkTrackingRecord::SafeDownCast( this->GetRecordAt(i) ) )->ToTransformRecord();
     transformBufferNode->AddTransform( transformRecord );
   }
 
@@ -511,7 +510,7 @@ vtkRecordBuffer* vtkRecordBuffer
 
   // Find the average time stamp
   // Divide by numRecords - 1 because there are one fewer differences than there are stamps
-  double DT = 1.0; // TODO: Get a more intelligible default value (not a magic number)
+  double DT = 1.0;
   if ( this->GetNumRecords() > 1 )
   {
     DT = ( this->GetCurrentRecord()->GetTime() - this->GetRecordAt(0)->GetTime() ) / ( this->GetNumRecords() - 1 );
@@ -1054,7 +1053,12 @@ std::vector<vtkLabelVector*> vtkRecordBuffer
   // Grab only the most important eigenvectors
   std::vector<vtkLabelVector*> prinComps;
 
-  // TODO: Prevent more prinicipal components than original dimensions
+  // Prevent more prinicipal components than original dimensions
+  if ( numComp > eigenvectors.cols() )
+  {
+    numComp = eigenvectors.cols();
+  }
+
   for ( int i = eigenvectors.cols() - 1; i > eigenvectors.cols() - 1 - numComp; i-- )
   {
     vtkLabelVector* currPrinComp = vtkLabelVector::New();

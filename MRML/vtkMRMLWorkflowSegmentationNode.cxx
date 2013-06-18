@@ -268,7 +268,7 @@ vtkMRMLWorkflowSegmentationNode
   vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowInputFileName );
   this->ToolCollection->InputFromXMLElement( element );
 
-  // TODO: This assumes that the completion tools are in the same order as the collection tools
+  // The tool collections are constructed so that they have the same order
   for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
   {
     this->ToolCompletion->GetToolAt(i)->Input = this->ToolCollection->GetToolAt(i)->Input->DeepCopy();

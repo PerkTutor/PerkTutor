@@ -281,7 +281,6 @@ bool vtkWorkflowAlgorithm
   std::vector<vtkRecordBuffer*> buffersByLabel = pcaCat->SplitBufferByLabel( this->Tool->Procedure->GetTaskNames() );
 
   // Add the centroids from each task
-  // TODO: Change NumCentroids back to 700
   for ( int i = 0; i < this->Tool->Procedure->GetNumTasks(); i++ )
   {
 	std::vector<vtkLabelVector*> currTaskCentroids = buffersByLabel.at(i)->fwdkmeans( taskCentroids.at(i) );
@@ -403,8 +402,6 @@ void vtkWorkflowAlgorithm
   {
     this->CompletionAlgorithm->AddSegmentRecord( newRecord->DeepCopy() );
   }
-
-  // TODO: Only keep the most recent observations (a few for filtering, a window for orthogonal transformation)
 
   // Apply Gaussian filtering to each previous records
   this->FilterBufferRT->AddRecord( this->BufferRT->GaussianFilterRT( this->Tool->Input->FilterWidth ) );
