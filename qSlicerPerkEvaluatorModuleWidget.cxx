@@ -306,7 +306,7 @@ qSlicerPerkEvaluatorModuleWidget
   Q_D(qSlicerPerkEvaluatorModuleWidget);
 
   d->setupUi(this);
-  d->MessagesGroupBox->layout()->addWidget( qSlicerMessagesWidget::New( d->logic()->TransformRecorderLogic ) ); 
+  d->MessagesGroupBox->layout()->addWidget( qSlicerPerkEvaluatorMessagesWidget::New( d->logic() ) ); 
   this->Superclass::setup();
   
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( OnImportClicked() ) );

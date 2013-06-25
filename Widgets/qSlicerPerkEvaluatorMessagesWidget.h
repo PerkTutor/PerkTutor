@@ -25,6 +25,9 @@
 #include "qSlicerWidget.h"
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 
+#include "vtkSlicerTransformRecorderLogic.h"
+#include "vtkSlicerPerkEvaluatorLogic.h"
+#include "vtkMRMLTransformRecorderNode.h"
 #include "qSlicerMessagesWidget.h"
 
 class qSlicerPerkEvaluatorMessagesWidgetPrivate;
@@ -39,9 +42,9 @@ public:
   qSlicerPerkEvaluatorMessagesWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorMessagesWidget();
 
-  static qSlicerPerkEvaluatorMessagesWidget* New();
+  static qSlicerPerkEvaluatorMessagesWidget* New( vtkSlicerPerkEvaluatorLogic* newPELogic );
 
-  void SetTime( double time );
+  void SetLogic( vtkSlicerPerkEvaluatorLogic* newPELogic );
 
 protected slots:
 
@@ -54,7 +57,7 @@ private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorMessagesWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorMessagesWidget);
 
-  double currentTime;
+  vtkSlicerPerkEvaluatorLogic* peLogic;
 
 };
 

@@ -11,6 +11,10 @@ set(${KIT}_SRCS
   qSlicerPerkEvaluatorMessagesWidget.cxx
   qSlicerPerkEvaluatorMessagesWidget.h
   )
+  
+set(${KIT}_MOC_SRCS
+  qSlicerPerkEvaluatorMessagesWidget.h
+  )
 
 set(${KIT}_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
@@ -23,6 +27,7 @@ SlicerMacroBuildModuleWidgets(
   EXPORT_DIRECTIVE ${${KIT}_EXPORT_DIRECTIVE}
   INCLUDE_DIRECTORIES ${${KIT}_INCLUDE_DIRECTORIES}
   SRCS ${${KIT}_SRCS}
+  MOC_SRCS ${${KIT}_MOC_SRCS}
   TARGET_LIBRARIES ${${KIT}_TARGET_LIBRARIES}
   RESOURCES ${${KIT}_RESOURCES}
   WRAP_PYTHONQT

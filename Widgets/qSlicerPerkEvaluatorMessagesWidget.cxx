@@ -59,7 +59,7 @@ void qSlicerPerkEvaluatorMessagesWidgetPrivate
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerMessagesWidget methods
+// qSlicerPerkEvaluatorMessagesWidget methods
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorMessagesWidget
@@ -75,19 +75,20 @@ qSlicerPerkEvaluatorMessagesWidget
 
 
 qSlicerPerkEvaluatorMessagesWidget* qSlicerPerkEvaluatorMessagesWidget
-::New()
+::New( vtkSlicerPerkEvaluatorLogic* newPELogic )
 {
   qSlicerPerkEvaluatorMessagesWidget* newMessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
-  newMessagesWidget->SetTime( 0.0 );
+  newMessagesWidget->SetLogic( newPELogic );
   newMessagesWidget->setup();
   return newMessagesWidget;
 }
 
 
 void qSlicerPerkEvaluatorMessagesWidget
-::SetTime( double time )
+::SetLogic( vtkSlicerPerkEvaluatorLogic* newPELogic )
 {
-  this->currentTime = time;
+  this->peLogic = newPELogic;
+  this->qSlicerMessagesWidget::SetLogic( newPELogic->TransformRecorderLogic );
 }
 
 
@@ -104,7 +105,7 @@ void qSlicerPerkEvaluatorMessagesWidget
   }
 
   // Record the timestamp
-  double time = this->currentTime;
+  double time = this->peLogic->GetPlaybackTime();
   this->trLogic->AddMessage( messageName.toStdString(), time );
   
   this->updateWidget();
