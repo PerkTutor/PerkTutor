@@ -61,11 +61,12 @@ protected:
   virtual void setup();
   virtual void enter();
 
+  vtkSlicerTransformRecorderLogic* trLogic;
+
 private:
   Q_DECLARE_PRIVATE(qSlicerMessagesWidget);
   Q_DISABLE_COPY(qSlicerMessagesWidget);
 
-  vtkSlicerTransformRecorderLogic* trLogic;
 };
 
 #endif

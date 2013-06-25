@@ -276,11 +276,11 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
   {
     return NULL;
   }
-  if ( time < this->GetTransformAt(0)->GetTime() )
+  if ( time <= this->GetTransformAt(0)->GetTime() )
   {
     return this->GetTransformAt( 0 );
   }
-  if ( time > this->GetCurrentTransform()->GetTime() )
+  if ( time >= this->GetCurrentTransform()->GetTime() )
   {
     return this->GetCurrentTransform();
   }
@@ -289,7 +289,7 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
   int candidate1, candidate2;
   for ( int i = this->GetNumTransforms() - 1; i >= 0; i-- )
   {
-    if ( time > this->GetTransformAt(i)->GetTime() )
+    if ( time >= this->GetTransformAt(i)->GetTime() )
 	{
 	  candidate1 = i;
 	  candidate2 = i + 1;
@@ -316,11 +316,11 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
   {
     return NULL;
   }
-  if ( time < this->GetMessageAt(0)->GetTime() )
+  if ( time <= this->GetMessageAt(0)->GetTime() )
   {
     return this->GetMessageAt( 0 );
   }
-  if ( time > this->GetCurrentMessage()->GetTime() )
+  if ( time >= this->GetCurrentMessage()->GetTime() )
   {
     return this->GetCurrentMessage();
   }
@@ -329,7 +329,7 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
   int candidate1, candidate2;
   for ( int i = this->GetNumMessages() - 1; i >= 0; i-- )
   {
-    if ( time > this->GetMessageAt(i)->GetTime() )
+    if ( time >= this->GetMessageAt(i)->GetTime() )
 	{
 	  candidate1 = i;
 	  candidate2 = i + 1;
