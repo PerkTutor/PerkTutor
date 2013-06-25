@@ -343,13 +343,13 @@ double vtkSlicerPerkEvaluatorLogic
 double vtkSlicerPerkEvaluatorLogic
 ::GetMaxTime() const
 {
-  double maxTime = std::numeric_limits< double >::min();
+  double maxTime = - std::numeric_limits< double >::max();
   
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {
-    if ( ToolTrajectories.at(i)->GetTransformAt(0)->GetTime() > maxTime )
+    if ( ToolTrajectories.at(i)->GetCurrentTransform()->GetTime() > maxTime )
     {
-      maxTime = ToolTrajectories.at(i)->GetTransformAt(0)->GetTime();
+      maxTime = ToolTrajectories.at(i)->GetCurrentTransform()->GetTime();
     }
   }
   
@@ -369,7 +369,7 @@ double vtkSlicerPerkEvaluatorLogic
 void vtkSlicerPerkEvaluatorLogic
 ::SetPlaybackTime( double time )
 {
-  if ( time < this->GetMinTime()  ||  time > this->GetMaxTime() )
+  if ( time < this->GetMinTime() || time > this->GetMaxTime() )
   {
     return;
   }
@@ -453,8 +453,8 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     EnclosedFilter->Initialize( body );
   }
 
-  vtkSmartPointer< vtkMatrix4x4 > M0; node->GetMatrixTransformToWorld( M0 );
-  vtkSmartPointer< vtkMatrix4x4 > M1; node->GetMatrixTransformToWorld( M1 );  
+  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M0 );
+  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M1 );  
   
   for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
   {
@@ -462,7 +462,10 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 	// Set the playback time to update the node, and get data from the node
 	this->SetPlaybackTime( Trajectory->GetTransformAt(i)->GetTime() );
 
-	M0 = M1;
+	M0->Identity();
+	M0->DeepCopy( M1 );
+
+	M1->Identity();
     node->GetMatrixTransformToWorld( M1 );  
 
     if ( Trajectory->GetTransformAt(i)->GetTime() < this->MarkBegin || Trajectory->GetTransformAt(i)->GetTime() > this->MarkEnd )
