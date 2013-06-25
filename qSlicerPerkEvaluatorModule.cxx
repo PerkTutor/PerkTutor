@@ -19,7 +19,8 @@
 #include <QtPlugin>
 
 // ExtensionTemplate Logic includes
-#include <vtkSlicerPerkEvaluatorLogic.h>
+#include "vtkSlicerPerkEvaluatorLogic.h"
+#include "vtkSlicerTransformRecorderLogic.h"
 
 // ExtensionTemplate includes
 #include "qSlicerPerkEvaluatorModule.h"
@@ -101,6 +102,14 @@ QStringList qSlicerPerkEvaluatorModule::dependencies() const
 void qSlicerPerkEvaluatorModule::setup()
 {
   this->Superclass::setup();
+
+  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( this->logic() );
+  qSlicerAbstractCoreModule* TransformRecorderModule = qSlicerCoreApplication::application()->moduleManager()->module("TransformRecorder");
+
+  if ( TransformRecorderModule )
+  {
+    PerkEvaluatorLogic->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( TransformRecorderModule->logic() );
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -112,5 +121,5 @@ qSlicerAbstractModuleRepresentation * qSlicerPerkEvaluatorModule::createWidgetRe
 //-----------------------------------------------------------------------------
 vtkMRMLAbstractLogic* qSlicerPerkEvaluatorModule::createLogic()
 {
-  return vtkSlicerPerkEvaluatorLogic::New();
+	return vtkSlicerPerkEvaluatorLogic::New();
 }

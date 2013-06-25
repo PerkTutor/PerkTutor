@@ -120,8 +120,6 @@ void qSlicerPerkEvaluatorModuleWidget
 	d->EndSpinBox->setValue( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
     dialog.close();
   }
-
-
   
   this->UpdateGUI();
 }
@@ -247,18 +245,31 @@ void qSlicerPerkEvaluatorModuleWidget
 void qSlicerPerkEvaluatorModuleWidget
 ::OnAnalyseClicked()
 {
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  
+  Q_D( qSlicerPerkEvaluatorModuleWidget );  
   
   double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
   double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
   d->logic()->SetMarkBegin( begin );
-  d->logic()->SetMarkEnd( end ); 
+  d->logic()->SetMarkEnd( end );
+
+  // Metrics table  
+  std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics();
   
-  d->logic()->Analyse();
+  d->MetricsTable->clear();
+  QStringList MetricsTableHeaders;
+  MetricsTableHeaders << "Metric" << "Value";
+  d->MetricsTable->setRowCount( metrics.size() );
+  d->MetricsTable->setColumnCount( 2 );
+  d->MetricsTable->setHorizontalHeaderLabels( MetricsTableHeaders );
+  d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
   
-  
+  for ( int i = 0; i < metrics.size(); ++ i )
+  {
+    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( metrics.at(i).first ) );
+    QTableWidgetItem* valueItem = new QTableWidgetItem( QString::number( metrics.at(i).second, 'f', 2 ) );
+    d->MetricsTable->setItem( i, 0, nameItem );
+    d->MetricsTable->setItem( i, 1, valueItem );
+  }
   
   this->UpdateGUI();
 }
@@ -286,62 +297,6 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( d->NeedleReferenceComboBox->currentNode() );
   d->logic()->SetNeedleTransformNode( tnode );
 }
-
-void
-qSlicerPerkEvaluatorModuleWidget
-::OnAddItemClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-
-  QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
-    tr("Input text for the new annotation:"));
-
-  
-  d->logic()->AddAnnotation( itemText.toStdString() );
-
-  this->UpdateGUI();
-}
-
-
-void
-qSlicerPerkEvaluatorModuleWidget
-::OnRemoveItemClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  // Remove the time and note items from the annotations table
-
-  int currRow = d->AnnotationsTable->currentRow();
-
-  // Remove the annotation from the list of annotations, if appropriate row selected
-  if ( currRow >= 0 )
-  {
-    d->logic()->RemoveAnnotation( currRow );
-  }
-
-
-  this->UpdateGUI();
-}
-
-
-void
-qSlicerPerkEvaluatorModuleWidget
-::OnSaveItemsClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save record"), "", tr("XML Files (*.xml)") );
-  
-  if ( filename.isEmpty() == false )
-  {
-    d->logic()->SaveAnnotations( filename.toStdString() );
-  }
-
-  this->UpdateGUI();
-}
-
-
 
 
 void
@@ -382,45 +337,6 @@ void qSlicerPerkEvaluatorModuleWidget
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
-  
-    // Annotations table
-  
-  vtkSlicerPerkEvaluatorLogic::AnnotationVectorType annotations = d->logic()->GetAnnotations();
-  
-  d->AnnotationsTable->setRowCount( annotations.size() );
-  d->AnnotationsTable->setColumnCount( 2 );
-  QStringList AnnotationHeaders;
-  AnnotationHeaders << "Time" << "Annotation";
-  d->AnnotationsTable->setHorizontalHeaderLabels( AnnotationHeaders );
-  d->AnnotationsTable->setColumnWidth( 1, 250 );
-  
-  for ( int i = 0; i < annotations.size(); ++ i )
-  {
-    QTableWidgetItem* TimeItem = new QTableWidgetItem( QString::number( annotations[ i ].first - d->logic()->GetMinTime(), 'f', 1 ) );
-    QTableWidgetItem* NoteItem = new QTableWidgetItem( QString::fromStdString( annotations[ i ].second ) );
-    d->AnnotationsTable->setItem( i, 0, TimeItem );
-    d->AnnotationsTable->setItem( i, 1, NoteItem );
-  }
-  
-  
-    // Metrics table
-  
-  vtkSlicerPerkEvaluatorLogic::MetricVectorType metrics = d->logic()->GetMetrics();
-  
-  d->MetricsTable->setRowCount( metrics.size() );
-  d->MetricsTable->setColumnCount( 2 );
-  QStringList headerLabels;
-  headerLabels << "Metric name" << "Value";
-  d->MetricsTable->setHorizontalHeaderLabels( headerLabels );
-  d->MetricsTable->setColumnWidth( 0, 250 );
-  
-  for ( int i = 0; i < metrics.size(); ++ i )
-  {
-    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( metrics[ i ].first ) );
-    QTableWidgetItem* valueItem = new QTableWidgetItem( QString::number( metrics[ i ].second, 'f', 2 ) );
-    d->MetricsTable->setItem( i, 0, nameItem );
-    d->MetricsTable->setItem( i, 1, valueItem );
-  }
   
 }
 
