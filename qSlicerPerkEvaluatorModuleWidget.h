@@ -4,7 +4,8 @@
 
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
-
+#include <QtGui>
+#include "qSlicerMessagesWidget.h"
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
 class qSlicerPerkEvaluatorModuleWidgetPrivate;

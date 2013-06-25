@@ -26,6 +26,12 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
+  ${qSlicerTransformRecorderModuleWidgets_SOURCE_DIR}
+  ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   )
 
 set(MODULE_SRCS

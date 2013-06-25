@@ -304,7 +304,9 @@ qSlicerPerkEvaluatorModuleWidget
 ::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
+
   d->setupUi(this);
+  d->MessagesGroupBox->layout()->addWidget( qSlicerMessagesWidget::New( d->logic()->TransformRecorderLogic ) ); 
   this->Superclass::setup();
   
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( OnImportClicked() ) );
@@ -318,9 +320,6 @@ qSlicerPerkEvaluatorModuleWidget
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
-  connect( d->AddItemButton, SIGNAL( clicked() ), this, SLOT ( OnAddItemClicked() ) );
-  connect( d->RemoveItemButton, SIGNAL( clicked() ), this, SLOT ( OnRemoveItemClicked() ) );
-  connect( d->SaveItemsButton, SIGNAL( clicked() ), this, SLOT( OnSaveItemsClicked() ) );
   connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
