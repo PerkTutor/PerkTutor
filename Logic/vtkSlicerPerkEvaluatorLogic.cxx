@@ -293,6 +293,7 @@ void vtkSlicerPerkEvaluatorLogic
   this->ClearData();
 
   // Use the built in import method from the transform buffer node
+  this->TransformRecorderLogic->GetModuleNode()->TransformBuffer->Clear();
   this->TransformRecorderLogic->GetModuleNode()->TransformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );
   this->ToolTrajectories = this->TransformRecorderLogic->GetModuleNode()->TransformBuffer->SplitBufferByName();
 
