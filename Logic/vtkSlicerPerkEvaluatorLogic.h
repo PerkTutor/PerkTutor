@@ -102,8 +102,8 @@ private:
   void CreateTransformNodes();
   
   std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory );
-  // void CalculateNeedleMetrics( vtkMRMLTransformBufferNode* Trajectory );
-  double SpanArea( double* E0, double* E1, double* T0, double* T1 );
+  std::vector<MetricType> CalculateNeedleMetrics();
+  double TriangleArea( double* p1, double* p2, double* p3 );
   
   std::vector<vtkMRMLTransformBufferNode*> ToolTrajectories;
   

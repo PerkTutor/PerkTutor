@@ -251,18 +251,18 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 	}
   }
 
-  /*
+
   // If the needle is specified, calculate needle-specific metrics
   if ( this->NeedleTransformNode != NULL )
   {
-    std::vector<MetricType> needleMetrics = this->CalculateNeedleMetrics( this->NeedleTransformNode );
+    std::vector<MetricType> needleMetrics = this->CalculateNeedleMetrics();
 
     for ( int j = 0; j < needleMetrics.size(); j++ )
 	{
       metrics.push_back( needleMetrics.at(j) );
 	}
   }
-  */
+
 
   return metrics;
 }
@@ -518,204 +518,161 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 }
 
 
-/*
+
 // Needle has a specific direction. Long in the positive Y direction (A in RAS coordinate system).
 // Using this condition, we can calculate the potential tissue damage.
-void vtkSlicerPerkEvaluatorLogic
-::AnalyseNeedle( vtkMRMLLinearTransformNode* tnode )
+std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
+::CalculateNeedleMetrics()
 {
-  if ( tnode == NULL )
+  std::vector<MetricType> toolMetrics;
+
+  double tissueDamage = 0.0;
+
+  // Grab the needle reference frame node
+  vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( this->NeedleTransformNode->GetID() ) );
+  std::string toolName = node->GetName();
+
+  // Make sure the needle node and body model node exist to calculate these metrics
+  if ( node == NULL || this->BodyModelNode == NULL )
   {
-    return;
+    return toolMetrics;
   }
   
-  if ( this->BodyModelNode == NULL )
+  // Get the trajectory which is an ancestor to the needle reference node
+  // We really only need it for its timestamps
+  vtkMRMLTransformBufferNode* Trajectory = NULL;
+  vtkMRMLLinearTransformNode* parent = node;
+  while( parent != NULL )
   {
-    return;  // No body -> no tissue damage.
-  }
-  
-  
-    // Check if this needle transform is on a recorded trajectory.
-  
-  vtkMRMLTransformNode* parent = tnode->GetParentTransformNode();
-  
-  if ( parent == NULL )
-  {
-    return;
-  }
-  
-  vtkTransformTimeSeries* ParentTrajectory = NULL;
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt < this->ToolTrajectories.end(); ++ tIt )
-  {
-    if ( (*tIt)->GetToolName().compare( parent->GetName() ) == 0 )
+    // Check if the parent's name matches one of the trajectory names
+    for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
     {
-      ParentTrajectory = *tIt;
+      if ( this->ToolTrajectories.at(i)->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
+	  {
+        Trajectory = this->ToolTrajectories.at(i);
+	  }
     }
+
+	if ( Trajectory != NULL )
+	{
+      break;
+	}
+
+	parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
   }
-  
-  if ( ParentTrajectory == NULL )
+
+  if ( Trajectory == NULL )
   {
-    return;
+    return toolMetrics;
   }
+
   
-  
-    // Analyse recorded needle trajectory.
-  
-    // Check if the parent transform has any further parent transform.
-  
-  vtkSmartPointer< vtkMatrix4x4 > GrandParentMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  GrandParentMatrix->Identity();
-  vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( ParentTrajectory->GetToolName().c_str() );
-  vtkMRMLLinearTransformNode* GrandParentTransformNode = NULL;
-  if ( collection->GetNumberOfItems() > 0 )
-  {
-    GrandParentTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
-  }
-  if ( GrandParentTransformNode != NULL )
-  {
-    vtkMRMLTransformNode* ptNode = GrandParentTransformNode->GetParentTransformNode();
-    if ( ptNode != NULL )
-    {
-      ptNode->GetMatrixTransformToWorld( GrandParentMatrix );
-    }
-  }
-  collection->Delete();
-  
-  
-    // Prepare inside-outside body measurements.
-  
-  double O[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };     // Needle tip in the needle tip coordinate system.
-  double OB[ 4 ] = { 0.0, 300.0, 0.0, 1.0 };  // Needle base in the needle tip coordinate system. 300 mm is an assumption.
-  double pcoords[ 3 ] = { 0.0, 0.0, 0.0 };    // Not used. Placeholder for function signature.
-  double t = 0.0;                             // Parametric coordinate of intersection. Not used.
-  double tolerance = 0.001;
-  int    subId;
-  
+  // Constants for tissue damage metric  
+  double NEEDLE_LENGTH = 300;				// 300 mm is an assumption.
+  double INTERSECTION_TOLERANCE = 1e-3;		// Tolerance in line intersection function
+
+  // Needle vectors
+  double Origin[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };					// Needle tip in the needle tip coordinate system.
+  double OriginBase[ 4 ] = { 0.0, NEEDLE_LENGTH, 0.0, 1.0 };	// Needle base in the needle tip coordinate system.
+
   double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip at time 0.
   double P1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip at time 1.
   
   double B0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle base at time 0.
-  double B1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle base at time 0.
+  double B1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle base at time 1.
   
-  double I0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 0.
-  double I1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 1.
+  double E0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 0.
+  double E1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 1.
+
+  // Not used - placeholders for intersect with line function signatures
+  double pcoords[ 3 ] = { 0.0, 0.0, 0.0 };
+  double t = 0.0;
+  int    subId;
   
-  vtkSmartPointer< vtkMatrix4x4 > M0;  // NeedleTip-To-RAS at time 0.
-  vtkSmartPointer< vtkMatrix4x4 > M1;  // NeedleTip-To-RAS at time 1.
+  // Get a reference to the relevant transform node, update the transform node, compute the metric for that time step
+  double originalPlaybackTime = this->GetPlaybackTime();
+  this->SetPlaybackTime( this->GetMinTime() );
+
+  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M0 );
+  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M1 );  
   
-  vtkMatrix4x4* NeedleTipMatrix = tnode->GetMatrixTransformToParent();
-  
-  double PTT = 0.0; // Potential tissue damage. Area swept by the needle inside the tissue.
-  
+  // Set up filters for calculating quantities associated  the body model nodes
   vtkSmartPointer< vtkSelectEnclosedPoints > EnclosedFilter = vtkSmartPointer< vtkSelectEnclosedPoints >::New();
   EnclosedFilter->Initialize( this->BodyModelNode->GetPolyData() );
   
   vtkSmartPointer< vtkModifiedBSPTree > bspTree = vtkSmartPointer< vtkModifiedBSPTree >::New();
   bspTree->SetDataSet( this->BodyModelNode->GetPolyData() );
   bspTree->BuildLocator();
+
   
-  for ( int i = 1; i < ParentTrajectory->GetNumberOfRecords(); ++ i )
+  for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
   {
-    if ( ParentTrajectory->GetTimeAtIndex( i ) < this->MarkBegin )
+	// Set the playback time to update the node, and get data from the node
+	this->SetPlaybackTime( Trajectory->GetTransformAt(i)->GetTime() );
+
+	M0->Identity();
+	M0->DeepCopy( M1 );
+
+	M1->Identity();
+    node->GetMatrixTransformToWorld( M1 );  
+
+    if ( Trajectory->GetTransformAt(i)->GetTime() < this->MarkBegin || Trajectory->GetTransformAt(i)->GetTime() > this->MarkEnd )
     {
       continue;
     }
+
     
-    if ( ParentTrajectory->GetTimeAtIndex( i ) > this->MarkEnd )
-    {
-      break;
-    }
+    M0->MultiplyPoint( Origin, P0 );
+    M1->MultiplyPoint( Origin, P1 );
     
-    M0 = ParentTrajectory->GetMatrixAtIndex( i - 1 );
-    M1 = ParentTrajectory->GetMatrixAtIndex( i );
+    M0->MultiplyPoint( OriginBase, B0 );
+    M1->MultiplyPoint( OriginBase, B1 );
+
     
-      // Transform matrix composition: M = GrandParentMatrix * PartentMatrix * NeedleTipMatrix
-    
-    vtkMatrix4x4::Multiply4x4( M0, NeedleTipMatrix, M0 );
-    vtkMatrix4x4::Multiply4x4( M1, NeedleTipMatrix, M1 );
-    
-    vtkMatrix4x4::Multiply4x4( GrandParentMatrix, M0, M0 );
-    vtkMatrix4x4::Multiply4x4( GrandParentMatrix, M1, M1 );
-    
-    M0->MultiplyPoint( O, P0 );
-    M1->MultiplyPoint( O, P1 );
-    
-    M0->MultiplyPoint( OB, B0 );
-    M1->MultiplyPoint( OB, B1 );
-    
-    
-      // Check if current point is inside the body.
-    
+    // Check if current point is inside the body    
     int Inside = 0;
-    if (    EnclosedFilter->IsInsideSurface( P0[ 0 ], P0[ 1 ], P0[ 2 ] )
-         && EnclosedFilter->IsInsideSurface( P1[ 0 ], P1[ 1 ], P1[ 2 ] ) )
+    if ( EnclosedFilter->IsInsideSurface( P0[ 0 ], P0[ 1 ], P0[ 2 ] ) && EnclosedFilter->IsInsideSurface( P1[ 0 ], P1[ 1 ], P1[ 2 ] ) )
     {
       Inside = true;
     }
     
     if ( Inside )
     {
-        // Compute needle entry points.
+      // Compute needle entry points      
+      bspTree->IntersectWithLine( P0, B0, INTERSECTION_TOLERANCE, t, E0, pcoords, subId );
+      bspTree->IntersectWithLine( P1, B1, INTERSECTION_TOLERANCE, t, E1, pcoords, subId );
       
-      bspTree->IntersectWithLine( P0, B0, tolerance, t, I0, pcoords, subId );
-      bspTree->IntersectWithLine( P1, B1, tolerance, t, I1, pcoords, subId );
-      
-        // Compute area of two triangles.
-      
-      PTT += SpanArea( I0, I1, P0, P1 );
+      // Compute area of two triangles      
+      tissueDamage += this->TriangleArea( E0, E1, P0 ) + this->TriangleArea( E1, P0, P1 );
     }
+
   }
   
-  
-    // Record this metric.
-  
-  MetricType PTTMetric;
-  PTTMetric.first = "Potential tissue damage (mm2)";
-  PTTMetric.second = PTT;
-  
-  this->Metrics.push_back( PTTMetric );
-  
+  // Reset the play back time
+  this->SetPlaybackTime( originalPlaybackTime );
+
+  MetricType tissueDamageMetric;
+  tissueDamageMetric.first = toolName + " potential tissue damage (mm2)";
+  tissueDamageMetric.second = tissueDamage;
+  toolMetrics.push_back( tissueDamageMetric );
+
+  return toolMetrics;
 }
 
 
 
 double vtkSlicerPerkEvaluatorLogic
-::SpanArea( double* e1, double* e2, double* t1, double* t2 )
+::TriangleArea( double* p1, double* p2, double* p3 )
 {
-    // Approximation: summed area of two triangles, (e1,t1,e2) and (t1,e2,t2).
-    // Area of a triangle: cross-product of two edge vectors.  
-  
-    // First triangle: v = e2 - e1; w = t1 = e1;
-  
-  double v[ 3 ] = { 0, 0, 0 };
-  double w[ 3 ] = { 0, 0, 0 };
-  
-  for ( int i = 0; i < 3; ++ i )
-    {
-    v[ i ] = e2[ i ] - e1[ i ];
-    w[ i ] = t1[ i ] - e1[ i ];
-    }
-  
-  double cprod[ 3 ] = { 0, 0, 0 };
-  vtkMath::Cross( v, w, cprod );
-  double area1 = std::sqrt( cprod[ 0 ] * cprod[ 0 ]  +  cprod[ 1 ] * cprod[ 1 ]  +  cprod[ 2 ] * cprod[ 2 ] );
-  
-    // Second triangle: v = e2 - t1; w = t2 - t1;
-  
-  for ( int i = 0; i < 3; ++ i )
-    {
-    v[ i ] = e2[ i ] - t1[ i ];
-    w[ i ] = t2[ i ] - t1[ i ];
-    }
-  
-  vtkMath::Cross( v, w, cprod );
-  double area2 = std::sqrt( cprod[ 0 ] * cprod[ 0 ]  +  cprod[ 1 ] * cprod[ 1 ]  +  cprod[ 2 ] * cprod[ 2 ] );
-  
-  return ( area1 + area2 );
-}
+  // Use Heron's formula to compute the area of a triangle
+  double a = sqrt( vtkMath::Distance2BetweenPoints( p1, p2 ) );
+  double b = sqrt( vtkMath::Distance2BetweenPoints( p1, p3 ) );
+  double c = sqrt( vtkMath::Distance2BetweenPoints( p2, p3 ) );
 
-*/
+  double s = ( a + b + c ) / 2;
+
+  return sqrt( s * ( s - a ) * ( s - b ) * ( s - c ) );
+}
 
 
 
