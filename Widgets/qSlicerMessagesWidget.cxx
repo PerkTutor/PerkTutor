@@ -167,6 +167,7 @@ void qSlicerMessagesWidget
   // Check what the current row and column are
   int currentRow = d->MessagesTableWidget->currentRow();
   int currentColumn = d->MessagesTableWidget->currentColumn();
+  int scrollPosition = d->MessagesTableWidget->verticalScrollBar()->value();
   
   // The only thing to do is update the table entries. Must ensure they are in sorted order (that's how they are stored in the buffer).
   d->MessagesTableWidget->clear();
@@ -194,5 +195,6 @@ void qSlicerMessagesWidget
 
   // Reset the current row and column to what they were
   d->MessagesTableWidget->setCurrentCell( currentRow, currentColumn );
+  d->MessagesTableWidget->verticalScrollBar()->setValue( scrollPosition );
 
 }
