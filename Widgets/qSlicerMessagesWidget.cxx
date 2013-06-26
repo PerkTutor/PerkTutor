@@ -163,6 +163,10 @@ void qSlicerMessagesWidget
 ::updateWidget()
 {
   Q_D(qSlicerMessagesWidget);
+
+  // Check what the current row and column are
+  int currentRow = d->MessagesTableWidget->currentRow();
+  int currentColumn = d->MessagesTableWidget->currentColumn();
   
   // The only thing to do is update the table entries. Must ensure they are in sorted order (that's how they are stored in the buffer).
   d->MessagesTableWidget->clear();
@@ -187,5 +191,8 @@ void qSlicerMessagesWidget
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 
   }
+
+  // Reset the current row and column to what they were
+  d->MessagesTableWidget->setCurrentCell( currentRow, currentColumn );
 
 }
