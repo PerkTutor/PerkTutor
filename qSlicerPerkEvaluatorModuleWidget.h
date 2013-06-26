@@ -38,6 +38,7 @@ public slots:
   void OnMarkEndClicked();
   void OnAnalyseClicked();
   void OnBodyModelNodeSelected();
+  void OnSaveButtonClicked();
   void OnNeedleReferenceSelected();
   
 

@@ -270,8 +270,6 @@ void qSlicerPerkEvaluatorModuleWidget
     d->MetricsTable->setItem( i, 0, nameItem );
     d->MetricsTable->setItem( i, 1, valueItem );
   }
-  
-  this->UpdateGUI();
 }
 
 
@@ -299,6 +297,21 @@ qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnSaveButtonClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );  
+
+  QString filename = QFileDialog::getSaveFileName( this, tr("Save buffer"), "", tr("XML Files (*.xml)") );
+  
+  if ( ! filename.isEmpty() )
+  {
+    d->logic()->TransformRecorderLogic->SaveToFile( filename.toStdString() );
+  }
+
+}
+
+
 void
 qSlicerPerkEvaluatorModuleWidget
 ::setup()
@@ -322,6 +335,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
   connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
+  connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( OnSaveButtonClicked() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
 }
 

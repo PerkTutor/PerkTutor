@@ -326,6 +326,11 @@ double vtkSlicerPerkEvaluatorLogic
 double vtkSlicerPerkEvaluatorLogic
 ::GetMinTime() const
 {
+  if ( this->ToolTrajectories.size() == 0 )
+  {
+    return 0.0;
+  }
+
   double minTime = std::numeric_limits< double >::max();
   
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
@@ -344,6 +349,11 @@ double vtkSlicerPerkEvaluatorLogic
 double vtkSlicerPerkEvaluatorLogic
 ::GetMaxTime() const
 {
+  if ( this->ToolTrajectories.size() == 0 )
+  {
+    return 0.0;
+  }
+
   double maxTime = - std::numeric_limits< double >::max();
   
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
