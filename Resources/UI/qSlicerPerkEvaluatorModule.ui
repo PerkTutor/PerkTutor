@@ -53,26 +53,6 @@
          <property name="verticalSpacing">
           <number>10</number>
          </property>
-         <item row="2" column="0">
-          <widget class="QPushButton" name="ImportButton">
-           <property name="maximumSize">
-            <size>
-             <width>800</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Import XML file</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Measurement range:</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout">
            <property name="topMargin">
@@ -103,7 +83,27 @@
            </item>
           </layout>
          </item>
-         <item row="7" column="0">
+         <item row="2" column="0">
+          <widget class="QPushButton" name="ImportButton">
+           <property name="maximumSize">
+            <size>
+             <width>800</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Import XML file</string>
+           </property>
+          </widget>
+         </item>
+         <item row="18" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Measurement range:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="19" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QPushButton" name="MarkBeginButton">
@@ -212,6 +212,86 @@
              <property name="noneEnabled">
               <bool>true</bool>
              </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="4" column="0">
+          <layout class="QHBoxLayout" name="NeedleOrientationLayout">
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="NeedleOrientationLabel">
+             <property name="text">
+              <string>Needle Orientation:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="PlusXRadioButton">
+             <property name="text">
+              <string>X</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string>NeedleOrientationButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="MinusXRadioButton">
+             <property name="text">
+              <string>-X</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string>NeedleOrientationButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="PlusYRadioButton">
+             <property name="text">
+              <string>Y</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string>NeedleOrientationButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="MinusYRadioButton">
+             <property name="text">
+              <string>-Y</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string>NeedleOrientationButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="PlusZRadioButton">
+             <property name="text">
+              <string>Z</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string>NeedleOrientationButtonGroup</string>
+             </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="MinusZRadioButton">
+             <property name="text">
+              <string>-Z</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string>NeedleOrientationButtonGroup</string>
+             </attribute>
             </widget>
            </item>
           </layout>
@@ -467,8 +547,8 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>20</width>
+       <height>40</height>
       </size>
      </property>
     </spacer>
@@ -534,4 +614,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="NeedleOrientationButtonGroup"/>
+ </buttongroups>
 </ui>

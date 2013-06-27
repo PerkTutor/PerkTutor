@@ -297,6 +297,42 @@ qSlicerPerkEvaluatorModuleWidget
 }
 
 
+
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnNeedleOrientationChanged( QAbstractButton* newOrientationButton )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  if ( newOrientationButton == d->PlusXRadioButton )
+  {
+    d->logic()->SetNeedleBase( 1.0, 0.0, 0.0 );
+  }
+  if ( newOrientationButton == d->MinusXRadioButton )
+  {
+    d->logic()->SetNeedleBase( -1.0, 0.0, 0.0 );
+  }
+  if ( newOrientationButton == d->PlusYRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, 1.0, 0.0 );
+  }
+  if ( newOrientationButton == d->MinusYRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, -1.0, 0.0 );
+  }
+  if ( newOrientationButton == d->PlusZRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, 0.0, 1.0 );
+  }
+  if ( newOrientationButton == d->MinusZRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, 0.0, -1.0 );
+  }
+
+}
+
+
+
 void qSlicerPerkEvaluatorModuleWidget
 ::OnSaveButtonClicked()
 {
@@ -337,6 +373,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( OnSaveButtonClicked() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
+  connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( OnNeedleOrientationChanged( QAbstractButton* ) ) );
 }
 
 

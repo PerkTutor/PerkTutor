@@ -82,6 +82,7 @@ vtkSlicerPerkEvaluatorLogic
   this->PlaybackTime = 0.0;
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
+  this->SetNeedleBase( 0.0, 1.0, 0.0 );
   
   this->BodyModelNode = NULL;
   this->NeedleTransformNode = NULL;
@@ -221,6 +222,17 @@ void vtkSlicerPerkEvaluatorLogic
   {
     this->MarkEnd = end;
   }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetNeedleBase( double x, double y, double z )
+{
+  // Observe that this function takes a unit vector in the direction of the base
+  this->NeedleBase[0] = x * NEEDLE_LENGTH;
+  this->NeedleBase[1] = y * NEEDLE_LENGTH;
+  this->NeedleBase[2] = z * NEEDLE_LENGTH;
+  this->NeedleBase[3] = 1.0;
 }
 
 
@@ -578,12 +590,11 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 
   
   // Constants for tissue damage metric  
-  double NEEDLE_LENGTH = 300;				// 300 mm is an assumption.
   double INTERSECTION_TOLERANCE = 1e-3;		// Tolerance in line intersection function
 
   // Needle vectors
-  double Origin[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };					// Needle tip in the needle tip coordinate system.
-  double OriginBase[ 4 ] = { 0.0, NEEDLE_LENGTH, 0.0, 1.0 };	// Needle base in the needle tip coordinate system.
+  double Origin[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip in the needle tip coordinate system.
+  double OriginBase[ 4 ] = { this->NeedleBase[0], this->NeedleBase[1], this->NeedleBase[2], this->NeedleBase[3] }; // Needle base in the needle tip coordinate system.
 
   double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip at time 0.
   double P1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip at time 1.

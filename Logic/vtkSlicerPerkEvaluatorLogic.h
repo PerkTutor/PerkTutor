@@ -64,6 +64,7 @@ public:
   void SetPlaybackTime( double time );
   void SetMarkBegin( double begin );
   void SetMarkEnd( double end );
+  void SetNeedleBase( double x, double y, double z );
 
   typedef std::pair<std::string,double> MetricType;  
   std::vector<MetricType> GetMetrics();
@@ -110,7 +111,10 @@ private:
   double PlaybackTime;
   double MarkBegin;
   double MarkEnd;
+  double NeedleBase[4];
 
 };
+
+const double NEEDLE_LENGTH = 300; // Assume 300mm
 
 #endif

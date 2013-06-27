@@ -40,6 +40,7 @@ public slots:
   void OnBodyModelNodeSelected();
   void OnSaveButtonClicked();
   void OnNeedleReferenceSelected();
+  void OnNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
 
 protected:
