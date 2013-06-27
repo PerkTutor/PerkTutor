@@ -243,7 +243,7 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnAnalyseClicked()
+::OnAnalyzeClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );  
   
@@ -369,7 +369,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
-  connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
+  connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( OnSaveButtonClicked() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );

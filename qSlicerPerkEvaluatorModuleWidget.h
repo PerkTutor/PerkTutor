@@ -36,7 +36,7 @@ public slots:
   void OnTimeout();
   void OnMarkBeginClicked();
   void OnMarkEndClicked();
-  void OnAnalyseClicked();
+  void OnAnalyzeClicked();
   void OnBodyModelNodeSelected();
   void OnSaveButtonClicked();
   void OnNeedleReferenceSelected();
