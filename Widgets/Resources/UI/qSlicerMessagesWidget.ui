@@ -37,7 +37,7 @@
      <item>
       <widget class="QPushButton" name="AddMessageButton">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -50,7 +50,7 @@
      <item>
       <widget class="QPushButton" name="RemoveMessageButton">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -63,7 +63,7 @@
      <item>
       <widget class="QPushButton" name="ClearMessagesButton">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
