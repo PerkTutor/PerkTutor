@@ -48,7 +48,7 @@ public:
 
 protected slots:
 
-  void onAddMessageButtonClicked();
+  void onClearButtonClicked();
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate> d_ptr;
