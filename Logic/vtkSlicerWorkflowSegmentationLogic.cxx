@@ -290,7 +290,12 @@ void vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::Update()
 {
-  if ( this->TransformRecorderLogic == NULL || this->TransformRecorderLogic->GetBuffer() == NULL || this->TransformRecorderLogic->GetBuffer()->GetNumTransforms() <= this->IndexToProcess )
+  if ( this->TransformRecorderLogic == NULL || this->TransformRecorderLogic->GetBuffer() == NULL )
+  {
+    return;
+  }
+
+  if ( this->TransformRecorderLogic->GetBuffer()->GetNumTransforms() <= this->IndexToProcess )
   {
     return;
   }
@@ -339,7 +344,7 @@ std::string vtkSlicerWorkflowSegmentationLogic
     instructions << this->WorkflowAlgorithms.at(i)->DoTask->Instruction;
 	if ( i < this->WorkflowAlgorithms.size() - 1 )
 	{
-		instructions << std::endl;	
+      instructions << std::endl;	
 	}
   }
   return instructions.str();

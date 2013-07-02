@@ -101,7 +101,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   Q_D(qSlicerWorkflowSegmentationModuleWidget);
 
   d->setupUi(this);
-  d->ControlsGroupBox->layout()->addWidget( qSlicerRecorderControlsWidget::New( d->logic()->TransformRecorderLogic ) );
+  d->ControlsGroupBox->layout()->addWidget( qSlicerWorkflowSegmentationRecorderControlsWidget::New( d->logic() ) );
   d->MessagesGroupBox->layout()->addWidget( qSlicerMessagesWidget::New( d->logic()->TransformRecorderLogic ) ); 
   this->Superclass::setup();
 
@@ -426,7 +426,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
     vtkWorkflowTool* completionTool = d->logic()->GetModuleNode()->GetCompletionTool( currentTool );
     std::string currentString = "";
 
-    currentString += currentTool->Name + " - ";
+    currentString += currentTool->Name + " (";
 	if ( ! currentTool->Inputted )
 	{
       currentString += "Not ";
@@ -436,26 +436,12 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
 	{
       currentString += "Not ";
 	}
-	currentString += "Trained (";
-
-	if ( completionTool == NULL )
-	{
-      currentString += "No ";
-	}
-	currentString += "Completion - ";
-	if ( completionTool == NULL || ! completionTool->Inputted )
-	{
-      currentString += "Not ";
-	}
-    currentString += "Inputted, ";
-	if ( completionTool == NULL || ! completionTool->Trained )
-	{
-      currentString += "Not ";
-	}
 	currentString += "Trained)";
 
 	QTableWidgetItem* toolWidget = new QTableWidgetItem( QString::fromStdString( currentString ) );
 	d->ToolsAvailableTableWidget->setItem( i, 0, toolWidget );
   }
 
+  d->ToolsAvailableTableWidget->horizontalHeader()->hide();
+  d->ToolsAvailableTableWidget->resizeRowsToContents();
 }
