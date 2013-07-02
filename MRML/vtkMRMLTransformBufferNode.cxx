@@ -363,6 +363,42 @@ int vtkMRMLTransformBufferNode
 }
 
 
+// Report the maximum transform time - use only the message time if no transforms exist
+double vtkMRMLTransformBufferNode
+::GetMaximumTime()
+{
+  if ( this->GetNumTransforms() > 0 )
+  {
+    return this->GetCurrentTransform()->GetTime();
+  }
+
+  if ( this->GetNumMessages() > 0 )
+  {
+    return this->GetCurrentMessage()->GetTime();
+  }
+
+  return 0.0;
+}
+
+
+// Report the minimum transform time - use only the message time if no transforms exist
+double vtkMRMLTransformBufferNode
+::GetMinimumTime()
+{
+  if ( this->GetNumTransforms() > 0 )
+  {
+    return this->GetTransformAt(0)->GetTime();
+  }
+
+  if ( this->GetNumMessages() > 0 )
+  {
+    return this->GetMessageAt(0)->GetTime();
+  }
+
+  return 0.0;
+}
+
+
 void vtkMRMLTransformBufferNode
 ::Clear()
 {

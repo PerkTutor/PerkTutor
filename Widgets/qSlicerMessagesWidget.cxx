@@ -187,7 +187,8 @@ void qSlicerMessagesWidget
   d->MessagesTableWidget->setRowCount( this->trLogic->GetBuffer()->GetNumMessages() );
   for ( int i = 0; i < this->trLogic->GetBuffer()->GetNumMessages(); i++ )
   {
-    QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( this->trLogic->GetBuffer()->GetMessageAt(i)->GetTime() ) );
+    double messageTime = this->trLogic->GetBuffer()->GetMessageAt(i)->GetTime() - this->trLogic->GetBuffer()->GetMinimumTime();
+    QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
 	QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->trLogic->GetBuffer()->GetMessageAt(i)->GetName() ) );
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 

@@ -90,6 +90,9 @@ public:
   int GetNumTransforms();
   int GetNumMessages();
 
+  double GetMinimumTime();
+  double GetMaximumTime();
+
   void Clear();
   void ClearTransforms();
   void ClearMessages();
