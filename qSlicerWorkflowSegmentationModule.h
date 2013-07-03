@@ -20,6 +20,8 @@
 
 // SlicerQt includes
 #include "qSlicerLoadableModule.h"
+#include "qSlicerCoreApplication.h"
+#include "qSlicerModuleManager.h"
 
 #include "qSlicerWorkflowSegmentationModuleExport.h"
 
@@ -53,6 +55,7 @@ public:
   /// Return the category for the module
   virtual QString category()const;
   virtual QStringList categories()const;
+  virtual QStringList dependencies()const;
 
 protected:
 

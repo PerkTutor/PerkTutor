@@ -19,7 +19,8 @@
 #include <QtPlugin>
 
 // WorkflowSegmentation Logic includes
-#include <vtkSlicerWorkflowSegmentationLogic.h>
+#include "vtkSlicerWorkflowSegmentationLogic.h"
+#include "vtkSlicerTransformRecorderLogic.h"
 
 // WorkflowSegmentation includes
 #include "qSlicerWorkflowSegmentationModule.h"
@@ -67,6 +68,13 @@ QStringList qSlicerWorkflowSegmentationModule::categories() const
 {
   return QStringList() << "IGT";
 }
+
+//-----------------------------------------------------------------------------
+QStringList qSlicerWorkflowSegmentationModule::dependencies()const
+{
+  return QStringList() << "TransformRecorder";
+}
+
 //-----------------------------------------------------------------------------
 qSlicerWorkflowSegmentationModule::~qSlicerWorkflowSegmentationModule()
 {
@@ -114,5 +122,13 @@ qSlicerAbstractModuleRepresentation * qSlicerWorkflowSegmentationModule::createW
 //-----------------------------------------------------------------------------
 vtkMRMLAbstractLogic* qSlicerWorkflowSegmentationModule::createLogic()
 {
-  return vtkSlicerWorkflowSegmentationLogic::New();
+  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::New();
+  qSlicerAbstractCoreModule* TransformRecorderModule = qSlicerCoreApplication::application()->moduleManager()->module("TransformRecorder");
+
+  if ( TransformRecorderModule )
+  {
+    WorkflowSegmentationLogic->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( TransformRecorderModule->logic() );
+  }
+
+  return WorkflowSegmentationLogic;
 }

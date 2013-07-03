@@ -17,6 +17,7 @@ endif()
 # Build module sub libraries
 add_subdirectory(MRML)
 add_subdirectory(Logic)
+add_subdirectory(Widgets)
 
 #-----------------------------------------------------------------------------
 set(MODULE_EXPORT_DIRECTIVE "Q_SLICER_QTMODULES_${MODULE_NAME_UPPER}_EXPORT")
@@ -27,6 +28,14 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_BINARY_DIR}/MRML
+  ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
+  ${CMAKE_CURRENT_BINARY_DIR}/Widgets
+  ${qSlicerTransformRecorderModuleWidgets_SOURCE_DIR}
+  ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   )
 
 set(MODULE_SRCS
@@ -48,6 +57,10 @@ set(MODULE_UI_SRCS
 set(MODULE_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
+  qSlicer${MODULE_NAME}ModuleWidgets
+  vtkSlicerTransformRecorderModuleMRML
+  vtkSlicerTransformRecorderModuleLogic
+  qSlicerTransformRecorderModuleWidgets
   ${MRML_LIBRARIES}
   )
   

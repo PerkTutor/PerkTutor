@@ -24,24 +24,29 @@
 #ifndef __vtkSlicerWorkflowSegmentationLogic_h
 #define __vtkSlicerWorkflowSegmentationLogic_h
 
-// Slicer includes
-#include "vtkSlicerModuleLogic.h"
-#include "vtkMRML.h"
-#include "vtkMRMLNode.h"
-#include "vtkMRMLScene.h"
-#include "vtkObjectFactory.h"
+// Standard Includes
+#include <string>
+#include <sstream>
+#include <vector>
+#include <cmath>
 
-#include "vtkSmartPointer.h"
+// VTK includes
+#include "vtkObject.h"
+#include "vtkObjectBase.h"
+#include "vtkObjectFactory.h"
+#include "vtkXMLDataElement.h"
+
+// Workflow Segmentation includes
+#include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
+#include "vtkMRMLWorkflowSegmentationNode.h"
+#include "vtkRecordBufferRT.h"
+#include "vtkMarkovModelRT.h"
+#include "vtkWorkflowToolCollection.h"
 #include "vtkWorkflowAlgorithm.h"
 
-// MRML includes
-// class vtkMRMLIGTLConnectorNode;
-class vtkMRMLViewNode;
-#include "vtkMRMLWorkflowSegmentationNode.h"
-// STD includes
-#include <cstdlib>
+#include "vtkSlicerTransformRecorderLogic.h"
+#include "vtkMRMLTransformBufferNode.h"
 
-#include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
 
 
 
@@ -50,25 +55,12 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT vtkSlicerWorkflowSegme
   public vtkSlicerModuleLogic
 {
 public:
-
-
-   //BTX
-  enum {  // Events
-    //LocatorUpdateEvent      = 50000,
-    StatusUpdateEvent       = 50001,
-  };
-  //ETX
+  vtkTypeMacro(vtkSlicerWorkflowSegmentationLogic,vtkSlicerModuleLogic);
 
   static vtkSlicerWorkflowSegmentationLogic *New();
-  vtkTypeMacro(vtkSlicerWorkflowSegmentationLogic,vtkSlicerModuleLogic);
-  void PrintSelf(ostream& os, vtkIndent indent);
   
-  /// Initialize listening to MRML events
+  void PrintSelf(ostream& os, vtkIndent indent);
   void InitializeEventListeners();
-    
-  // void SetOpenIGTLConnectorNode( vtkMRMLIGTLConnectorNode* node );
-  //void SetProgressViewNode( vtkMRMLViewNode* node );
-  //void SetBullsEyeViewNode( vtkMRMLViewNode* node );
 
 protected:
   vtkSlicerWorkflowSegmentationLogic();
@@ -79,23 +71,52 @@ protected:
   virtual void UpdateFromMRMLScene();
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
+
 private:
 
   vtkSlicerWorkflowSegmentationLogic(const vtkSlicerWorkflowSegmentationLogic&); // Not implemented
   void operator=(const vtkSlicerWorkflowSegmentationLogic&);               // Not implemented
-  // Reference to the module MRML node.
 
-private:
-  vtkMRMLWorkflowSegmentationNode* ModuleNode;
+
+  // These are methods specific to the Workflow Segmentation logic -------------------------------------------------------
 public:
-  vtkGetObjectMacro( ModuleNode, vtkMRMLWorkflowSegmentationNode );
+
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+
+  vtkMRMLWorkflowSegmentationNode* GetModuleNode();
   void SetModuleNode( vtkMRMLWorkflowSegmentationNode* node );
 
-  vtkWorkflowAlgorithm* GetWorkflowAlgorithm();
+  void ImportWorkflowProcedure( std::string fileName );
+  void ImportWorkflowInput( std::string fileName );
+  void ImportWorkflowTraining( std::string fileName );
+  void SaveWorkflowTraining( std::string fileName );
+
+  void ResetWorkflowAlgorithms();
+  bool GetWorkflowAlgorithmsDefined();
+  bool GetWorkflowAlgorithmsInputted();
+  bool GetWorkflowAlgorithmsTrained();
+  bool Train();
+
+  void AddTrainingBuffer( std::string fileName );
+  void SegmentBuffer( std::string fileName );
+
+  void Update();
+
+  std::string GetToolInstructions();
 
 private:
 
-  vtkWorkflowAlgorithm* workflowAlgorithm;
+  vtkMRMLWorkflowSegmentationNode* ModuleNode;
+  int IndexToProcess;
+
+  vtkXMLDataParser* Parser;
+  vtkXMLDataElement* ParseXMLFile( std::string fileName );
+
+private:
+
+  std::vector<vtkWorkflowAlgorithm*> WorkflowAlgorithms;
+
+  vtkWorkflowAlgorithm* GetWorkflowAlgorithmByName( std::string name );
 
 };
 
