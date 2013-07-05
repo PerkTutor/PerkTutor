@@ -30,52 +30,58 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QGroupBox" name="InputGroupBox">
+       <widget class="QGroupBox" name="BufferGroupBox">
         <property name="title">
-         <string>Input</string>
+         <string>Buffer</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="0">
-          <widget class="QLabel" name="ModuleNodeLabel">
+        <layout class="QVBoxLayout" name="verticalLayout_2"/>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="StatisticsGroupBox">
+        <property name="title">
+         <string>Statistics</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0" colspan="2">
+          <widget class="QLabel" name="NumTransformsLabel">
            <property name="text">
-            <string>Module Node:</string>
+            <string>Number of Transforms:</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="qMRMLNodeComboBox" name="ModuleComboBox">
-           <property name="nodeTypes">
-            <stringlist>
-             <string>vtkMRMLTransformRecorderNode</string>
-            </stringlist>
+         <item row="3" column="0">
+          <widget class="QLabel" name="TotalTimeLabel">
+           <property name="text">
+            <string>Total Time (s):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLabel" name="TotalTimeResultLabel">
+           <property name="text">
+            <string>0.00</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="NumTransformsResultLabel">
+           <property name="text">
+            <string>0</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="TransformSelectionsLabel">
+          <widget class="QLabel" name="NumMessagesLabel">
            <property name="text">
-            <string>Transform Selection(s):</string>
+            <string>Number of Messages:</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="qMRMLCheckableNodeComboBox" name="TransformCheckableComboBox">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="nodeTypes">
-            <stringlist>
-             <string>vtkMRMLLinearTransformNode</string>
-            </stringlist>
-           </property>
-           <property name="addEnabled">
-            <bool>false</bool>
-           </property>
-           <property name="removeEnabled">
-            <bool>false</bool>
-           </property>
-           <property name="renameEnabled">
-            <bool>false</bool>
+         <item row="1" column="2">
+          <widget class="QLabel" name="NumMessagesResultLabel">
+           <property name="text">
+            <string>0</string>
            </property>
           </widget>
          </item>
@@ -94,71 +100,6 @@
          <string>Controls</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3"/>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="BufferGroupBox">
-        <property name="title">
-         <string>Buffer</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_3">
-         <item row="0" column="0" colspan="2">
-          <widget class="QLabel" name="NumRecordsLabel">
-           <property name="text">
-            <string>Number of Records:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="TotalTimeLabel">
-           <property name="text">
-            <string>Total Time (s):</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QLabel" name="TotalNeedlePathLabel">
-           <property name="text">
-            <string>Total Needle Path (mm):</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0" colspan="2">
-          <widget class="QLabel" name="InsideNeedlePathLabel">
-           <property name="text">
-            <string>Inside Needle Path (mm):</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="2">
-          <widget class="QLabel" name="TotaNeedlelPathResultsLabel">
-           <property name="text">
-            <string>0.00</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="2">
-          <widget class="QLabel" name="InsideNeedlePathResultsLabel">
-           <property name="text">
-            <string>0.00</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="2">
-          <widget class="QLabel" name="TotalTimeResultsLabel">
-           <property name="text">
-            <string>0.00</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="NumRecordsResultLabel">
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
       <item>
@@ -189,16 +130,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qMRMLCheckableNodeComboBox</class>
-   <extends>qMRMLNodeComboBox</extends>
-   <header>qMRMLCheckableNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
-   <header>qMRMLNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>qSlicerWidget</class>
    <extends>QWidget</extends>
    <header>qSlicerWidget.h</header>
@@ -212,38 +143,5 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>qSlicerTransformRecorderModule</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>ModuleComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>271</x>
-     <y>371</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>308</x>
-     <y>73</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>qSlicerTransformRecorderModule</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>TransformCheckableComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>172</x>
-     <y>349</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>230</x>
-     <y>125</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

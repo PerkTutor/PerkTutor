@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qSlicerRecorderControlsWidget</class>
- <widget class="qSlicerWidget" name="qSlicerRecorderControlsWidget">
+ <class>qSlicerTransformBufferWidget</class>
+ <widget class="qSlicerWidget" name="qSlicerTransformBufferWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>245</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -24,9 +24,9 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="TransformSelectionsLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="TransformSelectionsLabel">
+      <widget class="QLabel" name="BufferLabel">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -34,15 +34,12 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Transform Selection(s):</string>
+        <string>Buffer:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="qMRMLCheckableNodeComboBox" name="TransformCheckableComboBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="qMRMLNodeComboBox" name="BufferNodeComboBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -51,26 +48,17 @@
        </property>
        <property name="nodeTypes">
         <stringlist>
-         <string>vtkMRMLLinearTransformNode</string>
+         <string>vtkMRMLTransformBufferNode</string>
         </stringlist>
        </property>
-       <property name="addEnabled">
-        <bool>false</bool>
-       </property>
-       <property name="removeEnabled">
-        <bool>false</bool>
-       </property>
-       <property name="renameEnabled">
-        <bool>false</bool>
-       </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="ControlButtonsLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QPushButton" name="StartButton">
+      <widget class="QPushButton" name="ImportButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -78,12 +66,12 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Start</string>
+        <string>Import</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="StopButton">
+      <widget class="QPushButton" name="SaveButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -91,50 +79,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Stop</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="ClearButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Clear</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="StatusLayout">
-     <item>
-      <widget class="QLabel" name="StatusLabel">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Status:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="StatusResultLabel">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Waiting</string>
+        <string>Save</string>
        </property>
       </widget>
      </item>
@@ -143,11 +88,6 @@
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>qMRMLCheckableNodeComboBox</class>
-   <extends>qMRMLNodeComboBox</extends>
-   <header>qMRMLCheckableNodeComboBox.h</header>
-  </customwidget>
   <customwidget>
    <class>qMRMLNodeComboBox</class>
    <extends>QWidget</extends>
@@ -163,9 +103,9 @@
  <resources/>
  <connections>
   <connection>
-   <sender>qSlicerRecorderControlsWidget</sender>
+   <sender>qSlicerTransformBufferWidget</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>TransformCheckableComboBox</receiver>
+   <receiver>BufferNodeComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -174,7 +114,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>300</x>
-     <y>123</y>
+     <y>149</y>
     </hint>
    </hints>
   </connection>

@@ -12,21 +12,26 @@ set(${KIT}_SRCS
   qSlicerMessagesWidget.cxx
   qSlicerRecorderControlsWidget.h
   qSlicerRecorderControlsWidget.cxx
+  qSlicerTransformBufferWidget.h
+  qSlicerTransformBufferWidget.cxx
   )
 
 set(${KIT}_MOC_SRCS
   qSlicerMessagesWidget.h
   qSlicerRecorderControlsWidget.h
+  qSlicerTransformBufferWidget.h
   )
 
 set(${KIT}_UI_SRCS
   Resources/UI/qSlicerMessagesWidget.ui
   Resources/UI/qSlicerRecorderControlsWidget.ui
+  Resources/UI/qSlicerTransformBufferWidget.ui
   )
 
 set(${KIT}_RESOURCES
   Resources/UI/qSlicerMessagesWidget.ui
   Resources/UI/qSlicerRecorderControlsWidget.ui
+  Resources/UI/qSlicerTransformBufferWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES

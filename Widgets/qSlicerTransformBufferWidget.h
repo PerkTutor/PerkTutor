@@ -18,54 +18,57 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerRecorderControlsWidget_h
-#define __qSlicerRecorderControlsWidget_h
+#ifndef __qSlicerTransformBufferWidget_h
+#define __qSlicerTransformBufferWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
 
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerRecorderControlsWidget.h"
+#include "ui_qSlicerTransformBufferWidget.h"
 
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
-#include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLTransformBufferNode.h"
 
-class qSlicerRecorderControlsWidgetPrivate;
+class qSlicerTransformBufferWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_TRANSFORMRECORDER_WIDGETS_EXPORT 
-qSlicerRecorderControlsWidget : public qSlicerWidget
+qSlicerTransformBufferWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
   typedef qSlicerWidget Superclass;
-  qSlicerRecorderControlsWidget(QWidget *parent=0);
-  virtual ~qSlicerRecorderControlsWidget();
+  qSlicerTransformBufferWidget(QWidget *parent=0);
+  virtual ~qSlicerTransformBufferWidget();
 
-  static qSlicerRecorderControlsWidget* New( vtkSlicerTransformRecorderLogic* newTRLogic );
+  
+  static qSlicerTransformBufferWidget* New( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic );
 
-  void SetLogic( vtkSlicerTransformRecorderLogic* newTRLogic );
+  void SetLogic( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic );
+  vtkSlicerTransformRecorderLogic* GetLogic();
+  
+  vtkMRMLTransformBufferNode* GetBufferNode();
 
 protected slots:
 
-  void onStartButtonClicked();
-  void onStopButtonClicked();
-  void onClearButtonClicked();
+  void onImportButtonClicked();
+  void onSaveButtonClicked();
+
   void updateWidget();
 
 protected:
-  QScopedPointer<qSlicerRecorderControlsWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
 
   virtual void setup();
   virtual void enter();
 
-  vtkSlicerTransformRecorderLogic* trLogic;
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerRecorderControlsWidget);
-  Q_DISABLE_COPY(qSlicerRecorderControlsWidget);
+  Q_DECLARE_PRIVATE(qSlicerTransformBufferWidget);
+  Q_DISABLE_COPY(qSlicerTransformBufferWidget);
 
 };
 

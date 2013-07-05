@@ -99,8 +99,7 @@ void qSlicerRecorderControlsWidget
   d->setupUi(this);
 
   connect( d->StartButton, SIGNAL( clicked() ), this, SLOT( onStartButtonClicked() ) );
-  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) ); 
-  connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( onSaveButtonClicked() ) );
+  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) );
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
 
   // GUI refresh: updates every 10ms
@@ -139,23 +138,6 @@ void qSlicerRecorderControlsWidget
   
   this->updateWidget();
 }
-
-
-void qSlicerRecorderControlsWidget
-::onSaveButtonClicked()
-{
-  Q_D(qSlicerRecorderControlsWidget);  
-
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save buffer"), "", tr("XML Files (*.xml)") );
-  
-  if ( ! filename.isEmpty() )
-  {
-    trLogic->SaveToFile( filename.toStdString() );
-  }
-  
-  this->updateWidget();
-}
-
 
 
 void qSlicerRecorderControlsWidget
