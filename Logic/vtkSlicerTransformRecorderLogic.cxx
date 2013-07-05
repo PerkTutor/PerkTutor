@@ -35,17 +35,13 @@ vtkStandardNewMacro(vtkSlicerTransformRecorderLogic);
 //----------------------------------------------------------------------------
 vtkSlicerTransformRecorderLogic::vtkSlicerTransformRecorderLogic()
 {
-  this->ModuleNode = NULL;
+  this->Clock0 = clock();
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerTransformRecorderLogic::~vtkSlicerTransformRecorderLogic()
 {
-  if ( this->ModuleNode != NULL )
-  {
-    this->ModuleNode->Delete();
-    this->ModuleNode = NULL;
-  }
+  this->RecordingBuffers.clear(); // The objects themselves will be deleted elsewhere
 }
 
 
@@ -70,16 +66,14 @@ void vtkSlicerTransformRecorderLogic::InitializeEventListeners()
 
 void vtkSlicerTransformRecorderLogic::RegisterNodes()
 {
-  //assert(this->GetMRMLScene() != 0);
-  
   if( ! this->GetMRMLScene() )
   {
     return;
   }
-  vtkMRMLTransformRecorderNode* pNode = vtkMRMLTransformRecorderNode::New();
+
+  vtkMRMLTransformBufferNode* pNode = vtkMRMLTransformBufferNode::New();
   this->GetMRMLScene()->RegisterNodeClass( pNode );
-  pNode->Delete(); 
-  
+  pNode->Delete();   
 }
 
 
@@ -94,208 +88,203 @@ void vtkSlicerTransformRecorderLogic::UpdateFromMRMLScene()
 void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeAdded(vtkMRMLNode* vtkNotUsed(node))
 {
-
+  assert(this->GetMRMLScene() != 0);
 }
-
 
 
 void vtkSlicerTransformRecorderLogic
-::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
+::ProcessMRMLEvents( vtkObject* caller, unsigned long event, void* callData )
 {
-	assert(this->GetMRMLScene() != 0);
-}
+  vtkMRMLTransformNode* callerNode = vtkMRMLTransformNode::SafeDownCast( caller );
 
-
-
-void vtkSlicerTransformRecorderLogic
-::SetModuleNode( vtkMRMLTransformRecorderNode* node )
-{
-  vtkSetMRMLNodeMacro( this->ModuleNode, node );
-  this->Modified();
-
-  if ( this->ModuleNode != NULL )
+  // For all buffers, iterate through all observed transforms and check if the name corresponds to the modified event
+  for ( int i = 0; i < this->RecordingBuffers.size(); i++ )
   {
-    this->ModuleNode->AddObservedTransformNodesFromSavedNames();
+    std::vector<std::string> activeTransforms = this->RecordingBuffers.at(i)->GetActiveTransforms();
+    for ( int j = 0; j < activeTransforms.size(); j++ )
+    {
+      if ( activeTransforms.at(j).compare( callerNode->GetName() ) )
+      {
+        //this->AddTransform( this->RecordingBuffer.at(i), callerNode );
+      }
+    }
   }
 
 }
-
-
-
-void vtkSlicerTransformRecorderLogic
-::AddObservedTransformNode( char* id )
-{
-  if ( this->ModuleNode != NULL )
-  {
-    this->ModuleNode->AddObservedTransformNode( id );
-  }
-}
-
-
-
-void vtkSlicerTransformRecorderLogic
-::RemoveObservedTransformNode( char* id )
-{
-  if ( this->ModuleNode != NULL )
-  {
-    this->ModuleNode->RemoveObservedTransformNode( id );
-  }
-}
-
-
-
-bool vtkSlicerTransformRecorderLogic
-::IsObservedTransformNode( char* id )
-{
-  if ( this->ModuleNode != NULL )
-  {
-    return this->ModuleNode->IsObservedTransformNode( id );
-  }
-  return false;
-}
-
-
-
-void vtkSlicerTransformRecorderLogic
-::SetRecording( bool isRecording )
-{
-  if ( this->ModuleNode != NULL )
-  {
-    this->ModuleNode->SetRecording( isRecording );
-  }
-}
-
-
-
-bool vtkSlicerTransformRecorderLogic
-::GetRecording()
-{
-  if ( this->ModuleNode != NULL )
-  {
-    return this->ModuleNode->GetRecording();
-  }
-  return false;
-}
-
-
-
-void vtkSlicerTransformRecorderLogic
-::ClearBuffer()
-{
-  if ( this->ModuleNode != NULL )
-  {
-    this->ModuleNode->Clear();
-  }
-}
-
 
 
 double vtkSlicerTransformRecorderLogic
 ::GetCurrentTimestamp()
 {
-  if ( this->ModuleNode != NULL )
+  clock_t clock1 = clock();  
+  return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
+{
+  assert(this->GetMRMLScene() != 0);
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::AddObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node )
+{
+  // Make sure the node is observed
+  node->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->MRMLLogicsCallback );
+
+  if ( bufferNode != NULL )
   {
-	return this->ModuleNode->GetCurrentTimestamp();
+    bufferNode->AddActiveTransform( node->GetName() );
   }
-  return 0.0;
 }
 
 
 
 void vtkSlicerTransformRecorderLogic
-::AddMessage( std::string annotationName, double time )
+::RemoveObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node )
 {
-  if ( this->ModuleNode != NULL )
+  if ( bufferNode != NULL )
   {
-	this->ModuleNode->AddMessage( annotationName, time );
+    bufferNode->RemoveActiveTransform( node->GetName() );
+  }
+}
+
+
+
+bool vtkSlicerTransformRecorderLogic
+::IsObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node )
+{
+  if ( bufferNode == NULL )
+  {
+    return false;
+  }
+
+  std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
+
+  for ( int i = 0; i < activeTransforms.size(); i++ )
+  {
+    if ( activeTransforms.at(i).compare( node->GetName() ) )
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+
+void vtkSlicerTransformRecorderLogic
+::SetRecording( vtkMRMLTransformBufferNode* bufferNode, bool isRecording )
+{
+  if ( bufferNode != NULL )
+  {
+    this->RecordingBuffers.push_back( bufferNode );
+  }
+}
+
+
+
+bool vtkSlicerTransformRecorderLogic
+::GetRecording( vtkMRMLTransformBufferNode* bufferNode )
+{
+  if ( bufferNode == NULL )
+  {
+    return false;
+  }
+
+  for ( int i = 0; i < this->RecordingBuffers.size(); i++ )
+  {
+    if ( bufferNode == this->RecordingBuffers.at(i) )
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+
+void vtkSlicerTransformRecorderLogic
+::ClearTransforms( vtkMRMLTransformBufferNode* bufferNode )
+{
+  if ( bufferNode != NULL )
+  {
+    bufferNode->ClearTransforms();
   }
 }
 
 
 void vtkSlicerTransformRecorderLogic
-::RemoveMessage( int index )
+::AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string messageName, double time )
 {
-  if ( this->ModuleNode != NULL )
+  if ( bufferNode == NULL )
   {
-	this->GetBuffer()->RemoveMessageAt( index );
+    return;
+  }
+
+  vtkMessageRecord* newMessage = vtkMessageRecord::New();
+  newMessage->SetName( messageName );
+  newMessage->SetTime( time );
+  bufferNode->AddMessage( newMessage );
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::RemoveMessage( vtkMRMLTransformBufferNode* bufferNode, int index )
+{
+  if ( bufferNode != NULL )
+  {
+	bufferNode->RemoveMessageAt( index );
   }
 }
 
 
 void vtkSlicerTransformRecorderLogic
-::ClearMessages()
+::ClearMessages( vtkMRMLTransformBufferNode* bufferNode )
 {
-  if ( this->ModuleNode != NULL )
+  if ( bufferNode != NULL )
   {
-	this->GetBuffer()->ClearMessages();
+	bufferNode->ClearMessages();
   }
 }
 
 
 void vtkSlicerTransformRecorderLogic
-::SaveToFile( std::string fileName )
+::ImportFromFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName )
 {
-  if ( this->ModuleNode != NULL )
-  {
-	this->ModuleNode->SaveToFile( fileName );
-  }
+  // Clear the current buffer prior to importing
+  bufferNode->Clear();
+
+  vtkXMLDataParser* parser = vtkXMLDataParser::New();
+  parser->SetFileName( fileName.c_str() );
+  parser->Parse();
+
+  bufferNode->FromXMLElement( parser->GetRootElement() );
 }
 
 
-
-double vtkSlicerTransformRecorderLogic
-::GetTotalTime()
+void vtkSlicerTransformRecorderLogic
+::SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName )
 {
-  if ( this->ModuleNode != NULL )
+  if ( bufferNode == NULL )
   {
-	return this->ModuleNode->GetTotalTime();
+    return;
   }
-  return 0.0;
-}
 
-
-
-double vtkSlicerTransformRecorderLogic
-::GetTotalPath()
-{
-  if ( this->ModuleNode != NULL )
-  {
-	return this->ModuleNode->GetTotalPath();
-  }
-  return 0.0;
-}
-
-
-
-double vtkSlicerTransformRecorderLogic
-::GetTotalPathInside()
-{
-  if ( this->ModuleNode != NULL )
-  {
-	return this->ModuleNode->GetTotalPathInside();
-  }
-  return 0.0;
-}
-
-
-vtkMRMLTransformBufferNode* vtkSlicerTransformRecorderLogic
-::GetBuffer()
-{
-  if ( this->ModuleNode != NULL )
-  {
-    return this->ModuleNode->TransformBuffer;
-  }
-  return NULL;
-}
-
-
-int vtkSlicerTransformRecorderLogic
-::GetBufferSize()
-{
-  if ( this->ModuleNode != NULL )
-  {
-    return this->GetBuffer()->GetNumTransforms() + this->GetBuffer()->GetNumMessages();
-  }
-  return NULL;
-}
+  std::ofstream output( fileName.c_str() );
   
+  if ( ! output.is_open() )
+  {
+    vtkErrorMacro( "Record file could not be opened!" );
+    return;
+  }
+
+  output << bufferNode->ToXMLString();
+
+  output.close();
+
+}

@@ -75,19 +75,12 @@ qSlicerMessagesWidget
 
 
 qSlicerMessagesWidget* qSlicerMessagesWidget
-::New( vtkSlicerTransformRecorderLogic* newTRLogic )
+::New( qSlicerTransformBufferWidget* newBufferWidget )
 {
   qSlicerMessagesWidget* newMessagesWidget = new qSlicerMessagesWidget();
-  newMessagesWidget->SetLogic( newTRLogic );
+  newMessagesWidget->BufferWidget = newBufferWidget;
   newMessagesWidget->setup();
   return newMessagesWidget;
-}
-
-
-void qSlicerMessagesWidget
-::SetLogic( vtkSlicerTransformRecorderLogic* newTRLogic )
-{
-  this->trLogic = newTRLogic;
 }
 
 
@@ -130,8 +123,8 @@ void qSlicerMessagesWidget
   }
 
   // Record the timestamp
-  double time = this->trLogic->GetCurrentTimestamp();
-  this->trLogic->AddMessage( messageName.toStdString(), time );
+  double time = this->BufferWidget->GetLogic()->GetCurrentTimestamp();
+  this->BufferWidget->GetLogic()->AddMessage( this->BufferWidget->GetBufferNode(), messageName.toStdString(), time );
   
   this->updateWidget();
 }
@@ -142,7 +135,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->trLogic->RemoveMessage( d->MessagesTableWidget->currentRow() );
+  this->BufferWidget->GetLogic()->RemoveMessage( this->BufferWidget->GetBufferNode(), d->MessagesTableWidget->currentRow() );
 
   this->updateWidget();
 }
@@ -153,7 +146,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->trLogic->ClearMessages();
+  this->BufferWidget->GetLogic()->ClearMessages( this->BufferWidget->GetBufferNode() );
   
   this->updateWidget();
 }
@@ -178,18 +171,18 @@ void qSlicerMessagesWidget
   d->MessagesTableWidget->setHorizontalHeaderLabels( MessagesTableHeaders ); 
   d->MessagesTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
 
-  if ( this->trLogic->GetModuleNode() == NULL )
+  if ( this->BufferWidget->GetBufferNode() == NULL )
   {
     return;
   }
 
   // Iterate over all the messages in the buffer and add them in order
-  d->MessagesTableWidget->setRowCount( this->trLogic->GetBuffer()->GetNumMessages() );
-  for ( int i = 0; i < this->trLogic->GetBuffer()->GetNumMessages(); i++ )
+  d->MessagesTableWidget->setRowCount( this->BufferWidget->GetBufferNode()->GetNumMessages() );
+  for ( int i = 0; i < this->BufferWidget->GetBufferNode()->GetNumMessages(); i++ )
   {
-    double messageTime = this->trLogic->GetBuffer()->GetMessageAt(i)->GetTime() - this->trLogic->GetBuffer()->GetMinimumTime();
+    double messageTime = this->BufferWidget->GetBufferNode()->GetMessageAt(i)->GetTime() - this->BufferWidget->GetBufferNode()->GetMinimumTime();
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
-	QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->trLogic->GetBuffer()->GetMessageAt(i)->GetName() ) );
+	QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->BufferWidget->GetBufferNode()->GetMessageAt(i)->GetName() ) );
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 
   }

@@ -101,7 +101,8 @@ vtkSlicerTransformRecorderLogic* qSlicerTransformBufferWidget
 vtkMRMLTransformBufferNode* qSlicerTransformBufferWidget
 ::GetBufferNode()
 {
-  return d->BufferComboBox->currentNode();
+  Q_D(qSlicerTransformBufferWidget);
+  return vtkMRMLTransformBufferNode::SafeDownCast( d->BufferNodeComboBox->currentNode() );
 }
 
 
@@ -145,7 +146,7 @@ void qSlicerTransformBufferWidget
     dialog.show();
     
     dialog.setValue( 10 );
-    this->TransformRecorderLogic->ImportFile( this->GetBufferNode(), filename.toStdString() );
+    this->TransformRecorderLogic->ImportFromFile( this->GetBufferNode(), filename.toStdString() );
 
     dialog.close();
   }
@@ -175,13 +176,5 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  if ( this->TransformRecorderLogic->GetRecording( this->GetBufferNode() ) )
-  {
-    d->StatusResultLabel->setText( "Recording" );
-  }
-  else
-  {
-    d->StatusResultLabel->setText( "Waiting" );
-  }
-
+  // Nothing to do at the moment...
 }

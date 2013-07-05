@@ -75,19 +75,12 @@ qSlicerRecorderControlsWidget
 
 
 qSlicerRecorderControlsWidget* qSlicerRecorderControlsWidget
-::New( vtkSlicerTransformRecorderLogic* newTRLogic )
+::New( qSlicerTransformBufferWidget* newBufferWidget )
 {
   qSlicerRecorderControlsWidget* newRecorderControlsWidget = new qSlicerRecorderControlsWidget();
-  newRecorderControlsWidget->SetLogic( newTRLogic );
+  newRecorderControlsWidget->BufferWidget = newBufferWidget;
   newRecorderControlsWidget->setup();
   return newRecorderControlsWidget;
-}
-
-
-void qSlicerRecorderControlsWidget
-::SetLogic( vtkSlicerTransformRecorderLogic* newTRLogic )
-{
-  this->trLogic = newTRLogic;
 }
 
 
@@ -97,6 +90,8 @@ void qSlicerRecorderControlsWidget
   Q_D(qSlicerRecorderControlsWidget);
 
   d->setupUi(this);
+
+  connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
 
   connect( d->StartButton, SIGNAL( clicked() ), this, SLOT( onStartButtonClicked() ) );
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) );
@@ -118,12 +113,60 @@ void qSlicerRecorderControlsWidget
 
 
 void qSlicerRecorderControlsWidget
+::onActiveTransformsUpdated()
+{
+  Q_D(qSlicerRecorderControlsWidget);
+
+  // Disable to the onCheckedChanged listener when initializing the selections
+  // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
+  this->updatingCheckedTransforms = true;
+
+  // Assume the default is not checked, and check all those that are observed
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  {
+    if( this->BufferWidget->GetLogic()->IsObservedTransformNode( this->BufferWidget->GetBufferNode(), d->TransformCheckableComboBox->nodeFromIndex(i) ) )
+    {
+	  d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
+    }
+  }
+
+  this->updatingCheckedTransforms = false;
+}
+
+
+void qSlicerRecorderControlsWidget
+::onCheckedTransformsChanged()
+{
+  Q_D(qSlicerRecorderControlsWidget);
+
+  if ( this->updatingCheckedTransforms )
+  {
+    return;
+  }
+    
+  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  {
+    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked  )
+    {
+      this->BufferWidget->GetLogic()->AddObservedTransformNode( this->BufferWidget->GetBufferNode(), d->TransformCheckableComboBox->nodeFromIndex(i) );
+    }
+    else
+    {
+      this->BufferWidget->GetLogic()->RemoveObservedTransformNode( this->BufferWidget->GetBufferNode(), d->TransformCheckableComboBox->nodeFromIndex(i) );
+    }
+  }
+}
+
+
+
+void qSlicerRecorderControlsWidget
 ::onStartButtonClicked()
 {
   Q_D(qSlicerRecorderControlsWidget);  
   
-  // The observed transforms should be dealt with in the TransformRecorder widget
-  this->trLogic->SetRecording( true );
+  // The observed transforms should be dealt with in the TransformRecorder logic
+  this->BufferWidget->GetLogic()->SetRecording( this->BufferWidget->GetBufferNode(), true );
   
   this->updateWidget();
 }
@@ -134,7 +177,7 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);  
 
-  this->trLogic->SetRecording( false );
+  this->BufferWidget->GetLogic()->SetRecording( this->BufferWidget->GetBufferNode(), false );
   
   this->updateWidget();
 }
@@ -145,7 +188,7 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);
 
-  this->trLogic->ClearBuffer();
+  this->BufferWidget->GetLogic()->ClearTransforms( this->BufferWidget->GetBufferNode() );
   
   this->updateWidget();
 }
@@ -156,7 +199,7 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);
 
-  if ( trLogic->GetRecording() )
+  if ( this->BufferWidget->GetLogic()->GetRecording( this->BufferWidget->GetBufferNode() ) )
   {
     d->StatusResultLabel->setText( "Recording" );
   }

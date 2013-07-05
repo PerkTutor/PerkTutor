@@ -35,9 +35,7 @@ protected:
   virtual void enter();
 
 protected slots:
-  void onModuleNodeSelected();
-  void updateSelectionsFromObservedNodes();
-  void updateObservedNodesFromSelections();
+
   void updateWidget();
 
 private:

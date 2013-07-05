@@ -53,7 +53,9 @@ public:
   vtkSlicerTransformRecorderLogic* logic() const;
 
   // Add embedded widgets here
-  qSlicerTransformBufferWidget* BufferWidget;
+  qSlicerTransformBufferWidget* TransformBufferWidget;
+  qSlicerRecorderControlsWidget* RecorderControlsWidget;
+  qSlicerMessagesWidget* MessagesWidget;
 };
 
 //-----------------------------------------------------------------------------
@@ -65,8 +67,8 @@ qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidge
 {
   // Initialize embedded widgets here
   this->TransformBufferWidget = qSlicerTransformBufferWidget::New( this->logic() );
-  this->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( this->logic() );
-  this->MessagesWidget = qSlicerMessagesWidget::New( this->logic() )
+  this->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( this->TransformBufferWidget );
+  this->MessagesWidget = qSlicerMessagesWidget::New( this->TransformBufferWidget );
 }
 
 //-----------------------------------------------------------------------------
@@ -111,7 +113,7 @@ void qSlicerTransformRecorderModuleWidget::setup()
 
   d->setupUi(this);
   // Embed widgets here
-  d->BufferGroupBox->layout()->addWidget( d->BufferWidget );
+  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
@@ -137,19 +139,21 @@ void qSlicerTransformRecorderModuleWidget
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
   
+  std::stringstream ss;
+
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->BufferWidget->GetBufferNode()->GetTotalTime();
+  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetTotalTime();
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
-  ss.precision( 2 );
-  ss << std::fixed << d->BufferWidget->GetBufferNode()->GetNumTransforms();;
+  ss.precision( 0 );
+  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetNumTransforms();;
   d->NumTransformsResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
-  ss.precision( 2 );
-  ss << std::fixed << d->BufferWidget->GetBufferNode()->GetNumMessages();;
+  ss.precision( 0 );
+  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetNumMessages();;
   d->NumMessagesResultLabel->setText( ss.str().c_str() );
    
 }

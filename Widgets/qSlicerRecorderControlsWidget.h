@@ -28,9 +28,8 @@
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
 #include "ui_qSlicerRecorderControlsWidget.h"
 
-#include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
-#include "vtkMRMLLinearTransformNode.h"
+#include "qSlicerTransformBufferWidget.h"
+#include "vtkMRMLTransformBufferNode.h"
 
 class qSlicerRecorderControlsWidgetPrivate;
 
@@ -44,15 +43,17 @@ public:
   qSlicerRecorderControlsWidget(QWidget *parent=0);
   virtual ~qSlicerRecorderControlsWidget();
 
-  static qSlicerRecorderControlsWidget* New( vtkSlicerTransformRecorderLogic* newTRLogic );
-
-  void SetLogic( vtkSlicerTransformRecorderLogic* newTRLogic );
+  static qSlicerRecorderControlsWidget* New( qSlicerTransformBufferWidget* newBufferWidget );
 
 protected slots:
 
   void onStartButtonClicked();
   void onStopButtonClicked();
   void onClearButtonClicked();
+
+  void onCheckedTransformsChanged();
+  void onActiveTransformsUpdated();
+
   void updateWidget();
 
 protected:
@@ -61,7 +62,8 @@ protected:
   virtual void setup();
   virtual void enter();
 
-  vtkSlicerTransformRecorderLogic* trLogic;
+  qSlicerTransformBufferWidget* BufferWidget;
+  bool updatingCheckedTransforms;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerRecorderControlsWidget);

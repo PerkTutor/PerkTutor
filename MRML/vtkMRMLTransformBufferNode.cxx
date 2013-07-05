@@ -45,7 +45,13 @@ void vtkMRMLTransformBufferNode
 ::WriteXML( ostream& of, int nIndent )
 {
   Superclass::WriteXML(of, nIndent);
+
   vtkIndent indent(nIndent);
+  
+  for ( int i = 0; i < this->activeTransforms.size(); i++ )
+  {
+    of << indent << " ActiveTransform" << i << "=\"" << this->activeTransforms.at(i) << "\"";
+  }
 }
 
 
@@ -53,6 +59,22 @@ void vtkMRMLTransformBufferNode
 ::ReadXMLAttributes( const char** atts )
 {
   Superclass::ReadXMLAttributes(atts);
+
+  // Read all MRML node attributes from two arrays of names and values
+  const char* attName;
+  const char* attValue;
+
+  while (*atts != NULL)
+  {
+    attName  = *(atts++);
+    attValue = *(atts++);
+ 
+	if ( std::string( attName ).find( "ActiveTransform" ) != std::string::npos )
+    {
+	  this->activeTransforms.push_back( std::string( attValue ) );
+    }
+  }
+
 }
 
 
@@ -399,6 +421,13 @@ double vtkMRMLTransformBufferNode
 }
 
 
+double vtkMRMLTransformBufferNode
+::GetTotalTime()
+{
+  return this->GetMaximumTime() - this->GetMinimumTime();
+}
+
+
 void vtkMRMLTransformBufferNode
 ::Clear()
 {
@@ -428,6 +457,79 @@ void vtkMRMLTransformBufferNode
     this->GetMessageAt(i)->Delete();
   }
   this->messages.clear();
+}
+
+
+void vtkMRMLTransformBufferNode
+::AddActiveTransform( std::string name )
+{
+  // Do not add if the name is already in the list
+  for ( int i = 0; i < this->activeTransforms.size(); i++ )
+  {
+    if ( this->activeTransforms.at(i).compare( name ) == 0 )
+	{
+      return;
+	}
+  }
+
+  this->activeTransforms.push_back( name );
+}
+
+
+void vtkMRMLTransformBufferNode
+::RemoveActiveTransform( std::string name )
+{
+  for ( int i = 0; i < this->activeTransforms.size(); i++ )
+  {
+    if ( this->activeTransforms.at(i).compare( name ) == 0 )
+	{
+	  this->activeTransforms.erase( this->activeTransforms.begin() + i );
+	  i--;
+	}
+  }
+}
+
+
+std::vector<std::string> vtkMRMLTransformBufferNode
+::GetActiveTransforms()
+{
+  return this->activeTransforms;
+}
+  
+
+void vtkMRMLTransformBufferNode
+::SetActiveTransforms( std::vector<std::string> names )
+{
+  this->activeTransforms.clear();
+  this->activeTransforms = names;
+}
+
+
+void vtkMRMLTransformBufferNode
+::SetActiveTransformsFromBuffer()
+{
+  this->activeTransforms.clear();
+
+  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  {
+    bool activeTransformExists = false;
+
+    for ( int j = 0; j < this->activeTransforms.size(); j++ )
+    {
+      if ( this->activeTransforms.at(j).compare( this->GetTransformAt(i)->GetDeviceName() ) ==  0 )
+      {
+        activeTransformExists = true;
+      }
+    }
+
+    // If we didn't find a mathcing active transform then add one
+    if ( activeTransformExists )
+    {
+      this->GetTransformAt(i)->GetDeviceName();
+    }
+
+  }
+
 }
 
 

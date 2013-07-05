@@ -107,7 +107,7 @@
         <property name="title">
          <string>Messages</string>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout"/>
+        <layout class="QVBoxLayout" name="verticalLayout_4"/>
        </widget>
       </item>
      </layout>
