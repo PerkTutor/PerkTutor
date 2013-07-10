@@ -79,6 +79,8 @@ qSlicerRecorderControlsWidget* qSlicerRecorderControlsWidget
 {
   qSlicerRecorderControlsWidget* newRecorderControlsWidget = new qSlicerRecorderControlsWidget();
   newRecorderControlsWidget->BufferWidget = newBufferWidget;
+  newRecorderControlsWidget->UpdateStatus = newBufferWidget->UpdateStatus;
+  newRecorderControlsWidget->updatingCheckedTransforms = false;
   newRecorderControlsWidget->setup();
   return newRecorderControlsWidget;
 }
@@ -97,12 +99,12 @@ void qSlicerRecorderControlsWidget
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) );
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
 
+  this->updateWidget();
+
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
   connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
   t->start(10); 
-
-  this->updateWidget();  
 }
 
 
@@ -128,9 +130,15 @@ void qSlicerRecorderControlsWidget
     {
 	  d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
     }
+    else
+    {
+      d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Unchecked );
+    }
   }
 
   this->updatingCheckedTransforms = false;
+
+  onCheckedTransformsChanged(); // Call this to update observers after adding active transforms
 }
 
 
@@ -199,6 +207,19 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);
 
+  if ( this->BufferWidget->GetLogic() == NULL )
+  {
+    return;
+  }
+
+  this->setMRMLScene( this->BufferWidget->GetLogic()->GetMRMLScene() );
+
+  if ( this->UpdateStatus != this->BufferWidget->UpdateStatus )
+  {
+    this->UpdateStatus = this->BufferWidget->UpdateStatus;
+    this->onActiveTransformsUpdated();
+  }
+
   if ( this->BufferWidget->GetLogic()->GetRecording( this->BufferWidget->GetBufferNode() ) )
   {
     d->StatusResultLabel->setText( "Recording" );
@@ -207,5 +228,7 @@ void qSlicerRecorderControlsWidget
   {
     d->StatusResultLabel->setText( "Waiting" );
   }
+
+
 
 }

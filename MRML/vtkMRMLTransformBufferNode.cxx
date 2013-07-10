@@ -96,6 +96,11 @@ void vtkMRMLTransformBufferNode
     this->AddMessage( node->GetMessageAt(i)->DeepCopy() );
   }
 
+  for ( int i = 0; i < node->GetActiveTransforms().size(); i++ )
+  {
+    this->AddActiveTransform( node->GetActiveTransforms().at(i) );
+  }
+
 }
 
 
@@ -516,16 +521,16 @@ void vtkMRMLTransformBufferNode
 
     for ( int j = 0; j < this->activeTransforms.size(); j++ )
     {
-      if ( this->activeTransforms.at(j).compare( this->GetTransformAt(i)->GetDeviceName() ) ==  0 )
+      if ( this->activeTransforms.at(j).compare( this->GetTransformAt(i)->GetDeviceName() ) == 0 )
       {
         activeTransformExists = true;
       }
     }
 
     // If we didn't find a mathcing active transform then add one
-    if ( activeTransformExists )
+    if ( ! activeTransformExists )
     {
-      this->GetTransformAt(i)->GetDeviceName();
+      this->AddActiveTransform( this->GetTransformAt(i)->GetDeviceName() );
     }
 
   }

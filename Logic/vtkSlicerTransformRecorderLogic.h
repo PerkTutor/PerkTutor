@@ -69,7 +69,7 @@ public:
   /// Initialize listening to MRML events
   void InitializeEventListeners();
 
-  void ProcessMRMLEvents( vtkObject* caller, unsigned long event, void* callData );
+  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
   
   double GetCurrentTimestamp();
 
@@ -87,7 +87,9 @@ public:
   void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
 
   void ImportFromFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
-  void SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );  
+  void SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
+
+  void AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode );
   
 private:
 

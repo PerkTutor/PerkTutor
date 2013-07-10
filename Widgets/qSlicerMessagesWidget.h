@@ -60,6 +60,7 @@ protected:
   virtual void enter();
 
   qSlicerTransformBufferWidget* BufferWidget;
+  unsigned int UpdateStatus;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerMessagesWidget);

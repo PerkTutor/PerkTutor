@@ -51,10 +51,13 @@ public:
   
   vtkMRMLTransformBufferNode* GetBufferNode();
 
+  unsigned int UpdateStatus;
+
 protected slots:
 
   void onImportButtonClicked();
   void onSaveButtonClicked();
+  void onCurrentBufferNodeChanged();
 
   void updateWidget();
 

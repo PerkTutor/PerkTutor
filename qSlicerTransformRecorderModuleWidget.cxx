@@ -66,7 +66,7 @@ public:
 qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidgetPrivate( qSlicerTransformRecorderModuleWidget& object ) : q_ptr(&object)
 {
   // Initialize embedded widgets here
-  this->TransformBufferWidget = qSlicerTransformBufferWidget::New( this->logic() );
+  this->TransformBufferWidget = qSlicerTransformBufferWidget::New( NULL ); // Set the logic later
   this->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( this->TransformBufferWidget );
   this->MessagesWidget = qSlicerMessagesWidget::New( this->TransformBufferWidget );
 }
@@ -113,6 +113,7 @@ void qSlicerTransformRecorderModuleWidget::setup()
 
   d->setupUi(this);
   // Embed widgets here
+  d->TransformBufferWidget->SetLogic( d->logic() );
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
@@ -138,6 +139,15 @@ void qSlicerTransformRecorderModuleWidget
 ::updateWidget()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
+
+  // The statistics should be reset to zeros if no buffer is selected
+  if ( d->TransformBufferWidget->GetBufferNode() == NULL )
+  {
+    d->TotalTimeResultLabel->setText( "0.00" );
+    d->NumTransformsResultLabel->setText( "0" );
+    d->NumMessagesResultLabel->setText( "0" );
+    return;
+  }
   
   std::stringstream ss;
 

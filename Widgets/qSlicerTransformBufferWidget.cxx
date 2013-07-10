@@ -79,6 +79,7 @@ qSlicerTransformBufferWidget* qSlicerTransformBufferWidget
 {
   qSlicerTransformBufferWidget* newTransformBufferWidget = new qSlicerTransformBufferWidget();
   newTransformBufferWidget->SetLogic( newTransformRecorderLogic );
+  newTransformBufferWidget->UpdateStatus = 0;
   newTransformBufferWidget->setup();
   return newTransformBufferWidget;
 }
@@ -113,6 +114,8 @@ void qSlicerTransformBufferWidget
 
   d->setupUi(this);
 
+  connect( d->BufferNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onCurrentBufferNodeChanged() ) );
+
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( onImportButtonClicked() ) );
   connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( onSaveButtonClicked() ) );
 
@@ -132,6 +135,16 @@ void qSlicerTransformBufferWidget
 
 
 void qSlicerTransformBufferWidget
+::onCurrentBufferNodeChanged()
+{
+  Q_D(qSlicerTransformBufferWidget);
+
+  this->UpdateStatus++;
+  this->updateWidget();
+}
+
+
+void qSlicerTransformBufferWidget
 ::onImportButtonClicked()
 {
   Q_D(qSlicerTransformBufferWidget);  
@@ -144,6 +157,15 @@ void qSlicerTransformBufferWidget
     dialog.setModal( true );
     dialog.setLabelText( "Please wait while reading XML file..." );
     dialog.show();
+
+    // We should create a new buffer node if there isn't one already selected
+    if ( this->GetBufferNode() == NULL )
+    {
+      vtkMRMLTransformBufferNode* importBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) );
+      importBufferNode->SetScene( this->mrmlScene() );
+      this->mrmlScene()->AddNode( importBufferNode );
+      d->BufferNodeComboBox->setCurrentNode( importBufferNode );
+    }
     
     dialog.setValue( 10 );
     this->TransformRecorderLogic->ImportFromFile( this->GetBufferNode(), filename.toStdString() );
@@ -151,6 +173,7 @@ void qSlicerTransformBufferWidget
     dialog.close();
   }
   
+  this->UpdateStatus++;
   this->updateWidget();
 }
 
@@ -166,7 +189,8 @@ void qSlicerTransformBufferWidget
   {
     this->TransformRecorderLogic->SaveToFile( this->GetBufferNode(), filename.toStdString() );
   }
-  
+
+  this->UpdateStatus++;
   this->updateWidget();
 }
 
@@ -176,5 +200,11 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  // Nothing to do at the moment...
+  if ( this->GetLogic() == NULL )
+  {
+    return;
+  }
+
+  this->setMRMLScene( this->GetLogic()->GetMRMLScene() );
+
 }

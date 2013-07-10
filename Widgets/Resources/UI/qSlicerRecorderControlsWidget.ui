@@ -41,7 +41,7 @@
      <item>
       <widget class="qMRMLCheckableNodeComboBox" name="TransformCheckableComboBox">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

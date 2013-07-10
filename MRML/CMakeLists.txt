@@ -24,8 +24,6 @@ set(module_mrml_include_directories
 
 # Source files
 set(module_mrml_SRCS
-  vtkMRMLTransformRecorderNode.cxx
-  vtkMRMLTransformRecorderNode.h
   vtkMRMLTransformBufferNode.cxx
   vtkMRMLTransformBufferNode.h
   vtkTransformRecord.cxx

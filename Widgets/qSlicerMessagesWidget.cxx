@@ -79,6 +79,7 @@ qSlicerMessagesWidget* qSlicerMessagesWidget
 {
   qSlicerMessagesWidget* newMessagesWidget = new qSlicerMessagesWidget();
   newMessagesWidget->BufferWidget = newBufferWidget;
+  newMessagesWidget->UpdateStatus = newBufferWidget->UpdateStatus;
   newMessagesWidget->setup();
   return newMessagesWidget;
 }
@@ -146,7 +147,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->BufferWidget->GetLogic()->ClearMessages( this->BufferWidget->GetBufferNode() );
+  this->BufferWidget->GetLogic()->ClearMessages( BufferWidget->GetBufferNode() );
   
   this->updateWidget();
 }
@@ -156,6 +157,18 @@ void qSlicerMessagesWidget
 ::updateWidget()
 {
   Q_D(qSlicerMessagesWidget);
+
+  if ( this->BufferWidget->GetLogic() == NULL )
+  {
+    return;
+  }
+
+  this->setMRMLScene( this->BufferWidget->GetLogic()->GetMRMLScene() );
+
+  if ( this->UpdateStatus != this->BufferWidget->UpdateStatus )
+  {
+    this->UpdateStatus = this->BufferWidget->UpdateStatus;
+  }
 
   // Check what the current row and column are
   int currentRow = d->MessagesTableWidget->currentRow();
