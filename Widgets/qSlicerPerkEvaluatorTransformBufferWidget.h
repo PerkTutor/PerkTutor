@@ -18,45 +18,46 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerPerkEvaluatorMessagesWidget_h
-#define __qSlicerPerkEvaluatorMessagesWidget_h
+#ifndef __qSlicerPerkEvaluatorTransformBufferWidget_h
+#define __qSlicerPerkEvaluatorTransformBufferWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
+
+// FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 
-#include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkSlicerPerkEvaluatorLogic.h"
-#include "qSlicerMessagesWidget.h"
+#include "vtkMRMLTransformBufferNode.h"
+#include "qSlicerTransformBufferWidget.h"
 
-class qSlicerPerkEvaluatorMessagesWidgetPrivate;
+class qSlicerPerkEvaluatorTransformBufferWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_PERKEVALUATOR_WIDGETS_EXPORT 
-qSlicerPerkEvaluatorMessagesWidget : public qSlicerMessagesWidget
+qSlicerPerkEvaluatorTransformBufferWidget : public qSlicerTransformBufferWidget
 {
   Q_OBJECT
 public:
-  typedef qSlicerMessagesWidget Superclass;
-  qSlicerPerkEvaluatorMessagesWidget(QWidget *parent=0);
-  virtual ~qSlicerPerkEvaluatorMessagesWidget();
+  typedef qSlicerTransformBufferWidget Superclass;
+  qSlicerPerkEvaluatorTransformBufferWidget(QWidget *parent=0);
+  virtual ~qSlicerPerkEvaluatorTransformBufferWidget();
 
-  static qSlicerPerkEvaluatorMessagesWidget* New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic );
-
+  
+  static qSlicerPerkEvaluatorTransformBufferWidget* New( vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic );
+  
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 
 protected slots:
 
-  void onAddMessageButtonClicked();
+  void onCurrentBufferNodeChanged();
 
 protected:
-  QScopedPointer<qSlicerPerkEvaluatorMessagesWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerPerkEvaluatorTransformBufferWidgetPrivate> d_ptr;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorMessagesWidget);
-  Q_DISABLE_COPY(qSlicerPerkEvaluatorMessagesWidget);
-
-  vtkSlicerPerkEvaluatorLogic* peLogic;
+  Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorTransformBufferWidget);
+  Q_DISABLE_COPY(qSlicerPerkEvaluatorTransformBufferWidget);
 
 };
 

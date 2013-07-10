@@ -10,10 +10,13 @@ set(${KIT}_INCLUDE_DIRECTORIES
 set(${KIT}_SRCS
   qSlicerPerkEvaluatorMessagesWidget.cxx
   qSlicerPerkEvaluatorMessagesWidget.h
+  qSlicerPerkEvaluatorTransformBufferWidget.cxx
+  qSlicerPerkEvaluatorTransformBufferWidget.h
   )
   
 set(${KIT}_MOC_SRCS
   qSlicerPerkEvaluatorMessagesWidget.h
+  qSlicerPerkEvaluatorTransformBufferWidget.h
   )
 
 set(${KIT}_TARGET_LIBRARIES

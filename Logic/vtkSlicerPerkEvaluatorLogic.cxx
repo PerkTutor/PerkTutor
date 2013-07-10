@@ -300,16 +300,14 @@ void vtkSlicerPerkEvaluatorLogic
 
 //Read XML file that was written by TransformRecorder module.
 void vtkSlicerPerkEvaluatorLogic
-::ImportFile( std::string fileName )
+::UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode )
 {
   this->ClearData();
-
-  // Use the built in import method from the transform buffer node
-  this->TransformRecorderLogic->GetModuleNode()->TransformBuffer->Clear();
-  this->TransformRecorderLogic->GetModuleNode()->TransformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );
-  this->ToolTrajectories = this->TransformRecorderLogic->GetModuleNode()->TransformBuffer->SplitBufferByName();
-
-  this->CreateTransformNodes();
+  // The import function from the Transform Recorder Logic will automatically add the transform nodes to the scene
+  if ( bufferNode != NULL )
+  {
+    this->ToolTrajectories = bufferNode->SplitBufferByName();
+  }
 }
 
 
@@ -416,29 +414,6 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
 }
-
-
-
-void vtkSlicerPerkEvaluatorLogic
-::CreateTransformNodes()
-{
-
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
-  {	
-    std::string toolName = this->ToolTrajectories.at(i)->GetCurrentTransform()->GetDeviceName();
-
-    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
-    if ( node == NULL )
-    {
-      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
-	  this->GetMRMLScene()->AddNode( node );
-	  node->SetScene( this->GetMRMLScene() );
-	  node->SetName( toolName.c_str() );
-    }
-  }
-
-}
-
 
 
 std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic

@@ -54,7 +54,7 @@ protected:
 
 public:
   
-  void ImportFile( std::string fileName );
+  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   
   double GetTotalTime() const;
   double GetMinTime() const;
@@ -100,7 +100,6 @@ private:
   
   void ClearData();
   double GetTimestampFromElement( vtkXMLDataElement* element );
-  void CreateTransformNodes();
   
   std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory );
   std::vector<MetricType> CalculateNeedleMetrics();
