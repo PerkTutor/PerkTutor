@@ -124,8 +124,8 @@ void qSlicerMessagesWidget
   }
 
   // Record the timestamp
-  double time = this->BufferWidget->GetLogic()->GetCurrentTimestamp();
-  this->BufferWidget->GetLogic()->AddMessage( this->BufferWidget->GetBufferNode(), messageName.toStdString(), time );
+  double time = this->BufferWidget->TransformRecorderLogic->GetCurrentTimestamp();
+  this->BufferWidget->TransformRecorderLogic->AddMessage( this->BufferWidget->GetBufferNode(), messageName.toStdString(), time );
   
   this->updateWidget();
 }
@@ -136,7 +136,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->BufferWidget->GetLogic()->RemoveMessage( this->BufferWidget->GetBufferNode(), d->MessagesTableWidget->currentRow() );
+  this->BufferWidget->TransformRecorderLogic->RemoveMessage( this->BufferWidget->GetBufferNode(), d->MessagesTableWidget->currentRow() );
 
   this->updateWidget();
 }
@@ -147,7 +147,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->BufferWidget->GetLogic()->ClearMessages( BufferWidget->GetBufferNode() );
+  this->BufferWidget->TransformRecorderLogic->ClearMessages( BufferWidget->GetBufferNode() );
   
   this->updateWidget();
 }
@@ -158,12 +158,12 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  if ( this->BufferWidget->GetLogic() == NULL )
+  if ( this->BufferWidget->TransformRecorderLogic == NULL )
   {
     return;
   }
 
-  this->setMRMLScene( this->BufferWidget->GetLogic()->GetMRMLScene() );
+  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
 
   if ( this->UpdateStatus != this->BufferWidget->UpdateStatus )
   {

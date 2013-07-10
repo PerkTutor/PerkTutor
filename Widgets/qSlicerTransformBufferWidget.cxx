@@ -78,24 +78,10 @@ qSlicerTransformBufferWidget* qSlicerTransformBufferWidget
 ::New( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic )
 {
   qSlicerTransformBufferWidget* newTransformBufferWidget = new qSlicerTransformBufferWidget();
-  newTransformBufferWidget->SetLogic( newTransformRecorderLogic );
+  newTransformBufferWidget->TransformRecorderLogic = newTransformRecorderLogic;
   newTransformBufferWidget->UpdateStatus = 0;
   newTransformBufferWidget->setup();
   return newTransformBufferWidget;
-}
-
-
-void qSlicerTransformBufferWidget
-::SetLogic( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic )
-{
-  this->TransformRecorderLogic = newTransformRecorderLogic;
-}
-
-
-vtkSlicerTransformRecorderLogic* qSlicerTransformBufferWidget
-::GetLogic()
-{
-  return this->TransformRecorderLogic;
 }
 
 
@@ -159,16 +145,19 @@ void qSlicerTransformBufferWidget
     dialog.show();
 
     // We should create a new buffer node if there isn't one already selected
+    vtkMRMLTransformBufferNode* importBufferNode = this->GetBufferNode();
     if ( this->GetBufferNode() == NULL )
     {
-      vtkMRMLTransformBufferNode* importBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) );
+      importBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) );
       importBufferNode->SetScene( this->mrmlScene() );
       this->mrmlScene()->AddNode( importBufferNode );
-      d->BufferNodeComboBox->setCurrentNode( importBufferNode );
     }
     
     dialog.setValue( 10 );
-    this->TransformRecorderLogic->ImportFromFile( this->GetBufferNode(), filename.toStdString() );
+    this->TransformRecorderLogic->ImportFromFile( importBufferNode, filename.toStdString() );
+
+    d->BufferNodeComboBox->setCurrentNode( NULL );
+    d->BufferNodeComboBox->setCurrentNode( importBufferNode );
 
     dialog.close();
   }
@@ -200,11 +189,11 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  if ( this->GetLogic() == NULL )
+  if ( this->TransformRecorderLogic == NULL )
   {
     return;
   }
 
-  this->setMRMLScene( this->GetLogic()->GetMRMLScene() );
+  this->setMRMLScene( this->TransformRecorderLogic->GetMRMLScene() );
 
 }

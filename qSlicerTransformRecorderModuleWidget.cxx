@@ -31,13 +31,12 @@
 #include <qMRMLUtils.h>
 
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 
 #include "qMRMLNodeComboBox.h"
 #include "vtkMRMLViewNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
+#include "vtkMRMLTransformBufferNode.h"
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_TransformRecorder
 class qSlicerTransformRecorderModuleWidgetPrivate: public Ui_qSlicerTransformRecorderModule
@@ -65,10 +64,6 @@ public:
 
 qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidgetPrivate( qSlicerTransformRecorderModuleWidget& object ) : q_ptr(&object)
 {
-  // Initialize embedded widgets here
-  this->TransformBufferWidget = qSlicerTransformBufferWidget::New( NULL ); // Set the logic later
-  this->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( this->TransformBufferWidget );
-  this->MessagesWidget = qSlicerMessagesWidget::New( this->TransformBufferWidget );
 }
 
 //-----------------------------------------------------------------------------
@@ -113,9 +108,11 @@ void qSlicerTransformRecorderModuleWidget::setup()
 
   d->setupUi(this);
   // Embed widgets here
-  d->TransformBufferWidget->SetLogic( d->logic() );
+  d->TransformBufferWidget = qSlicerTransformBufferWidget::New( d->logic() );
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+  d->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( d->TransformBufferWidget );
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
+  d->MessagesWidget = qSlicerMessagesWidget::New( d->TransformBufferWidget );
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
   

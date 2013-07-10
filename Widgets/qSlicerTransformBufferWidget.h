@@ -45,12 +45,10 @@ public:
 
   
   static qSlicerTransformBufferWidget* New( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic );
-
-  void SetLogic( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic );
-  vtkSlicerTransformRecorderLogic* GetLogic();
   
   vtkMRMLTransformBufferNode* GetBufferNode();
 
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
   unsigned int UpdateStatus;
 
 protected slots:
@@ -66,8 +64,6 @@ protected:
 
   virtual void setup();
   virtual void enter();
-
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerTransformBufferWidget);
