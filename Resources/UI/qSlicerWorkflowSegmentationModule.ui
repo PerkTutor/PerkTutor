@@ -83,6 +83,23 @@
        </widget>
       </item>
       <item>
+       <widget class="QGroupBox" name="BufferGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Buffer</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_8"/>
+       </widget>
+      </item>
+      <item>
        <widget class="QGroupBox" name="ControlsGroupBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -224,19 +241,6 @@
             </widget>
            </item>
           </layout>
-         </item>
-         <item>
-          <widget class="QPushButton" name="SegmentTransformBufferButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Segment Saved Tracking Log</string>
-           </property>
-          </widget>
          </item>
         </layout>
        </widget>

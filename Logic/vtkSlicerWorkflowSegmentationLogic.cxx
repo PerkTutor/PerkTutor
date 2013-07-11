@@ -216,6 +216,7 @@ bool vtkSlicerWorkflowSegmentationLogic
 }
 
 
+//TODO: Should this use the transform recorder buffer import function?
 void vtkSlicerWorkflowSegmentationLogic
 ::AddTrainingBuffer( std::string fileName )
 {
@@ -240,76 +241,31 @@ void vtkSlicerWorkflowSegmentationLogic
 }
 
 
-void vtkSlicerWorkflowSegmentationLogic
-::SegmentBuffer( std::string fileName )
-{
-  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
-  transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );
-
-  while ( transformBuffer->GetNumTransforms() > this->IndexToProcess )
-  {
-    if ( this->TransformRecorderLogic == NULL || this->TransformRecorderLogic->GetBuffer() == NULL )
-    {
-      return;
-    }
-
-    vtkTransformRecord* currentTransform = transformBuffer->GetTransformAt( this->IndexToProcess );
-	this->TransformRecorderLogic->GetBuffer()->AddTransform( currentTransform->DeepCopy() );
-    this->IndexToProcess++;
-  
-    vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
-    currentRecord->FromTransformRecord( currentTransform );
-
-    vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
-
-	if ( currentWorkflowAlgorithm == NULL )
-    {
-      currentRecord->Delete();
-	  continue;
-	}
-
-    currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
-
-    // Add messages to the module node's buffer
-    if ( currentWorkflowAlgorithm->CurrentTask != currentWorkflowAlgorithm->PrevTask )
-    {
-      // this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->CurrentTask->Name, currentTransform->GetTime() );
-    }
-    if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
-    {
-      this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
-    }
-
-  }
-
-  transformBuffer->Delete();
-
-}
-
 
 void vtkSlicerWorkflowSegmentationLogic
-::Update()
+::Update( vtkMRMLTransformBufferNode* bufferNode )
 {
-  if ( this->TransformRecorderLogic == NULL || this->TransformRecorderLogic->GetBuffer() == NULL )
+  if ( this->TransformRecorderLogic == NULL || bufferNode == NULL )
   {
     return;
   }
 
-  if ( this->TransformRecorderLogic->GetBuffer()->GetNumTransforms() <= this->IndexToProcess )
+  if ( bufferNode->GetNumTransforms() <= this->IndexToProcess )
   {
     return;
   }
 
   // If new transfrom, convert to label record and segment based on name
-  vtkTransformRecord* currentTransform = this->TransformRecorderLogic->GetBuffer()->GetTransformAt( this->IndexToProcess );
+  vtkTransformRecord* currentTransform = bufferNode->GetTransformAt( this->IndexToProcess );
   this->IndexToProcess++;
   
   vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
   currentRecord->FromTransformRecord( currentTransform );
 
+  // TODO: Should workflow algorithms be specific to a transform or to a buffer?
   vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
 
-  if ( currentWorkflowAlgorithm == NULL )
+  if ( currentWorkflowAlgorithm == NULL || ! currentWorkflowAlgorithm->Tool->Trained )
   {
     currentRecord->Delete();
 	return;
@@ -323,29 +279,41 @@ void vtkSlicerWorkflowSegmentationLogic
   }
   if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
   {
-    this->TransformRecorderLogic->AddMessage( currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
+    this->TransformRecorderLogic->AddMessage( bufferNode, currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
   }
 
 }
 
 
 std::string vtkSlicerWorkflowSegmentationLogic
-::GetToolInstructions()
+::GetToolInstructions( vtkMRMLTransformBufferNode* bufferNode )
 {
-  std::stringstream instructions;
-  for ( int i = 0; i < this->WorkflowAlgorithms.size(); i++ )
+
+  if ( this->TransformRecorderLogic == NULL || bufferNode == NULL )
   {
-    if ( this->WorkflowAlgorithms.at(i)->DoTask == NULL )
+    return "";
+  }
+
+  std::stringstream instructions;
+  std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
+  for ( int i = 0; i < activeTransforms.size(); i++ )
+  {
+    vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( activeTransforms.at(i) );
+
+    if ( currentAlgorithm == NULL || currentAlgorithm->DoTask == NULL )
 	{
       continue;
 	}
-    instructions << this->WorkflowAlgorithms.at(i)->Tool->Name << ": ";
-	instructions << this->WorkflowAlgorithms.at(i)->DoTask->Name << " - ";
-    instructions << this->WorkflowAlgorithms.at(i)->DoTask->Instruction;
-	if ( i < this->WorkflowAlgorithms.size() - 1 )
+
+    instructions << currentAlgorithm->Tool->Name << ": ";
+	instructions << currentAlgorithm->DoTask->Name << " - ";
+    instructions << currentAlgorithm->DoTask->Instruction;
+
+	if ( i < activeTransforms.size() - 1 )
 	{
       instructions << std::endl;	
 	}
+
   }
   return instructions.str();
 }

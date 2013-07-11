@@ -75,20 +75,13 @@ qSlicerWorkflowSegmentationRecorderControlsWidget
 
 
 qSlicerWorkflowSegmentationRecorderControlsWidget* qSlicerWorkflowSegmentationRecorderControlsWidget
-::New( vtkSlicerWorkflowSegmentationLogic* newWSLogic )
+::New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerWorkflowSegmentationLogic* newWorkflowSegmentationLogic )
 {
   qSlicerWorkflowSegmentationRecorderControlsWidget* newRecorderControlsWidget = new qSlicerWorkflowSegmentationRecorderControlsWidget();
-  newRecorderControlsWidget->SetLogic( newWSLogic );
+  newRecorderControlsWidget->BufferWidget = newBufferWidget;
+  newRecorderControlsWidget->WorkflowSegmentationLogic = newWorkflowSegmentationLogic;
   newRecorderControlsWidget->setup();
   return newRecorderControlsWidget;
-}
-
-
-void qSlicerWorkflowSegmentationRecorderControlsWidget
-::SetLogic( vtkSlicerWorkflowSegmentationLogic* newWSLogic )
-{
-  this->wsLogic = newWSLogic;
-  this->qSlicerRecorderControlsWidget::SetLogic( newWSLogic->TransformRecorderLogic );
 }
 
 
@@ -97,8 +90,8 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
-  this->trLogic->ClearBuffer();
-  this->wsLogic->ResetWorkflowAlgorithms();
+  this->BufferWidget->TransformRecorderLogic->ClearTransforms( this->BufferWidget->GetBufferNode() );
+  this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
   
   this->updateWidget();
 }

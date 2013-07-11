@@ -98,11 +98,10 @@ public:
   bool Train();
 
   void AddTrainingBuffer( std::string fileName );
-  void SegmentBuffer( std::string fileName );
 
-  void Update();
+  void Update( vtkMRMLTransformBufferNode* bufferNode );
 
-  std::string GetToolInstructions();
+  std::string GetToolInstructions( vtkMRMLTransformBufferNode* bufferNode );
 
 private:
 

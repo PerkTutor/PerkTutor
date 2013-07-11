@@ -27,7 +27,7 @@
 
 #include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkSlicerWorkflowSegmentationLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
+#include "vtkMRMLTransformBufferNode.h"
 #include "qSlicerRecorderControlsWidget.h"
 
 class qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate;
@@ -42,9 +42,7 @@ public:
   qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationRecorderControlsWidget();
 
-  static qSlicerWorkflowSegmentationRecorderControlsWidget* New( vtkSlicerWorkflowSegmentationLogic* newWSLogic );
-
-  void SetLogic( vtkSlicerWorkflowSegmentationLogic* newWSLogic );
+  static qSlicerWorkflowSegmentationRecorderControlsWidget* New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerWorkflowSegmentationLogic* newWorkflowSegmentationLogic );
 
 protected slots:
 
@@ -57,7 +55,7 @@ private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationRecorderControlsWidget);
   Q_DISABLE_COPY(qSlicerWorkflowSegmentationRecorderControlsWidget);
 
-  vtkSlicerWorkflowSegmentationLogic* wsLogic;
+  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic;
 
 };
 

@@ -25,7 +25,8 @@ public:
   typedef qSlicerAbstractModuleWidget Superclass;
   qSlicerWorkflowSegmentationModuleWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationModuleWidget();
-  
+
+  unsigned int UpdateStatus;  
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
@@ -43,8 +44,6 @@ protected slots:
   void onWorkflowTrainingButtonClicked();
   void onWorkflowTrainingFilesButtonClicked();
   void onTrainButtonClicked();
-
-  void onSegmentTransformBufferButtonClicked();
 
   void setupInstructions();
   void enableButtons();  
