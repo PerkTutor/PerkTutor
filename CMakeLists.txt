@@ -11,6 +11,7 @@ set( EXTENSION_SCREENSHOTURLS "http://www.slicer.org/slicerWiki/images/2/28/Perk
 set( EXTENSION_DEPENDS "NA") # Specified as a space separated list or 'NA' if any
 set( EXTENSION_BUILD_SUBDIRECTORY inner-build )
 
+project( PerkTutor )
 find_package( Slicer REQUIRED )
 include( ${Slicer_USE_FILE} )
 
@@ -18,15 +19,15 @@ include( ${Slicer_USE_FILE} )
 OPTION(PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES "Enable the building of work-in-progress, experimental modules." OFF)
 IF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
   set( PerkTutor_Modules
-    PerkEvaluator
     TransformRecorder
+    PerkEvaluator
     WorkflowSegmentation 
     TargetFiducials
   )
 ELSE( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
   set( PerkTutor_Modules
-    PerkEvaluator
     TransformRecorder
+    PerkEvaluator
     WorkflowSegmentation 
   )
 ENDIF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
