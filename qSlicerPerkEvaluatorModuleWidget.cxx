@@ -365,7 +365,6 @@ void qSlicerPerkEvaluatorModuleWidget
   }
   
   // Playback slider
-  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
-  
+  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );  
 }
 

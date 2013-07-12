@@ -63,7 +63,8 @@ qSlicerPerkEvaluatorModule::~qSlicerPerkEvaluatorModule()
 //-----------------------------------------------------------------------------
 QString qSlicerPerkEvaluatorModule::helpText()const
 {
-  return "For help on how to use this module visit: <a href='https://www.assembla.com/spaces/slicerigt'>SlicerIGT</a>";
+
+  return "The purpose of the Perk Evaluator module is to review previously recorded procedures, and calculate motion efficiency metrics. For help on how to use this module visit: <a href='http://www.perktutor.org/'>PerkTutor</a>.";
 }
 
 //-----------------------------------------------------------------------------
@@ -76,7 +77,8 @@ QString qSlicerPerkEvaluatorModule::acknowledgementText()const
 QStringList qSlicerPerkEvaluatorModule::contributors()const
 {
   QStringList moduleContributors;
-  moduleContributors << QString("Tamas Ungi (Queen's University");
+  moduleContributors << QString("Tamas Ungi (Queen's University)");
+  moduleContributors << QString("Matthew S. Holden (Queen's University)");
   return moduleContributors;
 }
 
