@@ -30,18 +30,11 @@
 
 
 
-void PrintToFile( std::string str )
-{
-  ofstream o( "PerkEvaluatorLog.txt", std::ios_base::app );
-  int c = clock();
-  o << std::fixed << setprecision( 2 ) << ( c / (double)CLOCKS_PER_SEC ) << " : " << str << std::endl;
-  o.close();
-}
+// Helper functions ------------------------------------------------------------------------
 
 
-
-vtkTransform*
-StrToTransform( std::string str, vtkTransform* tr )
+double*
+MatrixStrToDouble( std::string str )
 {
   std::stringstream ss( str );
   
@@ -49,287 +42,54 @@ StrToTransform( std::string str, vtkTransform* tr )
   double e10; ss >> e10; double e11; ss >> e11; double e12; ss >> e12; double e13; ss >> e13;
   double e20; ss >> e20; double e21; ss >> e21; double e22; ss >> e22; double e23; ss >> e23;
   double e30; ss >> e30; double e31; ss >> e31; double e32; ss >> e32; double e33; ss >> e33;
-  
-  tr->Identity();
-  
-  vtkSmartPointer< vtkMatrix4x4 > matrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  
-  matrix->SetElement( 0, 0, e00 );
-  matrix->SetElement( 0, 1, e01 );
-  matrix->SetElement( 0, 2, e02 );
-  matrix->SetElement( 0, 3, e03 );
-  
-  matrix->SetElement( 1, 0, e10 );
-  matrix->SetElement( 1, 1, e11 );
-  matrix->SetElement( 1, 2, e12 );
-  matrix->SetElement( 1, 3, e13 );
-  
-  matrix->SetElement( 2, 0, e20 );
-  matrix->SetElement( 2, 1, e21 );
-  matrix->SetElement( 2, 2, e22 );
-  matrix->SetElement( 2, 3, e23 );
-  
-  matrix->SetElement( 3, 0, e30 );
-  matrix->SetElement( 3, 1, e31 );
-  matrix->SetElement( 3, 2, e32 );
-  matrix->SetElement( 3, 3, e33 );
-  
-  tr->SetMatrix( matrix );
-  
-  return tr;
-}
 
-std::string
-TransformToStr( vtkTransform* tr )
-{
-	std::stringstream ss( "" );
+  double* dmat = new double[16];
 
-	ss << tr->GetMatrix()->GetElement( 0, 0 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 0, 1 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 0, 2 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 0, 3 ) << " ";
+  dmat[0] = e00;
+  dmat[1] = e01;
+  dmat[2] = e02;
+  dmat[3] = e03;
 
-	ss << tr->GetMatrix()->GetElement( 1, 0 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 1, 1 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 1, 2 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 1, 3 ) << " ";
+  dmat[4] = e10;
+  dmat[5] = e11;
+  dmat[6] = e12;
+  dmat[7] = e13;
 
-	ss << tr->GetMatrix()->GetElement( 2, 0 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 2, 1 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 2, 2 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 2, 3 ) << " ";
+  dmat[8] = e20;
+  dmat[9] = e21;
+  dmat[10] = e22;
+  dmat[11] = e23;
 
-	ss << tr->GetMatrix()->GetElement( 3, 0 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 3, 1 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 3, 2 ) << " ";
-	ss << tr->GetMatrix()->GetElement( 3, 3 ) << " ";
-
-	return ss.str();
+  dmat[12] = e30;
+  dmat[13] = e31;
+  dmat[14] = e32;
+  dmat[15] = e33;
+  
+  return dmat;
 }
 
 
 //----------------------------------------------------------------------------
 
-
-
 vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
 
 
+// Constructors and Desctructors ----------------------------------------------
 
-void
-vtkSlicerPerkEvaluatorLogic
-::SetMarkBegin( double begin )
-{
-  if ( begin <= this->GetMinTime() )
-  {
-    this->MarkBegin = this->GetMinTime();
-  }
-  else if ( begin >= this->GetMaxTime() )
-  {
-    this->MarkBegin = this->GetMaxTime();
-  }
-  else
-  {
-    this->MarkBegin = begin;
-  }
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::SetMarkEnd( double end )
-{
-  if ( end <= this->GetMinTime() )
-  {
-    this->MarkEnd = this->GetMinTime();
-  }
-  else if ( end >= this->GetMaxTime() )
-  {
-    this->MarkEnd = this->GetMaxTime();
-  }
-  else
-  {
-    this->MarkEnd = end;
-  }
-}
-
-
-
-vtkSlicerPerkEvaluatorLogic::AnnotationVectorType
-vtkSlicerPerkEvaluatorLogic
-::GetAnnotations()
-{
-  return this->Annotations;
-}
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::AddAnnotation( std::string annString )
-{
-  AnnotationType annotation;
-  annotation.first = this->GetPlaybackTime();
-  annotation.second = annString;
-  this->Annotations.push_back( annotation );
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::RemoveAnnotation( int row )
-{
-  Annotations.erase( Annotations.begin() + row );
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::SaveAnnotations( std::string fileName )
-{
-
-  std::ofstream output( fileName.c_str() );
-  
-  if ( ! output.is_open() )
-  {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-  }
-  
-  output << "<TransformRecorderLog>" << std::endl;
-
-  // Save transforms  
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
-  {
-    for ( unsigned int i = 0; i < (*tIt)->GetNumberOfRecords(); ++ i )
-    {
-      double currTime = (*tIt)->GetTimeAtIndex( i );
-	  int intPart = floor( currTime );
-	  int fracPart = floor( ( currTime - intPart ) * 1e9 );
-	  vtkSmartPointer< vtkMatrix4x4 > currMatrix = (*tIt)->GetMatrixAtIndex( i );
-	  vtkSmartPointer< vtkTransform > currTr = vtkSmartPointer< vtkTransform >::New();
-	  currTr->SetMatrix( vtkMatrix4x4::SafeDownCast( currMatrix ) );
-
-      output << "  <log";	  
-      output << " TimeStampSec=\"" << intPart << "\"";
-      output << " TimeStampNSec=\"" << fracPart << "\"";
-      output << " type=\"transform\"";
-      output << " DeviceName=\"" << (*tIt)->GetToolName() << "\"";
-	  output << " transform=\"" << TransformToStr( currTr ) << "\"";
-      output << " />" << std::endl;
-    }
-  }
- 
-  // Save annotations.
-  
-  for ( int i = 0; i < Annotations.size(); ++ i )
-  {
-    int intPart = floor( Annotations[i].first );
-	int fracPart = floor( ( Annotations[i].first - intPart ) * 1e9 );
-    output << "  <log";
-    output << " TimeStampSec=\"" << intPart << "\"";
-    output << " TimeStampNSec=\"" << fracPart << "\"";
-    output << " type=\"message\"";
-    output << " message=\"" << Annotations[i].second << "\"";
-    output << " />" << std::endl;
-  }
-  
-  
-  output << "</TransformRecorderLog>" << std::endl;
-  output.close();
-
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::Analyse()
-{
-  this->Metrics.clear();
-  
-  
-    // Check conditions.
-  
-  if (    this->MarkBegin >= this->MarkEnd
-       || this->MarkBegin < this->GetMinTime()
-       || this->MarkEnd > this->GetMaxTime() )
-  {
-    return;
-  }
-  
-  
-    // Compute common metrics.
-  
-  MetricType procedureTime;
-  procedureTime.first = "Total procedure time (s)";
-  procedureTime.second = this->MarkEnd - this->MarkBegin;
-  this->Metrics.push_back( procedureTime );
-  
-  
-    // Compute metrics for each trajectory.
-  
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
-  {
-    std::string toolName = (*tIt)->GetToolName();
-    this->AnalyseTrajectory( *tIt );
-  }
-  
-  
-    // Compute tissue damage by needle.
-  
-  if ( this->NeedleTransformNode != NULL )
-  {
-    this->AnalyseNeedle( this->NeedleTransformNode );
-  }
-}
-
-
-
-vtkSlicerPerkEvaluatorLogic::MetricVectorType
-vtkSlicerPerkEvaluatorLogic
-::GetMetrics()
-{
-  return this->Metrics;
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::SetBodyModelNode( vtkMRMLModelNode* node )
-{
-  vtkSetMRMLNodeMacro( this->BodyModelNode, node );
-  this->Modified();
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::SetNeedleTransformNode( vtkMRMLLinearTransformNode* node )
-{
-  vtkSetMRMLNodeMacro( this->NeedleTransformNode, node );
-  this->Modified();
-}
-
-
-
-// Constructor
-// 
 vtkSlicerPerkEvaluatorLogic
 ::vtkSlicerPerkEvaluatorLogic()
 {
   this->PlaybackTime = 0.0;
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
+  this->SetNeedleBase( 0.0, 1.0, 0.0 );
   
   this->BodyModelNode = NULL;
   this->NeedleTransformNode = NULL;
+
+  this->TransformRecorderLogic = NULL;
+
+  this->Parser = vtkXMLDataParser::New();
 }
 
 
@@ -348,12 +108,25 @@ vtkSlicerPerkEvaluatorLogic::
     this->NeedleTransformNode->Delete();
     this->NeedleTransformNode = NULL;
   }
+  this->Parser->Delete();
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::ClearData()
+{
+  this->ToolTrajectories.clear();
+  
+  this->MarkBegin = 0.0;
+  this->MarkEnd = 0.0;
+  this->PlaybackTime = 0.0;
 }
 
 
 
-void
-vtkSlicerPerkEvaluatorLogic
+// Slicer functions ---------------------------------------------------------------
+
+void vtkSlicerPerkEvaluatorLogic
 ::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
@@ -365,88 +138,181 @@ vtkSlicerPerkEvaluatorLogic
 
 
 
-void
-vtkSlicerPerkEvaluatorLogic
+void vtkSlicerPerkEvaluatorLogic
 ::OnMRMLSceneEndClose()
 {
   this->ClearData();
 }
 
 
-
-/**
- * Read XML file that was written by TransformRecorder module.
- */
-void
-vtkSlicerPerkEvaluatorLogic
-::ImportFile( std::string fileName )
+void vtkSlicerPerkEvaluatorLogic
+::SetMRMLSceneInternal( vtkMRMLScene * newScene )
 {
-  this->ClearData();
+  vtkNew<vtkIntArray> events;
+  events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+  events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+  events->InsertNextValue(vtkMRMLScene::EndBatchProcessEvent);
+  this->SetAndObserveMRMLSceneEventsInternal(newScene, events.GetPointer());
+}
 
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
-  parser->SetFileName( fileName.c_str() );
-  parser->Parse();
-  // PrintToFile( "End XML parser" ); // debug
-  
-  vtkXMLDataElement* element = parser->GetRootElement();
-  if ( ! element )
-  {
-    return;
-  }
 
-  int num = element->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
-  
-  for ( int i = 0; i < num; ++ i )
-  {
-    vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "log" ) != 0 )
-    {
-      continue;  // If it's not a "log", jump to the next.
-    }
-    const char* type = noteElement->GetAttribute( "type" );
-    
-    vtkTransformTimeSeries* trajectory = NULL;
-    if ( strcmp( type, "transform" ) == 0 )
-    {
-      const char* deviceName = noteElement->GetAttribute( "DeviceName" );
-      trajectory = this->UpdateToolList( std::string( deviceName ) );
-    }
+void vtkSlicerPerkEvaluatorLogic
+::RegisterNodes()
+{
+  assert(this->GetMRMLScene() != 0);
+}
 
-    
-    double time = this->GetTimestampFromElement( noteElement );
-    
-    if ( strcmp( type, "message" ) == 0 )
-    {
-      AnnotationType annotation;
-      annotation.first = time;
-      const char* msg = noteElement->GetAttribute( "message" );
-      if ( msg != NULL )
-      {
-        annotation.second = std::string( msg );
-      }
-      else
-      {
-        annotation.second = "(none)";
-      }
-      this->Annotations.push_back( annotation );
-    }
-    else if ( strcmp( type, "transform" ) == 0 )
-    {
-      const char* traC = noteElement->GetAttribute( "transform" );
-      vtkSmartPointer< vtkTransform > tr = vtkSmartPointer< vtkTransform >::New();
-      StrToTransform( std::string( traC ), tr );
-      trajectory->AddRecord( time, tr );
-    }
-   
-  }
 
-  this->CreateTransformNodes();
+void vtkSlicerPerkEvaluatorLogic
+::UpdateFromMRMLScene()
+{
+  assert(this->GetMRMLScene() != 0);
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::OnMRMLSceneNodeAdded( vtkMRMLNode* vtkNotUsed( node ) )
+{
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::OnMRMLSceneNodeRemoved( vtkMRMLNode* vtkNotUsed( node ) )
+{
 }
 
 
 
-double
-vtkSlicerPerkEvaluatorLogic
+// -----------------------------------------------------------------------------------
+
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetMarkBegin( double begin )
+{
+  if ( begin <= this->GetMinTime() )
+  {
+    this->MarkBegin = this->GetMinTime();
+  }
+  else if ( begin >= this->GetMaxTime() )
+  {
+    this->MarkBegin = this->GetMaxTime();
+  }
+  else
+  {
+    this->MarkBegin = begin;
+  }
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetMarkEnd( double end )
+{
+  if ( end <= this->GetMinTime() )
+  {
+    this->MarkEnd = this->GetMinTime();
+  }
+  else if ( end >= this->GetMaxTime() )
+  {
+    this->MarkEnd = this->GetMaxTime();
+  }
+  else
+  {
+    this->MarkEnd = end;
+  }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetNeedleBase( double x, double y, double z )
+{
+  // Observe that this function takes a unit vector in the direction of the base
+  this->NeedleBase[0] = x * NEEDLE_LENGTH;
+  this->NeedleBase[1] = y * NEEDLE_LENGTH;
+  this->NeedleBase[2] = z * NEEDLE_LENGTH;
+  this->NeedleBase[3] = 1.0;
+}
+
+
+std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
+::GetMetrics()
+{
+  std::vector<MetricType> metrics;
+
+  // Check conditions
+  if ( this->MarkBegin >= this->MarkEnd || this->MarkBegin < this->GetMinTime() || this->MarkEnd > this->GetMaxTime() )
+  {
+    return metrics;
+  }
+  
+  MetricType procedureTime;
+  procedureTime.first = "Total procedure time (s)";
+  procedureTime.second = this->MarkEnd - this->MarkBegin;
+  metrics.push_back( procedureTime );
+
+  // Calculate the metrics individually for each tool
+  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  {
+    std::vector<MetricType> toolMetrics = this->CalculateToolMetrics( this->ToolTrajectories.at(i) );
+
+	for ( int j = 0; j < toolMetrics.size(); j++ )
+	{
+      metrics.push_back( toolMetrics.at(j) );
+	}
+  }
+
+
+  // If the needle is specified, calculate needle-specific metrics
+  if ( this->NeedleTransformNode != NULL )
+  {
+    std::vector<MetricType> needleMetrics = this->CalculateNeedleMetrics();
+
+    for ( int j = 0; j < needleMetrics.size(); j++ )
+	{
+      metrics.push_back( needleMetrics.at(j) );
+	}
+  }
+
+
+  return metrics;
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetBodyModelNode( vtkMRMLModelNode* node )
+{
+  vtkSetMRMLNodeMacro( this->BodyModelNode, node );
+  this->Modified();
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetNeedleTransformNode( vtkMRMLLinearTransformNode* node )
+{
+  vtkSetMRMLNodeMacro( this->NeedleTransformNode, node );
+  this->Modified();
+}
+
+
+
+//Read XML file that was written by TransformRecorder module.
+void vtkSlicerPerkEvaluatorLogic
+::UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode )
+{
+  this->ClearData();
+  // The import function from the Transform Recorder Logic will automatically add the transform nodes to the scene
+  if ( bufferNode != NULL )
+  {
+    this->ToolTrajectories = bufferNode->SplitBufferByName();
+  }
+}
+
+
+
+double vtkSlicerPerkEvaluatorLogic
 ::GetTotalTime() const
 {
   double minTime = this->GetMinTime();
@@ -462,22 +328,26 @@ vtkSlicerPerkEvaluatorLogic
   {
     return totalTime;
   }
+
 }
 
 
 
-double
-vtkSlicerPerkEvaluatorLogic
+double vtkSlicerPerkEvaluatorLogic
 ::GetMinTime() const
 {
+  if ( this->ToolTrajectories.size() == 0 )
+  {
+    return 0.0;
+  }
+
   double minTime = std::numeric_limits< double >::max();
   
-  for ( TrajectoryContainerType::const_iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
+  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {
-    if ( (*tIt)->GetMinTime() < minTime )
+    if ( ToolTrajectories.at(i)->GetTransformAt(0)->GetTime() < minTime )
     {
-      minTime = (*tIt)->GetMinTime();
+      minTime = ToolTrajectories.at(i)->GetTransformAt(0)->GetTime();
     }
   }
   
@@ -489,14 +359,18 @@ vtkSlicerPerkEvaluatorLogic
 double vtkSlicerPerkEvaluatorLogic
 ::GetMaxTime() const
 {
-  double maxTime = std::numeric_limits< double >::min();
-  
-  for ( TrajectoryContainerType::const_iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
+  if ( this->ToolTrajectories.size() == 0 )
   {
-    if ( (*tIt)->GetMaxTime() > maxTime )
+    return 0.0;
+  }
+
+  double maxTime = - std::numeric_limits< double >::max();
+  
+  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  {
+    if ( ToolTrajectories.at(i)->GetCurrentTransform()->GetTime() > maxTime )
     {
-      maxTime = (*tIt)->GetMaxTime();
+      maxTime = ToolTrajectories.at(i)->GetCurrentTransform()->GetTime();
     }
   }
   
@@ -505,8 +379,7 @@ double vtkSlicerPerkEvaluatorLogic
 
 
 
-double
-vtkSlicerPerkEvaluatorLogic
+double vtkSlicerPerkEvaluatorLogic
 ::GetPlaybackTime() const
 {
   return this->PlaybackTime;
@@ -514,518 +387,298 @@ vtkSlicerPerkEvaluatorLogic
 
 
 
-void
-vtkSlicerPerkEvaluatorLogic
+void vtkSlicerPerkEvaluatorLogic
 ::SetPlaybackTime( double time )
 {
-  if ( time < this->GetMinTime()  ||  time > this->GetMaxTime() )
+  if ( time < this->GetMinTime() || time > this->GetMaxTime() )
   {
     return;
   }
   
-  this->PlaybackTime = time;
-  
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
-  {
-    std::string toolName = (*tIt)->GetToolName();
-    int currentIndex = 0;
-    for ( int i = 1; i < (*tIt)->GetNumberOfRecords(); ++ i )
+  this->PlaybackTime = time;  
+
+  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  {	
+    std::string toolName = this->ToolTrajectories.at(i)->GetCurrentTransform()->GetDeviceName();
+
+    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
+    if ( node == NULL )
     {
-      if ( time < (*tIt)->GetTimeAtIndex( i ) )
-      {
-        currentIndex = i - 1;
-        break;
-      }
+      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
+	  this->GetMRMLScene()->AddNode( node );
+	  node->SetScene( this->GetMRMLScene() );
+	  node->SetName( toolName.c_str() );
     }
-    
-    vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( toolName.c_str() );
-    collection->InitTraversal();
-    vtkMRMLLinearTransformNode* tNode = NULL;
-    if ( collection->GetNumberOfItems() > 0 )
-    {
-      tNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
-    }
-    if ( tNode != NULL )
-    {
-      tNode->GetMatrixTransformToParent()->DeepCopy( (*tIt)->GetMatrixAtIndex( currentIndex ) );
-    }
-    collection->Delete();
-  }
-}
 
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::SetMRMLSceneInternal( vtkMRMLScene * newScene )
-{
-  vtkNew<vtkIntArray> events;
-  events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-  events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-  events->InsertNextValue(vtkMRMLScene::EndBatchProcessEvent);
-  this->SetAndObserveMRMLSceneEventsInternal(newScene, events.GetPointer());
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::RegisterNodes()
-{
-  assert(this->GetMRMLScene() != 0);
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::UpdateFromMRMLScene()
-{
-  assert(this->GetMRMLScene() != 0);
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::OnMRMLSceneNodeAdded( vtkMRMLNode* vtkNotUsed( node ) )
-{
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::OnMRMLSceneNodeRemoved( vtkMRMLNode* vtkNotUsed( node ) )
-{
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::ClearData()
-{
-  this->ToolTrajectories.clear();
-  this->Annotations.clear();
-  this->Metrics.clear();
-  
-  this->MarkBegin = 0.0;
-  this->MarkEnd = 0.0;
-  this->PlaybackTime = 0.0;
-}
-
-
-
-double
-vtkSlicerPerkEvaluatorLogic
-::GetTimestampFromElement( vtkXMLDataElement* element )
-{
-    // Check if time was coded according to the old or new fashion.
-
-  int numAttribs = element->GetNumberOfAttributes();
-  bool old_time_style = false;
-  for ( int j = 0; j < numAttribs; ++ j )
-  {
-    const char* attName = element->GetAttributeName( j );
-    if ( !strcmp( attName, "time" ) )
-    {
-      old_time_style = true;
-      break;
-    }
-  }
-  
-  double time = 0.0;
-  if ( old_time_style )
-  {
-    double time = atof( element->GetAttribute( "time" ) );
-  }
-  else
-  {
-    double time_sec = atof( element->GetAttribute( "TimeStampSec" ) );
-    double time_nsec = atof( element->GetAttribute( "TimeStampNSec" ) );
-    time = time_sec + time_nsec * 1e-9;
+	node->GetMatrixTransformToParent()->DeepCopy( MatrixStrToDouble( this->ToolTrajectories.at(i)->GetTransformAtTime( time )->GetTransform() ) );
   }
 
-  return time;
 }
 
 
-
-vtkTransformTimeSeries*
-vtkSlicerPerkEvaluatorLogic
-::UpdateToolList( std::string name )
+std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
+::CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory )
 {
-    // Check if any of the existing tools have this name.
-  
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
-  {
-    if ( name.compare( (*tIt)->GetToolName() ) == 0 )
-    {
-      return (*tIt);
-    };
-  }
-  
-    // Create a new tool trajectory.
-  
-  vtkSmartPointer< vtkTransformTimeSeries > tts = vtkSmartPointer< vtkTransformTimeSeries >::New();
-  tts->SetToolName( name );
-  this->ToolTrajectories.push_back( tts );
-  return tts;
-}
+  std::vector<MetricType> toolMetrics;
 
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::CreateTransformNodes()
-{
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt != this->ToolTrajectories.end(); ++ tIt )
-  {
-    std::string toolName = (*tIt)->GetToolName();
-    vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( toolName.c_str() );
-    vtkMRMLLinearTransformNode* tNode = NULL;
-    if ( collection->GetNumberOfItems() > 0 )
-    {
-      tNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
-    }
-    if ( tNode == NULL )
-    {
-      vtkSmartPointer< vtkMRMLLinearTransformNode > newNode = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
-      newNode->SetName( toolName.c_str() );
-      newNode->SetScene( this->GetMRMLScene() );
-      this->GetMRMLScene()->AddNode( newNode );
-    }
-    collection->Delete();
-  }
-}
-
-
-
-void
-vtkSlicerPerkEvaluatorLogic
-::AnalyseTrajectory( vtkTransformTimeSeries* Trajectory )
-{
-  double length = 0.0;
-  double insideLength = 0.0;
+  double totalPath = 0.0;
+  double insidePath = 0.0;
   double insideTime = 0.0;
   
-  double O[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
+  double Origin[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
   double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
   double P1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
-  
-  vtkSmartPointer< vtkMatrix4x4 > M0;
-  vtkSmartPointer< vtkMatrix4x4 > M1;
-  
-  
-    // Check if the corresponding transform has any parent transforms.
-  
-  vtkSmartPointer< vtkMatrix4x4 > ParentMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  ParentMatrix->Identity();
-  vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( Trajectory->GetToolName().c_str() );
-  vtkMRMLLinearTransformNode* tNode = NULL;
-  if ( collection->GetNumberOfItems() > 0 )
+
+  // Get a reference to the relevant transform node, update the transform node, compute the metric for that time step
+  double originalPlaybackTime = this->GetPlaybackTime();
+  this->SetPlaybackTime( this->GetMinTime() );
+
+  // Check if the corresponding transform has any parent transforms  
+  std::string toolName = Trajectory->GetCurrentTransform()->GetDeviceName();
+  vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
+
+  if ( node == NULL )
   {
-    tNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
+    return toolMetrics;
   }
-  if ( tNode != NULL )
-  {
-    vtkMRMLTransformNode* ptNode = tNode->GetParentTransformNode();
-    if ( ptNode != NULL )
-    {
-      ptNode->GetMatrixTransformToWorld( ParentMatrix );
-    }
-  }
-  collection->Delete();
-  
-  
-    // Prepare inside-outside body measurements.
-  
+
+  // Prepare inside-outside body measurements.  
   vtkPolyData* body = NULL;
   vtkSmartPointer< vtkSelectEnclosedPoints > EnclosedFilter = vtkSmartPointer< vtkSelectEnclosedPoints >::New();
   if ( this->BodyModelNode != NULL )
   {
     body = this->BodyModelNode->GetPolyData();
-    // EnclosedFilter->SetSurface( body );
     EnclosedFilter->Initialize( body );
   }
+
+  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M0 );
+  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M1 );  
   
-  
-  for ( int i = 1; i < Trajectory->GetNumberOfRecords(); ++ i )
+  for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
   {
-    if ( Trajectory->GetTimeAtIndex( i ) < this->MarkBegin )
+    
+	// Set the playback time to update the node, and get data from the node
+	this->SetPlaybackTime( Trajectory->GetTransformAt(i)->GetTime() );
+
+	M0->Identity();
+	M0->DeepCopy( M1 );
+
+	M1->Identity();
+    node->GetMatrixTransformToWorld( M1 );  
+
+    if ( Trajectory->GetTransformAt(i)->GetTime() < this->MarkBegin || Trajectory->GetTransformAt(i)->GetTime() > this->MarkEnd )
     {
       continue;
     }
-    
-    if ( Trajectory->GetTimeAtIndex( i ) > this->MarkEnd )
-    {
-      break;
-    }
-    
-    M0 = Trajectory->GetMatrixAtIndex( i - 1 );
-    M1 = Trajectory->GetMatrixAtIndex( i );
-    
-    vtkMatrix4x4::Multiply4x4( ParentMatrix, M0, M0 );
-    vtkMatrix4x4::Multiply4x4( ParentMatrix, M1, M1 );
-    
-    M0->MultiplyPoint( O, P0 );
-    M1->MultiplyPoint( O, P1 );
-    
-    double distance = sqrt( vtkMath::Distance2BetweenPoints( P0, P1 ) );
-    
-    length += distance;
+        
+    M0->MultiplyPoint( Origin, P0 );
+    M1->MultiplyPoint( Origin, P1 );
+
+	double pathDistance = sqrt( vtkMath::Distance2BetweenPoints( P0, P1 ) );
+    totalPath += pathDistance;
     
     
-      // Check if current point is inside the body.
-    
+    // Check if current point is inside the body    
     int Inside = 0;
     if ( body != NULL )
     {
       Inside = EnclosedFilter->IsInsideSurface( P1[ 0 ], P1[ 1 ], P1[ 2 ] );
-    }
-    
+    }    
     if ( Inside )
     {
-      insideLength += distance;
-      insideTime += Trajectory->GetTimeAtIndex( i ) - Trajectory->GetTimeAtIndex( i - 1 );
+      insidePath += pathDistance;
+      insideTime += Trajectory->GetTransformAt(i)->GetTime() - Trajectory->GetTransformAt(i-1)->GetTime();
     }
+
   }
   
+  // Reset the play back time
+  this->SetPlaybackTime( originalPlaybackTime );
   
-    // Recording metrics.
+  // Recording metrics
+  MetricType pathLengthMetric;
+  pathLengthMetric.first = toolName + " path length (mm)";
+  pathLengthMetric.second = totalPath;
+  toolMetrics.push_back( pathLengthMetric );
   
-  MetricType PathLength;
-  PathLength.first = Trajectory->GetToolName() + " path length (mm)";
-  PathLength.second = length;
-  this->Metrics.push_back( PathLength );
+  MetricType insidePathMetric;
+  insidePathMetric.first = toolName + " inside path (mm)";
+  insidePathMetric.second = insidePath;
+  toolMetrics.push_back( insidePathMetric );
   
-  MetricType InsidePathLength;
-  InsidePathLength.first = Trajectory->GetToolName() + " inside path (mm)";
-  InsidePathLength.second = insideLength;
-  this->Metrics.push_back( InsidePathLength );
-  
-  MetricType InsideTime;
-  InsideTime.first = Trajectory->GetToolName() + " inside time (s)";
-  InsideTime.second = insideTime;
-  this->Metrics.push_back( InsideTime );
+  MetricType insideTimeMetric;
+  insideTimeMetric.first = toolName + " inside time (s)";
+  insideTimeMetric.second = insideTime;
+  toolMetrics.push_back( insideTimeMetric );
+
+  return toolMetrics;
 }
 
 
 
-/**
- * Needle has a specific direction. Long in the positive Y direction (A in RAS coordinate system).
- * Using this condition, we can calculate the potential tissue damage.
- * @param tnode Transform directly under the needle model node.
- */
-void
-vtkSlicerPerkEvaluatorLogic
-::AnalyseNeedle( vtkMRMLLinearTransformNode* tnode )
+// Needle has a specific direction. Long in the positive Y direction (A in RAS coordinate system).
+// Using this condition, we can calculate the potential tissue damage.
+std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
+::CalculateNeedleMetrics()
 {
-  if ( tnode == NULL )
+  std::vector<MetricType> toolMetrics;
+
+  double tissueDamage = 0.0;
+
+  // Grab the needle reference frame node
+  vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( this->NeedleTransformNode->GetID() ) );
+  std::string toolName = node->GetName();
+
+  // Make sure the needle node and body model node exist to calculate these metrics
+  if ( node == NULL || this->BodyModelNode == NULL )
   {
-    return;
+    return toolMetrics;
   }
   
-  if ( this->BodyModelNode == NULL )
+  // Get the trajectory which is an ancestor to the needle reference node
+  // We really only need it for its timestamps
+  vtkMRMLTransformBufferNode* Trajectory = NULL;
+  vtkMRMLLinearTransformNode* parent = node;
+  while( parent != NULL )
   {
-    return;  // No body -> no tissue damage.
-  }
-  
-  
-    // Check if this needle transform is on a recorded trajectory.
-  
-  vtkMRMLTransformNode* parent = tnode->GetParentTransformNode();
-  
-  if ( parent == NULL )
-  {
-    return;
-  }
-  
-  vtkTransformTimeSeries* ParentTrajectory = NULL;
-  for ( TrajectoryContainerType::iterator tIt = this->ToolTrajectories.begin();
-        tIt < this->ToolTrajectories.end(); ++ tIt )
-  {
-    if ( (*tIt)->GetToolName().compare( parent->GetName() ) == 0 )
+    // Check if the parent's name matches one of the trajectory names
+    for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
     {
-      ParentTrajectory = *tIt;
+      if ( this->ToolTrajectories.at(i)->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
+	  {
+        Trajectory = this->ToolTrajectories.at(i);
+	  }
     }
+
+	if ( Trajectory != NULL )
+	{
+      break;
+	}
+
+	parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
   }
-  
-  if ( ParentTrajectory == NULL )
+
+  if ( Trajectory == NULL )
   {
-    return;
+    return toolMetrics;
   }
+
   
-  
-    // Analyse recorded needle trajectory.
-  
-    // Check if the parent transform has any further parent transform.
-  
-  vtkSmartPointer< vtkMatrix4x4 > GrandParentMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  GrandParentMatrix->Identity();
-  vtkCollection* collection = this->GetMRMLScene()->GetNodesByName( ParentTrajectory->GetToolName().c_str() );
-  vtkMRMLLinearTransformNode* GrandParentTransformNode = NULL;
-  if ( collection->GetNumberOfItems() > 0 )
-  {
-    GrandParentTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( collection->GetItemAsObject( 0 ) );
-  }
-  if ( GrandParentTransformNode != NULL )
-  {
-    vtkMRMLTransformNode* ptNode = GrandParentTransformNode->GetParentTransformNode();
-    if ( ptNode != NULL )
-    {
-      ptNode->GetMatrixTransformToWorld( GrandParentMatrix );
-    }
-  }
-  collection->Delete();
-  
-  
-    // Prepare inside-outside body measurements.
-  
-  double O[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };     // Needle tip in the needle tip coordinate system.
-  double OB[ 4 ] = { 0.0, 300.0, 0.0, 1.0 };  // Needle base in the needle tip coordinate system. 300 mm is an assumption.
-  double pcoords[ 3 ] = { 0.0, 0.0, 0.0 };    // Not used. Placeholder for function signature.
-  double t = 0.0;                             // Parametric coordinate of intersection. Not used.
-  double tolerance = 0.001;
-  int    subId;
-  
+  // Constants for tissue damage metric  
+  double INTERSECTION_TOLERANCE = 1e-3;		// Tolerance in line intersection function
+
+  // Needle vectors
+  double Origin[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip in the needle tip coordinate system.
+  double OriginBase[ 4 ] = { this->NeedleBase[0], this->NeedleBase[1], this->NeedleBase[2], this->NeedleBase[3] }; // Needle base in the needle tip coordinate system.
+
   double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip at time 0.
   double P1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 }; // Needle tip at time 1.
   
   double B0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle base at time 0.
-  double B1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle base at time 0.
+  double B1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle base at time 1.
   
-  double I0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 0.
-  double I1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 1.
+  double E0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 0.
+  double E1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };  // Needle entry point at time 1.
+
+  // Not used - placeholders for intersect with line function signatures
+  double pcoords[ 3 ] = { 0.0, 0.0, 0.0 };
+  double t = 0.0;
+  int    subId;
   
-  vtkSmartPointer< vtkMatrix4x4 > M0;  // NeedleTip-To-RAS at time 0.
-  vtkSmartPointer< vtkMatrix4x4 > M1;  // NeedleTip-To-RAS at time 1.
+  // Get a reference to the relevant transform node, update the transform node, compute the metric for that time step
+  double originalPlaybackTime = this->GetPlaybackTime();
+  this->SetPlaybackTime( this->GetMinTime() );
+
+  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M0 );
+  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M1 );  
   
-  vtkMatrix4x4* NeedleTipMatrix = tnode->GetMatrixTransformToParent();
-  
-  double PTT = 0.0; // Potential tissue damage. Area swept by the needle inside the tissue.
-  
+  // Set up filters for calculating quantities associated  the body model nodes
   vtkSmartPointer< vtkSelectEnclosedPoints > EnclosedFilter = vtkSmartPointer< vtkSelectEnclosedPoints >::New();
   EnclosedFilter->Initialize( this->BodyModelNode->GetPolyData() );
   
   vtkSmartPointer< vtkModifiedBSPTree > bspTree = vtkSmartPointer< vtkModifiedBSPTree >::New();
   bspTree->SetDataSet( this->BodyModelNode->GetPolyData() );
   bspTree->BuildLocator();
+
   
-  for ( int i = 1; i < ParentTrajectory->GetNumberOfRecords(); ++ i )
+  for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
   {
-    if ( ParentTrajectory->GetTimeAtIndex( i ) < this->MarkBegin )
+	// Set the playback time to update the node, and get data from the node
+	this->SetPlaybackTime( Trajectory->GetTransformAt(i)->GetTime() );
+
+	M0->Identity();
+	M0->DeepCopy( M1 );
+
+	M1->Identity();
+    node->GetMatrixTransformToWorld( M1 );  
+
+    if ( Trajectory->GetTransformAt(i)->GetTime() < this->MarkBegin || Trajectory->GetTransformAt(i)->GetTime() > this->MarkEnd )
     {
       continue;
     }
+
     
-    if ( ParentTrajectory->GetTimeAtIndex( i ) > this->MarkEnd )
-    {
-      break;
-    }
+    M0->MultiplyPoint( Origin, P0 );
+    M1->MultiplyPoint( Origin, P1 );
     
-    M0 = ParentTrajectory->GetMatrixAtIndex( i - 1 );
-    M1 = ParentTrajectory->GetMatrixAtIndex( i );
+    M0->MultiplyPoint( OriginBase, B0 );
+    M1->MultiplyPoint( OriginBase, B1 );
+
     
-      // Transform matrix composition: M = GrandParentMatrix * PartentMatrix * NeedleTipMatrix
-    
-    vtkMatrix4x4::Multiply4x4( M0, NeedleTipMatrix, M0 );
-    vtkMatrix4x4::Multiply4x4( M1, NeedleTipMatrix, M1 );
-    
-    vtkMatrix4x4::Multiply4x4( GrandParentMatrix, M0, M0 );
-    vtkMatrix4x4::Multiply4x4( GrandParentMatrix, M1, M1 );
-    
-    M0->MultiplyPoint( O, P0 );
-    M1->MultiplyPoint( O, P1 );
-    
-    M0->MultiplyPoint( OB, B0 );
-    M1->MultiplyPoint( OB, B1 );
-    
-    
-      // Check if current point is inside the body.
-    
+    // Check if current point is inside the body    
     int Inside = 0;
-    if (    EnclosedFilter->IsInsideSurface( P0[ 0 ], P0[ 1 ], P0[ 2 ] )
-         && EnclosedFilter->IsInsideSurface( P1[ 0 ], P1[ 1 ], P1[ 2 ] ) )
+    if ( EnclosedFilter->IsInsideSurface( P0[ 0 ], P0[ 1 ], P0[ 2 ] ) && EnclosedFilter->IsInsideSurface( P1[ 0 ], P1[ 1 ], P1[ 2 ] ) )
     {
       Inside = true;
     }
     
     if ( Inside )
     {
-        // Compute needle entry points.
+      // Compute needle entry points      
+      bspTree->IntersectWithLine( P0, B0, INTERSECTION_TOLERANCE, t, E0, pcoords, subId );
+      bspTree->IntersectWithLine( P1, B1, INTERSECTION_TOLERANCE, t, E1, pcoords, subId );
       
-      bspTree->IntersectWithLine( P0, B0, tolerance, t, I0, pcoords, subId );
-      bspTree->IntersectWithLine( P1, B1, tolerance, t, I1, pcoords, subId );
-      
-      /*
-      //debug
-      std::stringstream ss;
-      ss << "Time: " << ParentTrajectory->GetTimeAtIndex( i ) << std::endl;
-      ss << "P0: " << P0[ 0 ] << "  " << P0[ 1 ] << "  " << P0[ 2 ] << std::endl;
-      ss << "P1: " << P1[ 0 ] << "  " << P1[ 1 ] << "  " << P1[ 2 ] << std::endl;
-      ss << "B0: " << B0[ 0 ] << "  " << B0[ 1 ] << "  " << B0[ 2 ] << std::endl;
-      ss << "B1: " << B1[ 0 ] << "  " << B1[ 1 ] << "  " << B1[ 2 ] << std::endl;
-      ss << "I0: " << I0[ 0 ] << "  " << I0[ 1 ] << "  " << I0[ 2 ] << std::endl;
-      ss << "I1: " << I1[ 0 ] << "  " << I1[ 1 ] << "  " << I1[ 2 ] << std::endl;
-      PrintToFile( ss.str() );
-      */
-      
-        // Compute area of two triangles.
-      
-      PTT += SpanArea( I0, I1, P0, P1 );
+      // Compute area of two triangles      
+      tissueDamage += this->TriangleArea( E0, E1, P0 ) + this->TriangleArea( E1, P0, P1 );
     }
+
   }
   
-  
-    // Record this metric.
-  
-  MetricType PTTMetric;
-  PTTMetric.first = "Potential tissue damage (mm2)";
-  PTTMetric.second = PTT;
-  
-  this->Metrics.push_back( PTTMetric );
-  
+  // Reset the play back time
+  this->SetPlaybackTime( originalPlaybackTime );
+
+  MetricType tissueDamageMetric;
+  tissueDamageMetric.first = toolName + " potential tissue damage (mm2)";
+  tissueDamageMetric.second = tissueDamage;
+  toolMetrics.push_back( tissueDamageMetric );
+
+  return toolMetrics;
 }
 
 
 
-double
-vtkSlicerPerkEvaluatorLogic
-::SpanArea( double* e1, double* e2, double* t1, double* t2 )
+double vtkSlicerPerkEvaluatorLogic
+::TriangleArea( double* p1, double* p2, double* p3 )
 {
-    // Approximation: summed area of two triangles, (e1,t1,e2) and (t1,e2,t2).
-    // Area of a triangle: cross-product of two edge vectors.  
-  
-    // First triangle: v = e2 - e1; w = t1 = e1;
-  
-  double v[ 3 ] = { 0, 0, 0 };
-  double w[ 3 ] = { 0, 0, 0 };
-  
-  for ( int i = 0; i < 3; ++ i )
-    {
-    v[ i ] = e2[ i ] - e1[ i ];
-    w[ i ] = t1[ i ] - e1[ i ];
-    }
-  
-  double cprod[ 3 ] = { 0, 0, 0 };
-  vtkMath::Cross( v, w, cprod );
-  double area1 = std::sqrt( cprod[ 0 ] * cprod[ 0 ]  +  cprod[ 1 ] * cprod[ 1 ]  +  cprod[ 2 ] * cprod[ 2 ] );
-  
-    // Second triangle: v = e2 - t1; w = t2 - t1;
-  
-  for ( int i = 0; i < 3; ++ i )
-    {
-    v[ i ] = e2[ i ] - t1[ i ];
-    w[ i ] = t2[ i ] - t1[ i ];
-    }
-  
-  vtkMath::Cross( v, w, cprod );
-  double area2 = std::sqrt( cprod[ 0 ] * cprod[ 0 ]  +  cprod[ 1 ] * cprod[ 1 ]  +  cprod[ 2 ] * cprod[ 2 ] );
-  
-  return ( area1 + area2 );
+  // Use Heron's formula to compute the area of a triangle
+  double a = sqrt( vtkMath::Distance2BetweenPoints( p1, p2 ) );
+  double b = sqrt( vtkMath::Distance2BetweenPoints( p1, p3 ) );
+  double c = sqrt( vtkMath::Distance2BetweenPoints( p2, p3 ) );
+
+  double s = ( a + b + c ) / 2;
+
+  return sqrt( s * ( s - a ) * ( s - b ) * ( s - c ) );
+}
+
+
+
+// Private method for reading xml files ---------------------------------------------------------------------------
+
+vtkXMLDataElement* vtkSlicerPerkEvaluatorLogic
+::ParseXMLFile( std::string fileName )
+{
+  // Parse the file here, not in the widget
+  Parser->SetFileName( fileName.c_str() );
+  Parser->Parse();
+  return Parser->GetRootElement();
 }

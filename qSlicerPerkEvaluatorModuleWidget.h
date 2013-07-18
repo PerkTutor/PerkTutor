@@ -4,7 +4,9 @@
 
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
-
+#include <QtGui>
+#include "qSlicerPerkEvaluatorTransformBufferWidget.h"
+#include "qSlicerPerkEvaluatorMessagesWidget.h"
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
 class qSlicerPerkEvaluatorModuleWidgetPrivate;
@@ -22,9 +24,11 @@ public:
   qSlicerPerkEvaluatorModuleWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorModuleWidget();
 
+  unsigned int UpdateStatus;
+
 public slots:
 
-  void OnImportClicked();
+
   void OnPlaybackSliderChanged( double value );
   void OnPlaybackNextClicked();
   void OnPlaybackPrevClicked();
@@ -32,16 +36,19 @@ public slots:
   void OnPlaybackEndClicked();
   void OnPlaybackPlayClicked();
   void OnPlaybackStopClicked();
+
   void OnTimeout();
+
   void OnMarkBeginClicked();
   void OnMarkEndClicked();
-  void OnAnalyseClicked();
-  void OnAddItemClicked();
-  void OnRemoveItemClicked();
-  void OnSaveItemsClicked();
+
+  void OnAnalyzeClicked();
+
   void OnBodyModelNodeSelected();
   void OnNeedleReferenceSelected();
+  void OnNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
+  void UpdateGUI();
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorModuleWidgetPrivate> d_ptr;
@@ -51,8 +58,7 @@ protected:
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorModuleWidget);
-  
-  void UpdateGUI();
+ 
   
   double TimerIntervalSec;
   QTimer* Timer;

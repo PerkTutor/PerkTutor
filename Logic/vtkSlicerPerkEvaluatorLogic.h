@@ -23,8 +23,7 @@
 #include "vtkXMLDataParser.h"
 
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
-
-#include "vtkTransformTimeSeries.h"
+#include "vtkSlicerTransformRecorderLogic.h"
 
 
 
@@ -40,8 +39,22 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   
   virtual void OnMRMLSceneEndClose();
+
+protected:
   
-  void ImportFile( std::string fileName );
+  vtkSlicerPerkEvaluatorLogic();
+  virtual ~vtkSlicerPerkEvaluatorLogic();
+  
+  // Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
+  virtual void SetMRMLSceneInternal( vtkMRMLScene* newScene );
+  virtual void RegisterNodes();
+  virtual void UpdateFromMRMLScene();
+  virtual void OnMRMLSceneNodeAdded( vtkMRMLNode* node );
+  virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
+
+public:
+  
+  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   
   double GetTotalTime() const;
   double GetMinTime() const;
@@ -51,26 +64,18 @@ public:
   void SetPlaybackTime( double time );
   void SetMarkBegin( double begin );
   void SetMarkEnd( double end );
+  void SetNeedleBase( double x, double y, double z );
+
+  typedef std::pair<std::string,double> MetricType;  
+  std::vector<MetricType> GetMetrics();
+
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+
+  vtkXMLDataParser* Parser;
+  vtkXMLDataElement* ParseXMLFile( std::string fileName );
+
   
-  
-  typedef std::pair< double, std::string > AnnotationType;
-  typedef std::vector< AnnotationType > AnnotationVectorType;
-  
-  AnnotationVectorType GetAnnotations();
-  void AddAnnotation( std::string annString );
-  void RemoveAnnotation( int row );
-  void SaveAnnotations( std::string fileName );
-  
-  
-  typedef std::pair< std::string, double > MetricType;
-  typedef std::vector< MetricType > MetricVectorType;
-  
-  void Analyse();
-  MetricVectorType GetMetrics();
-  
-  
-    // Reference to body model node.
-  
+  // Reference to body model node.  
 public:
   vtkGetObjectMacro( BodyModelNode, vtkMRMLModelNode );
   void SetBodyModelNode( vtkMRMLModelNode* node );
@@ -78,8 +83,7 @@ private:
   vtkMRMLModelNode* BodyModelNode;
   
   
-    // Reference to the needle coordinate system.
-
+  // Reference to the needle coordinate system.
 public:
   vtkGetObjectMacro( NeedleTransformNode, vtkMRMLLinearTransformNode );
   void SetNeedleTransformNode( vtkMRMLLinearTransformNode* node );
@@ -87,44 +91,29 @@ private:
   vtkMRMLLinearTransformNode* NeedleTransformNode;
   
   
-protected:
-  
-  vtkSlicerPerkEvaluatorLogic();
-  virtual ~vtkSlicerPerkEvaluatorLogic();
-  
-  virtual void SetMRMLSceneInternal( vtkMRMLScene* newScene );
-  /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
-  virtual void RegisterNodes();
-  virtual void UpdateFromMRMLScene();
-  virtual void OnMRMLSceneNodeAdded( vtkMRMLNode* node );
-  virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
-  
-
 private:
 
   vtkSlicerPerkEvaluatorLogic(const vtkSlicerPerkEvaluatorLogic&); // Not implemented
   void operator=(const vtkSlicerPerkEvaluatorLogic&);               // Not implemented
+
+private:
   
   void ClearData();
   double GetTimestampFromElement( vtkXMLDataElement* element );
-  vtkTransformTimeSeries* UpdateToolList( std::string name );
-  void CreateTransformNodes();
   
-  void AnalyseTrajectory( vtkTransformTimeSeries* Trajectory );
-  void AnalyseNeedle( vtkMRMLLinearTransformNode* tnode );
-  double SpanArea( double* E0, double* E1, double* T0, double* T1 );
+  std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory );
+  std::vector<MetricType> CalculateNeedleMetrics();
+  double TriangleArea( double* p1, double* p2, double* p3 );
   
-  typedef std::vector< vtkSmartPointer< vtkTransformTimeSeries > > TrajectoryContainerType;
-  TrajectoryContainerType ToolTrajectories;
-  
-  AnnotationVectorType Annotations;
+  std::vector<vtkMRMLTransformBufferNode*> ToolTrajectories;
   
   double PlaybackTime;
   double MarkBegin;
   double MarkEnd;
-  
-  MetricVectorType Metrics;
-  
+  double NeedleBase[4];
+
 };
+
+const double NEEDLE_LENGTH = 300; // Assume 300mm
 
 #endif

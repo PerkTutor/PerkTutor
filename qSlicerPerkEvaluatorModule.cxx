@@ -19,7 +19,8 @@
 #include <QtPlugin>
 
 // ExtensionTemplate Logic includes
-#include <vtkSlicerPerkEvaluatorLogic.h>
+#include "vtkSlicerPerkEvaluatorLogic.h"
+#include "vtkSlicerTransformRecorderLogic.h"
 
 // ExtensionTemplate includes
 #include "qSlicerPerkEvaluatorModule.h"
@@ -62,7 +63,8 @@ qSlicerPerkEvaluatorModule::~qSlicerPerkEvaluatorModule()
 //-----------------------------------------------------------------------------
 QString qSlicerPerkEvaluatorModule::helpText()const
 {
-  return "For help on how to use this module visit: <a href='https://www.assembla.com/spaces/slicerigt'>SlicerIGT</a>";
+
+  return "The purpose of the Perk Evaluator module is to review previously recorded procedures, and calculate motion efficiency metrics. For help on how to use this module visit: <a href='http://www.perktutor.org/'>PerkTutor</a>.";
 }
 
 //-----------------------------------------------------------------------------
@@ -75,7 +77,8 @@ QString qSlicerPerkEvaluatorModule::acknowledgementText()const
 QStringList qSlicerPerkEvaluatorModule::contributors()const
 {
   QStringList moduleContributors;
-  moduleContributors << QString("Tamas Ungi (Queen's University");
+  moduleContributors << QString("Tamas Ungi (Queen's University)");
+  moduleContributors << QString("Matthew S. Holden (Queen's University)");
   return moduleContributors;
 }
 
@@ -94,13 +97,21 @@ QStringList qSlicerPerkEvaluatorModule::categories() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerPerkEvaluatorModule::dependencies() const
 {
-  return QStringList();
+  return QStringList() << "TransformRecorder";
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerPerkEvaluatorModule::setup()
 {
   this->Superclass::setup();
+
+  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( this->logic() );
+  qSlicerAbstractCoreModule* TransformRecorderModule = qSlicerCoreApplication::application()->moduleManager()->module("TransformRecorder");
+
+  if ( TransformRecorderModule )
+  {
+    PerkEvaluatorLogic->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( TransformRecorderModule->logic() );
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -112,5 +123,5 @@ qSlicerAbstractModuleRepresentation * qSlicerPerkEvaluatorModule::createWidgetRe
 //-----------------------------------------------------------------------------
 vtkMRMLAbstractLogic* qSlicerPerkEvaluatorModule::createLogic()
 {
-  return vtkSlicerPerkEvaluatorLogic::New();
+	return vtkSlicerPerkEvaluatorLogic::New();
 }

@@ -43,7 +43,12 @@ protected:
   qSlicerPerkEvaluatorModuleWidget* const q_ptr;
 public:
   qSlicerPerkEvaluatorModuleWidgetPrivate( qSlicerPerkEvaluatorModuleWidget& object );
+
   vtkSlicerPerkEvaluatorLogic* logic() const;
+
+  // Add embedded widgets here
+  qSlicerPerkEvaluatorTransformBufferWidget* TransformBufferWidget;
+  qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
 };
 
 
@@ -91,39 +96,6 @@ qSlicerPerkEvaluatorModuleWidget::qSlicerPerkEvaluatorModuleWidget(QWidget* _par
 qSlicerPerkEvaluatorModuleWidget::~qSlicerPerkEvaluatorModuleWidget()
 {
   delete this->Timer;
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnImportClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  QString filename = QFileDialog::getOpenFileName( this, tr("Open record"), "", tr("XML Files (*.xml)") );
-  
-  if ( filename.isEmpty() == false )
-  {
-    QProgressDialog dialog;
-    dialog.setModal( true );
-    dialog.setLabelText( "Please wait while reading XML file..." );
-    dialog.show();
-    dialog.setValue( 10 );
-    
-    d->logic()->ImportFile( filename.toStdString() );
-    dialog.setValue( 60 );
-    QFileInfo pathInfo( filename );
-    d->FileNameLabel->setText( pathInfo.fileName() );
-    dialog.setValue( 70 );
-    d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
-    d->BeginSpinBox->setValue( 0 );
-	d->EndSpinBox->setValue( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
-    dialog.close();
-  }
-
-
-  
-  this->UpdateGUI();
 }
 
 
@@ -245,22 +217,33 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnAnalyseClicked()
+::OnAnalyzeClicked()
 {
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  
+  Q_D( qSlicerPerkEvaluatorModuleWidget );  
   
   double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
   double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
   d->logic()->SetMarkBegin( begin );
-  d->logic()->SetMarkEnd( end ); 
+  d->logic()->SetMarkEnd( end );
+
+  // Metrics table  
+  std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics();
   
-  d->logic()->Analyse();
+  d->MetricsTable->clear();
+  QStringList MetricsTableHeaders;
+  MetricsTableHeaders << "Metric" << "Value";
+  d->MetricsTable->setRowCount( metrics.size() );
+  d->MetricsTable->setColumnCount( 2 );
+  d->MetricsTable->setHorizontalHeaderLabels( MetricsTableHeaders );
+  d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
   
-  
-  
-  this->UpdateGUI();
+  for ( int i = 0; i < metrics.size(); ++ i )
+  {
+    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( metrics.at(i).first ) );
+    QTableWidgetItem* valueItem = new QTableWidgetItem( QString::number( metrics.at(i).second, 'f', 2 ) );
+    d->MetricsTable->setItem( i, 0, nameItem );
+    d->MetricsTable->setItem( i, 1, valueItem );
+  }
 }
 
 
@@ -287,72 +270,57 @@ qSlicerPerkEvaluatorModuleWidget
   d->logic()->SetNeedleTransformNode( tnode );
 }
 
-void
-qSlicerPerkEvaluatorModuleWidget
-::OnAddItemClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-
-  QString itemText = QInputDialog::getText(this, tr("Insert Annotation"),
-    tr("Input text for the new annotation:"));
-
-  
-  d->logic()->AddAnnotation( itemText.toStdString() );
-
-  this->UpdateGUI();
-}
 
 
 void
 qSlicerPerkEvaluatorModuleWidget
-::OnRemoveItemClicked()
+::OnNeedleOrientationChanged( QAbstractButton* newOrientationButton )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
-  // Remove the time and note items from the annotations table
-
-  int currRow = d->AnnotationsTable->currentRow();
-
-  // Remove the annotation from the list of annotations, if appropriate row selected
-  if ( currRow >= 0 )
+  if ( newOrientationButton == d->PlusXRadioButton )
   {
-    d->logic()->RemoveAnnotation( currRow );
+    d->logic()->SetNeedleBase( 1.0, 0.0, 0.0 );
+  }
+  if ( newOrientationButton == d->MinusXRadioButton )
+  {
+    d->logic()->SetNeedleBase( -1.0, 0.0, 0.0 );
+  }
+  if ( newOrientationButton == d->PlusYRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, 1.0, 0.0 );
+  }
+  if ( newOrientationButton == d->MinusYRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, -1.0, 0.0 );
+  }
+  if ( newOrientationButton == d->PlusZRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, 0.0, 1.0 );
+  }
+  if ( newOrientationButton == d->MinusZRadioButton )
+  {
+    d->logic()->SetNeedleBase( 0.0, 0.0, -1.0 );
   }
 
-
-  this->UpdateGUI();
 }
-
-
-void
-qSlicerPerkEvaluatorModuleWidget
-::OnSaveItemsClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save record"), "", tr("XML Files (*.xml)") );
-  
-  if ( filename.isEmpty() == false )
-  {
-    d->logic()->SaveAnnotations( filename.toStdString() );
-  }
-
-  this->UpdateGUI();
-}
-
-
-
 
 void
 qSlicerPerkEvaluatorModuleWidget
 ::setup()
 {
   Q_D(qSlicerPerkEvaluatorModuleWidget);
+
   d->setupUi(this);
+  // Embed widgets here
+  d->TransformBufferWidget = qSlicerPerkEvaluatorTransformBufferWidget::New( d->logic() );
+  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+  d->MessagesWidget = qSlicerPerkEvaluatorMessagesWidget::New( d->TransformBufferWidget, d->logic() );
+  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
+
+  this->UpdateStatus = d->TransformBufferWidget->UpdateStatus;
   
-  connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( OnImportClicked() ) );
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
   connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
   connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
@@ -360,15 +328,24 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->EndButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackEndClicked() ) );
   connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) );
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
+
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
+
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
-  connect( d->AddItemButton, SIGNAL( clicked() ), this, SLOT ( OnAddItemClicked() ) );
-  connect( d->RemoveItemButton, SIGNAL( clicked() ), this, SLOT ( OnRemoveItemClicked() ) );
-  connect( d->SaveItemsButton, SIGNAL( clicked() ), this, SLOT( OnSaveItemsClicked() ) );
-  connect( d->AnalyseButton, SIGNAL( clicked() ), this, SLOT( OnAnalyseClicked() ) );
+
+  connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
+
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
+  connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( OnNeedleOrientationChanged( QAbstractButton* ) ) );
+
+  // GUI refresh: updates every 10ms
+  QTimer *t = new QTimer( this );
+  connect( t,  SIGNAL( timeout() ), this, SLOT( UpdateGUI() ) );
+  t->start(10);
+
+  this->UpdateGUI();
 }
 
 
@@ -377,50 +354,17 @@ void qSlicerPerkEvaluatorModuleWidget
 ::UpdateGUI()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  if ( this->UpdateStatus != d->TransformBufferWidget->UpdateStatus )
+  {
+    d->PlaybackSlider->setMinimum( 0.0 );
+    d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
+    d->BeginSpinBox->setValue( 0.0 );
+    d->EndSpinBox->setValue( d->logic()->GetTotalTime() );
+    this->UpdateStatus = d->TransformBufferWidget->UpdateStatus;
+  }
   
   // Playback slider
-  d->PlaybackSlider->setMinimum( 0 );
-  d->PlaybackSlider->setMaximum( d->logic()->GetMaxTime() - d->logic()->GetMinTime() );
-  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
-  
-    // Annotations table
-  
-  vtkSlicerPerkEvaluatorLogic::AnnotationVectorType annotations = d->logic()->GetAnnotations();
-  
-  d->AnnotationsTable->setRowCount( annotations.size() );
-  d->AnnotationsTable->setColumnCount( 2 );
-  QStringList AnnotationHeaders;
-  AnnotationHeaders << "Time" << "Annotation";
-  d->AnnotationsTable->setHorizontalHeaderLabels( AnnotationHeaders );
-  d->AnnotationsTable->setColumnWidth( 1, 250 );
-  
-  for ( int i = 0; i < annotations.size(); ++ i )
-  {
-    QTableWidgetItem* TimeItem = new QTableWidgetItem( QString::number( annotations[ i ].first - d->logic()->GetMinTime(), 'f', 1 ) );
-    QTableWidgetItem* NoteItem = new QTableWidgetItem( QString::fromStdString( annotations[ i ].second ) );
-    d->AnnotationsTable->setItem( i, 0, TimeItem );
-    d->AnnotationsTable->setItem( i, 1, NoteItem );
-  }
-  
-  
-    // Metrics table
-  
-  vtkSlicerPerkEvaluatorLogic::MetricVectorType metrics = d->logic()->GetMetrics();
-  
-  d->MetricsTable->setRowCount( metrics.size() );
-  d->MetricsTable->setColumnCount( 2 );
-  QStringList headerLabels;
-  headerLabels << "Metric name" << "Value";
-  d->MetricsTable->setHorizontalHeaderLabels( headerLabels );
-  d->MetricsTable->setColumnWidth( 0, 250 );
-  
-  for ( int i = 0; i < metrics.size(); ++ i )
-  {
-    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( metrics[ i ].first ) );
-    QTableWidgetItem* valueItem = new QTableWidgetItem( QString::number( metrics[ i ].second, 'f', 2 ) );
-    d->MetricsTable->setItem( i, 0, nameItem );
-    d->MetricsTable->setItem( i, 1, valueItem );
-  }
-  
+  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );  
 }
 

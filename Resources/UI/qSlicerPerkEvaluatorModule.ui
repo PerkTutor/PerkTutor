@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>391</width>
+    <width>399</width>
     <height>827</height>
    </rect>
   </property>
@@ -15,16 +15,16 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="ctkCollapsibleButton" name="CTKCollapsibleButton">
+    <widget class="ctkCollapsibleButton" name="DisplayCollapsibleButton">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="maximumSize">
       <size>
-       <width>800</width>
+       <width>16777215</width>
        <height>16777215</height>
       </size>
      </property>
@@ -33,203 +33,40 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="QGroupBox" name="groupBox">
+       <widget class="QGroupBox" name="BufferGroupBox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="maximumSize">
          <size>
-          <width>800</width>
+          <width>16777215</width>
           <height>16777215</height>
          </size>
         </property>
         <property name="title">
-         <string>Input</string>
+         <string>Buffer</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
          <property name="verticalSpacing">
           <number>10</number>
          </property>
-         <item row="2" column="0">
-          <widget class="QPushButton" name="ImportButton">
-           <property name="maximumSize">
-            <size>
-             <width>800</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Import XML file</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Measurement range:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="label_3">
-             <property name="maximumSize">
-              <size>
-               <width>110</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Current procedure:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="FileNameLabel">
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="7" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QPushButton" name="MarkBeginButton">
-             <property name="text">
-              <string>Mark begin</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="BeginSpinBox">
-             <property name="maximum">
-              <double>9999.989999999999782</double>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_6">
-             <property name="maximumSize">
-              <size>
-               <width>20</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>--</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="EndSpinBox">
-             <property name="maximum">
-              <double>9999.989999999999782</double>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="MarkEndButton">
-             <property name="text">
-              <string>Mark end</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="3" column="0">
-          <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>Body surface node: </string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="qMRMLNodeComboBox" name="BodyNodeComboBox">
-             <property name="nodeTypes">
-              <stringlist>
-               <string>vtkMRMLModelNode</string>
-              </stringlist>
-             </property>
-             <property name="noneEnabled">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>Needle reference frame:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="qMRMLNodeComboBox" name="NeedleReferenceComboBox">
-             <property name="nodeTypes">
-              <stringlist>
-               <string>vtkMRMLLinearTransformNode</string>
-              </stringlist>
-             </property>
-             <property name="noneEnabled">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
         </layout>
        </widget>
       </item>
       <item>
        <widget class="QGroupBox" name="groupBox_2">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="maximumSize">
          <size>
-          <width>800</width>
+          <width>16777215</width>
           <height>16777215</height>
          </size>
         </property>
@@ -240,28 +77,17 @@
          <property name="verticalSpacing">
           <number>10</number>
          </property>
-         <item row="4" column="0">
-          <widget class="QTableWidget" name="AnnotationsTable">
-           <property name="maximumSize">
-            <size>
-             <width>800</width>
-             <height>120</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Annotations:</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="ctkSliderWidget" name="PlaybackSlider">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="maximumSize">
             <size>
-             <width>800</width>
+             <width>16777215</width>
              <height>16777215</height>
             </size>
            </property>
@@ -280,6 +106,12 @@
            </property>
            <item>
             <widget class="QPushButton" name="BeginButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>35</width>
@@ -299,6 +131,12 @@
            </item>
            <item>
             <widget class="QPushButton" name="PrevButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>35</width>
@@ -318,6 +156,12 @@
            </item>
            <item>
             <widget class="QPushButton" name="PlayButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>50</width>
@@ -331,6 +175,12 @@
            </item>
            <item>
             <widget class="QPushButton" name="StopButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>50</width>
@@ -344,6 +194,12 @@
            </item>
            <item>
             <widget class="QPushButton" name="NextButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>35</width>
@@ -363,6 +219,12 @@
            </item>
            <item>
             <widget class="QPushButton" name="EndButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>35</width>
@@ -395,6 +257,12 @@
            </item>
            <item>
             <widget class="QCheckBox" name="PlaybackRepeatCheckBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>Repeat</string>
              </property>
@@ -402,29 +270,353 @@
            </item>
           </layout>
          </item>
-         <item row="5" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <property name="topMargin">
-            <number>10</number>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="MessagesGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Messages</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2"/>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="AnalysisCollapsibleButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Analysis</string>
+     </property>
+     <property name="collapsed">
+      <bool>true</bool>
+     </property>
+     <property name="contentsFrameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QGroupBox" name="MeasurementParametersGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Measurement Parameters</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Body surface node: </string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="qMRMLNodeComboBox" name="BodyNodeComboBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="nodeTypes">
+              <stringlist>
+               <string>vtkMRMLModelNode</string>
+              </stringlist>
+             </property>
+             <property name="noneEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Needle reference frame:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="qMRMLNodeComboBox" name="NeedleReferenceComboBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="nodeTypes">
+              <stringlist>
+               <string>vtkMRMLLinearTransformNode</string>
+              </stringlist>
+             </property>
+             <property name="noneEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="NeedleOrientationLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Needle Orientation:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <layout class="QHBoxLayout" name="NeedleOrientationLayout">
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QRadioButton" name="PlusXRadioButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>X</string>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string>NeedleOrientationButtonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="MinusXRadioButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>-X</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string>NeedleOrientationButtonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="PlusYRadioButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Y</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string>NeedleOrientationButtonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="MinusYRadioButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>-Y</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string>NeedleOrientationButtonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="PlusZRadioButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Z</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string>NeedleOrientationButtonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="MinusZRadioButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>-Z</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string>NeedleOrientationButtonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
+           <property name="text">
+            <string>Measurement range:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QPushButton" name="AddItemButton">
-             <property name="text">
-              <string>Add Annotation</string>
+            <widget class="QDoubleSpinBox" name="BeginSpinBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximum">
+              <double>9999.989999999999782</double>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="RemoveItemButton">
+            <widget class="QPushButton" name="MarkBeginButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
-              <string>Remove Annotation</string>
+              <string>Mark begin</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="SaveItemsButton">
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_6">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>20</width>
+               <height>16777215</height>
+              </size>
+             </property>
              <property name="text">
-              <string>Save Annotations</string>
+              <string>--</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="EndSpinBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximum">
+              <double>9999.989999999999782</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="MarkEndButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Mark end</string>
              </property>
             </widget>
            </item>
@@ -436,14 +628,14 @@
       <item>
        <widget class="QGroupBox" name="groupBox_3">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="maximumSize">
          <size>
-          <width>800</width>
+          <width>16777215</width>
           <height>16777215</height>
          </size>
         </property>
@@ -455,9 +647,15 @@
           <number>10</number>
          </property>
          <item row="0" column="0">
-          <widget class="QPushButton" name="AnalyseButton">
+          <widget class="QPushButton" name="AnalyzeButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>Analyse</string>
+            <string>Analyze</string>
            </property>
           </widget>
          </item>
@@ -466,7 +664,7 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>10000</height>
+             <height>16777215</height>
             </size>
            </property>
           </widget>
@@ -484,8 +682,8 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>20</width>
+       <height>40</height>
       </size>
      </property>
     </spacer>
@@ -551,4 +749,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="NeedleOrientationButtonGroup"/>
+ </buttongroups>
 </ui>
