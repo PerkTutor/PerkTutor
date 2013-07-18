@@ -29,8 +29,8 @@
 #include "ui_qSlicerMessagesWidget.h"
 
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
-#include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLTransformBufferNode.h"
+#include "qSlicerTransformBufferWidget.h"
 
 class qSlicerMessagesWidgetPrivate;
 
@@ -44,9 +44,7 @@ public:
   qSlicerMessagesWidget(QWidget *parent=0);
   virtual ~qSlicerMessagesWidget();
 
-  static qSlicerMessagesWidget* New( vtkSlicerTransformRecorderLogic* newTRLogic );
-
-  void SetLogic( vtkSlicerTransformRecorderLogic* newTRLogic );
+  static qSlicerMessagesWidget* New( qSlicerTransformBufferWidget* newBufferWidget );
 
 protected slots:
 
@@ -61,7 +59,8 @@ protected:
   virtual void setup();
   virtual void enter();
 
-  vtkSlicerTransformRecorderLogic* trLogic;
+  qSlicerTransformBufferWidget* BufferWidget;
+  unsigned int UpdateStatus;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerMessagesWidget);

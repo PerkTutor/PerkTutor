@@ -18,57 +18,56 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerRecorderControlsWidget_h
-#define __qSlicerRecorderControlsWidget_h
+#ifndef __qSlicerTransformBufferWidget_h
+#define __qSlicerTransformBufferWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
 
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerRecorderControlsWidget.h"
+#include "ui_qSlicerTransformBufferWidget.h"
 
-#include "qSlicerTransformBufferWidget.h"
+#include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkMRMLTransformBufferNode.h"
 
-class qSlicerRecorderControlsWidgetPrivate;
+class qSlicerTransformBufferWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_TRANSFORMRECORDER_WIDGETS_EXPORT 
-qSlicerRecorderControlsWidget : public qSlicerWidget
+qSlicerTransformBufferWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
   typedef qSlicerWidget Superclass;
-  qSlicerRecorderControlsWidget(QWidget *parent=0);
-  virtual ~qSlicerRecorderControlsWidget();
+  qSlicerTransformBufferWidget(QWidget *parent=0);
+  virtual ~qSlicerTransformBufferWidget();
 
-  static qSlicerRecorderControlsWidget* New( qSlicerTransformBufferWidget* newBufferWidget );
+  
+  static qSlicerTransformBufferWidget* New( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic );
+  
+  vtkMRMLTransformBufferNode* GetBufferNode();
+
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  unsigned int UpdateStatus;
 
 protected slots:
 
-  void onStartButtonClicked();
-  void onStopButtonClicked();
-  void onClearButtonClicked();
-
-  void onCheckedTransformsChanged();
-  void onActiveTransformsUpdated();
+  void onImportButtonClicked();
+  void onSaveButtonClicked();
+  void onCurrentBufferNodeChanged();
 
   void updateWidget();
 
 protected:
-  QScopedPointer<qSlicerRecorderControlsWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
 
   virtual void setup();
   virtual void enter();
 
-  qSlicerTransformBufferWidget* BufferWidget;
-  unsigned int UpdateStatus;
-  bool updatingCheckedTransforms;
-
 private:
-  Q_DECLARE_PRIVATE(qSlicerRecorderControlsWidget);
-  Q_DISABLE_COPY(qSlicerRecorderControlsWidget);
+  Q_DECLARE_PRIVATE(qSlicerTransformBufferWidget);
+  Q_DISABLE_COPY(qSlicerTransformBufferWidget);
 
 };
 

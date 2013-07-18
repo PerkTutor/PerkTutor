@@ -75,19 +75,14 @@ qSlicerRecorderControlsWidget
 
 
 qSlicerRecorderControlsWidget* qSlicerRecorderControlsWidget
-::New( vtkSlicerTransformRecorderLogic* newTRLogic )
+::New( qSlicerTransformBufferWidget* newBufferWidget )
 {
   qSlicerRecorderControlsWidget* newRecorderControlsWidget = new qSlicerRecorderControlsWidget();
-  newRecorderControlsWidget->SetLogic( newTRLogic );
+  newRecorderControlsWidget->BufferWidget = newBufferWidget;
+  newRecorderControlsWidget->UpdateStatus = newBufferWidget->UpdateStatus;
+  newRecorderControlsWidget->updatingCheckedTransforms = false;
   newRecorderControlsWidget->setup();
   return newRecorderControlsWidget;
-}
-
-
-void qSlicerRecorderControlsWidget
-::SetLogic( vtkSlicerTransformRecorderLogic* newTRLogic )
-{
-  this->trLogic = newTRLogic;
 }
 
 
@@ -98,17 +93,18 @@ void qSlicerRecorderControlsWidget
 
   d->setupUi(this);
 
+  connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
+
   connect( d->StartButton, SIGNAL( clicked() ), this, SLOT( onStartButtonClicked() ) );
-  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) ); 
-  connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( onSaveButtonClicked() ) );
+  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) );
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
+
+  this->updateWidget();
 
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
   connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
   t->start(10); 
-
-  this->updateWidget();  
 }
 
 
@@ -119,12 +115,66 @@ void qSlicerRecorderControlsWidget
 
 
 void qSlicerRecorderControlsWidget
+::onActiveTransformsUpdated()
+{
+  Q_D(qSlicerRecorderControlsWidget);
+
+  // Disable to the onCheckedChanged listener when initializing the selections
+  // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
+  this->updatingCheckedTransforms = true;
+
+  // Assume the default is not checked, and check all those that are observed
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  {
+    if( this->BufferWidget->TransformRecorderLogic->IsObservedTransformNode( this->BufferWidget->GetBufferNode(), d->TransformCheckableComboBox->nodeFromIndex(i) ) )
+    {
+	  d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
+    }
+    else
+    {
+      d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Unchecked );
+    }
+  }
+
+  this->updatingCheckedTransforms = false;
+
+  onCheckedTransformsChanged(); // Call this to update observers after adding active transforms
+}
+
+
+void qSlicerRecorderControlsWidget
+::onCheckedTransformsChanged()
+{
+  Q_D(qSlicerRecorderControlsWidget);
+
+  if ( this->updatingCheckedTransforms )
+  {
+    return;
+  }
+    
+  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
+  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  {
+    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked  )
+    {
+      this->BufferWidget->TransformRecorderLogic->AddObservedTransformNode( this->BufferWidget->GetBufferNode(), d->TransformCheckableComboBox->nodeFromIndex(i) );
+    }
+    else
+    {
+      this->BufferWidget->TransformRecorderLogic->RemoveObservedTransformNode( this->BufferWidget->GetBufferNode(), d->TransformCheckableComboBox->nodeFromIndex(i) );
+    }
+  }
+}
+
+
+
+void qSlicerRecorderControlsWidget
 ::onStartButtonClicked()
 {
   Q_D(qSlicerRecorderControlsWidget);  
   
-  // The observed transforms should be dealt with in the TransformRecorder widget
-  this->trLogic->SetRecording( true );
+  // The observed transforms should be dealt with in the TransformRecorder logic
+  this->BufferWidget->TransformRecorderLogic->SetRecording( this->BufferWidget->GetBufferNode(), true );
   
   this->updateWidget();
 }
@@ -135,27 +185,10 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);  
 
-  this->trLogic->SetRecording( false );
+  this->BufferWidget->TransformRecorderLogic->SetRecording( this->BufferWidget->GetBufferNode(), false );
   
   this->updateWidget();
 }
-
-
-void qSlicerRecorderControlsWidget
-::onSaveButtonClicked()
-{
-  Q_D(qSlicerRecorderControlsWidget);  
-
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save buffer"), "", tr("XML Files (*.xml)") );
-  
-  if ( ! filename.isEmpty() )
-  {
-    trLogic->SaveToFile( filename.toStdString() );
-  }
-  
-  this->updateWidget();
-}
-
 
 
 void qSlicerRecorderControlsWidget
@@ -163,7 +196,7 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);
 
-  this->trLogic->ClearBuffer();
+  this->BufferWidget->TransformRecorderLogic->ClearTransforms( this->BufferWidget->GetBufferNode() );
   
   this->updateWidget();
 }
@@ -174,7 +207,20 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);
 
-  if ( trLogic->GetRecording() )
+  if ( this->BufferWidget->TransformRecorderLogic == NULL )
+  {
+    return;
+  }
+
+  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
+
+  if ( this->UpdateStatus != this->BufferWidget->UpdateStatus )
+  {
+    this->UpdateStatus = this->BufferWidget->UpdateStatus;
+    this->onActiveTransformsUpdated();
+  }
+
+  if ( this->BufferWidget->TransformRecorderLogic->GetRecording( this->BufferWidget->GetBufferNode() ) )
   {
     d->StatusResultLabel->setText( "Recording" );
   }
@@ -182,5 +228,7 @@ void qSlicerRecorderControlsWidget
   {
     d->StatusResultLabel->setText( "Waiting" );
   }
+
+
 
 }

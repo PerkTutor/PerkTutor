@@ -36,7 +36,7 @@
 // MRML includes
 // class vtkMRMLIGTLConnectorNode;
 class vtkMRMLViewNode;
-#include "vtkMRMLTransformRecorderNode.h"
+#include "vtkMRMLTransformBufferNode.h"
 // STD includes
 #include <cstdlib>
 
@@ -49,45 +49,12 @@ class VTK_SLICER_TRANSFORMRECORDER_MODULE_LOGIC_EXPORT vtkSlicerTransformRecorde
   public vtkSlicerModuleLogic
 {
 public:
-
-   //BTX
-  enum {  // Events
-    //LocatorUpdateEvent      = 50000,
-    StatusUpdateEvent       = 50001,
-  };
-  //ETX
+  vtkTypeMacro(vtkSlicerTransformRecorderLogic,vtkSlicerModuleLogic);
 
   static vtkSlicerTransformRecorderLogic *New();
-  vtkTypeMacro(vtkSlicerTransformRecorderLogic,vtkSlicerModuleLogic);
+
   void PrintSelf(ostream& os, vtkIndent indent);
-  
-  /// Initialize listening to MRML events
-  void InitializeEventListeners();
-  
-  // Functions to control recording.
-  void AddObservedTransformNode( char* id );
-  void RemoveObservedTransformNode( char* id );
-  bool IsObservedTransformNode( char* id );
 
-  void SetRecording( bool isRecording );
-  bool GetRecording();
-  void ClearBuffer();
-
-  double GetCurrentTimestamp();
-
-  void AddMessage( std::string annotationName, double time );
-  void RemoveMessage( int index );
-  void ClearMessages();
-
-  void SaveToFile( std::string fileName );
-  vtkMRMLTransformBufferNode* GetBuffer();
-  int GetBufferSize();
-
-  double GetTotalTime();
-  double GetTotalPath();
-  double GetTotalPathInside();
-  
-  
 protected:
   vtkSlicerTransformRecorderLogic();
   virtual ~vtkSlicerTransformRecorderLogic();
@@ -98,6 +65,31 @@ protected:
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
   
+public:
+  /// Initialize listening to MRML events
+  void InitializeEventListeners();
+
+  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
+  
+  double GetCurrentTimestamp();
+
+  // Functions to control recording.
+  void AddObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
+  void RemoveObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
+  bool IsObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
+
+  void SetRecording( vtkMRMLTransformBufferNode* bufferNode, bool isRecording );
+  bool GetRecording( vtkMRMLTransformBufferNode* bufferNode );
+  void ClearTransforms( vtkMRMLTransformBufferNode* bufferNode );
+
+  void AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string name, double time );
+  void RemoveMessage( vtkMRMLTransformBufferNode* bufferNode, int index );
+  void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
+
+  void ImportFromFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
+  void SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
+
+  void AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode );
   
 private:
 
@@ -105,11 +97,8 @@ private:
   void operator=(const vtkSlicerTransformRecorderLogic&);               // Not implemented
   // Reference to the module MRML node.
 
-private:
-  vtkMRMLTransformRecorderNode* ModuleNode;
-public:
-  vtkGetObjectMacro( ModuleNode, vtkMRMLTransformRecorderNode );
-  void SetModuleNode( vtkMRMLTransformRecorderNode* node );
+  std::vector<vtkMRMLTransformBufferNode*> RecordingBuffers;
+  double Clock0;
 
 };
 

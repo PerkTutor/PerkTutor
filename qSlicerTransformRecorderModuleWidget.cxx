@@ -31,13 +31,12 @@
 #include <qMRMLUtils.h>
 
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 
 #include "qMRMLNodeComboBox.h"
 #include "vtkMRMLViewNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformRecorderNode.h"
+#include "vtkMRMLTransformBufferNode.h"
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_TransformRecorder
 class qSlicerTransformRecorderModuleWidgetPrivate: public Ui_qSlicerTransformRecorderModule
@@ -51,7 +50,11 @@ public:
   ~qSlicerTransformRecorderModuleWidgetPrivate();
 
   vtkSlicerTransformRecorderLogic* logic() const;
-  vtkMRMLLinearTransformNode*   MRMLTransformNode;
+
+  // Add embedded widgets here
+  qSlicerTransformBufferWidget* TransformBufferWidget;
+  qSlicerRecorderControlsWidget* RecorderControlsWidget;
+  qSlicerMessagesWidget* MessagesWidget;
 };
 
 //-----------------------------------------------------------------------------
@@ -61,7 +64,6 @@ public:
 
 qSlicerTransformRecorderModuleWidgetPrivate::qSlicerTransformRecorderModuleWidgetPrivate( qSlicerTransformRecorderModuleWidget& object ) : q_ptr(&object)
 {
-  this->MRMLTransformNode = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -100,22 +102,19 @@ void qSlicerTransformRecorderModuleWidget::setup()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
 
-  d->NumRecordsResultLabel=NULL;
-  d->TotalTimeResultsLabel=NULL;
-  d->TotaNeedlelPathResultsLabel=NULL;
-  d->InsideNeedlePathResultsLabel=NULL;
+  d->TotalTimeLabel=NULL;
+  d->NumTransformsLabel=NULL;
+  d->NumTransformsLabel=NULL;
 
   d->setupUi(this);
-  d->ControlsGroupBox->layout()->addWidget( qSlicerRecorderControlsWidget::New( d->logic() ) );
-  d->MessagesGroupBox->layout()->addWidget( qSlicerMessagesWidget::New( d->logic() ) ); 
+  // Embed widgets here
+  d->TransformBufferWidget = qSlicerTransformBufferWidget::New( d->logic() );
+  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+  d->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( d->TransformBufferWidget );
+  d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
+  d->MessagesWidget = qSlicerMessagesWidget::New( d->TransformBufferWidget );
+  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
-
-
-  d->ModuleComboBox->setNoneEnabled( true );
-
-  connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
-  connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( updateObservedNodesFromSelections() ) );
-  
   
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
@@ -133,121 +132,35 @@ void qSlicerTransformRecorderModuleWidget::enter()
 
 
 
-void qSlicerTransformRecorderModuleWidget::onModuleNodeSelected()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
- 
-  vtkMRMLNode* currentNode = d->ModuleComboBox->currentNode();
-  std::cout << "Current node pointer: " << currentNode << std::endl;
-  
-  vtkMRMLTransformRecorderNode* TRNode = vtkMRMLTransformRecorderNode::SafeDownCast( currentNode );
-  if ( TRNode != NULL )
-  {
-    
-  }
-  
-  d->logic()->SetModuleNode( TRNode );
-  this->updateSelectionsFromObservedNodes();
-  this->updateWidget();
-}
-
-
 void qSlicerTransformRecorderModuleWidget
-::updateSelectionsFromObservedNodes()
+::updateWidget()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
-  // Disable to the onCheckedChanged listener when initializing the selections
-  // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
-  this->selectionsInitialized = false;
-
-  // Assume the default is not checked, and check all those that are observed
-  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
+  // The statistics should be reset to zeros if no buffer is selected
+  if ( d->TransformBufferWidget->GetBufferNode() == NULL )
   {
-    if( d->logic()->IsObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() ) )
-    {
-	  d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex( i ), Qt::Checked );
-    }
-  }
-
-  this->selectionsInitialized = true;
-}
-
-
-void qSlicerTransformRecorderModuleWidget
-::updateObservedNodesFromSelections()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
-
-  if ( ! this->selectionsInitialized )
-  {
+    d->TotalTimeResultLabel->setText( "0.00" );
+    d->NumTransformsResultLabel->setText( "0" );
+    d->NumMessagesResultLabel->setText( "0" );
     return;
   }
-    
-  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
-  for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
-  {
-    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
-    {
-      d->logic()->AddObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
-    }
-    else
-    {
-      d->logic()->RemoveObservedTransformNode( d->TransformCheckableComboBox->nodeFromIndex( i )->GetID() );
-    }
-  }
-}
-
-
-
-
-void qSlicerTransformRecorderModuleWidget::updateWidget()
-{
-  Q_D( qSlicerTransformRecorderModuleWidget );
   
-  
-  // Disableing node selector widgets if there is no module node to reference input nodes.    
-  if ( d->logic()->GetModuleNode() == NULL )
-  {
-    d->TransformCheckableComboBox->setEnabled( false );
-	return;
-  }
-  else
-  {
-    d->TransformCheckableComboBox->setEnabled( true );
-  }
- 
-  
-  // Update status descriptor labels.
-  
-  if ( d->logic()->GetRecording() )
-  {
-    d->TransformCheckableComboBox->setEnabled( false );
-  }
-  else
-  {
-    d->TransformCheckableComboBox->setEnabled( true );
-  }
-  
-  
-  int numRec = d->logic()->GetBufferSize();
   std::stringstream ss;
-  ss << numRec;
-  d->NumRecordsResultLabel->setText( QString::fromStdString( ss.str() ) );
-  
+
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->logic()->GetTotalTime();
-  d->TotalTimeResultsLabel->setText( ss.str().c_str() );
+  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetTotalTime();
+  d->TotalTimeResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
-  ss.precision( 2 );
-  ss << std::fixed << d->logic()->GetTotalPath();
-  d->TotaNeedlelPathResultsLabel->setText( ss.str().c_str() );
+  ss.precision( 0 );
+  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetNumTransforms();;
+  d->NumTransformsResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
-  ss.precision( 2 );
-  ss << std::fixed << d->logic()->GetTotalPathInside();
-  d->InsideNeedlePathResultsLabel->setText( ss.str().c_str() );
+  ss.precision( 0 );
+  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetNumMessages();;
+  d->NumMessagesResultLabel->setText( ss.str().c_str() );
    
 }

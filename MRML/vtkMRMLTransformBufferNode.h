@@ -92,10 +92,17 @@ public:
 
   double GetMinimumTime();
   double GetMaximumTime();
+  double GetTotalTime();
 
   void Clear();
   void ClearTransforms();
   void ClearMessages();
+
+  void AddActiveTransform( std::string name );
+  void RemoveActiveTransform( std::string name );
+  std::vector<std::string> GetActiveTransforms();
+  void SetActiveTransforms( std::vector<std::string> names );
+  void SetActiveTransformsFromBuffer();
 
   std::vector<vtkMRMLTransformBufferNode*> SplitBufferByName();
   vtkMRMLTransformBufferNode* GetBufferByName( std::string name );
@@ -108,6 +115,8 @@ private:
   
   std::vector<vtkTransformRecord*> transforms;
   std::vector<vtkMessageRecord*> messages;
+
+  std::vector<std::string> activeTransforms;
 
 };  
 
