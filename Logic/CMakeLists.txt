@@ -11,21 +11,8 @@ set(${KIT}_INCLUDE_DIRECTORIES
 set(${KIT}_SRCS
   vtkSlicer${MODULE_NAME}Logic.cxx
   vtkSlicer${MODULE_NAME}Logic.h
-  vtkRecordLog.cxx
-  vtkRecordLog.h
-  vtkProcedure.cxx
-  vtkProcedure.h
-  vtkTrackingRecord.cxx
-  vtkTrackingRecord.h
-  vtkMarkovModel.cxx
-  vtkMarkovModel.h
-  vtkMarkovModelRT.cxx
-  vtkMarkovModelRT.h
-  vtkRecordLogRT.cxx
-  vtkRecordLogRT.h
   vtkWorkflowAlgorithm.cxx
   vtkWorkflowAlgorithm.h
-  RecordType.h
   )
 
 set(${KIT}_TARGET_LIBRARIES
@@ -33,6 +20,7 @@ set(${KIT}_TARGET_LIBRARIES
   ${MRML_LIBRARIES}
   SlicerBaseLogic 
   vtkSlicerWorkflowSegmentationModuleMRML
+  vtkSlicerTransformRecorderModuleLogic
   )
 
 #-----------------------------------------------------------------------------

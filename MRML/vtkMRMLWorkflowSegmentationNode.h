@@ -25,95 +25,11 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
+#include "vtkXMLDataElement.h"
 
 // WorkflowSegmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-
-class vtkActor;
-class vtkImageActor;
-class vtkMatrix4x4;
-class vtkPolyData;
-class vtkRenderer;
-class vtkTransform;
-
-
-class vtkImageData;
-class vtkMRMLLinearTransformNode;
-class vtkMRMLModelNode;
-class vtkMRMLViewNode;
-class vtkMRMLVolumeNode;
-
-
-
-//-------------------------------------------------------------------------
-// Helper classes for MRML
-//-------------------------------------------------------------------------
-
-// Class to store observed transforms
-class TransformRecord
-{
-public:
-  std::string DeviceName;
-  std::string Transform;
-  long int TimeStampSec; 
-  int TimeStampNSec;     // Nanoseconds from TimeStampSec to the real timestamp.
-};
-
-// Class to store recorded messages
-class MessageRecord
-{
-public:
-  std::string Message;
-  long int TimeStampSec;
-  int TimeStampNSec;
-};
-
-// Class to store the definition of a procedure
-class ProcedureDefinition
-{
-public:
-  int NumTasks;
-  std::vector<std::string> TaskName;
-  std::vector<std::string> TaskInstruction;
-  std::vector<std::string> TaskNext;
-};
-
-// Class to store algorithm input parameters
-class InputParameter
-{
-public:
-  double FilterWidth;
-  int OrthogonalOrder;
-  int OrthogonalWindow;
-  int Derivative;
-  int NumCentroids;
-  int NumPrinComps;
-  double MarkovPseudoScalePi;
-  double MarkovPseudoScaleA;
-  double MarkovPseudoScaleB;
-};
-
-// Class to store algorithm training parameters
-class TrainingParameter
-{
-public:
-  std::string PrinComps;
-  std::string Mean;
-  std::string Centroids;
-  std::string MarkovPi;
-  std::string MarkovA;
-  std::string MarkovB;
-};
-
-
-
-
-
-
-//-------------------------------------------------------------------------
-// MRML Node classes
-//-------------------------------------------------------------------------
-
+#include "vtkWorkflowToolCollection.h"
 
 class
 VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -121,32 +37,17 @@ vtkMRMLWorkflowSegmentationNode
 : public vtkMRMLNode
 {
 public:
-  
-  //Enumeration of events
-  //BTX
-  enum {
-    TransformChangedEvent = 201001,
-    RecordingStartEvent   = 200901,
-    RecordingStopEvent    = 200902
-  };
-  //ETX
+  vtkTypeMacro( vtkMRMLWorkflowSegmentationNode, vtkMRMLNode );
   
   // Standard MRML node methods  
-  static vtkMRMLWorkflowSegmentationNode *New();
-  vtkTypeMacro( vtkMRMLWorkflowSegmentationNode, vtkMRMLNode );
+  static vtkMRMLWorkflowSegmentationNode *New();  
+
   virtual vtkMRMLNode* CreateNodeInstance();
   virtual const char* GetNodeTagName() { return "WorkflowSegmentation"; };
   void PrintSelf( ostream& os, vtkIndent indent );
   virtual void ReadXMLAttributes( const char** atts );
   virtual void WriteXML( ostream& of, int indent );
   virtual void Copy( vtkMRMLNode *node );
-  virtual void UpdateScene( vtkMRMLScene * );
-  void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
-  
-  
-  virtual void UpdateReferenceID( const char *oldID, const char *newID );
-  void UpdateReferences();
-  
   
 protected:
 
@@ -155,129 +56,42 @@ protected:
   virtual ~vtkMRMLWorkflowSegmentationNode();
   vtkMRMLWorkflowSegmentationNode ( const vtkMRMLWorkflowSegmentationNode& );
   void operator=( const vtkMRMLWorkflowSegmentationNode& );
-
-  void RemoveMRMLObservers();
-    
+ 
   
 public:
-  
-  // Reference to observed transform nodes.
-  void AddObservedTransformNode( const char* TransformNodeID );
-  void RemoveObservedTransformNode( const char* TransformNodeID );
-  void ClearObservedTranformNodes();
-  vtkMRMLLinearTransformNode* GetObservedTransformNode( const char* TransformNodeID );
-
-protected:
-
-  // Reference to observed transform nodes
-  std::vector< char* > ObservedTransformNodeIDs;
-  std::vector< vtkMRMLLinearTransformNode* > ObservedTransformNodes;
-  
-  
-public:
-
-  // Statistics associated with recorded transforms
-  unsigned int GetTransformsBufferSize();
-  unsigned int GetMessagesBufferSize();
-  unsigned int GetSegmentationBufferSize();
-  double GetTotalTime();
-  
-  // State setters and getters
-  bool GetRecording();
-  void SetRecording( bool newState );
-  bool GetProcedureDefined();
-  void SetProcedureDefined( bool newState );
-  bool GetParametersInputted();
-  void SetParametersInputted( bool newState );
-  bool GetAlgorithmTrained();
-  void SetAlgorithmTrained( bool newState );
 
   // File name setters and getters
-  std::string GetTrackingLogFileName();
-  void SetTrackingLogFileName( std::string name );
-  std::string GetSegmentationLogFileName();
-  void SetSegmentationLogFileName( std::string name );
-  std::string GetProcedureDefinitionFileName();
-  void SetProcedureDefinitionFileName( std::string name );
-  std::string GetInputParameterFileName();
-  void SetInputParameterFileName( std::string name );
-  std::string GetTrainingParameterFileName();
-  void SetTrainingParameterFileName( std::string name );
-
-
-
-  
-  // Setters for saving the scene
-  //BTX
-  void SetTransformSelections( std::vector< int > selections );
-  void CustomMessage( std::string message, int sec = -1, int nsec = -1 );
-  void AddSegmentation( std::string task, int sec = -1, int nsec = -1 );
-  //ETX
+  std::string GetWorkflowProcedureFileName();
+  void SetWorkflowProcedureFileName( std::string newWorkflowProcedureFileName );
+  std::string GetWorkflowInputFileName();
+  void SetWorkflowInputFileName( std::string newWorkflowInputFileName );
+  std::string GetWorkflowTrainingFileName();
+  void SetWorkflowTrainingFileName( std::string newWorkflowTrainingFileName );
   
   // File IO methods
-  void SaveTrackingLog();
-  void SaveSegmentation();
-  void SaveTrainingParameters();
-  void ImportProcedureDefinition();
-  void ImportInputParameters();
-  void ImportTrainingParameters();
-  void ImportAvailableData();
+  void SaveWorkflowTraining( std::string newWorkflowTrainingFileName = "" );
+  void ImportWorkflowProcedure( std::string newWorkflowProcedureFileName = "" );
+  void ImportWorkflowInput( std::string newWorkflowInputFileName = "" );
+  void ImportWorkflowTraining( std::string newWorkflowTrainingFileName = "" );
+  void ImportAllWorkflowData();
 
-  TransformRecord GetTransformAt( int index );
-  void ClearBuffer();
-  
-  // Get the current time stamp sec, nanosec
-  void GetTimestamp( int &sec, int &nsec );
-  double GetTimestamp();
-  
- 
-  //Observe a new transform
-  void AddNewTransform( const char* TransformNodeID ); 
-  void AddNewTransform( TransformRecord rec );
+  vtkWorkflowTool* GetCompletionTool( vtkWorkflowTool* tool );
 
-  
 protected:
-  
-  // Variables associated with recording
-  //BTX
-  std::vector< int > TransformSelections;  
-  std::vector< TransformRecord > TransformsBuffer;
-  std::vector< MessageRecord > MessagesBuffer;
-  std::vector< MessageRecord > SegmentationBuffer;
-  //ETX
 
   // Input/output files
-  std::string TrackingLogFileName;
-  std::string SegmentationLogFileName;
-  std::string ProcedureDefinitionFileName;
-  std::string InputParameterFileName;
-  std::string TrainingParameterFileName;
- 
-  // Active recording
-  bool Recording;
+  std::string WorkflowProcedureFileName;
+  std::string WorkflowInputFileName;
+  std::string WorkflowTrainingFileName;
 
-  bool ProcedureDefined;
-  bool ParametersInputted;
-  bool AlgorithmTrained;
-  
-  // Time.
-  // Set a zero timestamp in the constructor using the system clock.  
-  clock_t Clock0;
-  
-  // Clock synchronization
-  double IGTLTimeOffsetSeconds;  // Adding this to the IGTL timestamp synchronizes it with the clock.
-  bool IGTLTimeSynchronized;
-
-  // Keep track of the last recorded transform to avoid repeats
-  vtkTransform* LastNeedleTransform;
-  double LastNeedleTime;
+  vtkXMLDataParser* Parser;
+  vtkXMLDataElement* ParseXMLFile( std::string fileName );
 
 public:
-  // Parameter variables
-  ProcedureDefinition procDefn;
-  InputParameter inputParam;
-  TrainingParameter trainingParam;
-  
+
+  vtkWorkflowToolCollection* ToolCollection;
+  vtkWorkflowToolCollection* ToolCompletion;
+
 };  
 
 #endif

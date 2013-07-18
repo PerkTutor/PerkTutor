@@ -19,7 +19,8 @@
 #include <QtPlugin>
 
 // WorkflowSegmentation Logic includes
-#include <vtkSlicerWorkflowSegmentationLogic.h>
+#include "vtkSlicerWorkflowSegmentationLogic.h"
+#include "vtkSlicerTransformRecorderLogic.h"
 
 // WorkflowSegmentation includes
 #include "qSlicerWorkflowSegmentationModule.h"
@@ -67,6 +68,13 @@ QStringList qSlicerWorkflowSegmentationModule::categories() const
 {
   return QStringList() << "IGT";
 }
+
+//-----------------------------------------------------------------------------
+QStringList qSlicerWorkflowSegmentationModule::dependencies()const
+{
+  return QStringList() << "TransformRecorder";
+}
+
 //-----------------------------------------------------------------------------
 qSlicerWorkflowSegmentationModule::~qSlicerWorkflowSegmentationModule()
 {
@@ -75,7 +83,7 @@ qSlicerWorkflowSegmentationModule::~qSlicerWorkflowSegmentationModule()
 //-----------------------------------------------------------------------------
 QString qSlicerWorkflowSegmentationModule::helpText()const
 {
-  return "For help on how to use this module visit: <a href='https://www.assembla.com/spaces/slicerigt'>SlicerIGT</a>";
+  return "The purpose of the Workflow Segmentation module is to provide real-time instruction to medical trainees performing needle-based interventions by analyzing the procedural workflow. For help on how to use this module visit: <a href='http://www.perktutor.org/'>PerkTutor</a>.";
 }
 
 //-----------------------------------------------------------------------------
@@ -90,6 +98,7 @@ QStringList qSlicerWorkflowSegmentationModule::contributors()const
 {
   QStringList moduleContributors;
   moduleContributors << QString("Tamas Ungi (Queen's University)");
+  moduleContributors << QString("Matthew S. Holden (Queen's University)");
   return moduleContributors;
 }
 
@@ -114,5 +123,13 @@ qSlicerAbstractModuleRepresentation * qSlicerWorkflowSegmentationModule::createW
 //-----------------------------------------------------------------------------
 vtkMRMLAbstractLogic* qSlicerWorkflowSegmentationModule::createLogic()
 {
-  return vtkSlicerWorkflowSegmentationLogic::New();
+  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::New();
+  qSlicerAbstractCoreModule* TransformRecorderModule = qSlicerCoreApplication::application()->moduleManager()->module("TransformRecorder");
+
+  if ( TransformRecorderModule )
+  {
+    WorkflowSegmentationLogic->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( TransformRecorderModule->logic() );
+  }
+
+  return WorkflowSegmentationLogic;
 }
