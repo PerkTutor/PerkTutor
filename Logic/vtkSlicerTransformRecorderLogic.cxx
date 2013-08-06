@@ -298,6 +298,13 @@ void vtkSlicerTransformRecorderLogic
   bufferNode->FromXMLElement( parser->GetRootElement() );
   bufferNode->SetActiveTransformsFromBuffer();
 
+  // Change the name to reflect the file it was read from
+  int dotFound = fileName.find_last_of( "." );
+  int slashFound = fileName.find_last_of( "/" );
+  std::stringstream rootName;
+  rootName << bufferNode->GetName() << "_" << fileName.substr( slashFound + 1, dotFound - slashFound - 1 );
+  bufferNode->SetName( rootName.str().c_str() );
+
   // Add the active transform nodes to the scene
   // This will be particularly useful for the PerkEvaluator
   std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();

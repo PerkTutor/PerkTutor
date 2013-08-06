@@ -24,6 +24,12 @@
 // TransformRecorder includes
 #include "qSlicerTransformRecorderModule.h"
 #include "qSlicerTransformRecorderModuleWidget.h"
+#include "qSlicerTransformRecorderIO.h"
+
+// Slicer includes
+#include "qSlicerNodeWriter.h"
+#include "qSlicerCoreIOManager.h"
+#include "qSlicerCoreApplication.h"
 
 //-----------------------------------------------------------------------------
 Q_EXPORT_PLUGIN2(qSlicerTransformRecorderModule, qSlicerTransformRecorderModule);
@@ -104,6 +110,14 @@ QIcon qSlicerTransformRecorderModule::icon()const
 void qSlicerTransformRecorderModule::setup()
 {
   this->Superclass::setup();
+
+  qSlicerCoreApplication* app = qSlicerCoreApplication::application();
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( this->logic() );
+  
+  // Register the IO
+  app->coreIOManager()->registerIO( new qSlicerTransformRecorderIO( TransformRecorderLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "TransformRecorder", QString( "TransformBuffer" ), QStringList(), this ) );
+  
 }
 
 //-----------------------------------------------------------------------------
