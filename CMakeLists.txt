@@ -17,18 +17,17 @@ include( ${Slicer_USE_FILE} )
 
 # Option to enable the experimental modules
 OPTION(PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES "Enable the building of work-in-progress, experimental modules." OFF)
+
+set( PerkTutor_Modules
+  TransformRecorder
+  PerkEvaluator
+  WorkflowSegmentation 
+)
+
 IF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
   set( PerkTutor_Modules
-    TransformRecorder
-    PerkEvaluator
-    WorkflowSegmentation 
+    ${PerkTutor_Modules}
     TargetFiducials
-  )
-ELSE( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
-  set( PerkTutor_Modules
-    TransformRecorder
-    PerkEvaluator
-    WorkflowSegmentation 
   )
 ENDIF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
 
