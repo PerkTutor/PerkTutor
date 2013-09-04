@@ -116,6 +116,8 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);  
 
+  double time = this->BufferWidget->TransformRecorderLogic->GetCurrentTimestamp();
+
   QString messageName = QInputDialog::getText( this, tr("Add Message"), tr("Input text for the new message:") );
 
   if ( messageName.isNull() )
@@ -124,7 +126,6 @@ void qSlicerMessagesWidget
   }
 
   // Record the timestamp
-  double time = this->BufferWidget->TransformRecorderLogic->GetCurrentTimestamp();
   this->BufferWidget->TransformRecorderLogic->AddMessage( this->BufferWidget->GetBufferNode(), messageName.toStdString(), time );
   
   this->updateWidget();
