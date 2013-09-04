@@ -500,16 +500,21 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   pathLengthMetric.first = toolName + " path length (mm)";
   pathLengthMetric.second = totalPath;
   toolMetrics.push_back( pathLengthMetric );
+
+  if ( body != NULL )
+  {
   
-  MetricType insidePathMetric;
-  insidePathMetric.first = toolName + " inside path (mm)";
-  insidePathMetric.second = insidePath;
-  toolMetrics.push_back( insidePathMetric );
+    MetricType insidePathMetric;
+    insidePathMetric.first = toolName + " inside path (mm)";
+    insidePathMetric.second = insidePath;
+    toolMetrics.push_back( insidePathMetric );
   
-  MetricType insideTimeMetric;
-  insideTimeMetric.first = toolName + " inside time (s)";
-  insideTimeMetric.second = insideTime;
-  toolMetrics.push_back( insideTimeMetric );
+    MetricType insideTimeMetric;
+    insideTimeMetric.first = toolName + " inside time (s)";
+    insideTimeMetric.second = insideTime;
+    toolMetrics.push_back( insideTimeMetric );
+
+  }
 
   return toolMetrics;
 }

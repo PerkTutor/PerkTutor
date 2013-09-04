@@ -219,7 +219,13 @@ void qSlicerPerkEvaluatorModuleWidget
 void qSlicerPerkEvaluatorModuleWidget
 ::OnAnalyzeClicked()
 {
-  Q_D( qSlicerPerkEvaluatorModuleWidget );  
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  QProgressDialog dialog;
+  dialog.setModal( true );
+  dialog.setLabelText( "Please wait while analyzing procedure..." );
+  dialog.show();
+  dialog.setValue( 10 );
   
   double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
   double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
@@ -228,6 +234,8 @@ void qSlicerPerkEvaluatorModuleWidget
 
   // Metrics table  
   std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics();
+
+  dialog.setValue( 80 );
   
   d->MetricsTable->clear();
   QStringList MetricsTableHeaders;
@@ -244,6 +252,8 @@ void qSlicerPerkEvaluatorModuleWidget
     d->MetricsTable->setItem( i, 0, nameItem );
     d->MetricsTable->setItem( i, 1, valueItem );
   }
+
+  dialog.close();
 }
 
 
@@ -361,6 +371,9 @@ void qSlicerPerkEvaluatorModuleWidget
     d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
     d->BeginSpinBox->setValue( 0.0 );
     d->EndSpinBox->setValue( d->logic()->GetTotalTime() );
+    d->MetricsTable->clear();
+    d->MetricsTable->setRowCount( 0 );
+    d->MetricsTable->setColumnCount( 0 );
     this->UpdateStatus = d->TransformBufferWidget->UpdateStatus;
   }
   
