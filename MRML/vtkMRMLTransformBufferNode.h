@@ -26,6 +26,7 @@
 #include "vtkMRMLModelNode.h"
 #include "vtkTransform.h"
 #include "vtkMRMLNode.h"
+#include "vtkMRMLStorableNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkObject.h"
@@ -38,16 +39,17 @@
 #include "vtkSlicerTransformRecorderModuleMRMLExport.h"
 
 // Includes from this module
+#include "vtkMRMLTransformBufferStorageNode.h"
 #include "vtkTransformRecord.h"
 #include "vtkMessageRecord.h"
 
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
-vtkMRMLTransformBufferNode : public vtkMRMLNode
+vtkMRMLTransformBufferNode : public vtkMRMLStorableNode
 {
 public:
-  vtkTypeMacro( vtkMRMLTransformBufferNode, vtkMRMLNode );
+  vtkTypeMacro( vtkMRMLTransformBufferNode, vtkMRMLStorableNode );
 
   // Standard MRML node methods  
   static vtkMRMLTransformBufferNode* New();  
@@ -57,6 +59,11 @@ public:
   virtual void ReadXMLAttributes( const char** atts );
   virtual void WriteXML( ostream& of, int indent );
   virtual void Copy( vtkMRMLNode *node );
+
+  // To use the storage node
+  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() { return vtkMRMLTransformBufferStorageNode::New(); };
+  bool GetModifiedSinceRead() { return ( this->GetMTime() > this->GetStoredTime() ); };
+  virtual void UpdateScene( vtkMRMLScene *scene ) { Superclass::UpdateScene(scene); };
   
 protected:
 

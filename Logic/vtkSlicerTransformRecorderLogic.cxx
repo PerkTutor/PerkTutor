@@ -126,6 +126,13 @@ double vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
+::AddTransformBuffer( const char* fileName, const char* nodeName )
+{
+  
+}
+
+
+void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
   assert(this->GetMRMLScene() != 0);
@@ -144,6 +151,7 @@ void vtkSlicerTransformRecorderLogic
   vtkMRMLTransformNode* transformNode = vtkMRMLTransformNode::SafeDownCast( node );
   node->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->AddActiveTransform( node->GetName() );
+  bufferNode->Modified();
 }
 
 
@@ -159,6 +167,7 @@ void vtkSlicerTransformRecorderLogic
   // Unobserve the node
   node->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->RemoveActiveTransform( node->GetName() );
+  bufferNode->Modified();
 }
 
 
@@ -204,6 +213,7 @@ void vtkSlicerTransformRecorderLogic
     }
     if ( bufferNode == this->RecordingBuffers.at(i) && isRecording )
     {
+      bufferNode->Modified(); // If the recoding is start, then the node has been modified
       return; // If we found that this buffer node is in the list already, then do nothing
     }
   }
@@ -214,7 +224,6 @@ void vtkSlicerTransformRecorderLogic
     this->RecordingBuffers.push_back( bufferNode );
   }
 
-  
 }
 
 
@@ -319,6 +328,8 @@ void vtkSlicerTransformRecorderLogic
 	  node->SetName( activeTransforms.at(i).c_str() );
     }
   }
+
+  bufferNode->Modified();
 
 }
 

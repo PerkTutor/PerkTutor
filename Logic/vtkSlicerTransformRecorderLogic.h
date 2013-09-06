@@ -73,6 +73,8 @@ public:
   
   double GetCurrentTimestamp();
 
+  void AddTransformBuffer( const char* fileName, const char* nodeName = 0 );
+
   // Functions to control recording.
   void AddObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
   void RemoveObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
