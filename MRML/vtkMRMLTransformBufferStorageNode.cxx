@@ -18,7 +18,33 @@ Version:   $Revision: 1.2 $
 
 // Standard MRML Node Methods ------------------------------------------------------------
 
-vtkMRMLNodeNewMacro( vtkMRMLTransformBufferStorageNode );
+vtkMRMLTransformBufferStorageNode* vtkMRMLTransformBufferStorageNode
+::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLTransformBufferStorageNode" );
+  if( ret )
+    {
+      return ( vtkMRMLTransformBufferStorageNode* )ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkMRMLTransformBufferStorageNode();
+}
+
+
+vtkMRMLNode* vtkMRMLTransformBufferStorageNode
+::CreateNodeInstance()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLTransformBufferStorageNode" );
+  if( ret )
+    {
+      return ( vtkMRMLTransformBufferStorageNode* )ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkMRMLTransformBufferStorageNode();
+}
+
 
 
 void vtkMRMLTransformBufferStorageNode

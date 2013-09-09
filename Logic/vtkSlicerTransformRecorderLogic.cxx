@@ -74,9 +74,13 @@ void vtkSlicerTransformRecorderLogic::RegisterNodes()
     return;
   }
 
-  vtkMRMLTransformBufferNode* pNode = vtkMRMLTransformBufferNode::New();
-  this->GetMRMLScene()->RegisterNodeClass( pNode );
-  pNode->Delete();   
+  vtkMRMLTransformBufferNode* tbNode = vtkMRMLTransformBufferNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( tbNode );
+  tbNode->Delete();
+
+  vtkMRMLTransformBufferStorageNode* tbsNode = vtkMRMLTransformBufferStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( tbsNode );
+  tbsNode->Delete();   
 }
 
 
@@ -122,13 +126,6 @@ double vtkSlicerTransformRecorderLogic
 {
   clock_t clock1 = clock();  
   return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-}
-
-
-void vtkSlicerTransformRecorderLogic
-::AddTransformBuffer( const char* fileName, const char* nodeName )
-{
-  
 }
 
 
