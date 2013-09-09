@@ -116,6 +116,8 @@ int vtkMRMLTransformBufferStorageNode
   // The buffer name should already be specified
   // The scene should already be populated with the desired transforms
 
+  parser->Delete();
+
   return 1;
 }
 

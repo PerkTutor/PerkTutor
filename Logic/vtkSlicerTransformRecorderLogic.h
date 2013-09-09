@@ -87,7 +87,7 @@ public:
   void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
 
   void ImportFromFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
-  void SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
+  void ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
 
   void AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode );
   

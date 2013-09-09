@@ -326,13 +326,14 @@ void vtkSlicerTransformRecorderLogic
     }
   }
 
+  parser->Delete();
   bufferNode->Modified();
 
 }
 
 
 void vtkSlicerTransformRecorderLogic
-::SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName )
+::ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName )
 {
   if ( bufferNode == NULL )
   {
