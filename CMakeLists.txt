@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.7)
 
 #-----------------------------------------------------------------------------
 set(MODULE_NAME "PerkEvaluator")
-set(MODULE_TITLE ${MODULE_NAME})
+set(MODULE_TITLE "Perk Evaluator")
 
 string(TOUPPER ${MODULE_NAME} MODULE_NAME_UPPER)
 
