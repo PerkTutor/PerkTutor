@@ -66,7 +66,7 @@ QString qSlicerWorkflowSegmentationModule::category()const
 
 QStringList qSlicerWorkflowSegmentationModule::categories() const
 {
-  return QStringList() << "IGT";
+  return QStringList() << "Perk Tutor";
 }
 
 //-----------------------------------------------------------------------------
