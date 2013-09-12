@@ -101,7 +101,32 @@ class TissueModelCreatorWidget:
     self.markupSelector.setMRMLScene( slicer.mrmlScene )
     self.markupSelector.setToolTip( "Pick the markup node for the algorithm." )
     parametersFormLayout.addRow( "Select Markup Node: ", self.markupSelector )
-
+    
+    #
+    # Depth slider
+    #
+    self.depthSlider = ctk.ctkSliderWidget()
+    self.depthSlider.maximum = 1000
+    self.depthSlider.minimum = 0
+    self.depthSlider.value = 100
+    self.depthSlider.setToolTip( "Select the depth of the tissue." )
+    parametersFormLayout.addRow( "Depth (mm): ", self.depthSlider )
+    
+    #
+    # Reverse (ie inside-out) checkbox
+    #
+    self.reverseCheckBox = qt.QCheckBox()
+    self.reverseCheckBox.setCheckState( False )
+    self.reverseCheckBox.setToolTip( "Turn the tissue inside-out." )
+    parametersFormLayout.addRow( "Reverse: ", self.reverseCheckBox )
+        
+    #
+    # Flip (ie flip) checkbox
+    #
+    self.flipCheckBox = qt.QCheckBox()
+    self.flipCheckBox.setCheckState( False )
+    self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
+    parametersFormLayout.addRow( "Flip: ", self.flipCheckBox )
 
     #
     # Create Button
@@ -123,8 +148,7 @@ class TissueModelCreatorWidget:
   def onCreateButtonClicked(self):
     logic = TissueModelCreatorLogic()
     print("Run the algorithm")
-    logic.run( self.markupSelector.currentNode() )
-    #logic.CheckFiducials( self.markupSelector.currentNode() )
+    logic.run( self.markupSelector.currentNode(), self.depthSlider.value, self.reverseCheckBox.checked, self.flipCheckBox.checked )
 
   def onReload(self,moduleName="TissueModelCreator"):
     """Generic reload method for any scripted module.
@@ -199,7 +223,7 @@ class TissueModelCreatorLogic:
     pass
 
 
-  def run( self, markupNode ):
+  def run( self, markupNode, depth, reverse, flip ):
     """
     Run the actual algorithm
     """
@@ -213,7 +237,7 @@ class TissueModelCreatorLogic:
       points.InsertNextPoint( currentCoordinates )
       
     # Create a polydata object from the points
-    surfacePolyData = self.PointsToSurfacePolyData( points,  False )
+    surfacePolyData = self.PointsToSurfacePolyData( points, reverse )
     
     mean = self.CalculateMean( points )
     
@@ -223,9 +247,13 @@ class TissueModelCreatorLogic:
     surfaceNormal = [ 0, 0, 0 ]
     self.CalculatePlane( surfacePolyData.GetPoints(), surfaceBase, surfaceDir1, surfaceDir2, surfaceNormal )
     
-    untransDeepPolyData = self.PointsToSurfacePolyData( points, True )
+    untransDeepPolyData = self.PointsToSurfacePolyData( points, not reverse )
     deepTransform = vtk.vtkTransform()
-    deepTransform.Translate( -100 * surfaceNormal[0], -100 * surfaceNormal[1], -100 * surfaceNormal[2] )
+    if ( flip == True ):
+      deepTransform.Translate( -depth * surfaceNormal[0], -depth * surfaceNormal[1], -depth * surfaceNormal[2] )
+    if ( flip == False ):
+       deepTransform.Translate( depth * surfaceNormal[0], depth * surfaceNormal[1], depth * surfaceNormal[2] )
+
   
     deepTransformFilter = vtk.vtkTransformPolyDataFilter()
     deepTransformFilter.SetInput( untransDeepPolyData )
@@ -252,11 +280,11 @@ class TissueModelCreatorLogic:
     tissueCleaner.SetInput( tissuePolyDataAppend.GetOutput() )
     tissueCleaner.Update()
     
-    #Enusre that the surface is right-side out
+    tissueModelPolyData = tissueCleaner.GetOutput()
     
     # Add the data to a model 
     tissueModel = slicer.mrmlScene.CreateNodeByClass( "vtkMRMLModelNode" )
-    tissueModel.SetAndObservePolyData( tissueCleaner.GetOutput() )
+    tissueModel.SetAndObservePolyData( tissueModelPolyData )
     tissueModel.SetName( "TissueModel" )
     tissueModel.SetScene( slicer.mrmlScene )
     
