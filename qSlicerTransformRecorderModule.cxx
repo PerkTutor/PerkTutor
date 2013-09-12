@@ -71,7 +71,7 @@ QString qSlicerTransformRecorderModule::category()const
 
 QStringList qSlicerTransformRecorderModule::categories() const
 {
-  return QStringList() << "IGT";
+  return QStringList() << "Perk Tutor";
 }
 //-----------------------------------------------------------------------------
 qSlicerTransformRecorderModule::~qSlicerTransformRecorderModule()
