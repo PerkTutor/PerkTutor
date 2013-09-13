@@ -54,7 +54,7 @@ public:
 protected slots:
 
   void onImportButtonClicked();
-  void onSaveButtonClicked();
+  void onExportButtonClicked();
   void onCurrentBufferNodeChanged();
 
   void updateWidget();

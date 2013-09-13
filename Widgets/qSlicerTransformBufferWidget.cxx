@@ -103,11 +103,11 @@ void qSlicerTransformBufferWidget
   connect( d->BufferNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onCurrentBufferNodeChanged() ) );
 
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( onImportButtonClicked() ) );
-  connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( onSaveButtonClicked() ) );
+  connect( d->ExportButton, SIGNAL( clicked() ), this, SLOT( onExportButtonClicked() ) );
 
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
-  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
+  connect( t, SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
   t->start(10); 
 
   this->updateWidget();  
@@ -168,7 +168,7 @@ void qSlicerTransformBufferWidget
 
 
 void qSlicerTransformBufferWidget
-::onSaveButtonClicked()
+::onExportButtonClicked()
 {
   Q_D(qSlicerTransformBufferWidget);  
 
@@ -176,7 +176,7 @@ void qSlicerTransformBufferWidget
   
   if ( ! filename.isEmpty() )
   {
-    this->TransformRecorderLogic->SaveToFile( this->GetBufferNode(), filename.toStdString() );
+    this->TransformRecorderLogic->ExportToFile( this->GetBufferNode(), filename.toStdString() );
   }
 
   this->UpdateStatus++;

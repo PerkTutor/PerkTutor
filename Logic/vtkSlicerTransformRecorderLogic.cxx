@@ -74,9 +74,13 @@ void vtkSlicerTransformRecorderLogic::RegisterNodes()
     return;
   }
 
-  vtkMRMLTransformBufferNode* pNode = vtkMRMLTransformBufferNode::New();
-  this->GetMRMLScene()->RegisterNodeClass( pNode );
-  pNode->Delete();   
+  vtkMRMLTransformBufferNode* tbNode = vtkMRMLTransformBufferNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( tbNode );
+  tbNode->Delete();
+
+  vtkMRMLTransformBufferStorageNode* tbsNode = vtkMRMLTransformBufferStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( tbsNode );
+  tbsNode->Delete();   
 }
 
 
@@ -144,6 +148,7 @@ void vtkSlicerTransformRecorderLogic
   vtkMRMLTransformNode* transformNode = vtkMRMLTransformNode::SafeDownCast( node );
   node->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->AddActiveTransform( node->GetName() );
+  bufferNode->Modified();
 }
 
 
@@ -159,6 +164,7 @@ void vtkSlicerTransformRecorderLogic
   // Unobserve the node
   node->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->RemoveActiveTransform( node->GetName() );
+  bufferNode->Modified();
 }
 
 
@@ -204,6 +210,7 @@ void vtkSlicerTransformRecorderLogic
     }
     if ( bufferNode == this->RecordingBuffers.at(i) && isRecording )
     {
+      bufferNode->Modified(); // If the recoding is start, then the node has been modified
       return; // If we found that this buffer node is in the list already, then do nothing
     }
   }
@@ -214,7 +221,6 @@ void vtkSlicerTransformRecorderLogic
     this->RecordingBuffers.push_back( bufferNode );
   }
 
-  
 }
 
 
@@ -320,11 +326,14 @@ void vtkSlicerTransformRecorderLogic
     }
   }
 
+  parser->Delete();
+  bufferNode->Modified();
+
 }
 
 
 void vtkSlicerTransformRecorderLogic
-::SaveToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName )
+::ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName )
 {
   if ( bufferNode == NULL )
   {

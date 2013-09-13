@@ -26,6 +26,8 @@ set(module_mrml_include_directories
 set(module_mrml_SRCS
   vtkMRMLTransformBufferNode.cxx
   vtkMRMLTransformBufferNode.h
+  vtkMRMLTransformBufferStorageNode.cxx
+  vtkMRMLTransformBufferStorageNode.h
   vtkTransformRecord.cxx
   vtkTransformRecord.h
   vtkMessageRecord.cxx
