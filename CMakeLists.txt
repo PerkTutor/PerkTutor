@@ -28,6 +28,7 @@ IF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
   set( PerkTutor_Modules
     ${PerkTutor_Modules}
     TargetFiducials
+    TissueModelCreator
   )
 ENDIF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
 
