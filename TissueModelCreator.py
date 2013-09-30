@@ -8,16 +8,17 @@ from __main__ import vtk, qt, ctk, slicer
 
 class TissueModelCreator:
   def __init__(self, parent):
-    parent.title = "TissueModelCreator" # TODO make this more human readable by adding spaces
-    parent.categories = ["IGT"]
+    parent.title = "Tissue Model Creator" # TODO make this more human readable by adding spaces
+    parent.categories = ["Perk Tutor"]
     parent.dependencies = []
     parent.contributors = ["Matthew Holden (Queen's University)"] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
-    The purpose of the Tissue Model Creator module is to create a model based on a set of collected fiducial points. For help on this module, please visit: For help on how to use this module visit: <a href='http://www.github.com/mholden8/TissueModelCreator/'>Tissue Model Creator</a>.
+    The purpose of the Tissue Model Creator module is to create a model based on a set of collected fiducial points. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/TissueModelCreator/wiki'>Tissue Model Creator</a>.
     """
     parent.acknowledgementText = """
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
-""" # replace with organization, grant and thanks.
+    """ # replace with organization, grant and thanks.
+    parent.icon = qt.QIcon( "TissueModelCreator.png" )
     self.parent = parent
 
     # Add this test to the SelfTest module's list for discovery when the module
@@ -53,30 +54,31 @@ class TissueModelCreatorWidget:
   def setup(self):
     # Instantiate and connect widgets ...
 
-    #
-    # Reload and Test area
-    #
-    reloadCollapsibleButton = ctk.ctkCollapsibleButton()
-    reloadCollapsibleButton.text = "Reload && Test"
-    self.layout.addWidget(reloadCollapsibleButton)
-    reloadFormLayout = qt.QFormLayout(reloadCollapsibleButton)
+    # Comment these out when not debugging
+    # #
+    # # Reload and Test area
+    # #
+    # reloadCollapsibleButton = ctk.ctkCollapsibleButton()
+    # reloadCollapsibleButton.text = "Reload && Test"
+    # self.layout.addWidget(reloadCollapsibleButton)
+    # reloadFormLayout = qt.QFormLayout(reloadCollapsibleButton)
 
-    # reload button
-    # (use this during development, but remove it when delivering
-    #  your module to users)
-    self.reloadButton = qt.QPushButton("Reload")
-    self.reloadButton.toolTip = "Reload this module."
-    self.reloadButton.name = "TissueModelCreator Reload"
-    reloadFormLayout.addWidget(self.reloadButton)
-    self.reloadButton.connect('clicked()', self.onReload)
+    # # reload button
+    # # (use this during development, but remove it when delivering
+    # #  your module to users)
+    # self.reloadButton = qt.QPushButton("Reload")
+    # self.reloadButton.toolTip = "Reload this module."
+    # self.reloadButton.name = "TissueModelCreator Reload"
+    # reloadFormLayout.addWidget(self.reloadButton)
+    # self.reloadButton.connect('clicked()', self.onReload)
 
-    # reload and test button
-    # (use this during development, but remove it when delivering
-    #  your module to users)
-    self.reloadAndTestButton = qt.QPushButton("Reload and Test")
-    self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
-    reloadFormLayout.addWidget(self.reloadAndTestButton)
-    self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
+    # # reload and test button
+    # # (use this during development, but remove it when delivering
+    # #  your module to users)
+    # self.reloadAndTestButton = qt.QPushButton("Reload and Test")
+    # self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
+    # reloadFormLayout.addWidget(self.reloadAndTestButton)
+    # self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
 
     #
     # Parameters Area
@@ -118,7 +120,8 @@ class TissueModelCreatorWidget:
     self.reverseCheckBox = qt.QCheckBox()
     self.reverseCheckBox.setCheckState( False )
     self.reverseCheckBox.setToolTip( "Turn the tissue inside-out." )
-    parametersFormLayout.addRow( "Reverse: ", self.reverseCheckBox )
+    self.reverseCheckBox.setText( "Reverse" )
+    #parametersFormLayout.addRow( "Reverse: ", self.reverseCheckBox )
         
     #
     # Flip (ie flip) checkbox
@@ -126,7 +129,8 @@ class TissueModelCreatorWidget:
     self.flipCheckBox = qt.QCheckBox()
     self.flipCheckBox.setCheckState( False )
     self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
-    parametersFormLayout.addRow( "Flip: ", self.flipCheckBox )
+    self.flipCheckBox.setText( "Flip" )
+    parametersFormLayout.addRow( self.reverseCheckBox, self.flipCheckBox )
 
     #
     # Create Button
