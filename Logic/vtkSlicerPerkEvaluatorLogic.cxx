@@ -83,6 +83,7 @@ vtkSlicerPerkEvaluatorLogic
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
   this->SetNeedleBase( 0.0, 1.0, 0.0 );
+  this->TraceTrajectories = false;
   
   this->BodyModelNode = NULL;
   this->NeedleTransformNode = NULL;
@@ -233,6 +234,13 @@ void vtkSlicerPerkEvaluatorLogic
   this->NeedleBase[1] = y * NEEDLE_LENGTH;
   this->NeedleBase[2] = z * NEEDLE_LENGTH;
   this->NeedleBase[3] = 1.0;
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetTraceTrajectories( bool newTraceTrajectories )
+{
+  this->TraceTrajectories = newTraceTrajectories;
 }
 
 
@@ -429,6 +437,12 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   double P0[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
   double P1[ 4 ] = { 0.0, 0.0, 0.0, 1.0 };
 
+  // Initialize tool trajectory tracers
+  vtkSmartPointer< vtkPoints > curvePoints = vtkSmartPointer< vtkPoints >::New();
+  vtkSmartPointer< vtkPolyLine > curvePolyLine = vtkSmartPointer< vtkPolyLine >::New();
+  curvePolyLine->GetPointIds()->SetNumberOfIds( Trajectory->GetNumTransforms() - 1 ); 
+  int validIDs = 0;
+
   // Get a reference to the relevant transform node, update the transform node, compute the metric for that time step
   double originalPlaybackTime = this->GetPlaybackTime();
   this->SetPlaybackTime( this->GetMinTime() );
@@ -490,6 +504,14 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
       insideTime += Trajectory->GetTransformAt(i)->GetTime() - Trajectory->GetTransformAt(i-1)->GetTime();
     }
 
+    // Curve tracing
+    if ( this->TraceTrajectories )
+    {
+      curvePoints->InsertNextPoint( P0[ 0 ], P0[ 1 ], P0[ 2 ] );
+      curvePolyLine->GetPointIds()->SetId( validIDs, validIDs );
+      validIDs++;
+    }
+
   }
   
   // Reset the play back time
@@ -516,7 +538,45 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 
   }
 
+  if ( this->TraceTrajectories )
+  {
+    this->ShowTraceTrajectories( curvePoints, curvePolyLine, validIDs, toolName );
+  }
+
   return toolMetrics;
+}
+
+
+
+// Show the curves traced out by each tool
+void vtkSlicerPerkEvaluatorLogic
+::ShowTraceTrajectories( vtkPoints* curvePoints, vtkPolyLine* curvePolyLine, int validIDs, std::string toolName )
+{
+
+  vtkSmartPointer< vtkCellArray > curveCells = vtkSmartPointer< vtkCellArray >::New();
+  curvePolyLine->GetPointIds()->SetNumberOfIds( validIDs );
+  curveCells->InsertNextCell( curvePolyLine->GetPointIds() );
+
+  vtkSmartPointer< vtkPolyData > curvePolyData = vtkSmartPointer< vtkPolyData >::New();
+  curvePolyData->SetPoints( curvePoints );
+  curvePolyData->SetLines( curveCells );
+  
+  vtkMRMLModelNode* curveModel = vtkMRMLModelNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLModelNode" ) );
+  curveModel->SetAndObservePolyData( curvePolyData );
+  std::string curveName = toolName + "Curve";
+  curveModel->SetName( curveName.c_str() );
+  curveModel->SetScene( this->GetMRMLScene() );
+
+  vtkMRMLModelDisplayNode* curveModelDisplay = vtkMRMLModelDisplayNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLModelDisplayNode" ) );
+  curveModelDisplay->SetLineWidth( 2 );
+  curveModelDisplay->SetScene( this->GetMRMLScene() );
+  curveModelDisplay->SetInputPolyData( curveModel->GetPolyData() );
+
+  this->GetMRMLScene()->AddNode( curveModelDisplay );
+  this->GetMRMLScene()->AddNode( curveModel );
+
+  curveModel->SetAndObserveDisplayNodeID( curveModelDisplay->GetID() );
+
 }
 
 

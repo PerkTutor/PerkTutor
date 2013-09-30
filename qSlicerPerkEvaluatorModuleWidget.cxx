@@ -257,6 +257,40 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnClipboardClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  // Grab all of the contents from whatever is currently on the metrics table
+  QString clipString = QString( "" );
+
+  for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
+  {
+    for ( int j = 0; j < d->MetricsTable->columnCount(); j++ )
+    {
+      QTableWidgetItem* currentItem = d->MetricsTable->item( i, j );
+      clipString.append( currentItem->text() );
+      clipString.append( QString( "\t" ) );
+    }
+    clipString.append( QString( "\n" ) );
+  }
+
+  QApplication::clipboard()->setText( clipString );
+}
+
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnTraceTrajectoriesChanged()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->logic()->SetTraceTrajectories( d->TraceTrajectoriesCheckBox->checkState() );
+}
+
+
+
 
 void
 qSlicerPerkEvaluatorModuleWidget
@@ -345,6 +379,9 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
 
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
+  connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( OnClipboardClicked() ) );
+  d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
+  connect( d->TraceTrajectoriesCheckBox, SIGNAL( stateChanged( int ) ), this, SLOT( OnTraceTrajectoriesChanged() ) );
 
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );

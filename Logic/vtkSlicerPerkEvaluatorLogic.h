@@ -15,12 +15,16 @@
 #include "vtkMRML.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
+#include "vtkMRMLModelDisplayNode.h"
 
 // STD includes
 #include <cstdlib>
 
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
+#include "vtkPolyLine.h"
+#include "vtkPoints.h"
+#include "vtkCellArray.h"
 
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
 #include "vtkSlicerTransformRecorderLogic.h"
@@ -65,6 +69,7 @@ public:
   void SetMarkBegin( double begin );
   void SetMarkEnd( double end );
   void SetNeedleBase( double x, double y, double z );
+  void SetTraceTrajectories( bool newTraceTrajectories );
 
   typedef std::pair<std::string,double> MetricType;  
   std::vector<MetricType> GetMetrics();
@@ -103,6 +108,8 @@ private:
   
   std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory );
   std::vector<MetricType> CalculateNeedleMetrics();
+
+  void ShowTraceTrajectories( vtkPoints* curvePoints, vtkPolyLine* curvePolyLine, int validIDs, std::string toolName );
   double TriangleArea( double* p1, double* p2, double* p3 );
   
   std::vector<vtkMRMLTransformBufferNode*> ToolTrajectories;
@@ -111,6 +118,8 @@ private:
   double MarkBegin;
   double MarkEnd;
   double NeedleBase[4];
+
+  bool TraceTrajectories;
 
 };
 

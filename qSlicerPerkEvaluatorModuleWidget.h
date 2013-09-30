@@ -43,6 +43,8 @@ public slots:
   void OnMarkEndClicked();
 
   void OnAnalyzeClicked();
+  void OnClipboardClicked();
+  void OnTraceTrajectoriesChanged();
 
   void OnBodyModelNodeSelected();
   void OnNeedleReferenceSelected();
