@@ -37,6 +37,13 @@ ENDIF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
 option(${EXTENSION_NAME}_SUPERBUILD "Build ${EXTENSION_NAME} and the projects it depends on via SuperBuild.cmake." ON)
 mark_as_advanced(${EXTENSION_NAME}_SUPERBUILD)
 
+# Ensure that the modules' repositories are correctly set
+foreach( proj ${PerkTutor_Modules} )
+  set( PERKTUTOR_REPOSITORY_${proj} "https://github.com/PerkTutor/${proj}.git" CACHE STRING "Set the ${proj} repository" )
+  set( PERKTUTOR_REPOSITORY_TAG_${proj} "" CACHE STRING "Set the ${proj} repository tag" )
+endforeach( proj )
+
+
 if(${EXTENSION_NAME}_SUPERBUILD)
   include("${CMAKE_CURRENT_SOURCE_DIR}/SuperBuild.cmake")
   return()
