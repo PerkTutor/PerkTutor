@@ -54,7 +54,7 @@ class TissueModelCreatorWidget:
   def setup(self):
     # Instantiate and connect widgets ...
 
-    # Comment these out when not debugging
+    # # Comment these out when not debugging
     # #
     # # Reload and Test area
     # #
@@ -130,7 +130,7 @@ class TissueModelCreatorWidget:
     self.flipCheckBox.setCheckState( False )
     self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
     self.flipCheckBox.setText( "Flip" )
-    parametersFormLayout.addRow( self.reverseCheckBox, self.flipCheckBox )
+    parametersFormLayout.addRow( self.flipCheckBox )
 
     #
     # Create Button
@@ -151,8 +151,7 @@ class TissueModelCreatorWidget:
 
   def onCreateButtonClicked(self):
     logic = TissueModelCreatorLogic()
-    print("Run the algorithm")
-    logic.run( self.markupSelector.currentNode(), self.depthSlider.value, self.reverseCheckBox.checked, self.flipCheckBox.checked )
+    print logic.run( self.markupSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked )
 
   def onReload(self,moduleName="TissueModelCreator"):
     """Generic reload method for any scripted module.
@@ -227,7 +226,7 @@ class TissueModelCreatorLogic:
     pass
 
 
-  def run( self, markupNode, depth, reverse, flip ):
+  def run( self, markupNode, depth, flip ):
     """
     Run the actual algorithm
     """
@@ -241,7 +240,8 @@ class TissueModelCreatorLogic:
       points.InsertNextPoint( currentCoordinates )
       
     # Create a polydata object from the points
-    surfacePolyData = self.PointsToSurfacePolyData( points, reverse )
+    # The reversiness doesn't matter - we will fix it later if it os wrong
+    surfacePolyData = self.PointsToSurfacePolyData( points, True )
     
     mean = self.CalculateMean( points )
     
@@ -251,14 +251,35 @@ class TissueModelCreatorLogic:
     surfaceNormal = [ 0, 0, 0 ]
     self.CalculatePlane( surfacePolyData.GetPoints(), surfaceBase, surfaceDir1, surfaceDir2, surfaceNormal )
     
-    untransDeepPolyData = self.PointsToSurfacePolyData( points, not reverse )
-    deepTransform = vtk.vtkTransform()
     if ( flip == True ):
-      deepTransform.Translate( -depth * surfaceNormal[0], -depth * surfaceNormal[1], -depth * surfaceNormal[2] )
-    if ( flip == False ):
-       deepTransform.Translate( depth * surfaceNormal[0], depth * surfaceNormal[1], depth * surfaceNormal[2] )
-
-  
+      surfaceNormal[ 0 ] = - surfaceNormal[ 0 ]
+      surfaceNormal[ 1 ] = - surfaceNormal[ 1 ]
+      surfaceNormal[ 2 ] = - surfaceNormal[ 2 ]
+    
+    extremePointIndex = self.FindExtremePoint( surfacePolyData.GetPoints(), surfaceBase, surfaceNormal )
+    reverse = self.ReverseNormals( extremePointIndex, surfacePolyData, surfaceNormal )
+    
+    # Reverse the normals if necessary
+    reverseFilter = vtk.vtkReverseSense()
+    reverseFilter.SetInput( surfacePolyData )
+    reverseFilter.SetReverseCells( reverse )
+    reverseFilter.SetReverseNormals( reverse )
+    reverseFilter.Update()
+    surfacePolyData = reverseFilter.GetOutput()
+    
+    untransDeepPolyData = vtk.vtkPolyData()
+    untransDeepPolyData.DeepCopy( surfacePolyData )
+    
+    # Make the normals opposite the surface's normals
+    reverseFilter = vtk.vtkReverseSense()
+    reverseFilter.SetInput( untransDeepPolyData )
+    reverseFilter.SetReverseCells( True )
+    reverseFilter.SetReverseNormals( True )
+    reverseFilter.Update()
+    untransDeepPolyData = reverseFilter.GetOutput()
+    
+    deepTransform = vtk.vtkTransform()
+    deepTransform.Translate( depth * surfaceNormal[0], depth * surfaceNormal[1], depth * surfaceNormal[2] )  
     deepTransformFilter = vtk.vtkTransformPolyDataFilter()
     deepTransformFilter.SetInput( untransDeepPolyData )
     deepTransformFilter.SetTransform( deepTransform )
@@ -302,7 +323,15 @@ class TissueModelCreatorLogic:
     
     tissueModel.SetAndObserveDisplayNodeID( tissueModelDisplay.GetID() )
 
-    return True
+    # Check to make sure the model is a closed surface
+    edgesFilter = vtk.vtkFeatureEdges()
+    edgesFilter.FeatureEdgesOff()
+    edgesFilter.BoundaryEdgesOn()
+    edgesFilter.NonManifoldEdgesOn()
+    edgesFilter.SetInput( tissueModel.GetPolyData() )
+    edgesFilter.Update()
+    
+    return ( edgesFilter.GetOutput().GetNumberOfCells() == 0 )
       
     
   def PointsToSurfacePolyData( self, inPoints, reverse ):
@@ -320,15 +349,11 @@ class TissueModelCreatorLogic:
     contourFilter.SetValue( 0, 0.0 )
     contourFilter.SetInput( surfaceFilter.GetOutput() )
     
-    # Reverse the normals
+    # Reverse the normals if necessary
     reverseFilter = vtk.vtkReverseSense()
     reverseFilter.SetInput( contourFilter.GetOutput() )
-    if ( reverse == True ):
-      reverseFilter.ReverseCellsOn()
-      reverseFilter.ReverseNormalsOn()
-    if ( reverse == False ):
-      reverseFilter.ReverseCellsOff()
-      reverseFilter.ReverseNormalsOff()
+    reverseFilter.SetReverseCells( reverse )
+    reverseFilter.SetReverseNormals( reverse )
     reverseFilter.Update()
    
     # Reset the scaling to let the surface match the points
@@ -506,6 +531,38 @@ class TissueModelCreatorLogic:
       joiningAppend.AddInput( currPolyDataForSurface )
     
     return joiningAppend.GetOutput()
+    
+  
+  def FindExtremePoint( self, surfacePoints, surfaceBase, surfaceNormal ):
+  
+    extremePointIndex = 1
+    extremePointProjection = 0
+    # Find the point with the smallest projection (ie most negative) onto the surface normal
+    for i in range( surfacePoints.GetNumberOfPoints() ):
+    
+      currPoint = [ 0, 0, 0 ]
+      surfacePoints.GetPoint( i, currPoint )
+          
+      currProjection = ( currPoint[ 0 ] - surfaceBase [ 0 ] ) * surfaceNormal [ 0 ] + ( currPoint[ 1 ] - surfaceBase [ 1 ] ) * surfaceNormal [ 1 ] + ( currPoint[ 2 ] - surfaceBase [ 2 ] ) * surfaceNormal [ 2 ]
+      
+      if ( currProjection < extremePointProjection ):
+        extremePointProjection = currProjection
+        extremePointIndex = i
+    
+    return extremePointIndex
+
+
+  def ReverseNormals( self, extremePointIndex, surfacePolyData, surfaceNormal ):
+   
+    normalArray = surfacePolyData.GetPointData().GetNormals()
+    
+    extremePointNormal = [ 0, 0, 0 ]
+    normalArray.GetTuple( extremePointIndex, extremePointNormal )
+    
+    if ( vtk.vtkMath.Dot( extremePointNormal, surfaceNormal ) > 0 ):
+      return True
+      
+    return False
     
 
 
