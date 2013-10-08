@@ -75,6 +75,7 @@ void vtkMRMLTransformBufferNode
     }
   }
 
+  this->Modified();
 }
 
 
@@ -101,6 +102,7 @@ void vtkMRMLTransformBufferNode
     this->AddActiveTransform( node->GetActiveTransforms().at(i) );
   }
 
+  this->Modified();
 }
 
 
@@ -132,16 +134,19 @@ void vtkMRMLTransformBufferNode
   if ( this->GetNumTransforms() < 1 )
   {
     this->transforms.push_back( newTransform );
+    this->Modified();
 	return;
   }
   if ( newTransform->GetTime() >= this->GetCurrentTransform()->GetTime() )
   {
     this->transforms.push_back( newTransform );
+    this->Modified();
 	return;
   }
   if ( newTransform->GetTime() <= this->GetTransformAt(0)->GetTime() )
   {
     this->transforms.insert( transforms.begin() + 0, newTransform );
+    this->Modified();
 	return;
   }
 
@@ -155,6 +160,7 @@ void vtkMRMLTransformBufferNode
 	}
   }
 
+  this->Modified();
 }
 
 
@@ -165,16 +171,19 @@ void vtkMRMLTransformBufferNode
   if ( this->GetNumMessages() < 1 )
   {
     this->messages.push_back( newMessage );
+    this->Modified();
 	return;
   }
   if ( newMessage->GetTime() >= this->GetCurrentMessage()->GetTime() )
   {
     this->messages.push_back( newMessage );
+    this->Modified();
 	return;
   }
   if ( newMessage->GetTime() <= this->GetMessageAt(0)->GetTime() )
   {
     this->messages.insert( messages.begin() + 0, newMessage );
+    this->Modified();
 	return;
   }
 
@@ -184,6 +193,7 @@ void vtkMRMLTransformBufferNode
     if ( newMessage->GetTime() >= this->GetMessageAt(i)->GetTime() )
 	{
       this->messages.insert( messages.begin() + i + 1, newMessage );
+      this->Modified();
 	  return;
 	}
   }
@@ -194,8 +204,12 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::RemoveTransformAt( int index )
 {
-  this->GetTransformAt(index)->Delete();
-  this->transforms.erase( transforms.begin() + index );
+  if ( index >= 0 && index < this->GetNumTransforms() )
+  {
+    this->GetTransformAt(index)->Delete();
+    this->transforms.erase( transforms.begin() + index );
+  }
+  this->Modified();
 }
 
 
@@ -211,6 +225,8 @@ void vtkMRMLTransformBufferNode
 	  i--;
 	}
   }
+
+  this->Modified();
 }
 
 
@@ -222,6 +238,7 @@ void vtkMRMLTransformBufferNode
     this->GetMessageAt(index)->Delete();
     this->messages.erase( messages.begin() + index );
   }
+  this->Modified();
 }
 
 
@@ -237,6 +254,8 @@ void vtkMRMLTransformBufferNode
 	  i--;
 	}
   }
+
+  this->Modified();
 }
 
 
@@ -438,6 +457,7 @@ void vtkMRMLTransformBufferNode
 {
   this->ClearTransforms();
   this->ClearMessages();
+  this->Modified();
 }
 
 
@@ -450,6 +470,7 @@ void vtkMRMLTransformBufferNode
     this->GetTransformAt(i)->Delete();
   }
   this->transforms.clear();
+  this->Modified();
 }
 
 
@@ -462,6 +483,7 @@ void vtkMRMLTransformBufferNode
     this->GetMessageAt(i)->Delete();
   }
   this->messages.clear();
+  this->Modified();
 }
 
 
@@ -478,6 +500,7 @@ void vtkMRMLTransformBufferNode
   }
 
   this->activeTransforms.push_back( name );
+  this->Modified();
 }
 
 
@@ -492,6 +515,7 @@ void vtkMRMLTransformBufferNode
 	  i--;
 	}
   }
+  this->Modified();
 }
 
 
@@ -507,6 +531,7 @@ void vtkMRMLTransformBufferNode
 {
   this->activeTransforms.clear();
   this->activeTransforms = names;
+  this->Modified();
 }
 
 
@@ -535,6 +560,7 @@ void vtkMRMLTransformBufferNode
 
   }
 
+  this->Modified();
 }
 
 
@@ -622,6 +648,8 @@ std::string vtkMRMLTransformBufferNode
 
   xmlstring << "</TransformRecorderLog>" << std::endl;
 
+  this->Modified();
+
   return xmlstring.str();
 }
 
@@ -663,4 +691,5 @@ void vtkMRMLTransformBufferNode
    
   }
 
+  this->Modified();
 }

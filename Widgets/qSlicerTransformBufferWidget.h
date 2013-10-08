@@ -49,7 +49,7 @@ public:
   vtkMRMLTransformBufferNode* GetBufferNode();
 
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
-  unsigned int UpdateStatus;
+  unsigned long int BufferModifiedTime;
 
 protected slots:
 

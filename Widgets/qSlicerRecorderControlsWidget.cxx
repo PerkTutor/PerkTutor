@@ -79,7 +79,7 @@ qSlicerRecorderControlsWidget* qSlicerRecorderControlsWidget
 {
   qSlicerRecorderControlsWidget* newRecorderControlsWidget = new qSlicerRecorderControlsWidget();
   newRecorderControlsWidget->BufferWidget = newBufferWidget;
-  newRecorderControlsWidget->UpdateStatus = newBufferWidget->UpdateStatus;
+  newRecorderControlsWidget->BufferModifiedTime = newBufferWidget->BufferModifiedTime;
   newRecorderControlsWidget->updatingCheckedTransforms = false;
   newRecorderControlsWidget->setup();
   return newRecorderControlsWidget;
@@ -214,12 +214,7 @@ void qSlicerRecorderControlsWidget
 
   this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
 
-  if ( this->UpdateStatus != this->BufferWidget->UpdateStatus )
-  {
-    this->UpdateStatus = this->BufferWidget->UpdateStatus;
-    this->onActiveTransformsUpdated();
-  }
-
+  // Set the text indicating recording
   if ( this->BufferWidget->TransformRecorderLogic->GetRecording( this->BufferWidget->GetBufferNode() ) )
   {
     d->StatusResultLabel->setText( "Recording" );
@@ -229,6 +224,12 @@ void qSlicerRecorderControlsWidget
     d->StatusResultLabel->setText( "Waiting" );
   }
 
+  if ( this->BufferModifiedTime == this->BufferWidget->BufferModifiedTime )
+  {
+    return;
+  }    
+  this->BufferModifiedTime = this->BufferWidget->BufferModifiedTime;
 
+  this->onActiveTransformsUpdated();
 
 }

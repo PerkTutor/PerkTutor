@@ -79,7 +79,7 @@ qSlicerTransformBufferWidget* qSlicerTransformBufferWidget
 {
   qSlicerTransformBufferWidget* newTransformBufferWidget = new qSlicerTransformBufferWidget();
   newTransformBufferWidget->TransformRecorderLogic = newTransformRecorderLogic;
-  newTransformBufferWidget->UpdateStatus = 0;
+  newTransformBufferWidget->BufferModifiedTime = 0;
   newTransformBufferWidget->setup();
   return newTransformBufferWidget;
 }
@@ -125,7 +125,7 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  this->UpdateStatus++;
+  this->BufferModifiedTime++;
   this->updateWidget();
 }
 
@@ -162,7 +162,6 @@ void qSlicerTransformBufferWidget
     dialog.close();
   }
   
-  this->UpdateStatus++;
   this->updateWidget();
 }
 
@@ -179,7 +178,6 @@ void qSlicerTransformBufferWidget
     this->TransformRecorderLogic->ExportToFile( this->GetBufferNode(), filename.toStdString() );
   }
 
-  this->UpdateStatus++;
   this->updateWidget();
 }
 
@@ -192,6 +190,11 @@ void qSlicerTransformBufferWidget
   if ( this->TransformRecorderLogic == NULL )
   {
     return;
+  }
+
+  if ( this->GetBufferNode() != NULL )
+  {
+    this->BufferModifiedTime = this->GetBufferNode()->GetMTime();
   }
 
   this->setMRMLScene( this->TransformRecorderLogic->GetMRMLScene() );

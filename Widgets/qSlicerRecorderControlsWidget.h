@@ -63,7 +63,7 @@ protected:
   virtual void enter();
 
   qSlicerTransformBufferWidget* BufferWidget;
-  unsigned int UpdateStatus;
+  unsigned long int BufferModifiedTime;
   bool updatingCheckedTransforms;
 
 private:

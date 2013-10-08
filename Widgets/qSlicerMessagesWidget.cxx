@@ -79,7 +79,7 @@ qSlicerMessagesWidget* qSlicerMessagesWidget
 {
   qSlicerMessagesWidget* newMessagesWidget = new qSlicerMessagesWidget();
   newMessagesWidget->BufferWidget = newBufferWidget;
-  newMessagesWidget->UpdateStatus = newBufferWidget->UpdateStatus;
+  newMessagesWidget->BufferModifiedTime = newBufferWidget->BufferModifiedTime;
   newMessagesWidget->setup();
   return newMessagesWidget;
 }
@@ -95,6 +95,7 @@ void qSlicerMessagesWidget
   connect( d->AddMessageButton, SIGNAL( clicked() ), this, SLOT( onAddMessageButtonClicked() ) );
   connect( d->RemoveMessageButton, SIGNAL( clicked() ), this, SLOT( onRemoveMessageButtonClicked() ) ); 
   connect( d->ClearMessagesButton, SIGNAL( clicked() ), this, SLOT( onClearMessagesButtonClicked() ) );
+  connect( d->MessagesTableWidget, SIGNAL( cellDoubleClicked( int, int ) ), this, SLOT( onMessageDoubleClicked( int, int ) ) );
 
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
@@ -166,10 +167,12 @@ void qSlicerMessagesWidget
 
   this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
 
-  if ( this->UpdateStatus != this->BufferWidget->UpdateStatus )
+  // Only update if the buffer has changed
+  if ( this->BufferModifiedTime == this->BufferWidget->BufferModifiedTime )
   {
-    this->UpdateStatus = this->BufferWidget->UpdateStatus;
+    return;
   }
+  this->BufferModifiedTime = this->BufferWidget->BufferModifiedTime;
 
   // Check what the current row and column are
   int currentRow = d->MessagesTableWidget->currentRow();
@@ -196,7 +199,9 @@ void qSlicerMessagesWidget
   {
     double messageTime = this->BufferWidget->GetBufferNode()->GetMessageAt(i)->GetTime() - this->BufferWidget->GetBufferNode()->GetMinimumTime();
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
+    timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
 	QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->BufferWidget->GetBufferNode()->GetMessageAt(i)->GetName() ) );
+    messageItem->setFlags( messageItem->flags() & ~Qt::ItemIsEditable );
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 
   }
