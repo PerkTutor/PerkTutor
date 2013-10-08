@@ -80,7 +80,7 @@ qSlicerPerkEvaluatorTransformBufferWidget* qSlicerPerkEvaluatorTransformBufferWi
   qSlicerPerkEvaluatorTransformBufferWidget* newTransformBufferWidget = new qSlicerPerkEvaluatorTransformBufferWidget();
   newTransformBufferWidget->PerkEvaluatorLogic = newPerkEvaluatorLogic;
   newTransformBufferWidget->TransformRecorderLogic = newPerkEvaluatorLogic->TransformRecorderLogic;
-  newTransformBufferWidget->UpdateStatus = 0;
+  newTransformBufferWidget->BufferModifiedTime = 0;
   newTransformBufferWidget->setup();
   return newTransformBufferWidget;
 }
@@ -93,6 +93,6 @@ void qSlicerPerkEvaluatorTransformBufferWidget
   this->PerkEvaluatorLogic->UpdateToolTrajectories( this->GetBufferNode() );
   this->PerkEvaluatorLogic->SetPlaybackTime( this->PerkEvaluatorLogic->GetMinTime() );
 
-  this->UpdateStatus++;
+  this->BufferModifiedTime++;
   this->updateWidget();
 }

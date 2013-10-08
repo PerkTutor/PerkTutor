@@ -103,3 +103,15 @@ void qSlicerPerkEvaluatorMessagesWidget
   
   this->updateWidget();
 }
+
+
+void qSlicerPerkEvaluatorMessagesWidget
+::onMessageDoubleClicked( int row, int column )
+{
+  Q_D(qSlicerPerkEvaluatorMessagesWidget);  
+
+  double messageTime = this->BufferWidget->GetBufferNode()->GetMessageAt( row )->GetTime();
+  this->PerkEvaluatorLogic->SetPlaybackTime( messageTime );
+
+  this->updateWidget();
+}

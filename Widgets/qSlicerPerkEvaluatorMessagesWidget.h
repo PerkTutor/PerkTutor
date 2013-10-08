@@ -48,6 +48,7 @@ public:
 protected slots:
 
   void onAddMessageButtonClicked();
+  void onMessageDoubleClicked( int row, int column );
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorMessagesWidgetPrivate> d_ptr;
@@ -55,8 +56,6 @@ protected:
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorMessagesWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorMessagesWidget);
-
-  vtkSlicerPerkEvaluatorLogic* peLogic;
 
 };
 

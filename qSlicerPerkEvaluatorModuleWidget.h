@@ -24,7 +24,7 @@ public:
   qSlicerPerkEvaluatorModuleWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorModuleWidget();
 
-  unsigned int UpdateStatus;
+  unsigned long int BufferModifiedTime;
 
 public slots:
 

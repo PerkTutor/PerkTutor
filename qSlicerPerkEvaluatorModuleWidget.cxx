@@ -363,7 +363,7 @@ qSlicerPerkEvaluatorModuleWidget
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
 
-  this->UpdateStatus = d->TransformBufferWidget->UpdateStatus;
+  this->BufferModifiedTime = d->TransformBufferWidget->BufferModifiedTime;
   
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
   connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
@@ -402,7 +402,7 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
-  if ( this->UpdateStatus != d->TransformBufferWidget->UpdateStatus )
+  if ( this->BufferModifiedTime != d->TransformBufferWidget->BufferModifiedTime )
   {
     d->PlaybackSlider->setMinimum( 0.0 );
     d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
@@ -411,7 +411,7 @@ void qSlicerPerkEvaluatorModuleWidget
     d->MetricsTable->clear();
     d->MetricsTable->setRowCount( 0 );
     d->MetricsTable->setColumnCount( 0 );
-    this->UpdateStatus = d->TransformBufferWidget->UpdateStatus;
+    this->BufferModifiedTime = d->TransformBufferWidget->BufferModifiedTime;
   }
   
   // Playback slider
