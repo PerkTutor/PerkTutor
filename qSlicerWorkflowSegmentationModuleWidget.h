@@ -26,7 +26,7 @@ public:
   qSlicerWorkflowSegmentationModuleWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationModuleWidget();
 
-  unsigned int UpdateStatus;  
+  unsigned long int BufferModifiedTime;  
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
