@@ -42,6 +42,8 @@ public slots:
   void OnMarkBeginClicked();
   void OnMarkEndClicked();
 
+  void OnMetricsDirectoryClicked();
+
   void OnAnalyzeClicked();
   void OnClipboardClicked();
   void OnTraceTrajectoriesChanged();
