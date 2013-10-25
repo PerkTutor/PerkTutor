@@ -16,8 +16,11 @@ def CalculateAllToolMetrics():
   # Compile a list of metric objects
   metrics = []
   for j in range( len( allScripts ) ):
-    currentMetric = imp.load_source( "PerkEvaluatorMetric" + str( j ), allScripts[j] )
-    metrics.append( currentMetric.PerkEvaluatorMetric() )
+    currentMetricModule = imp.load_source( "PerkEvaluatorMetric" + str( j ), allScripts[j] )
+    currentMetric = currentMetricModule.PerkEvaluatorMetric()
+    # Drop if it requires a tissue node and none is specified
+    if ( currentMetric.RequiresTissueNode() == False or peLogic.GetBodyModelNode() != None ):
+      metrics.append( currentMetric )
   
   metricStringList = []
   trajectoryIndex = 0
@@ -25,16 +28,22 @@ def CalculateAllToolMetrics():
   for i in range( peLogic.GetNumToolTrajectories() ):
 
     trajectory = peLogic.GetToolTrajectory( trajectoryIndex )
-  
-    for j in range( len( metrics ) ):
-      metrics[j].Initialize()
-      
-    CalculateToolMetric( peLogic, trajectory, metrics )
     
+    #Drop if it requires the needle reference 
+    trajectoryMetrics = []
     for j in range( len( metrics ) ):
-      metrics[j].Finalize()
-      metricStringList.append( trajectory.GetCurrentTransform().GetDeviceName() + " " + metrics[j].GetMetricName() + " (" + str( metrics[j].GetMetricUnit() ) + ") " )
-      metricStringList.append( str( metrics[j].GetMetric() ) )  
+      if ( ( peLogic.GetNeedleTransformNode() != None and trajectory.GetCurrentTransform().GetDeviceName() == peLogic.GetNeedleTransformNode().GetName() ) or metrics[j].RequiresNeedle() == False ):
+        trajectoryMetrics.append( metrics[j] )
+  
+    for j in range( len( trajectoryMetrics ) ):
+      trajectoryMetrics[j].Initialize( peLogic.GetBodyModelNode() )
+      
+    CalculateToolMetric( peLogic, trajectory, trajectoryMetrics )
+    
+    for j in range( len( trajectoryMetrics ) ):
+      trajectoryMetrics[j].Finalize()
+      metricStringList.append( trajectory.GetCurrentTransform().GetDeviceName() + " " + trajectoryMetrics[j].GetMetricName() + " (" + str( trajectoryMetrics[j].GetMetricUnit() ) + ") " )
+      metricStringList.append( str( trajectoryMetrics[j].GetMetric() ) )  
     
     trajectoryIndex = trajectoryIndex + 1
   
@@ -42,7 +51,7 @@ def CalculateAllToolMetrics():
   
   
 
-def CalculateToolMetric( peLogic, trajectory, metrics ):
+def CalculateToolMetric( peLogic, trajectory, trajectoryMetrics ):
   
   # Initialize the origin, previous point, current point
   Origin = [ 0, 0, 0, 1 ]
@@ -84,7 +93,7 @@ def CalculateToolMetric( peLogic, trajectory, metrics ):
     M_Prev.MultiplyPoint( Origin, P_Prev )
     M_Curr.MultiplyPoint( Origin, P_Curr )
     
-    for j in range( len( metrics ) ):
-      metrics[j].AddTimestamp( T_Prev, T_Curr, M_Prev, M_Curr, P_Prev, P_Curr )
+    for j in range( len( trajectoryMetrics ) ):
+      trajectoryMetrics[j].AddTimestamp( T_Prev, T_Curr, M_Prev, M_Curr, P_Prev, P_Curr )
   
   peLogic.SetPlaybackTime( originalPlaybackTime ) 
