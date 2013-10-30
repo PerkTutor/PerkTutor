@@ -60,7 +60,11 @@ protected:
   virtual void enter();
 
   qSlicerTransformBufferWidget* BufferWidget;
-  unsigned long int BufferModifiedTime;
+
+  // This widget will keep track if the buffer is changed
+  unsigned long BufferStatus;
+  // These quantities might be repeated by different buffers, so we still need the above
+  unsigned long BufferMessagesStatus;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerMessagesWidget);

@@ -79,7 +79,10 @@ qSlicerTransformBufferWidget* qSlicerTransformBufferWidget
 {
   qSlicerTransformBufferWidget* newTransformBufferWidget = new qSlicerTransformBufferWidget();
   newTransformBufferWidget->TransformRecorderLogic = newTransformRecorderLogic;
-  newTransformBufferWidget->BufferModifiedTime = 0;
+  newTransformBufferWidget->BufferStatus = 0;
+  newTransformBufferWidget->BufferTransformsStatus = 0;
+  newTransformBufferWidget->BufferMessagesStatus = 0;
+  newTransformBufferWidget->BufferActiveTransformsStatus = 0;
   newTransformBufferWidget->setup();
   return newTransformBufferWidget;
 }
@@ -99,6 +102,7 @@ void qSlicerTransformBufferWidget
   Q_D(qSlicerTransformBufferWidget);
 
   d->setupUi(this);
+  this->setMRMLScene( this->TransformRecorderLogic->GetMRMLScene() );
 
   connect( d->BufferNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onCurrentBufferNodeChanged() ) );
 
@@ -125,7 +129,7 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  this->BufferModifiedTime++;
+  this->BufferStatus++;
   this->updateWidget();
 }
 
@@ -156,6 +160,7 @@ void qSlicerTransformBufferWidget
     dialog.setValue( 10 );
     this->TransformRecorderLogic->ImportFromFile( importBufferNode, filename.toStdString() );
 
+    // Triggers the buffer node changed signal
     d->BufferNodeComboBox->setCurrentNode( NULL );
     d->BufferNodeComboBox->setCurrentNode( importBufferNode );
 
@@ -178,6 +183,7 @@ void qSlicerTransformBufferWidget
     this->TransformRecorderLogic->ExportToFile( this->GetBufferNode(), filename.toStdString() );
   }
 
+  // No need to update the buffer - it is not changed
   this->updateWidget();
 }
 
@@ -192,11 +198,12 @@ void qSlicerTransformBufferWidget
     return;
   }
 
-  if ( this->GetBufferNode() != NULL )
+  if ( this->GetBufferNode() == NULL )
   {
-    this->BufferModifiedTime = this->GetBufferNode()->GetMTime();
+    return;
   }
 
-  this->setMRMLScene( this->TransformRecorderLogic->GetMRMLScene() );
-
+  this->BufferTransformsStatus = this->GetBufferNode()->TransformsStatus;
+  this->BufferMessagesStatus = this->GetBufferNode()->MessagesStatus;
+  this->BufferActiveTransformsStatus = this->GetBufferNode()->ActiveTransformsStatus;
 }

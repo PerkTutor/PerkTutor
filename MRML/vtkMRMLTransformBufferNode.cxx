@@ -113,6 +113,10 @@ vtkMRMLTransformBufferNode
 ::vtkMRMLTransformBufferNode()
 {
   // No need to initialize the vectors
+  // Initialize the statuses for updating
+  this->TransformsStatus = 0;
+  this->MessagesStatus = 0;
+  this->ActiveTransformsStatus = 0;
 }
 
 
@@ -134,19 +138,19 @@ void vtkMRMLTransformBufferNode
   if ( this->GetNumTransforms() < 1 )
   {
     this->transforms.push_back( newTransform );
-    this->Modified();
+    this->TransformsStatus++;
 	return;
   }
   if ( newTransform->GetTime() >= this->GetCurrentTransform()->GetTime() )
   {
     this->transforms.push_back( newTransform );
-    this->Modified();
+    this->TransformsStatus++;
 	return;
   }
   if ( newTransform->GetTime() <= this->GetTransformAt(0)->GetTime() )
   {
     this->transforms.insert( transforms.begin() + 0, newTransform );
-    this->Modified();
+    this->TransformsStatus++;
 	return;
   }
 
@@ -156,11 +160,11 @@ void vtkMRMLTransformBufferNode
     if ( newTransform->GetTime() >= this->GetTransformAt(i)->GetTime() )
 	{
       this->transforms.insert( transforms.begin() + i + 1, newTransform );
+      this->TransformsStatus++;
 	  return;
 	}
   }
 
-  this->Modified();
 }
 
 
@@ -171,19 +175,19 @@ void vtkMRMLTransformBufferNode
   if ( this->GetNumMessages() < 1 )
   {
     this->messages.push_back( newMessage );
-    this->Modified();
+    this->MessagesStatus++;
 	return;
   }
   if ( newMessage->GetTime() >= this->GetCurrentMessage()->GetTime() )
   {
     this->messages.push_back( newMessage );
-    this->Modified();
+    this->MessagesStatus++;
 	return;
   }
   if ( newMessage->GetTime() <= this->GetMessageAt(0)->GetTime() )
   {
     this->messages.insert( messages.begin() + 0, newMessage );
-    this->Modified();
+    this->MessagesStatus++;
 	return;
   }
 
@@ -193,7 +197,7 @@ void vtkMRMLTransformBufferNode
     if ( newMessage->GetTime() >= this->GetMessageAt(i)->GetTime() )
 	{
       this->messages.insert( messages.begin() + i + 1, newMessage );
-      this->Modified();
+      this->MessagesStatus++;
 	  return;
 	}
   }
@@ -209,7 +213,7 @@ void vtkMRMLTransformBufferNode
     this->GetTransformAt(index)->Delete();
     this->transforms.erase( transforms.begin() + index );
   }
-  this->Modified();
+  this->TransformsStatus++;
 }
 
 
@@ -226,7 +230,7 @@ void vtkMRMLTransformBufferNode
 	}
   }
 
-  this->Modified();
+  this->TransformsStatus++;
 }
 
 
@@ -238,7 +242,7 @@ void vtkMRMLTransformBufferNode
     this->GetMessageAt(index)->Delete();
     this->messages.erase( messages.begin() + index );
   }
-  this->Modified();
+  this->MessagesStatus++;
 }
 
 
@@ -255,7 +259,7 @@ void vtkMRMLTransformBufferNode
 	}
   }
 
-  this->Modified();
+  this->MessagesStatus++;
 }
 
 
@@ -470,7 +474,7 @@ void vtkMRMLTransformBufferNode
     this->GetTransformAt(i)->Delete();
   }
   this->transforms.clear();
-  this->Modified();
+  this->TransformsStatus++;
 }
 
 
@@ -483,7 +487,7 @@ void vtkMRMLTransformBufferNode
     this->GetMessageAt(i)->Delete();
   }
   this->messages.clear();
-  this->Modified();
+  this->MessagesStatus++;
 }
 
 
@@ -500,7 +504,7 @@ void vtkMRMLTransformBufferNode
   }
 
   this->activeTransforms.push_back( name );
-  this->Modified();
+  this->ActiveTransformsStatus++;
 }
 
 
@@ -513,9 +517,10 @@ void vtkMRMLTransformBufferNode
 	{
 	  this->activeTransforms.erase( this->activeTransforms.begin() + i );
 	  i--;
+      this->ActiveTransformsStatus++;
 	}
   }
-  this->Modified();
+
 }
 
 
@@ -531,7 +536,7 @@ void vtkMRMLTransformBufferNode
 {
   this->activeTransforms.clear();
   this->activeTransforms = names;
-  this->Modified();
+  this->ActiveTransformsStatus++;
 }
 
 
@@ -560,7 +565,7 @@ void vtkMRMLTransformBufferNode
 
   }
 
-  this->Modified();
+  this->ActiveTransformsStatus++;
 }
 
 
@@ -648,8 +653,6 @@ std::string vtkMRMLTransformBufferNode
 
   xmlstring << "</TransformRecorderLog>" << std::endl;
 
-  this->Modified();
-
   return xmlstring.str();
 }
 
@@ -691,5 +694,5 @@ void vtkMRMLTransformBufferNode
    
   }
 
-  this->Modified();
+  // Status updates are taken care of in the add functions
 }

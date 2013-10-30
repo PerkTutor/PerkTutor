@@ -115,6 +115,10 @@ void qSlicerTransformRecorderModuleWidget::setup()
   d->MessagesWidget = qSlicerMessagesWidget::New( d->TransformBufferWidget );
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
+
+  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
+  this->BufferTransformsStatus = d->TransformBufferWidget->BufferTransformsStatus;
+  this->BufferMessagesStatus = d->TransformBufferWidget->BufferMessagesStatus;
   
   // GUI refresh: updates every 10ms
   QTimer *t = new QTimer( this );
@@ -136,6 +140,15 @@ void qSlicerTransformRecorderModuleWidget
 ::updateWidget()
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
+
+  if ( this->BufferStatus == d->TransformBufferWidget->BufferStatus && this->BufferTransformsStatus == d->TransformBufferWidget->BufferTransformsStatus &&
+    this->BufferMessagesStatus == d->TransformBufferWidget->BufferMessagesStatus )
+  {
+    return;
+  }
+  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
+  this->BufferTransformsStatus = d->TransformBufferWidget->BufferTransformsStatus;
+  this->BufferMessagesStatus = d->TransformBufferWidget->BufferMessagesStatus;
 
   // The statistics should be reset to zeros if no buffer is selected
   if ( d->TransformBufferWidget->GetBufferNode() == NULL )
