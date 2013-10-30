@@ -98,6 +98,8 @@ vtkSlicerPerkEvaluatorLogic
 vtkSlicerPerkEvaluatorLogic::
 ~vtkSlicerPerkEvaluatorLogic()
 {
+  this->ClearData();
+
   if ( this->BodyModelNode != NULL )
   {
     this->BodyModelNode->Delete();
@@ -116,8 +118,12 @@ vtkSlicerPerkEvaluatorLogic::
 void vtkSlicerPerkEvaluatorLogic
 ::ClearData()
 {
+  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  {
+    this->ToolTrajectories.at(i)->Delete();
+  }
   this->ToolTrajectories.clear();
-  
+
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
   this->PlaybackTime = 0.0;
@@ -465,8 +471,8 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     EnclosedFilter->Initialize( body );
   }
 
-  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M0 );
-  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkMatrix4x4::New(); node->GetMatrixTransformToWorld( M1 );  
+  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkSmartPointer< vtkMatrix4x4 >::New(); node->GetMatrixTransformToWorld( M0 );
+  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkSmartPointer< vtkMatrix4x4 >::New(); node->GetMatrixTransformToWorld( M1 );  
   
   for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
   {
