@@ -80,6 +80,8 @@ qSlicerPerkEvaluatorMessagesWidget* qSlicerPerkEvaluatorMessagesWidget
   qSlicerPerkEvaluatorMessagesWidget* newMessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
   newMessagesWidget->BufferWidget = newBufferWidget;
   newMessagesWidget->PerkEvaluatorLogic = newPerkEvaluatorLogic;
+  newMessagesWidget->BufferStatus = newBufferWidget->BufferStatus;
+  newMessagesWidget->BufferMessagesStatus = newBufferWidget->BufferMessagesStatus;
   newMessagesWidget->setup();
   return newMessagesWidget;
 }

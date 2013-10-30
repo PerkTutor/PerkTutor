@@ -24,7 +24,7 @@ public:
   qSlicerPerkEvaluatorModuleWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorModuleWidget();
 
-  unsigned long int BufferModifiedTime;
+  unsigned long BufferStatus;
 
 public slots:
 
@@ -39,7 +39,9 @@ public slots:
 
   void OnTimeout();
 
+  void OnMarkBeginChanged( double value );
   void OnMarkBeginClicked();
+  void OnMarkEndChanged( double value );
   void OnMarkEndClicked();
 
   void OnAnalyzeClicked();

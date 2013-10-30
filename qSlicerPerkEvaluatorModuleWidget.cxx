@@ -197,20 +197,36 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkBeginChanged( double value )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  d->logic()->SetMarkBegin( d->logic()->GetMinTime() + value );
+}
+
 
 void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkBeginClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+  d->logic()->SetMarkBegin( d->logic()->GetPlaybackTime() );
   d->BeginSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
 }
 
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkEndChanged( double value )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  d->logic()->SetMarkEnd( d->logic()->GetMinTime() + value );
+}
 
 
 void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkEndClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+  d->logic()->SetMarkBegin( d->logic()->GetPlaybackTime() );
   d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
 }
 
@@ -227,10 +243,12 @@ void qSlicerPerkEvaluatorModuleWidget
   dialog.show();
   dialog.setValue( 10 );
   
+  /*
   double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
   double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
   d->logic()->SetMarkBegin( begin );
   d->logic()->SetMarkEnd( end );
+  */
 
   // Metrics table  
   std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics();
@@ -363,7 +381,7 @@ qSlicerPerkEvaluatorModuleWidget
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
   this->Superclass::setup();
 
-  this->BufferModifiedTime = d->TransformBufferWidget->BufferModifiedTime;
+  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
   
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
   connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
@@ -375,7 +393,9 @@ qSlicerPerkEvaluatorModuleWidget
 
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 
+  connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged( double ) ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
+  connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged( double ) ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
 
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
@@ -402,19 +422,22 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
-  if ( this->BufferModifiedTime != d->TransformBufferWidget->BufferModifiedTime )
-  {
-    d->PlaybackSlider->setMinimum( 0.0 );
-    d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
-    d->BeginSpinBox->setValue( 0.0 );
-    d->EndSpinBox->setValue( d->logic()->GetTotalTime() );
-    d->MetricsTable->clear();
-    d->MetricsTable->setRowCount( 0 );
-    d->MetricsTable->setColumnCount( 0 );
-    this->BufferModifiedTime = d->TransformBufferWidget->BufferModifiedTime;
-  }
-  
   // Playback slider
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );  
+
+  if ( this->BufferStatus == d->TransformBufferWidget->BufferStatus )
+  {
+    return;
+  }
+  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
+
+  d->PlaybackSlider->setMinimum( 0.0 );
+  d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
+  d->BeginSpinBox->setValue( 0.0 );
+  d->EndSpinBox->setValue( d->logic()->GetTotalTime() );
+  d->MetricsTable->clear();
+  d->MetricsTable->setRowCount( 0 );
+  d->MetricsTable->setColumnCount( 0 ); 
+
 }
 
