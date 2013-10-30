@@ -318,10 +318,11 @@ void vtkSlicerTransformRecorderLogic
     if ( node == NULL )
     {
       node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
+      node->SetName( activeTransforms.at(i).c_str() );
+      node->SetScene( this->GetMRMLScene() );
 	  this->GetMRMLScene()->AddNode( node );
-	  node->SetScene( this->GetMRMLScene() );
-	  node->SetName( activeTransforms.at(i).c_str() );
     }
+    node->UnRegister( this->GetMRMLScene() ); // This is required to avoid memory problems
   }
 
   parser->Delete();

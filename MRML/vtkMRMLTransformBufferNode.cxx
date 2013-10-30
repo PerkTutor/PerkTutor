@@ -75,7 +75,7 @@ void vtkMRMLTransformBufferNode
     }
   }
 
-  this->Modified();
+  this->ActiveTransformsStatus++;
 }
 
 
@@ -102,7 +102,6 @@ void vtkMRMLTransformBufferNode
     this->AddActiveTransform( node->GetActiveTransforms().at(i) );
   }
 
-  this->Modified();
 }
 
 
@@ -461,7 +460,6 @@ void vtkMRMLTransformBufferNode
 {
   this->ClearTransforms();
   this->ClearMessages();
-  this->Modified();
 }
 
 

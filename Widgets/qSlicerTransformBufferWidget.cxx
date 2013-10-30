@@ -155,6 +155,7 @@ void qSlicerTransformBufferWidget
       importBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) );
       importBufferNode->SetScene( this->mrmlScene() );
       this->mrmlScene()->AddNode( importBufferNode );
+      importBufferNode->UnRegister( this->mrmlScene() ); // This is required otherwise there is a memory problem
     }
     
     dialog.setValue( 10 );
