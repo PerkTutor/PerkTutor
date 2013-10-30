@@ -114,7 +114,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
   this->Superclass::setup();
 
-  this->BufferModifiedTime = d->TransformBufferWidget->BufferModifiedTime;
+  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
 
   // Module node selection
   d->ModuleComboBox->setNoneEnabled( true );
@@ -369,11 +369,17 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
     return;
   }
 
-  if ( this->BufferModifiedTime != d->TransformBufferWidget->BufferModifiedTime )
+  if ( this->BufferStatus != d->TransformBufferWidget->BufferStatus )
   {
     d->logic()->ResetWorkflowAlgorithms();
-    this->BufferModifiedTime = d->TransformBufferWidget->BufferModifiedTime;
   }
+
+  if ( this->BufferStatus == d->TransformBufferWidget->BufferStatus && this->BufferTransformsStatus == d->TransformBufferWidget->BufferTransformsStatus )
+  {
+    return;
+  }
+  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
+  this->BufferTransformsStatus = d->TransformBufferWidget->BufferStatus;
 
   // This updates the tasks
   d->logic()->Update( d->TransformBufferWidget->GetBufferNode() );

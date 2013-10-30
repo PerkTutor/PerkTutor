@@ -26,7 +26,11 @@ public:
   qSlicerWorkflowSegmentationModuleWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationModuleWidget();
 
-  unsigned long int BufferModifiedTime;  
+  // This widget will keep track if the buffer is changed
+  unsigned long BufferStatus;
+  // These quantities might be repeated by different buffers, so we still need the above
+  unsigned long BufferTransformsStatus;
+
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
