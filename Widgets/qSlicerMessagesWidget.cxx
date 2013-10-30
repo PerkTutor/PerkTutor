@@ -79,7 +79,8 @@ qSlicerMessagesWidget* qSlicerMessagesWidget
 {
   qSlicerMessagesWidget* newMessagesWidget = new qSlicerMessagesWidget();
   newMessagesWidget->BufferWidget = newBufferWidget;
-  newMessagesWidget->BufferModifiedTime = newBufferWidget->BufferModifiedTime;
+  newMessagesWidget->BufferStatus = newBufferWidget->BufferStatus;
+  newMessagesWidget->BufferMessagesStatus = newBufferWidget->BufferMessagesStatus;
   newMessagesWidget->setup();
   return newMessagesWidget;
 }
@@ -91,6 +92,7 @@ void qSlicerMessagesWidget
   Q_D(qSlicerMessagesWidget);
 
   d->setupUi(this);
+  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
 
   connect( d->AddMessageButton, SIGNAL( clicked() ), this, SLOT( onAddMessageButtonClicked() ) );
   connect( d->RemoveMessageButton, SIGNAL( clicked() ), this, SLOT( onRemoveMessageButtonClicked() ) ); 
@@ -165,14 +167,13 @@ void qSlicerMessagesWidget
     return;
   }
 
-  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
-
   // Only update if the buffer has changed
-  if ( this->BufferModifiedTime == this->BufferWidget->BufferModifiedTime )
+  if ( this->BufferStatus == this->BufferWidget->BufferStatus && this->BufferMessagesStatus == this->BufferWidget->BufferMessagesStatus )
   {
     return;
   }
-  this->BufferModifiedTime = this->BufferWidget->BufferModifiedTime;
+  this->BufferStatus = this->BufferWidget->BufferStatus;
+  this->BufferMessagesStatus = this->BufferWidget->BufferMessagesStatus;
 
   // Check what the current row and column are
   int currentRow = d->MessagesTableWidget->currentRow();

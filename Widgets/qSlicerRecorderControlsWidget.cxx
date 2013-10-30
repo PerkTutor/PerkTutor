@@ -79,8 +79,9 @@ qSlicerRecorderControlsWidget* qSlicerRecorderControlsWidget
 {
   qSlicerRecorderControlsWidget* newRecorderControlsWidget = new qSlicerRecorderControlsWidget();
   newRecorderControlsWidget->BufferWidget = newBufferWidget;
-  newRecorderControlsWidget->BufferModifiedTime = newBufferWidget->BufferModifiedTime;
   newRecorderControlsWidget->updatingCheckedTransforms = false;
+  newRecorderControlsWidget->BufferStatus = newBufferWidget->BufferStatus;
+  newRecorderControlsWidget->BufferActiveTransformsStatus = newBufferWidget->BufferActiveTransformsStatus;
   newRecorderControlsWidget->setup();
   return newRecorderControlsWidget;
 }
@@ -92,6 +93,7 @@ void qSlicerRecorderControlsWidget
   Q_D(qSlicerRecorderControlsWidget);
 
   d->setupUi(this);
+  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
 
   connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
 
@@ -175,6 +177,7 @@ void qSlicerRecorderControlsWidget
   
   // The observed transforms should be dealt with in the TransformRecorder logic
   this->BufferWidget->TransformRecorderLogic->SetRecording( this->BufferWidget->GetBufferNode(), true );
+  d->StatusResultLabel->setText( "Recording" );
   
   this->updateWidget();
 }
@@ -186,6 +189,7 @@ void qSlicerRecorderControlsWidget
   Q_D(qSlicerRecorderControlsWidget);  
 
   this->BufferWidget->TransformRecorderLogic->SetRecording( this->BufferWidget->GetBufferNode(), false );
+  d->StatusResultLabel->setText( "Waiting" );
   
   this->updateWidget();
 }
@@ -212,7 +216,12 @@ void qSlicerRecorderControlsWidget
     return;
   }
 
-  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
+  if ( this->BufferStatus == this->BufferWidget->BufferStatus && this->BufferActiveTransformsStatus == this->BufferWidget->BufferActiveTransformsStatus )
+  {
+    return;
+  }
+  this->BufferStatus = this->BufferWidget->BufferStatus;
+  this->BufferActiveTransformsStatus = this->BufferWidget->BufferActiveTransformsStatus;
 
   // Set the text indicating recording
   if ( this->BufferWidget->TransformRecorderLogic->GetRecording( this->BufferWidget->GetBufferNode() ) )
@@ -224,12 +233,5 @@ void qSlicerRecorderControlsWidget
     d->StatusResultLabel->setText( "Waiting" );
   }
 
-  if ( this->BufferModifiedTime == this->BufferWidget->BufferModifiedTime )
-  {
-    return;
-  }    
-  this->BufferModifiedTime = this->BufferWidget->BufferModifiedTime;
-
   this->onActiveTransformsUpdated();
-
 }

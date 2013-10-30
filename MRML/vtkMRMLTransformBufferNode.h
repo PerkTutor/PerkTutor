@@ -117,6 +117,11 @@ public:
   std::string ToXMLString();
   void FromXMLElement( vtkXMLDataElement* element );
 
+  // Keep track of what has been updated
+  unsigned long TransformsStatus;
+  unsigned long MessagesStatus;
+  unsigned long ActiveTransformsStatus;
+
 
 private:
   

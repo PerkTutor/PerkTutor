@@ -148,7 +148,6 @@ void vtkSlicerTransformRecorderLogic
   vtkMRMLTransformNode* transformNode = vtkMRMLTransformNode::SafeDownCast( node );
   node->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->AddActiveTransform( node->GetName() );
-  bufferNode->Modified();
 }
 
 
@@ -164,7 +163,6 @@ void vtkSlicerTransformRecorderLogic
   // Unobserve the node
   node->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->RemoveActiveTransform( node->GetName() );
-  bufferNode->Modified();
 }
 
 
