@@ -39,9 +39,9 @@ public slots:
 
   void OnTimeout();
 
-  void OnMarkBeginChanged( double value );
+  void OnMarkBeginEdited();
   void OnMarkBeginClicked();
-  void OnMarkEndChanged( double value );
+  void OnMarkEndEdited();
   void OnMarkEndClicked();
 
   void OnAnalyzeClicked();

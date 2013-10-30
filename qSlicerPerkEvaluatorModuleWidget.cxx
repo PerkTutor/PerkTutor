@@ -198,10 +198,10 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnMarkBeginChanged( double value )
+::OnMarkBeginEdited()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-  d->logic()->SetMarkBegin( d->logic()->GetMinTime() + value );
+  d->logic()->SetMarkBegin( d->logic()->GetMinTime() + d->BeginSpinBox->value() );
 }
 
 
@@ -215,10 +215,10 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnMarkEndChanged( double value )
+::OnMarkEndEdited()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-  d->logic()->SetMarkEnd( d->logic()->GetMinTime() + value );
+  d->logic()->SetMarkEnd( d->logic()->GetMinTime() + d->EndSpinBox->value() );
 }
 
 
@@ -242,13 +242,6 @@ void qSlicerPerkEvaluatorModuleWidget
   dialog.setLabelText( "Please wait while analyzing procedure..." );
   dialog.show();
   dialog.setValue( 10 );
-  
-  /*
-  double begin = d->BeginSpinBox->value() + d->logic()->GetMinTime();
-  double end = d->EndSpinBox->value() + d->logic()->GetMinTime();
-  d->logic()->SetMarkBegin( begin );
-  d->logic()->SetMarkEnd( end );
-  */
 
   // Metrics table  
   std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics();
@@ -393,9 +386,9 @@ qSlicerPerkEvaluatorModuleWidget
 
   connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 
-  connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged( double ) ) );
+  connect( d->BeginSpinBox, SIGNAL( editingFinished() ), this, SLOT( OnMarkBeginEdited() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
-  connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged( double ) ) );
+  connect( d->EndSpinBox, SIGNAL( editingFinished() ), this, SLOT( OnMarkEndEdited() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
 
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
@@ -433,8 +426,12 @@ void qSlicerPerkEvaluatorModuleWidget
 
   d->PlaybackSlider->setMinimum( 0.0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
+
+  d->logic()->SetMarkBegin( d->logic()->GetMinTime() );
   d->BeginSpinBox->setValue( 0.0 );
+  d->logic()->SetMarkEnd( d->logic()->GetMaxTime() );
   d->EndSpinBox->setValue( d->logic()->GetTotalTime() );
+
   d->MetricsTable->clear();
   d->MetricsTable->setRowCount( 0 );
   d->MetricsTable->setColumnCount( 0 ); 
