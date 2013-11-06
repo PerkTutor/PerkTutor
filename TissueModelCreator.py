@@ -81,17 +81,17 @@ class TissueModelCreatorWidget:
     # self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
 
     #
-    # Parameters Area
+    # Display Area
     #
-    parametersCollapsibleButton = ctk.ctkCollapsibleButton()
-    parametersCollapsibleButton.text = "Parameters"
-    self.layout.addWidget(parametersCollapsibleButton)
+    displayCollapsibleButton = ctk.ctkCollapsibleButton()
+    displayCollapsibleButton.text = "Display"
+    self.layout.addWidget(displayCollapsibleButton)
 
     # Layout within the dummy collapsible button
-    parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
+    displayFormLayout = qt.QFormLayout(displayCollapsibleButton)
 
     #
-    # input volume selector
+    # input fiducials selector
     #
     self.markupSelector = slicer.qMRMLNodeComboBox()
     self.markupSelector.nodeTypes = ( ("vtkMRMLMarkupsFiducialNode"), "" )
@@ -102,7 +102,7 @@ class TissueModelCreatorWidget:
     self.markupSelector.showChildNodeTypes = False
     self.markupSelector.setMRMLScene( slicer.mrmlScene )
     self.markupSelector.setToolTip( "Pick the markup node for the algorithm." )
-    parametersFormLayout.addRow( "Select Markup Node: ", self.markupSelector )
+    displayFormLayout.addRow( "Select Markup Node: ", self.markupSelector )
     
     #
     # Depth slider
@@ -112,17 +112,8 @@ class TissueModelCreatorWidget:
     self.depthSlider.minimum = 0
     self.depthSlider.value = 100
     self.depthSlider.setToolTip( "Select the depth of the tissue." )
-    parametersFormLayout.addRow( "Depth (mm): ", self.depthSlider )
-    
-    #
-    # Reverse (ie inside-out) checkbox
-    #
-    self.reverseCheckBox = qt.QCheckBox()
-    self.reverseCheckBox.setCheckState( False )
-    self.reverseCheckBox.setToolTip( "Turn the tissue inside-out." )
-    self.reverseCheckBox.setText( "Reverse" )
-    #parametersFormLayout.addRow( "Reverse: ", self.reverseCheckBox )
-        
+    displayFormLayout.addRow( "Depth (mm): ", self.depthSlider )
+
     #
     # Flip (ie flip) checkbox
     #
@@ -130,7 +121,7 @@ class TissueModelCreatorWidget:
     self.flipCheckBox.setCheckState( False )
     self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
     self.flipCheckBox.setText( "Flip" )
-    parametersFormLayout.addRow( self.flipCheckBox )
+    displayFormLayout.addRow( self.flipCheckBox )
 
     #
     # Create Button
@@ -138,7 +129,17 @@ class TissueModelCreatorWidget:
     self.createButton = qt.QPushButton( "Create" )
     self.createButton.toolTip = "Create a tissue model."
     self.createButton.enabled = True
-    parametersFormLayout.addRow( self.createButton )
+    displayFormLayout.addRow( self.createButton )
+    
+    #
+    # Status Label
+    #
+    self.statusLabel = qt.QLabel( "Status:" )
+    self.statusLabel.toolTip = "Status of whether the tissue model was successfully created."
+    self.statusLabel.enabled = True
+    displayFormLayout.addRow( self.statusLabel )
+    
+    
 
     # connections
     self.createButton.connect( 'clicked(bool)', self.onCreateButtonClicked )
@@ -151,7 +152,12 @@ class TissueModelCreatorWidget:
 
   def onCreateButtonClicked(self):
     logic = TissueModelCreatorLogic()
-    print logic.run( self.markupSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked )
+    surfaceClosed = logic.run( self.markupSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked )
+    
+    if ( surfaceClosed == True ):
+      self.statusLabel.setText( "Status: Success!" )
+    else:
+      self.statusLabel.setText( "Status: Failed - surface is not closed." )
 
   def onReload(self,moduleName="TissueModelCreator"):
     """Generic reload method for any scripted module.
