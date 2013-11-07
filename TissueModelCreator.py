@@ -157,7 +157,7 @@ class TissueModelCreatorWidget:
     if ( surfaceClosed == True ):
       self.statusLabel.setText( "Status: Success!" )
     else:
-      self.statusLabel.setText( "Status: Failed - surface is not closed." )
+      self.statusLabel.setText( "Status: Failed!" )
 
   def onReload(self,moduleName="TissueModelCreator"):
     """Generic reload method for any scripted module.
@@ -244,6 +244,13 @@ class TissueModelCreatorLogic:
       currentCoordinates = [ 0, 0, 0 ]
       markupNode.GetNthFiducialPosition( i, currentCoordinates )
       points.InsertNextPoint( currentCoordinates )
+      
+    # Check that there is non-zero range in all coordinate directions
+    pointsBounds = [ 0, 0, 0, 0, 0, 0 ]
+    points.GetBounds( pointsBounds )
+    if ( pointsBounds[0] == pointsBounds [1] or pointsBounds[2] == pointsBounds [3] or pointsBounds[4] == pointsBounds [5] ):
+      print "Tissue Model Creator: Points have no extent in one or more coordinate directions."
+      return False
       
     # Create a polydata object from the points
     # The reversiness doesn't matter - we will fix it later if it os wrong
@@ -337,7 +344,11 @@ class TissueModelCreatorLogic:
     edgesFilter.SetInput( tissueModel.GetPolyData() )
     edgesFilter.Update()
     
-    return ( edgesFilter.GetOutput().GetNumberOfCells() == 0 )
+    if ( edgesFilter.GetOutput().GetNumberOfCells() != 0 ):
+      print "Tissue Model Creator: Surface is not closed."
+      return False
+      
+    return True
       
     
   def PointsToSurfacePolyData( self, inPoints, reverse ):
