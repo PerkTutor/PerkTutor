@@ -255,6 +255,10 @@ class TissueModelCreatorLogic:
     # Create a polydata object from the points
     # The reversiness doesn't matter - we will fix it later if it os wrong
     surfacePolyData = self.PointsToSurfacePolyData( points, True )
+    surfaceCleaner = vtk.vtkCleanPolyData()
+    surfaceCleaner.SetInput( surfacePolyData )
+    surfaceCleaner.Update()
+    surfacePolyData = surfaceCleaner.GetOutput()
     
     mean = self.CalculateMean( points )
     
