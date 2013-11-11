@@ -314,15 +314,16 @@ void vtkSlicerTransformRecorderLogic
   std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
   for ( int i = 0; i < activeTransforms.size(); i++ )
   {	
-    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( activeTransforms.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
-    if ( node == NULL )
+    vtkSmartPointer< vtkMRMLLinearTransformNode > transformNode;
+    transformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( activeTransforms.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
+    if ( transformNode == NULL )
     {
-      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
-      node->SetName( activeTransforms.at(i).c_str() );
-      node->SetScene( this->GetMRMLScene() );
-	  this->GetMRMLScene()->AddNode( node );
+      transformNode.TakeReference( vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) ) );
+      transformNode->SetName( activeTransforms.at(i).c_str() );
+      transformNode->SetScene( this->GetMRMLScene() );
+	  this->GetMRMLScene()->AddNode( transformNode );
     }
-    node->UnRegister( this->GetMRMLScene() ); // This is required to avoid memory problems
+
   }
 
   parser->Delete();

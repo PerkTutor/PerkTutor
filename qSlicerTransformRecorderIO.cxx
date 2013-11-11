@@ -90,10 +90,10 @@ bool qSlicerTransformRecorderIO::load(const IOProperties& properties)
   Q_ASSERT( properties.contains("fileName") );
   QString fileName = properties["fileName"].toString();
   
-  vtkMRMLTransformBufferNode* importBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) );
+  vtkSmartPointer< vtkMRMLTransformBufferNode > importBufferNode;
+  importBufferNode.TakeReference( vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) ) );
   importBufferNode->SetScene( this->mrmlScene() );
   this->mrmlScene()->AddNode( importBufferNode );
-  importBufferNode->UnRegister( this->mrmlScene() ); // This is required otherwise there is a memory problem
   d->TransformRecorderLogic->ImportFromFile( importBufferNode, fileName.toStdString() );
 
   return true; // TODO: Check to see read was successful first
