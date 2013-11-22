@@ -33,7 +33,8 @@ foreach( proj ${PerkTutor_Modules} )
   message( STATUS "Source: "${${proj}_SOURCE_DIR} )
   ExternalProject_Add(
     ${proj}Download
-    GIT_REPOSITORY "https://github.com/PerkTutor/${proj}.git"
+    GIT_REPOSITORY ${PERKTUTOR_REPOSITORY_${proj}}
+    GIT_TAG ${PERKTUTOR_REPOSITORY_TAG_${proj}}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     TEST_COMMAND ""
