@@ -226,7 +226,7 @@ void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkEndClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-  d->logic()->SetMarkBegin( d->logic()->GetPlaybackTime() );
+  d->logic()->SetMarkEnd( d->logic()->GetPlaybackTime() );
   d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
 }
 
