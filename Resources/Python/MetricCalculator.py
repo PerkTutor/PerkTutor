@@ -54,9 +54,8 @@ def CalculateAllToolMetrics():
 def CalculateToolMetric( peLogic, trajectory, trajectoryMetrics ):
   
   # Initialize the origin, previous point, current point
-  Origin = [ 0, 0, 0, 1 ]
-  P_Curr = [ 0, 0, 0, 1 ]
-  P_Prev = [ 0, 0, 0, 1 ]
+  origin = [ 0, 0, 0, 1 ]
+  point = [ 0, 0, 0, 1 ]
   # We will calculate the point here, since it is important, otherwise, the metrics are on their own
   
   # Start at the beginning (but remember where we were)
@@ -68,32 +67,24 @@ def CalculateToolMetric( peLogic, trajectory, trajectoryMetrics ):
   node = slicer.mrmlScene.GetFirstNodeByName( toolName )
   
   # Initialize the matrices
-  M_Prev = vtk.vtkMatrix4x4()
-  node.GetMatrixTransformToWorld( M_Prev )
-  M_Curr = vtk.vtkMatrix4x4()
-  node.GetMatrixTransformToWorld( M_Curr )
+  matrix = vtk.vtkMatrix4x4()
   
   # Now iterate
   for i in range( 1, trajectory.GetNumTransforms() ):
+
+    time = trajectory.GetTransformAt(i).GetTime()
     
-    T_Prev = trajectory.GetTransformAt(i-1).GetTime()
-    T_Curr = trajectory.GetTransformAt(i).GetTime()
+    peLogic.SetPlaybackTime( time )
     
-    peLogic.SetPlaybackTime( T_Curr )
+    matrix.Identity()
+    node.GetMatrixTransformToWorld( matrix )
     
-    M_Prev.Identity()
-    M_Prev.DeepCopy( M_Curr )
-    
-    M_Curr.Identity()
-    node.GetMatrixTransformToWorld( M_Curr )
-    
-    if ( trajectory.GetTransformAt(i).GetTime() < peLogic.GetMarkBegin() or trajectory.GetTransformAt(i).GetTime() > peLogic.GetMarkEnd() ):
+    if ( time < peLogic.GetMarkBegin() or time > peLogic.GetMarkEnd() ):
       continue
       
-    M_Prev.MultiplyPoint( Origin, P_Prev )
-    M_Curr.MultiplyPoint( Origin, P_Curr )
+    matrix.MultiplyPoint( origin, point )
     
     for j in range( len( trajectoryMetrics ) ):
-      trajectoryMetrics[j].AddTimestamp( T_Prev, T_Curr, M_Prev, M_Curr, P_Prev, P_Curr )
+      trajectoryMetrics[j].AddTimestamp( time, matrix, point )
   
   peLogic.SetPlaybackTime( originalPlaybackTime ) 
