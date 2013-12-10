@@ -231,6 +231,22 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnMetricsDirectoryClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  QString fileName = QFileDialog::getExistingDirectory( this, tr("Open metrics directory"), "", QFileDialog::ShowDirsOnly );
+  
+  if ( fileName.isEmpty() == false )
+  {
+    d->logic()->SetMetricsDirectory( fileName.toStdString() );
+  }
+
+  d->MetricsDirectoryButton->setText( QString( d->logic()->GetMetricsDirectory().c_str() ) );
+}
+
+
 
 void qSlicerPerkEvaluatorModuleWidget
 ::OnAnalyzeClicked()
@@ -390,6 +406,8 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->EndSpinBox, SIGNAL( editingFinished() ), this, SLOT( OnMarkEndEdited() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
+
+  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
 
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
   connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( OnClipboardClicked() ) );

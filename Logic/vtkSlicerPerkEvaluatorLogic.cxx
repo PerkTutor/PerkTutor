@@ -28,6 +28,9 @@
 #include <limits>
 #include <sstream>
 
+// PythonQT includes
+#include "PythonQt.h"
+
 
 
 // Helper functions ------------------------------------------------------------------------
@@ -84,6 +87,8 @@ vtkSlicerPerkEvaluatorLogic
   this->MarkEnd = 0.0;
   this->SetNeedleBase( 0.0, 1.0, 0.0 );
   this->TraceTrajectories = false;
+
+  this->MetricsDirectory = "";
   
   this->BodyModelNode = NULL;
   this->NeedleTransformNode = NULL;
@@ -213,6 +218,12 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
+double vtkSlicerPerkEvaluatorLogic
+::GetMarkBegin()
+{
+  return this->MarkBegin;
+}
+
 
 void vtkSlicerPerkEvaluatorLogic
 ::SetMarkEnd( double end )
@@ -229,6 +240,13 @@ void vtkSlicerPerkEvaluatorLogic
   {
     this->MarkEnd = end;
   }
+}
+
+
+double vtkSlicerPerkEvaluatorLogic
+::GetMarkEnd()
+{
+  return this->MarkEnd;
 }
 
 
@@ -249,6 +267,19 @@ void vtkSlicerPerkEvaluatorLogic
   this->TraceTrajectories = newTraceTrajectories;
 }
 
+
+void vtkSlicerPerkEvaluatorLogic
+::SetMetricsDirectory( std::string newDirectory )
+{
+  this->MetricsDirectory = newDirectory;
+}
+
+
+std::string vtkSlicerPerkEvaluatorLogic
+::GetMetricsDirectory()
+{
+  return this->MetricsDirectory;
+}
 
 std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 ::GetMetrics()
@@ -289,6 +320,24 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 	}
   }
 
+  // Get the python metrics
+  PythonQt::init();
+  PythonQtObjectPtr context = PythonQt::self()->getMainModule();
+  context.evalFile( ":/Python/MetricCalculator.py" );
+
+  QVariant result = context.call( "CalculateAllToolMetrics" );
+  QStringList pythonMetrics = result.toStringList();
+
+  int i = 0;
+  while ( i < pythonMetrics.length() )
+  {
+    MetricType currentPythonMetric;
+    currentPythonMetric.first = pythonMetrics.at( i ).toStdString();
+    currentPythonMetric.second = atof( pythonMetrics.at( i + 1 ).toStdString().c_str() );
+    metrics.push_back( currentPythonMetric );
+    i = i + 2;
+  }
+
 
   return metrics;
 }
@@ -322,6 +371,22 @@ void vtkSlicerPerkEvaluatorLogic
   {
     this->ToolTrajectories = bufferNode->SplitBufferByName();
   }
+}
+
+
+//This should be used to access the device-wise trajectories (primarily by the python functions for metric calculation)
+vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
+::GetToolTrajectory( int index )
+{
+  return this->ToolTrajectories.at(index);
+}
+
+
+//This should be used to access the device-wise trajectories (primarily by the python functions for metric calculation)
+int vtkSlicerPerkEvaluatorLogic
+::GetNumToolTrajectories()
+{
+  return this->ToolTrajectories.size();
 }
 
 

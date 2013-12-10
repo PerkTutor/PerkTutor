@@ -59,6 +59,8 @@ protected:
 public:
   
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
+  vtkMRMLTransformBufferNode* GetToolTrajectory( int index );
+  int GetNumToolTrajectories();
   
   double GetTotalTime() const;
   double GetMinTime() const;
@@ -67,12 +69,17 @@ public:
   
   void SetPlaybackTime( double time );
   void SetMarkBegin( double begin );
+  double GetMarkBegin();
   void SetMarkEnd( double end );
+  double GetMarkEnd();
   void SetNeedleBase( double x, double y, double z );
   void SetTraceTrajectories( bool newTraceTrajectories );
 
   typedef std::pair<std::string,double> MetricType;  
   std::vector<MetricType> GetMetrics();
+
+  void SetMetricsDirectory( std::string newDirectory );
+  std::string GetMetricsDirectory();
 
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
@@ -120,6 +127,8 @@ private:
   double NeedleBase[4];
 
   bool TraceTrajectories;
+
+  std::string MetricsDirectory;
 
 };
 
