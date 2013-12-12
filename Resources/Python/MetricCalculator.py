@@ -70,7 +70,7 @@ def CalculateToolMetric( peLogic, trajectory, trajectoryMetrics ):
   matrix = vtk.vtkMatrix4x4()
   
   # Now iterate
-  for i in range( 1, trajectory.GetNumTransforms() ):
+  for i in range( trajectory.GetNumTransforms() ):
 
     time = trajectory.GetTransformAt(i).GetTime()
     
