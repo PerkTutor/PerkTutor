@@ -124,6 +124,11 @@ public:
 
 
 private:
+
+  int GetPriorTransformIndex( double time );
+  int GetClosestTransformIndex( double time );
+  int GetPriorMessageIndex( double time );
+  int GetClosestMessageIndex( double time );
   
   std::vector<vtkTransformRecord*> transforms;
   std::vector<vtkMessageRecord*> messages;

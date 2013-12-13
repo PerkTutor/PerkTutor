@@ -153,16 +153,9 @@ void vtkMRMLTransformBufferNode
 	return;
   }
 
-  // Records are probably near the end so this is more efficient than binary search
-  for ( int i = this->GetNumTransforms() - 1; i >= 0; i-- )
-  {
-    if ( newTransform->GetTime() >= this->GetTransformAt(i)->GetTime() )
-	{
-      this->transforms.insert( transforms.begin() + i + 1, newTransform );
-      this->TransformsStatus++;
-	  return;
-	}
-  }
+  // Use the binary search
+  int insertLocation = this->GetPriorTransformIndex( newTransform->GetTime() ) + 1;
+  this->transforms.insert( this->transforms.begin() + insertLocation, newTransform );
 
 }
 
@@ -190,16 +183,9 @@ void vtkMRMLTransformBufferNode
 	return;
   }
 
-  // Records are probably near the end, so this is more efficient than binary search
-  for ( int i = this->GetNumMessages() - 1; i >= 0; i-- )
-  {
-    if ( newMessage->GetTime() >= this->GetMessageAt(i)->GetTime() )
-	{
-      this->messages.insert( messages.begin() + i + 1, newMessage );
-      this->MessagesStatus++;
-	  return;
-	}
-  }
+  // Use the binary search
+  int insertLocation = this->GetPriorMessageIndex( newMessage->GetTime() ) + 1;
+  this->messages.insert( this->messages.begin() + insertLocation, newMessage );
 
 }
 
@@ -334,26 +320,8 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
     return this->GetCurrentTransform();
   }
 
-  // Records are probably near the end, so this is more efficient than binary search
-  int candidate1, candidate2;
-  for ( int i = this->GetNumTransforms() - 1; i >= 0; i-- )
-  {
-    if ( time >= this->GetTransformAt(i)->GetTime() )
-	{
-	  candidate1 = i;
-	  candidate2 = i + 1;
-	  break;
-	}
-  }
-  	  
-  if ( abs ( time - this->GetTransformAt(candidate1)->GetTime() ) < abs ( time - this->GetTransformAt(candidate2)->GetTime() ) )
-  {
-    return this->GetTransformAt( candidate1 );
-  }
-  else
-  {
-    return this->GetTransformAt( candidate2 );
-  }
+  // Binary search since the records are sorted
+  return this->GetTransformAt( this->GetClosestTransformIndex( time ) );
 
 }
 
@@ -374,26 +342,8 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
     return this->GetCurrentMessage();
   }
 
-  // Records are probably near the end so this is more efficient than binary search
-  int candidate1, candidate2;
-  for ( int i = this->GetNumMessages() - 1; i >= 0; i-- )
-  {
-    if ( time >= this->GetMessageAt(i)->GetTime() )
-	{
-	  candidate1 = i;
-	  candidate2 = i + 1;
-	  break;
-	}
-  }
-  	  
-  if ( abs ( time - this->GetMessageAt(candidate1)->GetTime() ) < abs ( time - this->GetMessageAt(candidate2)->GetTime() ) )
-  {
-    return this->GetMessageAt( candidate1 );
-  }
-  else
-  {
-    return this->GetMessageAt( candidate2 );
-  }
+  // Binary search since the records are sorted
+  return this->GetMessageAt( this->GetClosestMessageIndex( time ) );
 
 }
 
@@ -487,6 +437,129 @@ void vtkMRMLTransformBufferNode
   this->messages.clear();
   this->MessagesStatus++;
 }
+
+
+// Implement binary searches to find transforms and/or messages at a particular time
+int vtkMRMLTransformBufferNode
+::GetPriorTransformIndex( double time )
+{
+  int lowerBound = 0;
+  int upperBound = this->GetNumTransforms() - 1;
+
+  if ( time < this->GetTransformAt( lowerBound )->GetTime() )
+  {
+    return lowerBound;
+  }
+  if ( time > this->GetTransformAt( upperBound )->GetTime() )
+  {
+    return upperBound;
+  }
+
+  while ( upperBound - lowerBound > 1 )
+  {
+    // Note that if middle is equal to either lowerBound or upperBound then upperBound - lowerBound <= 1
+    int middle = int( ( lowerBound + upperBound ) / 2 );
+    double middleTime = this->GetTransformAt( middle )->GetTime();
+
+    if ( time == middleTime )
+    {
+      return middle;
+    }
+
+    if ( time > middleTime )
+    {
+      lowerBound = middle;
+    }
+
+    if ( time < middleTime )
+    {
+      upperBound = middle;
+    }
+
+  }
+
+  // Since we're returning the prior index, always return the lower bound
+  return lowerBound;
+}
+
+
+int vtkMRMLTransformBufferNode
+::GetClosestTransformIndex( double time )
+{
+  int lowerIndex = this->GetPriorTransformIndex( time );
+  int upperIndex = lowerIndex + 1;
+
+  if ( upperIndex >= this->GetNumTransforms() || abs ( time - this->GetTransformAt( lowerIndex )->GetTime() ) < abs ( time - this->GetTransformAt( upperIndex )->GetTime() ) )
+  {
+    return lowerIndex;
+  }
+  else
+  {
+    return upperIndex;
+  }
+}
+
+
+// Implement binary searches to find transforms and/or messages at a particular time
+int vtkMRMLTransformBufferNode
+::GetPriorMessageIndex( double time )
+{
+  int lowerBound = 0;
+  int upperBound = this->GetNumMessages() - 1;
+
+  if ( time < this->GetMessageAt( lowerBound )->GetTime() )
+  {
+    return lowerBound;
+  }
+  if ( time > this->GetMessageAt( upperBound )->GetTime() )
+  {
+    return upperBound;
+  }
+
+  while ( upperBound - lowerBound > 1 )
+  {
+    // Note that if middle is equal to either lowerBound or upperBound then upperBound - lowerBound <= 1
+    int middle = int( ( lowerBound + upperBound ) / 2 );
+    double middleTime = this->GetMessageAt( middle )->GetTime();
+
+    if ( time == middleTime )
+    {
+      return middle;
+    }
+
+    if ( time > middleTime )
+    {
+      lowerBound = middle;
+    }
+
+    if ( time < middleTime )
+    {
+      upperBound = middle;
+    }
+
+  }
+
+  // Since we're returning the prior index, always return the lower bound
+  return lowerBound;
+}
+
+
+int vtkMRMLTransformBufferNode
+::GetClosestMessageIndex( double time )
+{
+  int lowerIndex = this->GetPriorMessageIndex( time );
+  int upperIndex = lowerIndex + 1;
+
+  if ( upperIndex >= this->GetNumMessages() || abs ( time - this->GetMessageAt( lowerIndex )->GetTime() ) < abs ( time - this->GetMessageAt( upperIndex )->GetTime() ) )
+  {
+    return lowerIndex;
+  }
+  else
+  {
+    return upperIndex;
+  }
+}
+
 
 
 void vtkMRMLTransformBufferNode
