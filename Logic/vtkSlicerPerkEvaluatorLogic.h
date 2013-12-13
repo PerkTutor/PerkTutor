@@ -30,6 +30,12 @@
 #include "vtkSlicerTransformRecorderLogic.h"
 
 
+struct ToolTrajectory
+{
+  vtkMRMLTransformBufferNode* Buffer;
+  vtkMRMLLinearTransformNode* Node;
+};
+
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class VTK_SLICER_PERKEVALUATOR_MODULE_LOGIC_EXPORT
@@ -59,8 +65,8 @@ protected:
 public:
   
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
-  vtkMRMLTransformBufferNode* GetToolTrajectory( int index );
-  int GetNumToolTrajectories();
+  vtkMRMLTransformBufferNode* GetToolBuffer( int index );
+  int GetNumTools();
   
   double GetTotalTime() const;
   double GetMinTime() const;
@@ -111,15 +117,17 @@ private:
 private:
   
   void ClearData();
-  double GetTimestampFromElement( vtkXMLDataElement* element );
+  //double GetTimestampFromElement( vtkXMLDataElement* element );
   
-  std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory );
+  std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* toolBuffer );
   std::vector<MetricType> CalculateNeedleMetrics();
 
   void ShowTraceTrajectories( vtkPoints* curvePoints, vtkPolyLine* curvePolyLine, int validIDs, std::string toolName );
   double TriangleArea( double* p1, double* p2, double* p3 );
   
-  std::vector<vtkMRMLTransformBufferNode*> ToolTrajectories;
+  void IncrementTimestamp( std::string baseTrajectoryName );
+
+  std::vector< ToolTrajectory > ToolTrajectories;
   
   double PlaybackTime;
   double MarkBegin;

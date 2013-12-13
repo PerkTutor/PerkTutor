@@ -30,9 +30,9 @@ def CalculateAllToolMetrics():
     return metricStringList
 
   # Now iterate over all of the trajectories
-  for i in range( peLogic.GetNumToolTrajectories() ):
+  for i in range( peLogic.GetNumTools() ):
 
-    trajectory = peLogic.GetToolTrajectory( trajectoryIndex )
+    trajectory = peLogic.GetToolBuffer( trajectoryIndex )
     
     #Drop if it requires the needle reference 
     trajectoryMetrics = []

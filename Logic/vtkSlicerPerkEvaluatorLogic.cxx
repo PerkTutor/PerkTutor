@@ -125,7 +125,7 @@ void vtkSlicerPerkEvaluatorLogic
 {
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {
-    this->ToolTrajectories.at(i)->Delete();
+    this->ToolTrajectories.at(i).Buffer->Delete();
   }
   this->ToolTrajectories.clear();
 
@@ -300,7 +300,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   // Calculate the metrics individually for each tool
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {
-    std::vector<MetricType> toolMetrics = this->CalculateToolMetrics( this->ToolTrajectories.at(i) );
+    std::vector<MetricType> toolMetrics = this->CalculateToolMetrics( this->ToolTrajectories.at(i).Buffer );
 
 	for ( int j = 0; j < toolMetrics.size(); j++ )
 	{
@@ -367,24 +367,48 @@ void vtkSlicerPerkEvaluatorLogic
 {
   this->ClearData();
   // The import function from the Transform Recorder Logic will automatically add the transform nodes to the scene
-  if ( bufferNode != NULL )
+  if ( bufferNode == NULL )
   {
-    this->ToolTrajectories = bufferNode->SplitBufferByName();
+    return;
   }
+
+  std::vector< vtkMRMLTransformBufferNode* > toolBuffers = bufferNode->SplitBufferByName();
+
+  for ( int i = 0; i < toolBuffers.size(); i++ )
+  {	
+    std::string toolName = toolBuffers.at(i)->GetCurrentTransform()->GetDeviceName();
+
+    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
+    if ( node == NULL )
+    {
+      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
+	  this->GetMRMLScene()->AddNode( node );
+	  node->SetScene( this->GetMRMLScene() );
+	  node->SetName( toolName.c_str() );
+    }
+
+    // Add to the tool trajectories
+    ToolTrajectory currentTrajectory;
+    currentTrajectory.Node = node;
+    currentTrajectory.Buffer = toolBuffers.at(i);
+    this->ToolTrajectories.push_back( currentTrajectory );
+
+  }
+
 }
 
 
 //This should be used to access the device-wise trajectories (primarily by the python functions for metric calculation)
 vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
-::GetToolTrajectory( int index )
+::GetToolBuffer( int index )
 {
-  return this->ToolTrajectories.at(index);
+  return this->ToolTrajectories.at(index).Buffer;
 }
 
 
 //This should be used to access the device-wise trajectories (primarily by the python functions for metric calculation)
 int vtkSlicerPerkEvaluatorLogic
-::GetNumToolTrajectories()
+::GetNumTools()
 {
   return this->ToolTrajectories.size();
 }
@@ -424,9 +448,9 @@ double vtkSlicerPerkEvaluatorLogic
   
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {
-    if ( ToolTrajectories.at(i)->GetTransformAt(0)->GetTime() < minTime )
+    if ( this->ToolTrajectories.at(i).Buffer->GetTransformAt(0)->GetTime() < minTime )
     {
-      minTime = ToolTrajectories.at(i)->GetTransformAt(0)->GetTime();
+      minTime = this->ToolTrajectories.at(i).Buffer->GetTransformAt(0)->GetTime();
     }
   }
   
@@ -447,9 +471,9 @@ double vtkSlicerPerkEvaluatorLogic
   
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {
-    if ( ToolTrajectories.at(i)->GetCurrentTransform()->GetTime() > maxTime )
+    if ( this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetTime() > maxTime )
     {
-      maxTime = ToolTrajectories.at(i)->GetCurrentTransform()->GetTime();
+      maxTime = this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetTime();
     }
   }
   
@@ -478,25 +502,16 @@ void vtkSlicerPerkEvaluatorLogic
 
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {	
-    std::string toolName = this->ToolTrajectories.at(i)->GetCurrentTransform()->GetDeviceName();
-
-    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
-    if ( node == NULL )
-    {
-      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
-	  this->GetMRMLScene()->AddNode( node );
-	  node->SetScene( this->GetMRMLScene() );
-	  node->SetName( toolName.c_str() );
-    }
-
-	node->GetMatrixTransformToParent()->DeepCopy( MatrixStrToDouble( this->ToolTrajectories.at(i)->GetTransformAtTime( time )->GetTransform() ) );
+    vtkMRMLLinearTransformNode* node = this->ToolTrajectories.at(i).Node;
+    std::string transformString = this->ToolTrajectories.at(i).Buffer->GetTransformAtTime( time )->GetTransform();
+	node->GetMatrixTransformToParent()->DeepCopy( MatrixStrToDouble( transformString ) );
   }
 
 }
 
 
 std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
-::CalculateToolMetrics( vtkMRMLTransformBufferNode* Trajectory )
+::CalculateToolMetrics( vtkMRMLTransformBufferNode* toolBuffer )
 {
   std::vector<MetricType> toolMetrics;
 
@@ -511,7 +526,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   // Initialize tool trajectory tracers
   vtkSmartPointer< vtkPoints > curvePoints = vtkSmartPointer< vtkPoints >::New();
   vtkSmartPointer< vtkPolyLine > curvePolyLine = vtkSmartPointer< vtkPolyLine >::New();
-  curvePolyLine->GetPointIds()->SetNumberOfIds( Trajectory->GetNumTransforms() - 1 ); 
+  curvePolyLine->GetPointIds()->SetNumberOfIds( toolBuffer->GetNumTransforms() - 1 ); 
   int validIDs = 0;
 
   // Get a reference to the relevant transform node, update the transform node, compute the metric for that time step
@@ -519,7 +534,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   this->SetPlaybackTime( this->GetMinTime() );
 
   // Check if the corresponding transform has any parent transforms  
-  std::string toolName = Trajectory->GetCurrentTransform()->GetDeviceName();
+  std::string toolName = toolBuffer->GetCurrentTransform()->GetDeviceName();
   vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
 
   if ( node == NULL )
@@ -539,11 +554,11 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   vtkSmartPointer< vtkMatrix4x4 > M0 = vtkSmartPointer< vtkMatrix4x4 >::New(); node->GetMatrixTransformToWorld( M0 );
   vtkSmartPointer< vtkMatrix4x4 > M1 = vtkSmartPointer< vtkMatrix4x4 >::New(); node->GetMatrixTransformToWorld( M1 );  
   
-  for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
+  for ( int i = 1; i < toolBuffer->GetNumTransforms(); i++ )
   {
     
 	// Set the playback time to update the node, and get data from the node
-	this->SetPlaybackTime( Trajectory->GetTransformAt(i)->GetTime() );
+    this->SetPlaybackTime( toolBuffer->GetTransformAt( i )->GetTime() );
 
 	M0->Identity();
 	M0->DeepCopy( M1 );
@@ -551,7 +566,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 	M1->Identity();
     node->GetMatrixTransformToWorld( M1 );  
 
-    if ( Trajectory->GetTransformAt(i)->GetTime() < this->MarkBegin || Trajectory->GetTransformAt(i)->GetTime() > this->MarkEnd )
+    if ( toolBuffer->GetTransformAt(i)->GetTime() < this->MarkBegin || toolBuffer->GetTransformAt(i)->GetTime() > this->MarkEnd )
     {
       continue;
     }
@@ -572,7 +587,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     if ( Inside )
     {
       insidePath += pathDistance;
-      insideTime += Trajectory->GetTransformAt(i)->GetTime() - Trajectory->GetTransformAt(i-1)->GetTime();
+      insideTime += toolBuffer->GetTransformAt(i)->GetTime() - toolBuffer->GetTransformAt(i-1)->GetTime();
     }
 
     // Curve tracing
@@ -673,20 +688,20 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   
   // Get the trajectory which is an ancestor to the needle reference node
   // We really only need it for its timestamps
-  vtkMRMLTransformBufferNode* Trajectory = NULL;
+  vtkMRMLTransformBufferNode* toolBuffer = NULL;
   vtkMRMLLinearTransformNode* parent = node;
   while( parent != NULL )
   {
     // Check if the parent's name matches one of the trajectory names
     for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
     {
-      if ( this->ToolTrajectories.at(i)->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
+      if ( this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
 	  {
-        Trajectory = this->ToolTrajectories.at(i);
+        toolBuffer = this->ToolTrajectories.at(i).Buffer;
 	  }
     }
 
-	if ( Trajectory != NULL )
+	if ( toolBuffer != NULL )
 	{
       break;
 	}
@@ -694,7 +709,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 	parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
   }
 
-  if ( Trajectory == NULL )
+  if ( toolBuffer == NULL )
   {
     return toolMetrics;
   }
@@ -737,10 +752,10 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   bspTree->BuildLocator();
 
   
-  for ( int i = 1; i < Trajectory->GetNumTransforms(); i++ )
+  for ( int i = 1; i < toolBuffer->GetNumTransforms(); i++ )
   {
 	// Set the playback time to update the node, and get data from the node
-	this->SetPlaybackTime( Trajectory->GetTransformAt(i)->GetTime() );
+	this->SetPlaybackTime( toolBuffer->GetTransformAt( i )->GetTime() );
 
 	M0->Identity();
 	M0->DeepCopy( M1 );
@@ -748,7 +763,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 	M1->Identity();
     node->GetMatrixTransformToWorld( M1 );  
 
-    if ( Trajectory->GetTransformAt(i)->GetTime() < this->MarkBegin || Trajectory->GetTransformAt(i)->GetTime() > this->MarkEnd )
+    if ( toolBuffer->GetTransformAt(i)->GetTime() < this->MarkBegin || toolBuffer->GetTransformAt(i)->GetTime() > this->MarkEnd )
     {
       continue;
     }
