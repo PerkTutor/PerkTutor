@@ -24,6 +24,11 @@ def CalculateAllToolMetrics():
   
   metricStringList = []
   trajectoryIndex = 0
+  
+  # Exit if there are no metrics (e.g. no metrics directory was specified)
+  if ( len( metrics ) == 0 ):
+    return metricStringList
+
   # Now iterate over all of the trajectories
   for i in range( peLogic.GetNumToolTrajectories() ):
 
