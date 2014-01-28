@@ -19,11 +19,13 @@
 #include "vtkSlicerTargetFiducialsLogic.h"
 
 // MRML includes
+#include "vtkMRMLScene.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLAnnotationHierarchyNode.h"
 #include "vtkMRMLAnnotationFiducialNode.h"
 
 // VTK includes
+#include <vtkObjectFactory.h>
 #include <vtkNew.h>
 #include <vtkMatrix4x4.h>
 
