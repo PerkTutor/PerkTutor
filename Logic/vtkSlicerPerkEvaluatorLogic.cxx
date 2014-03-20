@@ -85,7 +85,7 @@ vtkSlicerPerkEvaluatorLogic
   this->PlaybackTime = 0.0;
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
-  this->SetNeedleBase( 0.0, 1.0, 0.0 );
+  this->SetNeedleBase( 1.0, 0.0, 0.0 );
   this->TraceTrajectories = false;
 
   this->MetricsDirectory = "";
