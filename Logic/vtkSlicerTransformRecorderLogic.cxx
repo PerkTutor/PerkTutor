@@ -362,8 +362,12 @@ void vtkSlicerTransformRecorderLogic
   // Get the transform matrix from the node
   vtkMRMLLinearTransformNode* linearTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNode );
   vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
+
+#ifdef TRANSFORM_NODE_MATRIX_COPY_REQUIRED
+  linearTransformNode->GetMatrixTransformToParent( transformMatrix );
+#else
   transformMatrix->DeepCopy( linearTransformNode->GetMatrixTransformToParent() );
-  
+#endif
   
   // Record the transform into a string  
   std::stringstream matrixsstring;
