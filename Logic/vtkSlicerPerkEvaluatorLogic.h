@@ -67,6 +67,11 @@ public:
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   vtkMRMLTransformBufferNode* GetToolBuffer( int index );
   int GetNumTools();
+
+  void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
+  void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
+  void GetAnalyzeTransforms( vtkCollection* analyzeTransforms );
+  bool IsAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   
   double GetTotalTime() const;
   double GetMinTime() const;
@@ -119,7 +124,7 @@ private:
   void ClearData();
   //double GetTimestampFromElement( vtkXMLDataElement* element );
   
-  std::vector<MetricType> CalculateToolMetrics( vtkMRMLTransformBufferNode* toolBuffer );
+  std::vector<MetricType> CalculateToolMetrics( vtkMRMLLinearTransformNode* analyzeTransform );
   std::vector<MetricType> CalculateNeedleMetrics();
 
   void ShowTraceTrajectories( vtkPoints* curvePoints, vtkPolyLine* curvePolyLine, int validIDs, std::string toolName );
@@ -128,6 +133,9 @@ private:
   void IncrementTimestamp( std::string baseTrajectoryName );
 
   std::vector< ToolTrajectory > ToolTrajectories;
+  
+  vtkMRMLTransformBufferNode* TransformBuffer;
+  vtkSmartPointer< vtkCollection > AnalyzeTransforms;
   
   double PlaybackTime;
   double MarkBegin;

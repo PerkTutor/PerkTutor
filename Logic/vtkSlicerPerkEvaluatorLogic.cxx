@@ -95,6 +95,9 @@ vtkSlicerPerkEvaluatorLogic
 
   this->TransformRecorderLogic = NULL;
 
+  this->TransformBuffer = NULL;
+  this->AnalyzeTransforms = vtkSmartPointer< vtkCollection >::New();
+
   this->Parser = vtkXMLDataParser::New();
 }
 
@@ -298,14 +301,19 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   metrics.push_back( procedureTime );
 
   // Calculate the metrics individually for each tool
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  for ( int i = 0; i < this->AnalyzeTransforms->GetNumberOfItems(); i++ )
   {
-    std::vector<MetricType> toolMetrics = this->CalculateToolMetrics( this->ToolTrajectories.at(i).Buffer );
+    vtkMRMLLinearTransformNode* analyzeTransform = vtkMRMLLinearTransformNode::SafeDownCast( this->AnalyzeTransforms->GetItemAsObject( i ) );
+    if ( analyzeTransform == NULL )
+    {
+      break;
+    }
+    std::vector<MetricType> toolMetrics = this->CalculateToolMetrics( analyzeTransform );
 
-	for ( int j = 0; j < toolMetrics.size(); j++ )
-	{
+	  for ( int j = 0; j < toolMetrics.size(); j++ )
+	  {
       metrics.push_back( toolMetrics.at(j) );
-	}
+	  }
   }
 
 
@@ -315,9 +323,9 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     std::vector<MetricType> needleMetrics = this->CalculateNeedleMetrics();
 
     for ( int j = 0; j < needleMetrics.size(); j++ )
-	{
+    {
       metrics.push_back( needleMetrics.at(j) );
-	}
+    }
   }
 
   // Get the python metrics
@@ -372,6 +380,7 @@ void vtkSlicerPerkEvaluatorLogic
     return;
   }
 
+  this->TransformBuffer = bufferNode;
   std::vector< vtkMRMLTransformBufferNode* > toolBuffers = bufferNode->SplitBufferByName();
 
   for ( int i = 0; i < toolBuffers.size(); i++ )
@@ -382,10 +391,12 @@ void vtkSlicerPerkEvaluatorLogic
     if ( node == NULL )
     {
       node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
-	  this->GetMRMLScene()->AddNode( node );
-	  node->SetScene( this->GetMRMLScene() );
-	  node->SetName( toolName.c_str() );
+	    this->GetMRMLScene()->AddNode( node );
+	    node->SetScene( this->GetMRMLScene() );
+	    node->SetName( toolName.c_str() );
     }
+
+    this->AnalyzeTransforms->AddItem( node );
 
     // Add to the tool trajectories
     ToolTrajectory currentTrajectory;
@@ -411,6 +422,84 @@ int vtkSlicerPerkEvaluatorLogic
 ::GetNumTools()
 {
   return this->ToolTrajectories.size();
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform )
+{
+  // Make sure its not already in the list
+  for ( int i = 0 ; i < this->AnalyzeTransforms->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLLinearTransformNode* currentTransform = vtkMRMLLinearTransformNode::SafeDownCast( this->AnalyzeTransforms->GetItemAsObject( i ) );
+    if ( currentTransform == newAnalyzeTransform )
+    {
+      return;
+    }
+  }
+
+  if ( newAnalyzeTransform != NULL )
+  {
+    this->AnalyzeTransforms->AddItem( newAnalyzeTransform );
+  }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::RemoveAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform )
+{
+  // Make sure its not already in the list
+  for ( int i = 0 ; i < this->AnalyzeTransforms->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLLinearTransformNode* currentTransform = vtkMRMLLinearTransformNode::SafeDownCast( this->AnalyzeTransforms->GetItemAsObject( i ) );
+    if ( currentTransform == NULL )
+    {
+      continue;
+    }
+    if ( currentTransform == newAnalyzeTransform )
+    {
+      this->AnalyzeTransforms->RemoveItem( i );
+    }
+  }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::GetAnalyzeTransforms( vtkCollection* analyzeTransforms )
+{
+  if ( analyzeTransforms == NULL )
+  {
+    return;
+  }
+  
+  analyzeTransforms->RemoveAllItems();
+  for ( int i = 0 ; i < this->AnalyzeTransforms->GetNumberOfItems(); i++ )
+  {
+    analyzeTransforms->AddItem( this->AnalyzeTransforms->GetItemAsObject( i ) );
+  }
+
+}
+
+
+bool vtkSlicerPerkEvaluatorLogic
+::IsAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform )
+{
+  if ( newAnalyzeTransform == NULL )
+  {
+    return false;
+  }
+  
+  for ( int i = 0 ; i < this->AnalyzeTransforms->GetNumberOfItems(); i++ )
+  {
+    if ( this->AnalyzeTransforms->GetItemAsObject( i ) == newAnalyzeTransform )
+    {
+      return true;
+    }
+
+  }
+
+  return false;
 }
 
 
@@ -518,9 +607,15 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
-::CalculateToolMetrics( vtkMRMLTransformBufferNode* toolBuffer )
+::CalculateToolMetrics( vtkMRMLLinearTransformNode* analyzeTransform )
 {
   std::vector<MetricType> toolMetrics;
+  if ( analyzeTransform == NULL )
+  {
+    return toolMetrics;
+  }
+
+  std::string toolName = analyzeTransform->GetName();
 
   double totalPath = 0.0;
   double insidePath = 0.0;
@@ -533,21 +628,13 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   // Initialize tool trajectory tracers
   vtkSmartPointer< vtkPoints > curvePoints = vtkSmartPointer< vtkPoints >::New();
   vtkSmartPointer< vtkPolyLine > curvePolyLine = vtkSmartPointer< vtkPolyLine >::New();
-  curvePolyLine->GetPointIds()->SetNumberOfIds( toolBuffer->GetNumTransforms() - 1 ); 
+  curvePolyLine->GetPointIds()->SetNumberOfIds( this->TransformBuffer->GetNumTransforms() - 1 ); 
   int validIDs = 0;
 
   // Get a reference to the relevant transform node, update the transform node, compute the metric for that time step
   double originalPlaybackTime = this->GetPlaybackTime();
   this->SetPlaybackTime( this->GetMinTime() );
 
-  // Check if the corresponding transform has any parent transforms  
-  std::string toolName = toolBuffer->GetCurrentTransform()->GetDeviceName();
-  vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
-
-  if ( node == NULL )
-  {
-    return toolMetrics;
-  }
 
   // Prepare inside-outside body measurements.  
   vtkPolyData* body = NULL;
@@ -558,30 +645,30 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     EnclosedFilter->Initialize( body );
   }
 
-  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkSmartPointer< vtkMatrix4x4 >::New(); node->GetMatrixTransformToWorld( M0 );
-  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkSmartPointer< vtkMatrix4x4 >::New(); node->GetMatrixTransformToWorld( M1 );  
+  vtkSmartPointer< vtkMatrix4x4 > M0 = vtkSmartPointer< vtkMatrix4x4 >::New(); analyzeTransform->GetMatrixTransformToWorld( M0 );
+  vtkSmartPointer< vtkMatrix4x4 > M1 = vtkSmartPointer< vtkMatrix4x4 >::New(); analyzeTransform->GetMatrixTransformToWorld( M1 );  
   
-  for ( int i = 1; i < toolBuffer->GetNumTransforms(); i++ )
+  for ( int i = 1; i < this->TransformBuffer->GetNumTransforms(); i++ )
   {
     
-	// Set the playback time to update the node, and get data from the node
-    this->SetPlaybackTime( toolBuffer->GetTransformAt( i )->GetTime() );
+	  // Set the playback time to update the node, and get data from the node
+    this->SetPlaybackTime( this->TransformBuffer->GetTransformAt( i )->GetTime() );
 
-	M0->Identity();
-	M0->DeepCopy( M1 );
+	  M0->Identity();
+	  M0->DeepCopy( M1 );
 
-	M1->Identity();
-    node->GetMatrixTransformToWorld( M1 );  
+	  M1->Identity();
+    analyzeTransform->GetMatrixTransformToWorld( M1 );  
 
-    if ( toolBuffer->GetTransformAt(i)->GetTime() < this->MarkBegin || toolBuffer->GetTransformAt(i)->GetTime() > this->MarkEnd )
+    if ( this->TransformBuffer->GetTransformAt(i)->GetTime() < this->MarkBegin || this->TransformBuffer->GetTransformAt(i)->GetTime() > this->MarkEnd )
     {
       continue;
-    }
+    } 
         
     M0->MultiplyPoint( Origin, P0 );
     M1->MultiplyPoint( Origin, P1 );
 
-	double pathDistance = sqrt( vtkMath::Distance2BetweenPoints( P0, P1 ) );
+	  double pathDistance = sqrt( vtkMath::Distance2BetweenPoints( P0, P1 ) );
     totalPath += pathDistance;
     
     
@@ -594,7 +681,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     if ( Inside )
     {
       insidePath += pathDistance;
-      insideTime += toolBuffer->GetTransformAt(i)->GetTime() - toolBuffer->GetTransformAt(i-1)->GetTime();
+      insideTime += this->TransformBuffer->GetTransformAt(i)->GetTime() - this->TransformBuffer->GetTransformAt(i-1)->GetTime();
     }
 
     // Curve tracing

@@ -49,6 +49,7 @@ public:
   // Add embedded widgets here
   qSlicerPerkEvaluatorTransformBufferWidget* TransformBufferWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
+  qSlicerTransformSelectionWidget* TransformSelectionWidget;
 };
 
 
@@ -383,11 +384,17 @@ qSlicerPerkEvaluatorModuleWidget
   Q_D(qSlicerPerkEvaluatorModuleWidget);
 
   d->setupUi(this);
+
   // Embed widgets here
   d->TransformBufferWidget = qSlicerPerkEvaluatorTransformBufferWidget::New( d->logic() );
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+
   d->MessagesWidget = qSlicerPerkEvaluatorMessagesWidget::New( d->TransformBufferWidget, d->logic() );
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
+
+  d->TransformSelectionWidget = qSlicerTransformSelectionWidget::New( d->TransformBufferWidget, d->logic() );
+  d->TransformSelectionGroupBox->layout()->addWidget( d->TransformSelectionWidget ); 
+
   this->Superclass::setup();
 
   this->BufferStatus = d->TransformBufferWidget->BufferStatus;
