@@ -132,6 +132,8 @@ void vtkSlicerPerkEvaluatorLogic
   }
   this->ToolTrajectories.clear();
 
+  this->AnalyzeTransforms->RemoveAllItems();
+
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
   this->PlaybackTime = 0.0;
@@ -502,6 +504,27 @@ bool vtkSlicerPerkEvaluatorLogic
   return false;
 }
 
+
+void vtkSlicerPerkEvaluatorLogic
+::GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes )
+{
+  if ( visibleTransformNodes == NULL )
+  {
+    return;
+  }
+  visibleTransformNodes->RemoveAllItems();
+
+  vtkSmartPointer< vtkCollection > nodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  
+  for ( int i = 0; i < nodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( nodes->GetItemAsObject( i ) );
+    if ( transformNode != NULL && transformNode->GetHideFromEditors() == false )
+    {
+      visibleTransformNodes->AddItem( nodes->GetItemAsObject( i ) );
+    }
+  }
+}
 
 
 double vtkSlicerPerkEvaluatorLogic

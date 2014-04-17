@@ -118,15 +118,16 @@ void qSlicerTransformSelectionWidget
 {
   Q_D(qSlicerTransformSelectionWidget);  
 
-  vtkCollection* nodes = this->mrmlScene()->GetNodes();
+  vtkSmartPointer< vtkCollection > nodes = vtkSmartPointer< vtkCollection >::New();
+  this->PerkEvaluatorLogic->GetSceneVisibleTransformNodes( nodes );
   
   for ( int i = 0; i < nodes->GetNumberOfItems(); i++ )
   {
     vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( nodes->GetItemAsObject( i ) );
-	if ( transformNode != NULL )
-	{
-	  this->PerkEvaluatorLogic->AddAnalyzeTransform( transformNode );
-	}
+	  if ( transformNode != NULL )
+	  {
+	    this->PerkEvaluatorLogic->AddAnalyzeTransform( transformNode );
+	  }
   }
   
   this->updateWidget();
@@ -138,15 +139,16 @@ void qSlicerTransformSelectionWidget
 {
   Q_D(qSlicerTransformSelectionWidget);  
 
-  vtkCollection* nodes = this->mrmlScene()->GetNodes();
+  vtkSmartPointer< vtkCollection > nodes = vtkSmartPointer< vtkCollection >::New();
+  this->PerkEvaluatorLogic->GetSceneVisibleTransformNodes( nodes );
   
   for ( int i = 0; i < nodes->GetNumberOfItems(); i++ )
   {
     vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( nodes->GetItemAsObject( i ) );
-	if ( transformNode != NULL )
-	{
-	  this->PerkEvaluatorLogic->RemoveAnalyzeTransform( transformNode );
-	}
+	  if ( transformNode != NULL )
+	  {
+	    this->PerkEvaluatorLogic->RemoveAnalyzeTransform( transformNode );
+	  }
   }
   
   this->updateWidget();
@@ -209,7 +211,8 @@ void qSlicerTransformSelectionWidget
     return;
   }
   
-  vtkSmartPointer< vtkCollection > nodes = this->mrmlScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );  
+  vtkSmartPointer< vtkCollection > nodes = vtkSmartPointer< vtkCollection >::New();
+  this->PerkEvaluatorLogic->GetSceneVisibleTransformNodes( nodes ); 
 
   d->TransformSelectionTable->setRowCount( nodes->GetNumberOfItems() );
   d->TransformSelectionTable->setColumnCount( 2 );
@@ -258,5 +261,6 @@ void qSlicerTransformSelectionWidget
   // Reset the current row and column to what they were
   d->TransformSelectionTable->setCurrentCell( currentRow, currentColumn );
   d->TransformSelectionTable->verticalScrollBar()->setValue( scrollPosition );
+  d->TransformSelectionTable->resizeRowsToContents();
 
 }

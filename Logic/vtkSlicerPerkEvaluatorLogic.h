@@ -72,6 +72,8 @@ public:
   void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void GetAnalyzeTransforms( vtkCollection* analyzeTransforms );
   bool IsAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
+
+  void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
   
   double GetTotalTime() const;
   double GetMinTime() const;
