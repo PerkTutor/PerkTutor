@@ -130,6 +130,7 @@ void qSlicerTransformSelectionWidget
 	  }
   }
   
+  this->BufferStatus = this->BufferWidget->BufferStatus - 1; // Hack to cue update without buffer change
   this->updateWidget();
 }
 
@@ -150,7 +151,8 @@ void qSlicerTransformSelectionWidget
 	    this->PerkEvaluatorLogic->RemoveAnalyzeTransform( transformNode );
 	  }
   }
-  
+
+  this->BufferStatus = this->BufferWidget->BufferStatus - 1; // Hack to cue update without buffer change
   this->updateWidget();
 }
 
@@ -173,6 +175,7 @@ void qSlicerTransformSelectionWidget
     this->PerkEvaluatorLogic->RemoveAnalyzeTransform( changedNode );
   }
 
+  this->BufferStatus = this->BufferWidget->BufferStatus - 1; // Hack to cue update without buffer change
   this->updateWidget();
 }
 
