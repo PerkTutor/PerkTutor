@@ -411,21 +411,11 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
-//This should be used to access the device-wise trajectories (primarily by the python functions for metric calculation)
 vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
-::GetToolBuffer( int index )
+::GetTransformBuffer()
 {
-  return this->ToolTrajectories.at(index).Buffer;
+  return this->TransformBuffer;
 }
-
-
-//This should be used to access the device-wise trajectories (primarily by the python functions for metric calculation)
-int vtkSlicerPerkEvaluatorLogic
-::GetNumTools()
-{
-  return this->ToolTrajectories.size();
-}
-
 
 
 void vtkSlicerPerkEvaluatorLogic

@@ -65,8 +65,7 @@ protected:
 public:
   
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
-  vtkMRMLTransformBufferNode* GetToolBuffer( int index );
-  int GetNumTools();
+  vtkMRMLTransformBufferNode* GetTransformBuffer();
 
   void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
