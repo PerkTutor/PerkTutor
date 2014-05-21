@@ -24,7 +24,7 @@ add_subdirectory(Widgets)
 ExternalProject_Add(
   PythonMetricsDownload
   GIT_REPOSITORY "https://github.com/mholden8/PythonMetrics.git"
-  GIT_TAG ""
+  GIT_TAG "Core"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   TEST_COMMAND ""
