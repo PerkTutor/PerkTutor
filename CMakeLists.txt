@@ -20,19 +20,6 @@ add_subdirectory(Logic)
 add_subdirectory(Widgets)
 
 #-----------------------------------------------------------------------------
-# Add the python metrics
-ExternalProject_Add(
-  PythonMetricsDownload
-  GIT_REPOSITORY "https://github.com/mholden8/PythonMetrics.git"
-  GIT_TAG "Core"
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  TEST_COMMAND ""
-  INSTALL_COMMAND ""
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Resources/PythonMetrics
-)
-
-#-----------------------------------------------------------------------------
 set(MODULE_EXPORT_DIRECTIVE "Q_SLICER_QTMODULES_${MODULE_NAME_UPPER}_EXPORT")
 
 # Current_{source,binary} and Slicer_{Libs,Base} already included
@@ -72,6 +59,13 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicerTransformRecorderModuleLogic
   qSlicerTransformRecorderModuleWidgets
   )
+  
+#-----------------------------------------------------------------------------
+# Add the python metrics
+execute_process(
+  COMMAND ${GIT_EXECUTABLE} clone https://github.com/mholden8/PythonMetrics.git -b Core
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Resources
+)
 
 set(MODULE_RESOURCES
   Resources/qSlicer${MODULE_NAME}Module.qrc
