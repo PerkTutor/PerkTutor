@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.7)
 
+include(ExternalProject)
+
 #-----------------------------------------------------------------------------
 set(MODULE_NAME "PerkEvaluator")
 set(MODULE_TITLE "Perk Evaluator")
@@ -16,6 +18,19 @@ endif()
 #-----------------------------------------------------------------------------
 add_subdirectory(Logic)
 add_subdirectory(Widgets)
+
+#-----------------------------------------------------------------------------
+# Add the python metrics
+ExternalProject_Add(
+  PythonMetricsDownload
+  GIT_REPOSITORY "https://github.com/mholden8/PythonMetrics.git"
+  GIT_TAG ""
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  TEST_COMMAND ""
+  INSTALL_COMMAND ""
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Resources/PythonMetrics
+)
 
 #-----------------------------------------------------------------------------
 set(MODULE_EXPORT_DIRECTIVE "Q_SLICER_QTMODULES_${MODULE_NAME_UPPER}_EXPORT")
@@ -60,6 +75,7 @@ set(MODULE_TARGET_LIBRARIES
 
 set(MODULE_RESOURCES
   Resources/qSlicer${MODULE_NAME}Module.qrc
+  Resources/PythonMetrics/qSlicerPythonMetrics.qrc
   )
 
 #-----------------------------------------------------------------------------
