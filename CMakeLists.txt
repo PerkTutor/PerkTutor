@@ -61,10 +61,9 @@ set(MODULE_TARGET_LIBRARIES
   )
   
 #-----------------------------------------------------------------------------
-# Add the python metrics
+# Update the python metrics repo
 execute_process(
-  COMMAND ${GIT_EXECUTABLE} submodule add -b Core https://github.com/mholden8/PythonMetrics.git
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Resources
+  COMMAND ${GIT_EXECUTABLE} submodule update
 )
 
 set(MODULE_RESOURCES
