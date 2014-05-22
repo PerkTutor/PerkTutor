@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.7)
 
+include(ExternalProject)
+
 #-----------------------------------------------------------------------------
 set(MODULE_NAME "PerkEvaluator")
 set(MODULE_TITLE "Perk Evaluator")
@@ -66,6 +68,7 @@ execute_process(
 
 set(MODULE_RESOURCES
   Resources/qSlicer${MODULE_NAME}Module.qrc
+  Resources/PythonMetrics/qSlicerPythonMetrics.qrc
   )
 
 #-----------------------------------------------------------------------------
