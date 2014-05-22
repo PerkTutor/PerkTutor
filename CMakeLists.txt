@@ -63,7 +63,7 @@ set(MODULE_TARGET_LIBRARIES
 #-----------------------------------------------------------------------------
 # Add the python metrics
 execute_process(
-  COMMAND ${GIT_EXECUTABLE} clone https://github.com/mholden8/PythonMetrics.git -b Core
+  COMMAND ${GIT_EXECUTABLE} submodule add -b Core https://github.com/mholden8/PythonMetrics.git
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Resources
 )
 
