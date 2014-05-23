@@ -6,7 +6,11 @@ class PythonMetricCalculator:
 
   def __init__( self ):
     self.metrics = []
+    # Use the module's active logic by default
     self.peLogic = slicer.modules.perkevaluator.logic()
+    
+  def SetPerkEvaluatorLogic( self, newPELogicDecorator ):
+    self.peLogic = newPELogicDecorator.GetLogic()
 
   def AddPythonMetric( self, newMetric ):
     if ( newMetric.RequiresTissueNode() == False or self.peLogic.GetBodyModelNode() != None ):
@@ -75,10 +79,6 @@ class PythonMetricCalculator:
     # Start at the beginning (but remember where we were)
     originalPlaybackTime = self.peLogic.GetPlaybackTime()
     self.peLogic.SetPlaybackTime( self.peLogic.GetMinTime() )
-  
-    # Get the node associated with the trajectory we are interested in
-    transformName = currentTransform.GetName()
-    node = slicer.mrmlScene.GetFirstNodeByName( transformName )
   
     # Initialize the matrices
     matrix = vtk.vtkMatrix4x4()

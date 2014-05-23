@@ -34,7 +34,6 @@
 #include "QDirIterator.h"
 
 
-
 // Helper functions ------------------------------------------------------------------------
 
 
@@ -337,6 +336,17 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   PythonQtObjectPtr context = PythonQt::self()->getMainModule();
   context.evalFile( ":/Python/MetricCalculator.py" );
   context.evalScript( "MainMetricCalculator = PythonMetricCalculator()" );
+
+  /*
+  // Create a logic decorator and pass to python
+  vtkSlicerPerkEvaluatorLogicDecorator logicDecorator;
+  logicDecorator.SetLogic( this );
+
+  QVariantList logicArgs;
+  logicArgs.append( QVariant::fromValue( logicDecorator ) );
+
+  context.call( "MainMetricCalculator.SetPerkEvaluatorLogic", logicArgs );
+  */
 
   // Traverse all "core" metrics defined in the qrc file (look for python files, exclude metric calculator)
   QStringList pythonFilter;

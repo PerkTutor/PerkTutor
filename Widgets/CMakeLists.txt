@@ -14,12 +14,15 @@ set(${KIT}_SRCS
   qSlicerPerkEvaluatorMessagesWidget.h
   qSlicerPerkEvaluatorTransformBufferWidget.cxx
   qSlicerPerkEvaluatorTransformBufferWidget.h
+  qSlicerVTKObjectDecorator.cxx
+  qSlicerVTKObjectDecorator.h
   )
   
 set(${KIT}_MOC_SRCS
   qSlicerTransformSelectionWidget.h
   qSlicerPerkEvaluatorMessagesWidget.h
   qSlicerPerkEvaluatorTransformBufferWidget.h
+  qSlicerVTKObjectDecorator.h
   )
   
 set(${KIT}_UI_SRCS
