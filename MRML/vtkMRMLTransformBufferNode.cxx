@@ -131,6 +131,21 @@ vtkMRMLTransformBufferNode
 
 
 void vtkMRMLTransformBufferNode
+::Concatenate( vtkMRMLTransformBufferNode* catBuffer )
+{
+  // If you want things to be deep copied, just deep copy the buffer
+  for ( int i = 0; i < catBuffer->GetNumTransforms(); i++ )
+  {
+    this->AddTransform( catBuffer->GetTransformAt( i ) );
+  }
+  for ( int i = 0; i < catBuffer->GetNumMessages(); i++ )
+  {
+    this->AddMessage( catBuffer->GetMessageAt( i ) );
+  }
+}
+
+
+void vtkMRMLTransformBufferNode
 ::AddTransform( vtkTransformRecord* newTransform )
 {
   // Ensure that we put it into sorted order (usually it will go at the end)

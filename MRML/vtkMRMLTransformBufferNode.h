@@ -75,6 +75,8 @@ protected:
   
   
 public:
+
+  void Concatenate( vtkMRMLTransformBufferNode* catBuffer );
   
   void AddTransform( vtkTransformRecord* newTransform );
   void AddMessage( vtkMessageRecord* newMessage );
