@@ -66,6 +66,7 @@ public:
   
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   vtkMRMLTransformBufferNode* GetTransformBuffer();
+  vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
 
   void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );

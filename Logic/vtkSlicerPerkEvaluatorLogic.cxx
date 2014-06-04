@@ -418,6 +418,33 @@ vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
 }
 
 
+vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
+::GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transformNode )
+{
+  // Iterate through the parents and add to temporary transform buffer if in the selected transform buffer for analysis
+  vtkMRMLTransformBufferNode* selfParentBuffer = vtkMRMLTransformBufferNode::New();
+
+  vtkMRMLLinearTransformNode* parent = transformNode;
+  while( parent != NULL )
+  {
+    // Check if the parent's name matches one of the trajectory names
+    for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+    {
+      if ( this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
+	    {
+        // Concatenate into the transform if so
+        vtkMRMLTransformBufferNode* currentCopyBuffer = vtkMRMLTransformBufferNode::New();
+        currentCopyBuffer->Copy( this->ToolTrajectories.at( i ).Buffer );
+        selfParentBuffer->Concatenate( currentCopyBuffer );
+	    }
+    }
+	  parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
+  }
+
+  return selfParentBuffer;
+}
+
+
 void vtkSlicerPerkEvaluatorLogic
 ::AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform )
 {

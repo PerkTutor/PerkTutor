@@ -74,13 +74,17 @@ def CalculateToolMetric( peLogic, currentTransform, transformMetrics ):
   transformName = currentTransform.GetName()
   node = slicer.mrmlScene.GetFirstNodeByName( transformName )
   
+  # Get the self and parent transform buffer
+  selfAndParentBuffer = peLogic.GetSelfAndParentTransformBuffer( node )
+  
   # Initialize the matrices
-  matrix = vtk.vtkMatrix4x4()
+  matrix = vtk.vtkMatrix4x4() 
+
   
   # Now iterate
-  for i in range( peLogic.GetTransformBuffer().GetNumTransforms() ):
+  for i in range( selfAndParentBuffer.GetNumTransforms() ):
 
-    time = peLogic.GetTransformBuffer().GetTransformAt(i).GetTime()
+    time = selfAndParentBuffer.GetTransformAt(i).GetTime()
     
     peLogic.SetPlaybackTime( time )
     
