@@ -790,7 +790,12 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLModelDisplayNode* curveModelDisplay = vtkMRMLModelDisplayNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLModelDisplayNode" ) );
   curveModelDisplay->SetLineWidth( 2 );
   curveModelDisplay->SetScene( this->GetMRMLScene() );
+
+#if ( VTK_MAJOR_VERSION <= 5 )
   curveModelDisplay->SetInputPolyData( curveModel->GetPolyData() );
+#else
+  curveModelDisplay->SetInputPolyDataConnection( curveModel->GetPolyDataConnection() );
+#endif
 
   this->GetMRMLScene()->AddNode( curveModelDisplay );
   this->GetMRMLScene()->AddNode( curveModel );
