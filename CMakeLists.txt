@@ -56,7 +56,7 @@ set(MODULE_UI_SRCS
   )
 
 set(MODULE_TARGET_LIBRARIES
-  vtkSlicer${MODULE_NAME}ModuleWrapperQtVTK
+  qSlicer${MODULE_NAME}ModuleWrapperQtVTK
   vtkSlicer${MODULE_NAME}ModuleLogic
   qSlicer${MODULE_NAME}ModuleWidgets
   vtkSlicerTransformRecorderModuleMRML

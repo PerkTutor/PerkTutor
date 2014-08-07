@@ -2,8 +2,9 @@
 #ifndef __qSlicerVTKObjectDecorator_h
 #define __qSlicerVTKObjectDecorator_h
 
-#include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
+#include "qSlicerPerkEvaluatorModuleWrapperQtVTKExport.h"
 
+#include "QMetaType.h"
 #include "QObject.h"
 
 #include "vtkObject.h"
@@ -20,6 +21,7 @@ public:
   qSlicerVTKObjectDecorator( const qSlicerVTKObjectDecorator& source );
   ~qSlicerVTKObjectDecorator();
 
+public slots:
   vtkObject* GetObject();
   void SetObject( vtkObject* newObject );
 
@@ -27,6 +29,6 @@ private:
   vtkObject* Object;
 
 };
-//Q_DECLARE_METATYPE( qSlicerVTKObjectDecorator );
+Q_DECLARE_METATYPE( qSlicerVTKObjectDecorator );
 
 #endif

@@ -17,11 +17,9 @@ set(${KIT}_MOC_SRCS
   )
   
 set(${KIT}_UI_SRCS
-  Resources/UI/qSlicerTransformSelectionWidget.ui
   )
 
 set(${KIT}_RESOURCES
-  Resources/UI/qSlicerTransformSelectionWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES

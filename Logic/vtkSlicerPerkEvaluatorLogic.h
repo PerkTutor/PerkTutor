@@ -19,6 +19,7 @@
 
 // STD includes
 #include <cstdlib>
+#include <fstream>
 
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
@@ -98,6 +99,8 @@ public:
   vtkXMLDataParser* Parser;
   vtkXMLDataElement* ParseXMLFile( std::string fileName );
 
+  // FOR TESTING ONLY!!!!
+  void CreateMemoryLeakForTesting( int num );
   
   // Reference to body model node.  
 public:
@@ -146,6 +149,8 @@ private:
   bool TraceTrajectories;
 
   std::string MetricsDirectory;
+
+  ofstream playbackStream;
 
 };
 
