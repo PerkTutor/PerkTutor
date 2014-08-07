@@ -19,7 +19,6 @@
 
 // STD includes
 #include <cstdlib>
-#include <fstream>
 
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
@@ -149,8 +148,6 @@ private:
   bool TraceTrajectories;
 
   std::string MetricsDirectory;
-
-  ofstream playbackStream;
 
 };
 

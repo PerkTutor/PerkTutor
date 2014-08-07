@@ -40,7 +40,7 @@ macro(TEST_WITH_DATA
       NeedleTransformID
       ScriptedMetricsDirectory
       ExpectedResultsFile
-      BinaryDirectory      )
+      PythonBinaryDirectory      )
   message( ${Slicer_LAUNCH_COMMAND} )
   add_test(
     NAME ${TestName}
@@ -51,7 +51,7 @@ macro(TEST_WITH_DATA
     -NeedleTransformID ${NeedleTransformID}
     -ScriptedMetricsDirectory ${ScriptedMetricsDirectory}
     -ExpectedResultsFile ${ExpectedResultsFile}
-    -BinaryDirectory ${BinaryDirectory}
+    -PythonBinaryDirectory ${PythonBinaryDirectory}
   )
 endmacro()
 

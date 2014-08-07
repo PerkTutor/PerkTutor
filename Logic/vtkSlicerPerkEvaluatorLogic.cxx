@@ -23,7 +23,6 @@
 // STD includes
 #include <cassert>
 #include <ctime>
-#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -103,8 +102,6 @@ vtkSlicerPerkEvaluatorLogic
   this->AnalyzeTransforms = vtkSmartPointer< vtkCollection >::New();
 
   this->Parser = vtkXMLDataParser::New();
-
-  this->playbackStream.open( "C:/Devel/PerkTutor/PerkTutorLogicPlaybackLog.txt" );
 }
 
 
@@ -336,8 +333,6 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     }
   }
 
-  ofstream fileStream;
-  fileStream.open( "C:/Devel/PerkTutor/PerkTutorLogicLog.txt" );
 
   // Create the python metric calculator object
   PythonQt::init();
@@ -345,7 +340,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   context.evalFile( ":/Python/MetricCalculator.py" );
   context.evalScript( "MainMetricCalculator = PythonMetricCalculator()" );
 
-  // Create a logic decorator and pass to python
+  // Pass the logic to Python
   qSlicerApplication::application()->pythonManager()->addVTKObjectToPythonMain( "PerkEvaluatorLogic", this );
   context.evalScript( "MainMetricCalculator.SetPerkEvaluatorLogic( PerkEvaluatorLogic )" );
 
@@ -358,8 +353,6 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
 
   while ( metricIterator.hasNext() ) {
     std::string currentMetricDirectory = metricIterator.next().toStdString();
-
-    fileStream << "Logic loaded resources: " << currentMetricDirectory << std::endl;
 
     std::stringstream moduleName;
     moduleName << "PerkEvaluatorCoreMetric" << metricCount;
@@ -377,29 +370,10 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     metricCount++;
   }
 
-  QVariant numMetricsResultBefore = context.call( "MainMetricCalculator.GetNumMetrics" );
-  fileStream << "Actually loaded python metrics (before user directory): " << numMetricsResultBefore.toInt() << std::endl;
-
   context.evalScript( "MainMetricCalculator.AddAllScriptedMetrics()" );
-
-  QVariant numMetricsResultAfter = context.call( "MainMetricCalculator.GetNumMetrics" );
-  fileStream << "Actually loaded python metrics (after user directory): " << numMetricsResultAfter.toInt() << std::endl;
 
   QVariant result = context.call( "MainMetricCalculator.CalculateAllToolMetrics" );
   QStringList pythonMetrics = result.toStringList();
-
-  int resultSize = -1;
-  context.evalScript( "coll = vtk.vtkCollection()" );
-  context.evalScript( "coll.AddItem( vtk.vtkObject() )" );
-  resultSize = context.call( "coll.GetNumberOfItems" ).toInt();
-  if ( resultSize == 1 )
-  {
-    fileStream << "Successful calculation using Python console for vtk objects!" << std::endl;
-  }
-  else
-  {
-    fileStream << "Could not perform calculation using Python console for vtk objects!" << std::endl;
-  }
 
   int i = 0;
   while ( i < pythonMetrics.length() )
@@ -669,9 +643,6 @@ void vtkSlicerPerkEvaluatorLogic
   {	
     vtkMRMLLinearTransformNode* node = this->ToolTrajectories.at(i).Node;
     std::string transformString = this->ToolTrajectories.at(i).Buffer->GetTransformAtTime( time )->GetTransform();
-
-    this->playbackStream << node->GetName() << node->GetID() << std::endl;
-    this->playbackStream << transformString << std::endl;    
 
 #ifdef TRANSFORM_NODE_MATRIX_COPY_REQUIRED
     vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
