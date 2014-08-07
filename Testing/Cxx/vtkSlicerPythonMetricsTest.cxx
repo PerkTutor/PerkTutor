@@ -24,7 +24,6 @@
 #include "vtkSlicerPerkEvaluatorLogic.h"
 
 #include "qSlicerPerkEvaluatorModuleWidget.h"
-#include "qSlicerVTKObjectDecorator.h"
 
 // SlicerQt includes
 #include "qSlicerLoadableModule.h"

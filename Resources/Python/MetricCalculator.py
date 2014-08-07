@@ -14,8 +14,8 @@ class PythonMetricCalculator:
     self.fileStream.flush()
     #print "Python metric calculator called!"
     
-  def SetPerkEvaluatorLogic( self, newPELogicDecorator ):
-    self.peLogic = newPELogicDecorator#.GetObject()
+  def SetPerkEvaluatorLogic( self, newPELogic ):
+    self.peLogic = newPELogic
     self.fileStream.write( str( self.peLogic ) )
     self.fileStream.flush()
     #print self.peLogic

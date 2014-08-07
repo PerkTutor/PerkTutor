@@ -33,7 +33,6 @@
 #include "QDir.h"
 #include "QDirIterator.h"
 
-#include "qSlicerVTKObjectDecorator.h"
 #include "qSlicerApplication.h"
 #include "qSlicerPythonManager.h"
 
@@ -347,14 +346,8 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   context.evalScript( "MainMetricCalculator = PythonMetricCalculator()" );
 
   // Create a logic decorator and pass to python
-  //qSlicerVTKObjectDecorator logicDecorator;
-  //logicDecorator.SetObject( this );
-
   qSlicerApplication::application()->pythonManager()->addVTKObjectToPythonMain( "PerkEvaluatorLogic", this );
   context.evalScript( "MainMetricCalculator.SetPerkEvaluatorLogic( PerkEvaluatorLogic )" );
-    
-  //context.addObject( "PythonMetricsLogicDecorator", &logicDecorator );
-  //context.evalScript( "MainMetricCalculator.SetPerkEvaluatorLogic( PythonMetricsLogicDecorator )" );
 
   // Traverse all "core" metrics defined in the qrc file (look for python files, exclude metric calculator)
   QStringList pythonFilter;
