@@ -256,7 +256,7 @@ class TissueModelCreatorLogic:
     # The reversiness doesn't matter - we will fix it later if it os wrong
     surfacePolyData = self.PointsToSurfacePolyData( points, True )
     surfaceCleaner = vtk.vtkCleanPolyData()
-    surfaceCleaner.SetInput( surfacePolyData )
+    surfaceCleaner.SetInputData( surfacePolyData )
     surfaceCleaner.Update()
     surfacePolyData = surfaceCleaner.GetOutput()
     
@@ -278,7 +278,7 @@ class TissueModelCreatorLogic:
     
     # Reverse the normals if necessary
     reverseFilter = vtk.vtkReverseSense()
-    reverseFilter.SetInput( surfacePolyData )
+    reverseFilter.SetInputData( surfacePolyData )
     reverseFilter.SetReverseCells( reverse )
     reverseFilter.SetReverseNormals( reverse )
     reverseFilter.Update()
@@ -289,7 +289,7 @@ class TissueModelCreatorLogic:
     
     # Make the normals opposite the surface's normals
     reverseFilter = vtk.vtkReverseSense()
-    reverseFilter.SetInput( untransDeepPolyData )
+    reverseFilter.SetInputData( untransDeepPolyData )
     reverseFilter.SetReverseCells( True )
     reverseFilter.SetReverseNormals( True )
     reverseFilter.Update()
@@ -298,7 +298,7 @@ class TissueModelCreatorLogic:
     deepTransform = vtk.vtkTransform()
     deepTransform.Translate( depth * surfaceNormal[0], depth * surfaceNormal[1], depth * surfaceNormal[2] )  
     deepTransformFilter = vtk.vtkTransformPolyDataFilter()
-    deepTransformFilter.SetInput( untransDeepPolyData )
+    deepTransformFilter.SetInputData( untransDeepPolyData )
     deepTransformFilter.SetTransform( deepTransform )
     deepTransformFilter.Update()
     
@@ -313,39 +313,39 @@ class TissueModelCreatorLogic:
     
     # Append all of the polydata together
     tissuePolyDataAppend = vtk.vtkAppendPolyData()
-    tissuePolyDataAppend.AddInput( surfacePolyData )
-    tissuePolyDataAppend.AddInput( deepPolyData )
-    tissuePolyDataAppend.AddInput( jointHullPolyData )    
+    tissuePolyDataAppend.AddInputData( surfacePolyData )
+    tissuePolyDataAppend.AddInputData( deepPolyData )
+    tissuePolyDataAppend.AddInputData( jointHullPolyData )   
+    tissuePolyDataAppend.Update()
 
     # Clean up so the surface is closed
     tissueCleaner = vtk.vtkCleanPolyData()
-    tissueCleaner.SetInput( tissuePolyDataAppend.GetOutput() )
+    tissueCleaner.SetInputData( tissuePolyDataAppend.GetOutput() )
     tissueCleaner.Update()
     
     tissueModelPolyData = tissueCleaner.GetOutput()
     
     # Add the data to a model 
     tissueModel = slicer.mrmlScene.CreateNodeByClass( "vtkMRMLModelNode" )
-    tissueModel.SetAndObservePolyData( tissueModelPolyData )
+    slicer.mrmlScene.AddNode( tissueModel )
     tissueModel.SetName( "TissueModel" )
+    tissueModel.SetAndObservePolyData( tissueModelPolyData )    
     tissueModel.SetScene( slicer.mrmlScene )
     
     # Finally display the model
     tissueModelDisplay = slicer.mrmlScene.CreateNodeByClass( "vtkMRMLModelDisplayNode" )
-    tissueModelDisplay.SetScene( slicer.mrmlScene )
-    tissueModelDisplay.SetInputPolyData( tissueModel.GetPolyData() )
-    
     slicer.mrmlScene.AddNode( tissueModelDisplay )
-    slicer.mrmlScene.AddNode( tissueModel )
-    
     tissueModel.SetAndObserveDisplayNodeID( tissueModelDisplay.GetID() )
+    tissueModelDisplay.SetScene( slicer.mrmlScene )
+    tissueModelDisplay.SetInputPolyDataConnection( tissueModel.GetPolyDataConnection() )
+
 
     # Check to make sure the model is a closed surface
     edgesFilter = vtk.vtkFeatureEdges()
     edgesFilter.FeatureEdgesOff()
     edgesFilter.BoundaryEdgesOn()
     edgesFilter.NonManifoldEdgesOn()
-    edgesFilter.SetInput( tissueModel.GetPolyData() )
+    edgesFilter.SetInputData( tissueModel.GetPolyData() )
     edgesFilter.Update()
     
     if ( edgesFilter.GetOutput().GetNumberOfCells() != 0 ):
@@ -363,16 +363,18 @@ class TissueModelCreatorLogic:
   
     # Create the surface filter from the polydata
     surfaceFilter = vtk.vtkSurfaceReconstructionFilter()
-    surfaceFilter.SetInput( pointsPolyData )
+    surfaceFilter.SetInputData( pointsPolyData )
+    surfaceFilter.Update()
     
     # Do the contouring filter, and reverse to ensure it works properly
     contourFilter = vtk.vtkContourFilter()
     contourFilter.SetValue( 0, 0.0 )
-    contourFilter.SetInput( surfaceFilter.GetOutput() )
+    contourFilter.SetInputData( surfaceFilter.GetOutput() )
+    contourFilter.Update()
     
     # Reverse the normals if necessary
     reverseFilter = vtk.vtkReverseSense()
-    reverseFilter.SetInput( contourFilter.GetOutput() )
+    reverseFilter.SetInputData( contourFilter.GetOutput() )
     reverseFilter.SetReverseCells( reverse )
     reverseFilter.SetReverseNormals( reverse )
     reverseFilter.Update()
@@ -394,7 +396,7 @@ class TissueModelCreatorLogic:
     transform.Translate( - tissueBounds[0], - tissueBounds[2], - tissueBounds[4] )
   
     transformFilter = vtk.vtkTransformPolyDataFilter()
-    transformFilter.SetInput( reverseFilter.GetOutput() )
+    transformFilter.SetInputData( reverseFilter.GetOutput() )
     transformFilter.SetTransform( transform )
     transformFilter.Update()
   
@@ -455,7 +457,7 @@ class TissueModelCreatorLogic:
     
     # Setting up the PCA
     pca = vtk.vtkPCAStatistics()
-    pca.SetInput( vtk.vtkStatisticsAlgorithm.INPUT_DATA, table )
+    pca.SetInputData( vtk.vtkStatisticsAlgorithm.INPUT_DATA, table )
     pca.SetColumnStatus( 'X', 1 )
     pca.SetColumnStatus( 'Y', 1 )
     pca.SetColumnStatus( 'Z', 1 )
@@ -484,15 +486,15 @@ class TissueModelCreatorLogic:
     featureEdges.NonManifoldEdgesOff()
     featureEdges.ManifoldEdgesOff()
     featureEdges.BoundaryEdgesOn()
-    featureEdges.SetInput( inPolyData )
+    featureEdges.SetInputData( inPolyData )
     featureEdges.Update()
     
     stripper = vtk.vtkStripper()
-    stripper.SetInput( featureEdges.GetOutput() )
+    stripper.SetInputData( featureEdges.GetOutput() )
     stripper.Update()
     
     cleaner = vtk.vtkCleanPolyData()
-    cleaner.SetInput( stripper.GetOutput() )
+    cleaner.SetInputData( stripper.GetOutput() )
     cleaner.Update()
        
     return cleaner.GetOutput().GetPoints()
@@ -549,8 +551,9 @@ class TissueModelCreatorLogic:
       currPolyDataForSurface.SetPoints( currPointsForSurface )
       currPolyDataForSurface.SetPolys( triangles )
          
-      joiningAppend.AddInput( currPolyDataForSurface )
+      joiningAppend.AddInputData( currPolyDataForSurface )
     
+    joiningAppend.Update()
     return joiningAppend.GetOutput()
     
   
