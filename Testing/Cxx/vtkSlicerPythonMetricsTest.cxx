@@ -42,8 +42,6 @@
 // ITK includes
 #include "itkFactoryRegistration.h"
 
-#include <fstream>
-
 
 // This helper function will check if the metrics are equal to within n decimal places
 // We choose two for most applications
@@ -63,8 +61,6 @@ int vtkSlicerPythonMetricsTest ( int argc, char * argv[] )
   std::ostream& outputStream = std::cout;
   std::ostream& errorStream = std::cerr;
 
-  ofstream fileStream;
-  fileStream.open( "C:/Devel/PerkTutor/PerkTutorTestLog.txt" );
 
   // TestSceneFile
   const char *sceneFileName  = NULL;
@@ -207,7 +203,7 @@ int vtkSlicerPythonMetricsTest ( int argc, char * argv[] )
     return EXIT_FAILURE;
   }
 
-  outputStream << endl << "CTEST_FULL_OUTPUT" << endl;
+  outputStream << "CTEST_FULL_OUTPUT" << std::endl;
 
   // Ensure file reading works
   itk::itkFactoryRegistration();
@@ -216,7 +212,7 @@ int vtkSlicerPythonMetricsTest ( int argc, char * argv[] )
   qSlicerApplication* slicerApp = new qSlicerApplication(argc, argv);
 
 
-  // Load TransformRecorder Python module(s)
+  // Load TransformRecorder and PerkEvaluator Python module(s)
   slicerApp->pythonManager()->executeString( QString( "from slicer.util import importVTKClassesFromDirectory;"
       "importVTKClassesFromDirectory('%1', 'slicer.modulelogic', filematch='vtkSlicer%2ModuleLogic.py');"
       "importVTKClassesFromDirectory('%1', 'slicer.modulemrml', filematch='vtkSlicer%2ModuleMRML.py');"
@@ -246,7 +242,7 @@ int vtkSlicerPythonMetricsTest ( int argc, char * argv[] )
 
   // Load test scene
   mrmlScene->SetURL( sceneFileName );
-  fileStream << "Scene import: " << mrmlScene->Import() << "." << std::endl;
+  outputStream << "Scene import: " << mrmlScene->Import() << "." << std::endl;
 
   
   // Get references to the relevant nodes
@@ -314,37 +310,40 @@ int vtkSlicerPythonMetricsTest ( int argc, char * argv[] )
 
   // Calculate the metrics
   std::vector< vtkSlicerPerkEvaluatorLogic::MetricType > calculatedMetrics = peLogic->GetMetrics();
-  fileStream << "Number of calculated metrics: " << calculatedMetrics.size() << "." << std::endl;
+  outputStream << "Number of calculated metrics: " << calculatedMetrics.size() << "." << std::endl;
 
   if ( calculatedMetrics.size() == 0 )
   {
-    fileStream << "No metrics were calculated." << std::endl;
+    errorStream << "No metrics were calculated." << std::endl;
     return EXIT_FAILURE;
   }
 
  
   // Compare the metrics to the expected results
-  std::map< std::string, double > compareMap;
-  
+  bool metricFail = false;
   for ( int i = 0; i < calculatedMetrics.size(); i++ )
   {
-    //fileStream << calculatedMetrics.at( i ).first << " " << calculatedMetrics.at( i ).second << std::endl;
 
     if ( metricsMap.find( calculatedMetrics.at( i ).first ) == metricsMap.end() )
     {
-      fileStream << "Could not find expected result for metric: " << calculatedMetrics.at( i ).first << ". Value: " << calculatedMetrics.at( i ).second << "." << std::endl;
+      outputStream << "Could not find expected result for metric: " << calculatedMetrics.at( i ).first << ". Value: " << calculatedMetrics.at( i ).second << "." << std::endl;
       continue; // Don't worry about extra metrics for now
     }
     
     if ( ! EqualToNDecimalPlaces( metricsMap[ calculatedMetrics.at( i ).first ], calculatedMetrics.at( i ).second, 2 ) )
     {
-      fileStream << "Incorrect python metric: " << calculatedMetrics.at( i ).first << ". Expected: " << metricsMap[ calculatedMetrics.at( i ).first ] << ", but got: " << calculatedMetrics.at( i ).second << "!" << std::endl;
-      return EXIT_FAILURE;
+      errorStream << "Incorrect python metric: " << calculatedMetrics.at( i ).first << ". Expected: " << metricsMap[ calculatedMetrics.at( i ).first ] << ", but got: " << calculatedMetrics.at( i ).second << "!" << std::endl;
+      metricFail = true;
     }
     else
     {
-      fileStream << "Correct! Python metric: " << calculatedMetrics.at( i ).first << ". Expected: " << metricsMap[ calculatedMetrics.at( i ).first ] << ", and got: " << calculatedMetrics.at( i ).second << "!" << std::endl;
+      outputStream << "Correct! Python metric: " << calculatedMetrics.at( i ).first << ". Expected: " << metricsMap[ calculatedMetrics.at( i ).first ] << ", and got: " << calculatedMetrics.at( i ).second << "!" << std::endl;
     }
+  }
+
+  if ( metricFail )
+  {
+    return EXIT_FAILURE;
   }
   
   return EXIT_SUCCESS;
