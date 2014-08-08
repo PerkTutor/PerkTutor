@@ -98,7 +98,6 @@ public:
 
   vtkXMLDataParser* Parser;
   vtkXMLDataElement* ParseXMLFile( std::string fileName );
-
   
   // Reference to body model node.  
 public:

@@ -23,14 +23,17 @@
 // STD includes
 #include <cassert>
 #include <ctime>
-#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
 
 // PythonQT includes
 #include "PythonQt.h"
+#include "QDir.h"
+#include "QDirIterator.h"
 
+#include "qSlicerApplication.h"
+#include "qSlicerPythonManager.h"
 
 
 // Helper functions ------------------------------------------------------------------------
@@ -330,12 +333,46 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     }
   }
 
-  // Get the python metrics
+
+  // Create the python metric calculator object
   PythonQt::init();
   PythonQtObjectPtr context = PythonQt::self()->getMainModule();
   context.evalFile( ":/Python/MetricCalculator.py" );
+  context.evalScript( "MainMetricCalculator = PythonMetricCalculator()" );
 
-  QVariant result = context.call( "CalculateAllToolMetrics" );
+  // Pass the logic to Python
+  qSlicerApplication::application()->pythonManager()->addVTKObjectToPythonMain( "PerkEvaluatorLogic", this );
+  context.evalScript( "MainMetricCalculator.SetPerkEvaluatorLogic( PerkEvaluatorLogic )" );
+
+  // Traverse all "core" metrics defined in the qrc file (look for python files, exclude metric calculator)
+  QStringList pythonFilter;
+  pythonFilter << "*.py";
+  QDirIterator metricIterator( ":", pythonFilter, QDir::NoFilter, QDirIterator::NoIteratorFlags );
+
+  int metricCount = 0;
+
+  while ( metricIterator.hasNext() ) {
+    std::string currentMetricDirectory = metricIterator.next().toStdString();
+
+    std::stringstream moduleName;
+    moduleName << "PerkEvaluatorCoreMetric" << metricCount;
+
+    std::stringstream moduleImport;
+    moduleImport << "import " << moduleName.str();
+
+    std::stringstream moduleAdd;
+    moduleAdd << "MainMetricCalculator.AddPythonMetric( " << moduleName.str() << ".PerkEvaluatorMetric() )";
+
+    PythonQt::self()->createModuleFromFile( moduleName.str().c_str(), currentMetricDirectory.c_str() );
+    context.evalScript( moduleImport.str().c_str() );
+    context.evalScript( moduleAdd.str().c_str() );
+
+    metricCount++;
+  }
+
+  context.evalScript( "MainMetricCalculator.AddAllScriptedMetrics()" );
+
+  QVariant result = context.call( "MainMetricCalculator.CalculateAllToolMetrics" );
   QStringList pythonMetrics = result.toStringList();
 
   int i = 0;
@@ -641,6 +678,7 @@ void vtkSlicerPerkEvaluatorLogic
 #else
 	node->GetMatrixTransformToParent()->DeepCopy( MatrixStrToDouble( transformString ) );
 #endif
+
   }
 
 }

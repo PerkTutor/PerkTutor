@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.7)
 
+include(ExternalProject)
+
 #-----------------------------------------------------------------------------
 set(MODULE_NAME "PerkEvaluator")
 set(MODULE_TITLE "Perk Evaluator")
@@ -57,9 +59,16 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicerTransformRecorderModuleLogic
   qSlicerTransformRecorderModuleWidgets
   )
+  
+#-----------------------------------------------------------------------------
+# Update the python metrics repo
+execute_process(
+  COMMAND ${GIT_EXECUTABLE} submodule update
+)
 
 set(MODULE_RESOURCES
   Resources/qSlicer${MODULE_NAME}Module.qrc
+  Resources/PythonMetrics/qSlicerPythonMetrics.qrc
   )
 
 #-----------------------------------------------------------------------------
