@@ -978,14 +978,3 @@ vtkXMLDataElement* vtkSlicerPerkEvaluatorLogic
   Parser->Parse();
   return Parser->GetRootElement();
 }
-
-
-// FOR TESTING ONLY!!!!
-void vtkSlicerPerkEvaluatorLogic
-::CreateMemoryLeakForTesting( int num )
-{
-  for ( int i = 0; i < num; i++ )
-  {
-    vtkObject::New();
-  }
-}

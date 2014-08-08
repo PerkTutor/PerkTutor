@@ -97,9 +97,6 @@ public:
 
   vtkXMLDataParser* Parser;
   vtkXMLDataElement* ParseXMLFile( std::string fileName );
-
-  // FOR TESTING ONLY!!!!
-  void CreateMemoryLeakForTesting( int num );
   
   // Reference to body model node.  
 public:
