@@ -84,23 +84,22 @@ class PythonMetricCalculator:
     
     
     # Start at the beginning (but remember where we were)
-    originalPlaybackTime = peLogic.GetPlaybackTime()
-    peLogic.SetPlaybackTime( peLogic.GetMinTime() )
+    originalPlaybackTime = self.peLogic.GetPlaybackTime()
+    self.peLogic.SetPlaybackTime( self.peLogic.GetMinTime() )
     
     # Get the node associated with the trajectory we are interested in
     transformName = currentTransform.GetName()
     node = slicer.mrmlScene.GetFirstNodeByName( transformName )
     
     # Get the self and parent transform buffer
-    selfAndParentBuffer = peLogic.GetSelfAndParentTransformBuffer( node )
+    selfAndParentBuffer = self.peLogic.GetSelfAndParentTransformBuffer( node )
     
     # Initialize the matrices
     matrix = vtk.vtkMatrix4x4() 
     
     
     # Now iterate
-    for i in range( selfAndParentBuffer.GetNumTransforms() ):
-      
+    for i in range( selfAndParentBuffer.GetNumTransforms() ):      
       
       time = selfAndParentBuffer.GetTransformAt(i).GetTime()
       
