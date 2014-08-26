@@ -22,6 +22,7 @@ set( PerkTutor_Modules
   TransformRecorder
   PerkEvaluator
   WorkflowSegmentation 
+  PythonMetricsCalculator
 )
 
 IF( PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES )
@@ -39,8 +40,8 @@ mark_as_advanced(${EXTENSION_NAME}_SUPERBUILD)
 
 # Ensure that the modules' repositories are correctly set
 foreach( proj ${PerkTutor_Modules} )
-  set( PERKTUTOR_REPOSITORY_${proj} "https://github.com/PerkTutor/${proj}.git" CACHE STRING "Set the ${proj} repository" )
-  set( PERKTUTOR_REPOSITORY_TAG_${proj} "" CACHE STRING "Set the ${proj} repository tag" )
+  set( PERKTUTOR_REPOSITORY_${proj}_URL "https://github.com/PerkTutor/${proj}.git" CACHE STRING "Set the ${proj} repository" )
+  set( PERKTUTOR_REPOSITORY_${proj}_TAG "" CACHE STRING "Set the ${proj} repository tag" )
 endforeach( proj )
 
 
