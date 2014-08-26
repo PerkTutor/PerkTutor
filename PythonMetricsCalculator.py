@@ -19,7 +19,7 @@ class PythonMetricsCalculator:
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
     """ # replace with organization, grant and thanks.
     parent.icon = qt.QIcon( "PythonMetricsCalculator.png" )
-    parent.hidden = False # TODO: Set to "True" when deploying module
+    parent.hidden = True # TODO: Set to "True" when deploying module
     self.parent = parent
 
     # Add this test to the SelfTest module's list for discovery when the module
