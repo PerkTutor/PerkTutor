@@ -1,6 +1,5 @@
 <!DOCTYPE RCC><RCC version="1.0">
   <qresource>
     <file>Icons/PerkEvaluator.png</file>
-    <file>Python/MetricCalculator.py</file>
   </qresource>
 </RCC>

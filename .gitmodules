@@ -1,4 +1,0 @@
-[submodule "Resources/PythonMetrics"]
-	path = Resources/PythonMetrics
-	url = https://github.com/PerkTutor/PythonMetrics.git
-	branch = Core

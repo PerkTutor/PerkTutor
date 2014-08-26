@@ -61,14 +61,8 @@ set(MODULE_TARGET_LIBRARIES
   )
   
 #-----------------------------------------------------------------------------
-# Update the python metrics repo
-execute_process(
-  COMMAND ${GIT_EXECUTABLE} submodule update
-)
-
 set(MODULE_RESOURCES
   Resources/qSlicer${MODULE_NAME}Module.qrc
-  Resources/PythonMetrics/qSlicerPythonMetrics.qrc
   )
 
 #-----------------------------------------------------------------------------
