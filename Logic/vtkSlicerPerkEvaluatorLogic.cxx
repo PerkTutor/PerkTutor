@@ -23,7 +23,6 @@
 // STD includes
 #include <cassert>
 #include <ctime>
-#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -33,6 +32,8 @@
 #include "QDir.h"
 #include "QDirIterator.h"
 
+#include "qSlicerApplication.h"
+#include "qSlicerPythonManager.h"
 
 
 // Helper functions ------------------------------------------------------------------------
@@ -332,11 +333,16 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     }
   }
 
+
   // Create the python metric calculator object
   PythonQt::init();
   PythonQtObjectPtr context = PythonQt::self()->getMainModule();
   context.evalFile( ":/Python/MetricCalculator.py" );
   context.evalScript( "MainMetricCalculator = PythonMetricCalculator()" );
+
+  // Pass the logic to Python
+  qSlicerApplication::application()->pythonManager()->addVTKObjectToPythonMain( "PerkEvaluatorLogic", this );
+  context.evalScript( "MainMetricCalculator.SetPerkEvaluatorLogic( PerkEvaluatorLogic )" );
 
   // Traverse all "core" metrics defined in the qrc file (look for python files, exclude metric calculator)
   QStringList pythonFilter;
@@ -362,10 +368,10 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     context.evalScript( moduleAdd.str().c_str() );
 
     metricCount++;
-    //qDebug() << it.next();
   }
 
   context.evalScript( "MainMetricCalculator.AddAllScriptedMetrics()" );
+
   QVariant result = context.call( "MainMetricCalculator.CalculateAllToolMetrics" );
   QStringList pythonMetrics = result.toStringList();
 
@@ -446,6 +452,33 @@ vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
 ::GetTransformBuffer()
 {
   return this->TransformBuffer;
+}
+
+
+vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
+::GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transformNode )
+{
+  // Iterate through the parents and add to temporary transform buffer if in the selected transform buffer for analysis
+  vtkMRMLTransformBufferNode* selfParentBuffer = vtkMRMLTransformBufferNode::New();
+
+  vtkMRMLLinearTransformNode* parent = transformNode;
+  while( parent != NULL )
+  {
+    // Check if the parent's name matches one of the trajectory names
+    for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+    {
+      if ( this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
+	    {
+        // Concatenate into the transform if so
+        vtkMRMLTransformBufferNode* currentCopyBuffer = vtkMRMLTransformBufferNode::New();
+        currentCopyBuffer->Copy( this->ToolTrajectories.at( i ).Buffer );
+        selfParentBuffer->Concatenate( currentCopyBuffer );
+	    }
+    }
+	  parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
+  }
+
+  return selfParentBuffer;
 }
 
 
@@ -645,6 +678,7 @@ void vtkSlicerPerkEvaluatorLogic
 #else
 	node->GetMatrixTransformToParent()->DeepCopy( MatrixStrToDouble( transformString ) );
 #endif
+
   }
 
 }
@@ -794,7 +828,12 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLModelDisplayNode* curveModelDisplay = vtkMRMLModelDisplayNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLModelDisplayNode" ) );
   curveModelDisplay->SetLineWidth( 2 );
   curveModelDisplay->SetScene( this->GetMRMLScene() );
+
+#if ( VTK_MAJOR_VERSION <= 5 )
   curveModelDisplay->SetInputPolyData( curveModel->GetPolyData() );
+#else
+  curveModelDisplay->SetInputPolyDataConnection( curveModel->GetPolyDataConnection() );
+#endif
 
   this->GetMRMLScene()->AddNode( curveModelDisplay );
   this->GetMRMLScene()->AddNode( curveModel );

@@ -66,6 +66,7 @@ public:
   
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   vtkMRMLTransformBufferNode* GetTransformBuffer();
+  vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
 
   void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
@@ -97,7 +98,6 @@ public:
 
   vtkXMLDataParser* Parser;
   vtkXMLDataElement* ParseXMLFile( std::string fileName );
-
   
   // Reference to body model node.  
 public:
