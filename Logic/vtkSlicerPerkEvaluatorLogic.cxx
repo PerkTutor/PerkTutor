@@ -334,45 +334,12 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   }
 
 
-  // Create the python metric calculator object
-  PythonQt::init();
-  PythonQtObjectPtr context = PythonQt::self()->getMainModule();
-  context.evalFile( ":/Python/MetricCalculator.py" );
-  context.evalScript( "MainMetricCalculator = PythonMetricCalculator()" );
-
-  // Pass the logic to Python
-  qSlicerApplication::application()->pythonManager()->addVTKObjectToPythonMain( "PerkEvaluatorLogic", this );
-  context.evalScript( "MainMetricCalculator.SetPerkEvaluatorLogic( PerkEvaluatorLogic )" );
-
-  // Traverse all "core" metrics defined in the qrc file (look for python files, exclude metric calculator)
-  QStringList pythonFilter;
-  pythonFilter << "*.py";
-  QDirIterator metricIterator( ":", pythonFilter, QDir::NoFilter, QDirIterator::NoIteratorFlags );
-
-  int metricCount = 0;
-
-  while ( metricIterator.hasNext() ) {
-    std::string currentMetricDirectory = metricIterator.next().toStdString();
-
-    std::stringstream moduleName;
-    moduleName << "PerkEvaluatorCoreMetric" << metricCount;
-
-    std::stringstream moduleImport;
-    moduleImport << "import " << moduleName.str();
-
-    std::stringstream moduleAdd;
-    moduleAdd << "MainMetricCalculator.AddPythonMetric( " << moduleName.str() << ".PerkEvaluatorMetric() )";
-
-    PythonQt::self()->createModuleFromFile( moduleName.str().c_str(), currentMetricDirectory.c_str() );
-    context.evalScript( moduleImport.str().c_str() );
-    context.evalScript( moduleAdd.str().c_str() );
-
-    metricCount++;
-  }
-
-  context.evalScript( "MainMetricCalculator.AddAllScriptedMetrics()" );
-
-  QVariant result = context.call( "MainMetricCalculator.CalculateAllToolMetrics" );
+  // Use the python metrics calculator module
+  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
+  pythonManager->executeString( "import PythonMetricsCalculator" );
+  pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( "PythonMetricsVariable = PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
+  QVariant result = pythonManager->getVariable( "PythonMetricsVariable" );
   QStringList pythonMetrics = result.toStringList();
 
   int i = 0;
