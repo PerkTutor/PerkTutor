@@ -27,11 +27,6 @@
 #include <limits>
 #include <sstream>
 
-// PythonQT includes
-#include "PythonQt.h"
-#include "QDir.h"
-#include "QDirIterator.h"
-
 #include "qSlicerApplication.h"
 #include "qSlicerPythonManager.h"
 
