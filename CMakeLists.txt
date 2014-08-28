@@ -23,15 +23,38 @@ set(PERKTUTOR_CORE_METRICS
   PythonMetrics/TissueTime.py
   )
 
-#-----------------------------------------------------------------------------
+
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
   ${PERKTUTOR_CORE_METRICS}
   )
 
+#-----------------------------------------------------------------------------
+set(SCENE_TEST_RESOURCES
+  Data/Scenes/Lumbar/BodyModel.stl
+  Data/Scenes/Lumbar/NeedleRotation.tfm
+  Data/Scenes/Lumbar/ProbeToRAS.tfm
+  Data/Scenes/Lumbar/StylusTipToRAS.tfm
+  Data/Scenes/Lumbar/TransformBuffer_Subject13.xml
+  Data/Scenes/Lumbar/TransformBuffer_Lumbar_Scene.mrml  
+  )
+  
+set(RESULTS_TEST_RESOURCES
+  Data/Results/Lumbar.xml
+  )
+
+#-----------------------------------------------------------------------------
 set(MODULE_PYTHON_RESOURCES
   Resources/${MODULE_NAME}.qrc
   )
+
+if (BUILD_TESTING)
+  set(MODULE_PYTHON_RESOURCES
+    ${MODULE_PYTHON_RESOURCES}
+    ${SCENE_TEST_RESOURCES}
+    ${RESULTS_TEST_RESOURCES}
+    )
+endif()
 
 #-----------------------------------------------------------------------------
 slicerMacroBuildScriptedModule(

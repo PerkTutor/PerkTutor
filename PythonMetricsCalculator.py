@@ -10,7 +10,7 @@ class PythonMetricsCalculator:
   def __init__(self, parent):
     parent.title = "Python Metrics Calculator" # TODO make this more human readable by adding spaces
     parent.categories = ["Perk Tutor"]
-    parent.dependencies = []
+    parent.dependencies = ["PerkEvaluator"]
     parent.contributors = ["Matthew Holden (Queen's University), Tamas Ungi (Queen's University)"] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
     The Python Metric Calculator module is a hidden module for calculating metrics for transform buffers. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/PythonMetricsCalculator/wiki'>Python Metric Calculator</a>.
@@ -19,7 +19,7 @@ class PythonMetricsCalculator:
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
     """ # replace with organization, grant and thanks.
     parent.icon = qt.QIcon( "PythonMetricsCalculator.png" )
-    parent.hidden = True # TODO: Set to "True" when deploying module
+    parent.hidden = False # TODO: Set to "True" when deploying module
     self.parent = parent
 
     # Add this test to the SelfTest module's list for discovery when the module
@@ -317,46 +317,91 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
   def setUp(self):
     """ Do whatever is needed to reset the state - typically a scene clear will be enough.
     """
-    slicer.mrmlScene.Clear(0)
+    slicer.mrmlScene.Clear( 0 )
 
   def runTest(self):
     """Run as few or as many tests as needed here.
     """
     self.setUp()
-    self.test_PythonMetricsCalculator1()
+    self.test_PythonMetricsCalculatorLumbar()
 
-  def test_PythonMetricsCalculator1(self):
-    """ Ideally you should have several levels of tests.  At the lowest level
-    tests sould exercise the functionality of the logic with different inputs
-    (both valid and invalid).  At higher levels your tests should emulate the
-    way the user would interact with your code and confirm that it still works
-    the way you intended.
-    One of the most important features of the tests is that it should alert other
-    developers when their changes will have an impact on the behavior of your
-    module.  For example, if a developer removes a feature that you depend on,
-    your test should break so they know that the feature is needed.
-    """
-
-    self.delayDisplay("Starting the test")
-    #
-    # first, get some data
-    #
-    import urllib
-    downloads = (
-        ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
-
-    for url,name,loader in downloads:
-      filePath = slicer.app.temporaryPath + '/' + name
-      if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-        print('Requesting download %s from %s...\n' % (name, url))
-        urllib.urlretrieve(url, filePath)
-      if loader:
-        print('Loading %s...\n' % (name,))
-        loader(filePath)
-    self.delayDisplay('Finished with download and loading\n')
-
-    volumeNode = slicer.util.getNode(pattern="FA")
-    logic = PythonMetricsCalculatorLogic()
-    self.assertTrue( logic.hasImageData(volumeNode) )
-    self.delayDisplay('Test passed!')
+  def test_PythonMetricsCalculatorLumbar(self):
+    
+    # These are the IDs of the relevant nodes
+    transformBufferID = "vtkMRMLTransformBufferNode1"
+    tissueModelID = "vtkMRMLModelNode4"
+    needleTransformID = "vtkMRMLLinearTransformNode4"
+    
+    # TODO: Does this work for all OS?
+    sceneFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Scenes/Lumbar/TransformBuffer_Lumbar_Scene.mrml"
+    resultsFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Results/Lumbar.xml"
+    
+    print sceneFile
+    print resultsFile
+    
+    # Load the scene
+    activeScene = slicer.mrmlScene
+    activeScene.Clear( 0 )
+    activeScene.SetURL( sceneFile )
+    activeScene.Import()
+    
+    transformBufferNode = activeScene.GetNodeByID( transformBufferID )
+    tissueModelNode = activeScene.GetNodeByID( tissueModelID )
+    needleTransformNode = activeScene.GetNodeByID( needleTransformID )
+    
+    # Parse the results xml file
+    resultsParser = vtk.vtkXMLDataParser()
+    resultsParser.SetFileName( resultsFile )
+    resultsParser.Parse()
+    rootElement = resultsParser.GetRootElement()
+    
+    # Create a dictionary to store results
+    metricsDict = dict()
+    
+    for i in range( rootElement.GetNumberOfNestedElements() ):
+      element = rootElement.GetNestedElement( i )
+      if ( element == None or element.GetName() != "Metric" ):
+        continue
+      metricsDict[ element.GetAttribute( "Name" ) ] = float( element.GetAttribute( "Value" ) )
+    
+    # Setup the analysis
+    peLogic = slicer.modules.perkevaluator.logic()
+    
+    peLogic.UpdateToolTrajectories( transformBufferNode )
+    peLogic.SetPlaybackTime( peLogic.GetMinTime() )
+    peLogic.AddAnalyzeTransform( needleTransformNode )
+    
+    peLogic.SetBodyModelNode( tissueModelNode )
+    peLogic.SetNeedleTransformNode( needleTransformNode )
+    
+    peLogic.SetMarkBegin( peLogic.GetMinTime() )
+    peLogic.SetMarkEnd( peLogic.GetMaxTime() )
+    
+    # Calculate the metrics
+    pmcLogic = PythonMetricsCalculatorLogic()
+    metricStringList = pmcLogic.CalculateAllMetrics()
+    
+    # Compare the metrics to the expected results
+    metricIndex = 0
+    metricsFail = False
+    precision = 2
+    
+    while ( metricIndex < len( metricStringList ) ):
+      metricName = metricStringList[ metricIndex ]
+      metricValue = float( metricStringList[ metricIndex + 1 ] )
+      
+      if ( metricName not in metricsDict ):
+        print "Could not find expected result for metric:", metricName, ". Value:", metricValue, "."
+      else:
+        if ( round( metricValue, precision ) != round( metricsDict[ metricName ], precision ) ):
+          print "Incorrect metric:", metricName, ". Expected:", metricsDict[ metricName ], "but got", metricValue, "!"
+          metricsFail = True
+        else:
+          print "Correct! Metric:", metricName, ". Expected:", metricsDict[ metricName ], "and got", metricValue, "!"
+        
+      metricIndex = metricIndex + 2
+        
+    if ( metricsFail == True ):
+      self.delayDisplay( "Test failed! Calculated metrics were not consistent with results." )
+    else:
+      self.delayDisplay( "Test passed! Calculated metrics match results!" )
