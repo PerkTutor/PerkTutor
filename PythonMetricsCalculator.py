@@ -19,7 +19,7 @@ class PythonMetricsCalculator:
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
     """ # replace with organization, grant and thanks.
     parent.icon = qt.QIcon( "PythonMetricsCalculator.png" )
-    parent.hidden = False # TODO: Set to "True" when deploying module
+    parent.hidden = True # TODO: Set to "True" when deploying module
     self.parent = parent
 
     # Add this test to the SelfTest module's list for discovery when the module
@@ -323,7 +323,12 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     """Run as few or as many tests as needed here.
     """
     self.setUp()
-    self.test_PythonMetricsCalculatorLumbar()
+    
+    try:
+      self.test_PythonMetricsCalculatorLumbar()
+    
+    except Exception, e:
+      self.delayDisplay( "Test caused exception!\n" + str(e) )
 
   def test_PythonMetricsCalculatorLumbar(self):
     
@@ -336,24 +341,36 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     sceneFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Scenes/Lumbar/TransformBuffer_Lumbar_Scene.mrml"
     resultsFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Results/Lumbar.xml"
     
-    print sceneFile
-    print resultsFile
+    #print sceneFile
+    #print resultsFile
     
     # Load the scene
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
-    activeScene.Import()
+    if ( activeScene.Import() != 1 ):
+      raise Exception( "Scene import failed. Scene file:" + sceneFile )   
+    
     
     transformBufferNode = activeScene.GetNodeByID( transformBufferID )
+    if ( transformBufferNode == None ):
+      raise Exception( "Bad transform buffer." )
+      
     tissueModelNode = activeScene.GetNodeByID( tissueModelID )
+    if ( tissueModelNode == None ):
+      raise Exception( "Bad tissue model." )
+      
     needleTransformNode = activeScene.GetNodeByID( needleTransformID )
+    if ( needleTransformNode == None ):
+      raise Exception( "Bad needle transform." )
     
     # Parse the results xml file
     resultsParser = vtk.vtkXMLDataParser()
     resultsParser.SetFileName( resultsFile )
     resultsParser.Parse()
     rootElement = resultsParser.GetRootElement()
+    if ( rootElement == None or rootElement.GetName() != "PythonMetricsResults" ):
+      raise Exception( "Reading results failed. Results file:" + resultsFile )   
     
     # Create a dictionary to store results
     metricsDict = dict()
@@ -380,6 +397,10 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     # Calculate the metrics
     pmcLogic = PythonMetricsCalculatorLogic()
     metricStringList = pmcLogic.CalculateAllMetrics()
+    if ( len( metricStringList ) == 0 ):
+      raise Exception( "No metrics were calculated." )
+    if ( len( metricStringList ) % 2 != 0 ):
+      raise Exception( "Metric calculation produced an unexpected result." ) 
     
     # Compare the metrics to the expected results
     metricIndex = 0
