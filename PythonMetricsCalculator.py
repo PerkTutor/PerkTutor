@@ -426,3 +426,5 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
       self.delayDisplay( "Test failed! Calculated metrics were not consistent with results." )
     else:
       self.delayDisplay( "Test passed! Calculated metrics match results!" )
+      
+    self.assertFalse( metricsFail )
