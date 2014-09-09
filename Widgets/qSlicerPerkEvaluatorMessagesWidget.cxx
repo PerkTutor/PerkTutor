@@ -63,27 +63,15 @@ void qSlicerPerkEvaluatorMessagesWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorMessagesWidget
-::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
+::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
 {
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
 
 qSlicerPerkEvaluatorMessagesWidget
 ::~qSlicerPerkEvaluatorMessagesWidget()
 {
-}
-
-
-qSlicerPerkEvaluatorMessagesWidget* qSlicerPerkEvaluatorMessagesWidget
-::New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic )
-{
-  qSlicerPerkEvaluatorMessagesWidget* newMessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
-  newMessagesWidget->BufferWidget = newBufferWidget;
-  newMessagesWidget->PerkEvaluatorLogic = newPerkEvaluatorLogic;
-  newMessagesWidget->BufferStatus = newBufferWidget->BufferStatus;
-  newMessagesWidget->BufferMessagesStatus = newBufferWidget->BufferMessagesStatus;
-  newMessagesWidget->setup();
-  return newMessagesWidget;
 }
 
 
@@ -101,9 +89,9 @@ void qSlicerPerkEvaluatorMessagesWidget
 
   // Record the timestamp
   double time = this->PerkEvaluatorLogic->GetPlaybackTime();
-  this->BufferWidget->TransformRecorderLogic->AddMessage( this->BufferWidget->GetBufferNode(), messageName.toStdString(), time );
+  this->TransformRecorderLogic->AddMessage( this->BufferHelper->GetTransformBufferNode(), messageName.toStdString(), time );
   
-  this->updateWidget();
+  this->updateWidget();  // Force this update widget
 }
 
 
@@ -112,8 +100,8 @@ void qSlicerPerkEvaluatorMessagesWidget
 {
   Q_D(qSlicerPerkEvaluatorMessagesWidget);  
 
-  double messageTime = this->BufferWidget->GetBufferNode()->GetMessageAt( row )->GetTime();
+  double messageTime = this->BufferHelper->GetTransformBufferNode()->GetMessageAt( row )->GetTime();
   this->PerkEvaluatorLogic->SetPlaybackTime( messageTime );
 
-  this->updateWidget();
+  this->updateWidget();  // Force this update widget
 }

@@ -63,8 +63,11 @@ void qSlicerTransformSelectionWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerTransformSelectionWidget
-::qSlicerTransformSelectionWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTransformSelectionWidgetPrivate(*this) )
+::qSlicerTransformSelectionWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerTransformSelectionWidgetPrivate(*this) )
 {
+  this->BufferHelper = new qSlicerTransformBufferWidgetHelper();
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->setup();
 }
 
 
@@ -74,42 +77,30 @@ qSlicerTransformSelectionWidget
 }
 
 
-qSlicerTransformSelectionWidget* qSlicerTransformSelectionWidget
-::New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic )
-{
-  qSlicerTransformSelectionWidget* newtransformSelectionWidget = new qSlicerTransformSelectionWidget();
-  newtransformSelectionWidget->BufferWidget = newBufferWidget;
-  newtransformSelectionWidget->PerkEvaluatorLogic = newPerkEvaluatorLogic;
-  newtransformSelectionWidget->BufferStatus = newBufferWidget->BufferStatus;
-  newtransformSelectionWidget->BufferMessagesStatus = newBufferWidget->BufferMessagesStatus;
-  newtransformSelectionWidget->setup();
-  return newtransformSelectionWidget;
-}
-
-
 void qSlicerTransformSelectionWidget
 ::setup()
 {
   Q_D(qSlicerTransformSelectionWidget);
 
   d->setupUi(this);
-  this->setMRMLScene( this->BufferWidget->TransformRecorderLogic->GetMRMLScene() );
 
   connect( d->SelectAllButton, SIGNAL( clicked() ), this, SLOT( onSelectAllClicked() ) );
   connect( d->UnselectAllButton, SIGNAL( clicked() ), this, SLOT( onUnselectAllClicked() ) );
-  
-  // GUI refresh: updates every 10ms
-  QTimer *t = new QTimer( this );
-  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
-  t->start(10); 
+
+  // Listen for updates from the helper
+  connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
 
   this->updateWidget();  
 }
 
 
 void qSlicerTransformSelectionWidget
-::enter()
+::setMRMLScene( vtkMRMLScene* newScene )
 {
+  this->qvtkDisconnect( this->mrmlScene(), vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->qSlicerWidget::setMRMLScene( newScene );
+  this->qvtkConnect( this->mrmlScene(), vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 }
 
 
@@ -129,8 +120,7 @@ void qSlicerTransformSelectionWidget
 	    this->PerkEvaluatorLogic->AddAnalyzeTransform( transformNode );
 	  }
   }
-  
-  this->BufferStatus = this->BufferWidget->BufferStatus - 1; // Hack to cue update without buffer change
+
   this->updateWidget();
 }
 
@@ -152,7 +142,6 @@ void qSlicerTransformSelectionWidget
 	  }
   }
 
-  this->BufferStatus = this->BufferWidget->BufferStatus - 1; // Hack to cue update without buffer change
   this->updateWidget();
 }
 
@@ -175,7 +164,6 @@ void qSlicerTransformSelectionWidget
     this->PerkEvaluatorLogic->RemoveAnalyzeTransform( changedNode );
   }
 
-  this->BufferStatus = this->BufferWidget->BufferStatus - 1; // Hack to cue update without buffer change
   this->updateWidget();
 }
 
@@ -185,19 +173,10 @@ void qSlicerTransformSelectionWidget
 {
   Q_D(qSlicerTransformSelectionWidget);
 
-  if ( this->BufferWidget->TransformRecorderLogic == NULL )
+  if ( this->PerkEvaluatorLogic == NULL )
   {
     return;
   }
-
-  // Only update if the buffer has changed
-  if ( this->BufferStatus == this->BufferWidget->BufferStatus && this->BufferMessagesStatus == this->BufferWidget->BufferMessagesStatus )
-  {
-    return;
-  }
-  this->BufferStatus = this->BufferWidget->BufferStatus;
-  this->BufferMessagesStatus = this->BufferWidget->BufferMessagesStatus;
-
   
   // Check what the current row and column are
   int currentRow = d->TransformSelectionTable->currentRow();
@@ -208,11 +187,6 @@ void qSlicerTransformSelectionWidget
   d->TransformSelectionTable->clear();
   d->TransformSelectionTable->setRowCount( 0 );
   d->TransformSelectionTable->setColumnCount( 0 );
-
-  if ( this->BufferWidget->GetBufferNode() == NULL )
-  {
-    return;
-  }
   
   vtkSmartPointer< vtkCollection > nodes = vtkSmartPointer< vtkCollection >::New();
   this->PerkEvaluatorLogic->GetSceneVisibleTransformNodes( nodes ); 
