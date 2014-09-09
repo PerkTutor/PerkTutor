@@ -6,7 +6,9 @@
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
 #include "qSlicerWorkflowSegmentationModuleExport.h"
+
 #include "qSlicerMessagesWidget.h"
+#include "qSlicerTransformBufferWidget.h"
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
 
 class qSlicerWorkflowSegmentationModuleWidgetPrivate;
@@ -26,16 +28,12 @@ public:
   qSlicerWorkflowSegmentationModuleWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationModuleWidget();
 
-  // This widget will keep track if the buffer is changed
-  unsigned long BufferStatus;
-  // These quantities might be repeated by different buffers, so we still need the above
-  unsigned long BufferTransformsStatus;
-
-
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
   
   virtual void setup();
+  virtual void setupEmbeddedWidgets();
+
   virtual void enter();
   virtual void exit();
 
@@ -50,8 +48,10 @@ protected slots:
   void onTrainButtonClicked();
 
   void setupInstructions();
-  void enableButtons();  
+  void enableButtons();
+
   void updateWidget();
+  void resetWidget();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationModuleWidget);

@@ -100,24 +100,45 @@ qSlicerWorkflowSegmentationModuleWidget::~qSlicerWorkflowSegmentationModuleWidge
 }
 
 
+void qSlicerWorkflowSegmentationModuleWidget
+::setupEmbeddedWidgets()
+{
+  Q_D(qSlicerWorkflowSegmentationModuleWidget);
+
+  // Adding embedded widgets
+  d->TransformBufferWidget = new qSlicerTransformBufferWidget();
+  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+  d->TransformBufferWidget->setMRMLScene( NULL );
+  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  d->RecorderControlsWidget = new qSlicerWorkflowSegmentationRecorderControlsWidget();
+  d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
+  d->RecorderControlsWidget->setMRMLScene( NULL );
+  d->RecorderControlsWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  d->MessagesWidget = new qSlicerMessagesWidget();
+  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
+  d->MessagesWidget->setMRMLScene( NULL );
+  d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  // Setting up connections for embedded widgets
+  // Connect the child widget to the transform buffer node change event (they already observe the modified event)
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+
+}
+
 
 void qSlicerWorkflowSegmentationModuleWidget::setup()
 {
   Q_D(qSlicerWorkflowSegmentationModuleWidget);
 
   d->setupUi(this);
-  d->TransformBufferWidget = qSlicerTransformBufferWidget::New( d->logic()->TransformRecorderLogic );
-  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
-  d->MessagesWidget = qSlicerMessagesWidget::New( d->TransformBufferWidget );
-  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
-  d->RecorderControlsWidget = qSlicerWorkflowSegmentationRecorderControlsWidget::New( d->TransformBufferWidget, d->logic() );
-  d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
-  this->Superclass::setup();
 
-  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
+  // Add the embedded widgets
+  this->setupEmbeddedWidgets();
 
   // Module node selection
-  d->ModuleComboBox->setNoneEnabled( true );
   connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
 
   // Import parameters and files
@@ -132,11 +153,11 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   // Setup the display of instructions
   this->setupInstructions();
 
-  // GUI refresh: updates every 10ms
-  QTimer *t = new QTimer( this );
-  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
-  t->start(10); 
+  // If the transform buffer node is changed, reset everything
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( resetWidget() ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
 
+  this->updateWidget();
 }
 
 
@@ -225,7 +246,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->ImportWorkflowTraining( fileName.toStdString() );
+	  d->logic()->ImportWorkflowTraining( fileName.toStdString() );
     d->logic()->ResetWorkflowAlgorithms();
   }
   
@@ -252,7 +273,7 @@ void qSlicerWorkflowSegmentationModuleWidget
     dialog.setValue( 10 );
 
     // Add the buffers from each of the files to the workflow algorithms.
-	d->logic()->ResetWorkflowAlgorithms();
+	  d->logic()->ResetWorkflowAlgorithms();
     for( int i = 0; i < files.size(); i++ )
     {    
       d->logic()->AddTrainingBuffer( files.at(i).toStdString() );
@@ -285,7 +306,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 
   if ( fileName.isEmpty() == false )
   {
-	d->logic()->SaveWorkflowTraining( fileName.toStdString() );
+	  d->logic()->SaveWorkflowTraining( fileName.toStdString() );
   }
   d->logic()->ResetWorkflowAlgorithms();
 
@@ -300,7 +321,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setupInstructions()
   qSlicerApplication::application()->layoutManager()->threeDWidget( 0 );
   this->InstructionLabel = new QLabel( "" );
   this->InstructionLabel->setAlignment( Qt::AlignCenter );
-  this->InstructionLabel->setStyleSheet("QLabel { background-color : white; color : black; font-size : 24px }");
+  this->InstructionLabel->setStyleSheet("QLabel { background-color : white; color : black; font-size : 24px }"); // TODO: Follow style guide
   qSlicerApplication::application()->layoutManager()->threeDWidget( 0 )->layout()->addWidget( this->InstructionLabel );
 }
 
@@ -312,21 +333,21 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   // Disabling node selector widgets if there is no module node to reference input nodes.    
   if ( d->logic()->GetModuleNode() == NULL )
   {
-	d->WorkflowProcedureButton->setEnabled( false );
-	d->WorkflowInputButton->setEnabled( false );
-	d->WorkflowTrainingButton->setEnabled( false );
+	  d->WorkflowProcedureButton->setEnabled( false );
+	  d->WorkflowInputButton->setEnabled( false );
+	  d->WorkflowTrainingButton->setEnabled( false );
 
-	d->WorkflowTrainingFilesButton->setEnabled( false );
-	d->TrainButton->setEnabled( false );
+	  d->WorkflowTrainingFilesButton->setEnabled( false );
+	  d->TrainButton->setEnabled( false );
 
     d->ToolsAvailableTableWidget->setRowCount( 0 );
     d->ToolsAvailableTableWidget->setColumnCount( 1 );
 
-	return;
+	  return;
   }
   else
   {
-	d->WorkflowProcedureButton->setEnabled( true );
+	  d->WorkflowProcedureButton->setEnabled( true );
   }
   
   // If the algorithms are procedure defined
@@ -343,18 +364,25 @@ void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
   if ( ! d->logic()->GetWorkflowAlgorithmsInputted() )
   {
     d->WorkflowTrainingButton->setEnabled( false );
-	d->WorkflowTrainingFilesButton->setEnabled( false );
-	d->TrainButton->setEnabled( false );
+	  d->WorkflowTrainingFilesButton->setEnabled( false );
+	  d->TrainButton->setEnabled( false );
   }
   else
   {
     d->WorkflowTrainingButton->setEnabled( true );
-	d->WorkflowTrainingFilesButton->setEnabled( true );
-	d->TrainButton->setEnabled( true );
+	  d->WorkflowTrainingFilesButton->setEnabled( true );
+	  d->TrainButton->setEnabled( true );
   }
 
 }
 
+
+void qSlicerWorkflowSegmentationModuleWidget::resetWidget()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  d->logic()->ResetWorkflowAlgorithms();
+}
 
 
 void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
@@ -362,29 +390,17 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
 
   // All the other things are taken care of by the TransformRecord logic/widgets
-  enableButtons();
+  this->enableButtons();
 
   if ( d->logic() == NULL || d->logic()->GetModuleNode() == NULL )
   {
     return;
   }
 
-  if ( this->BufferStatus != d->TransformBufferWidget->BufferStatus )
-  {
-    d->logic()->ResetWorkflowAlgorithms();
-  }
-
-  if ( this->BufferStatus == d->TransformBufferWidget->BufferStatus && this->BufferTransformsStatus == d->TransformBufferWidget->BufferTransformsStatus )
-  {
-    return;
-  }
-  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
-  this->BufferTransformsStatus = d->TransformBufferWidget->BufferStatus;
-
   // This updates the tasks
-  d->logic()->Update( d->TransformBufferWidget->GetBufferNode() );
+  d->logic()->Update( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
 
-  this->InstructionLabel->setText( d->logic()->GetToolInstructions( d->TransformBufferWidget->GetBufferNode() ).c_str() );
+  this->InstructionLabel->setText( d->logic()->GetToolInstructions( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() ).c_str() );
 
   d->ToolsAvailableTableWidget->setRowCount( 0 );
   d->ToolsAvailableTableWidget->setColumnCount( 1 );
@@ -399,19 +415,19 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
     std::string currentString = "";
 
     currentString += currentTool->Name + " (";
-	if ( ! currentTool->Inputted )
-	{
+	  if ( ! currentTool->Inputted )
+	  {
       currentString += "Not ";
-	}
+	  }
     currentString += "Inputted, ";
-	if ( ! currentTool->Trained )
-	{
+	  if ( ! currentTool->Trained )
+	  {
       currentString += "Not ";
-	}
-	currentString += "Trained)";
+	  }
+	  currentString += "Trained)";
 
-	QTableWidgetItem* toolWidget = new QTableWidgetItem( QString::fromStdString( currentString ) );
-	d->ToolsAvailableTableWidget->setItem( i, 0, toolWidget );
+	  QTableWidgetItem* toolWidget = new QTableWidgetItem( QString::fromStdString( currentString ) );
+	  d->ToolsAvailableTableWidget->setItem( i, 0, toolWidget );
   }
 
   d->ToolsAvailableTableWidget->horizontalHeader()->hide();

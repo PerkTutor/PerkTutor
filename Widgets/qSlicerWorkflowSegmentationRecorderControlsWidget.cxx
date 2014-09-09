@@ -63,8 +63,9 @@ void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerWorkflowSegmentationRecorderControlsWidget
-::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
+::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
+  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
 }
 
 
@@ -73,24 +74,13 @@ qSlicerWorkflowSegmentationRecorderControlsWidget
 {
 }
 
-
-qSlicerWorkflowSegmentationRecorderControlsWidget* qSlicerWorkflowSegmentationRecorderControlsWidget
-::New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerWorkflowSegmentationLogic* newWorkflowSegmentationLogic )
-{
-  qSlicerWorkflowSegmentationRecorderControlsWidget* newRecorderControlsWidget = new qSlicerWorkflowSegmentationRecorderControlsWidget();
-  newRecorderControlsWidget->BufferWidget = newBufferWidget;
-  newRecorderControlsWidget->WorkflowSegmentationLogic = newWorkflowSegmentationLogic;
-  newRecorderControlsWidget->setup();
-  return newRecorderControlsWidget;
-}
-
-
 void qSlicerWorkflowSegmentationRecorderControlsWidget
 ::onClearButtonClicked()
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
-  this->BufferWidget->TransformRecorderLogic->ClearTransforms( this->BufferWidget->GetBufferNode() );
+  //this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
+  this->TransformRecorderLogic->ClearTransforms( this->BufferHelper->GetTransformBufferNode() );
   this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
   
   this->updateWidget();
