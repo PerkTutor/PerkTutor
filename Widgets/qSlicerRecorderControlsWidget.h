@@ -24,12 +24,12 @@
 // Qt includes
 #include "qSlicerWidget.h"
 
+#include "qSlicerTransformBufferWidgetHelper.h"
+#include "vtkSlicerTransformRecorderLogic.h"
+
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
 #include "ui_qSlicerRecorderControlsWidget.h"
-
-#include "qSlicerTransformBufferWidget.h"
-#include "vtkMRMLTransformBufferNode.h"
 
 class qSlicerRecorderControlsWidgetPrivate;
 
@@ -39,13 +39,16 @@ qSlicerRecorderControlsWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  typedef qSlicerWidget Superclass;
+
   qSlicerRecorderControlsWidget(QWidget *parent=0);
   virtual ~qSlicerRecorderControlsWidget();
 
-  static qSlicerRecorderControlsWidget* New( qSlicerTransformBufferWidget* newBufferWidget );
+  qSlicerTransformBufferWidgetHelper* BufferHelper;
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
 protected slots:
+
+  virtual void onTransformBufferNodeChangedOrModified();
 
   void onStartButtonClicked();
   void onStopButtonClicked();
@@ -60,15 +63,6 @@ protected:
   QScopedPointer<qSlicerRecorderControlsWidgetPrivate> d_ptr;
 
   virtual void setup();
-  virtual void enter();
-
-  qSlicerTransformBufferWidget* BufferWidget;
-  bool updatingCheckedTransforms;
-
-  // This widget will keep track if the buffer is changed
-  unsigned long BufferStatus;
-  // These quantities might be repeated by different buffers, so we still need the above
-  unsigned long BufferActiveTransformsStatus;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerRecorderControlsWidget);

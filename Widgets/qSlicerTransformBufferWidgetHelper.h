@@ -18,48 +18,56 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerMessagesWidget_h
-#define __qSlicerMessagesWidget_h
+#ifndef __qSlicerTransformBufferWidgetHelper_h
+#define __qSlicerTransformBufferWidgetHelper_h
 
 // Qt includes
 #include "qSlicerWidget.h"
 
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerMessagesWidget.h"
 
-#include "qSlicerTransformBufferWidgetHelper.h"
-#include "vtkSlicerTransformRecorderLogic.h"
+#include "vtkSlicerModuleLogic.h"
+#include "vtkMRMLTransformBufferNode.h"
 
-class qSlicerMessagesWidgetPrivate;
+class qSlicerTransformBufferWidgetHelperPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_TRANSFORMRECORDER_WIDGETS_EXPORT 
-qSlicerMessagesWidget : public qSlicerWidget
+qSlicerTransformBufferWidgetHelper : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  qSlicerMessagesWidget(QWidget *parent=0);
-  virtual ~qSlicerMessagesWidget();
 
-  qSlicerTransformBufferWidgetHelper* BufferHelper;
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  qSlicerTransformBufferWidgetHelper();
+  virtual ~qSlicerTransformBufferWidgetHelper();
+  
+  vtkMRMLTransformBufferNode* GetTransformBufferNode();
+
+  // Static methods to help get logic
+  static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );
+
+public slots:
+
+  virtual void SetTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode );
 
 protected slots:
 
-  virtual void onAddMessageButtonClicked();
-  virtual void onRemoveMessageButtonClicked();
-  virtual void onClearMessagesButtonClicked();
-  virtual void updateWidget();
+  void onTransformBufferNodeModified();
+
+signals:
+
+   // Classes using this helper should listen to these signals to know when to update
+  void transformBufferNodeChanged( vtkMRMLTransformBufferNode* );
+  void transformBufferNodeModified();
 
 protected:
-  QScopedPointer<qSlicerMessagesWidgetPrivate> d_ptr;
 
-  virtual void setup();
+  vtkMRMLTransformBufferNode* TransformBufferNode;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerMessagesWidget);
-  Q_DISABLE_COPY(qSlicerMessagesWidget);
+  Q_DECLARE_PRIVATE(qSlicerTransformBufferWidgetHelper);
+  Q_DISABLE_COPY(qSlicerTransformBufferWidgetHelper);
 
 };
 

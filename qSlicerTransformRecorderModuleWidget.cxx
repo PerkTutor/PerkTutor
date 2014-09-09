@@ -97,43 +97,51 @@ qSlicerTransformRecorderModuleWidget::~qSlicerTransformRecorderModuleWidget()
 }
 
 
-
-void qSlicerTransformRecorderModuleWidget::setup()
+void qSlicerTransformRecorderModuleWidget
+::setupEmbeddedWidgets()
 {
   Q_D(qSlicerTransformRecorderModuleWidget);
 
-  d->TotalTimeLabel=NULL;
-  d->NumTransformsLabel=NULL;
-  d->NumTransformsLabel=NULL;
+  // Adding embedded widgets
+  d->TransformBufferWidget = new qSlicerTransformBufferWidget();
+  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+  d->TransformBufferWidget->setMRMLScene( NULL );
+  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  d->RecorderControlsWidget = new qSlicerRecorderControlsWidget();
+  d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
+  d->RecorderControlsWidget->setMRMLScene( NULL );
+  d->RecorderControlsWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  d->MessagesWidget = new qSlicerMessagesWidget();
+  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
+  d->MessagesWidget->setMRMLScene( NULL );
+  d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  // Setting up connections for embedded widgets
+  // Connect the child widget to the transform buffer node change event (they already observe the modified event)
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+
+}
+
+
+void qSlicerTransformRecorderModuleWidget
+::setup()
+{
+  Q_D(qSlicerTransformRecorderModuleWidget);
 
   d->setupUi(this);
+
   // Embed widgets here
-  d->TransformBufferWidget = qSlicerTransformBufferWidget::New( d->logic() );
-  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
-  d->RecorderControlsWidget = qSlicerRecorderControlsWidget::New( d->TransformBufferWidget );
-  d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
-  d->MessagesWidget = qSlicerMessagesWidget::New( d->TransformBufferWidget );
-  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
-  this->Superclass::setup();
+  this->setupEmbeddedWidgets();
 
-  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
-  this->BufferTransformsStatus = d->TransformBufferWidget->BufferTransformsStatus;
-  this->BufferMessagesStatus = d->TransformBufferWidget->BufferMessagesStatus;
-  
-  // GUI refresh: updates every 10ms
-  QTimer *t = new QTimer( this );
-  connect( t,  SIGNAL( timeout() ), this, SLOT( updateWidget() ) );
-  t->start(10);
+  // If the transform buffer node is changed, update everything
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
 
-}
-
-
-void qSlicerTransformRecorderModuleWidget::enter()
-{
-  this->Superclass::enter();
   this->updateWidget();
 }
-
 
 
 void qSlicerTransformRecorderModuleWidget
@@ -141,17 +149,8 @@ void qSlicerTransformRecorderModuleWidget
 {
   Q_D( qSlicerTransformRecorderModuleWidget );
 
-  if ( this->BufferStatus == d->TransformBufferWidget->BufferStatus && this->BufferTransformsStatus == d->TransformBufferWidget->BufferTransformsStatus &&
-    this->BufferMessagesStatus == d->TransformBufferWidget->BufferMessagesStatus )
-  {
-    return;
-  }
-  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
-  this->BufferTransformsStatus = d->TransformBufferWidget->BufferTransformsStatus;
-  this->BufferMessagesStatus = d->TransformBufferWidget->BufferMessagesStatus;
-
   // The statistics should be reset to zeros if no buffer is selected
-  if ( d->TransformBufferWidget->GetBufferNode() == NULL )
+  if ( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() == NULL )
   {
     d->TotalTimeResultLabel->setText( "0.00" );
     d->NumTransformsResultLabel->setText( "0" );
@@ -163,17 +162,17 @@ void qSlicerTransformRecorderModuleWidget
 
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetTotalTime();
+  ss << std::fixed << d->TransformBufferWidget->BufferHelper->GetTransformBufferNode()->GetTotalTime();
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetNumTransforms();;
+  ss << std::fixed << d->TransformBufferWidget->BufferHelper->GetTransformBufferNode()->GetNumTransforms();;
   d->NumTransformsResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->GetBufferNode()->GetNumMessages();;
+  ss << std::fixed << d->TransformBufferWidget->BufferHelper->GetTransformBufferNode()->GetNumMessages();;
   d->NumMessagesResultLabel->setText( ss.str().c_str() );
    
 }
