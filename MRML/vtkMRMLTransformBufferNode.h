@@ -21,6 +21,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <cmath>
 
 // VTK includes
 #include "vtkMRMLModelNode.h"

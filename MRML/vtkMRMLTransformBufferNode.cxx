@@ -504,7 +504,7 @@ int vtkMRMLTransformBufferNode
   int lowerIndex = this->GetPriorTransformIndex( time );
   int upperIndex = lowerIndex + 1;
 
-  if ( upperIndex >= this->GetNumTransforms() || abs ( time - this->GetTransformAt( lowerIndex )->GetTime() ) < abs ( time - this->GetTransformAt( upperIndex )->GetTime() ) )
+  if ( upperIndex >= this->GetNumTransforms() || std::abs ( time - this->GetTransformAt( lowerIndex )->GetTime() ) < std::abs ( time - this->GetTransformAt( upperIndex )->GetTime() ) )
   {
     return lowerIndex;
   }
