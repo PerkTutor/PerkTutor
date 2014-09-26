@@ -53,6 +53,7 @@ public slots:
   void OnNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
   void updateWidget();
+  void resetWidget();
   void clearWidget();
 
 protected:

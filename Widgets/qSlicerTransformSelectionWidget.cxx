@@ -89,7 +89,8 @@ void qSlicerTransformSelectionWidget
 
   // Listen for updates from the helper
   connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferTransformAdded( int ) ), this, SLOT( updateWidget() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferTransformRemoved( int ) ), this, SLOT( updateWidget() ) ); // In case a new transform name has been added/removed
 
   this->updateWidget();  
 }

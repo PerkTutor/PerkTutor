@@ -454,8 +454,13 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( OnNeedleOrientationChanged( QAbstractButton* ) ) );
 
   // If the transform buffer node is changed, update everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( clearWidget() ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is added
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( resetWidget() ) );
+  connect( d->TransformBufferWidget->BufferHelper, SIGNAL( transformBufferTransformAdded( int ) ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is added
+  connect( d->TransformBufferWidget->BufferHelper, SIGNAL( transformBufferTransformRemoved( int ) ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is removed
+
+  // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
+  // But resetting the tool trajectories is computationally expensive
+  // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
 
   this->clearWidget();
   this->updateWidget();
@@ -474,10 +479,24 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::resetWidget()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->logic()->UpdateToolTrajectories( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
+  d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+
+  // Should also clear everything to default
+  this->clearWidget();
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::clearWidget()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
+  // Do not update trajectories
   d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
   d->PlaybackSlider->setMinimum( 0.0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
@@ -489,5 +508,5 @@ void qSlicerPerkEvaluatorModuleWidget
 
   d->MetricsTable->clear();
   d->MetricsTable->setRowCount( 0 );
-  d->MetricsTable->setColumnCount( 0 ); 
+  d->MetricsTable->setColumnCount( 0 );
 }
