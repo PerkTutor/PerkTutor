@@ -91,15 +91,16 @@ void qSlicerRecorderControlsWidget
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
 
   // Listen for updates from the helper
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( onTransformBufferNodeChangedOrModified() ) );
-  //connect( this->BufferHelper, SIGNAL( transformBufferNodeModified() ), this, SLOT( onTransformBufferNodeChangedOrModified() ) ); TODO: Need more specific signals
+  connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( onTransformBufferActiveTransformsChanged() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferActiveTransformAdded() ), this, SLOT( onTransformBufferActiveTransformsChanged() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferActiveTransformRemoved() ), this, SLOT( onTransformBufferActiveTransformsChanged() ) );
 
   this->updateWidget();
 }
 
 
 void qSlicerRecorderControlsWidget
-::onTransformBufferNodeChangedOrModified()
+::onTransformBufferActiveTransformsChanged()
 {
   this->updateWidget();
   this->onCheckedTransformsChanged(); // TODO: This is just a hack until the observed transforms are synced with the active transforms

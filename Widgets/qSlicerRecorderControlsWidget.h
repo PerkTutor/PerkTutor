@@ -48,7 +48,7 @@ public:
 
 protected slots:
 
-  virtual void onTransformBufferNodeChangedOrModified();
+  virtual void onTransformBufferActiveTransformsChanged();
 
   void onStartButtonClicked();
   void onStopButtonClicked();

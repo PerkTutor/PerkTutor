@@ -149,29 +149,34 @@ void vtkMRMLTransformBufferNode
 ::AddTransform( vtkTransformRecord* newTransform )
 {
   // Ensure that we put it into sorted order (usually it will go at the end)
+  int insertLocation = 0;
   if ( this->GetNumTransforms() < 1 )
   {
     this->transforms.push_back( newTransform );
     this->Modified();
+    this->InvokeEvent( this->TransformAddedEvent, &( insertLocation = 0 ) );
 	  return;
   }
   if ( newTransform->GetTime() >= this->GetCurrentTransform()->GetTime() )
   {
     this->transforms.push_back( newTransform );
     this->Modified();
+    this->InvokeEvent( this->TransformAddedEvent, &( insertLocation = this->GetNumTransforms() - 1 ) );
 	  return;
   }
   if ( newTransform->GetTime() <= this->GetTransformAt(0)->GetTime() )
   {
     this->transforms.insert( transforms.begin() + 0, newTransform );
     this->Modified();
+    this->InvokeEvent( this->TransformAddedEvent, &( insertLocation = 0 ) );
 	  return;
   }
 
   // Use the binary search
-  int insertLocation = this->GetPriorTransformIndex( newTransform->GetTime() ) + 1;
+  insertLocation = this->GetPriorTransformIndex( newTransform->GetTime() ) + 1;
   this->transforms.insert( this->transforms.begin() + insertLocation, newTransform );
   this->Modified();
+  this->InvokeEvent( this->TransformAddedEvent, &insertLocation );
 }
 
 
@@ -179,29 +184,34 @@ void vtkMRMLTransformBufferNode
 ::AddMessage( vtkMessageRecord* newMessage )
 {
   // Ensure that we put it into sorted order (usually it will go at the end)
+  int insertLocation = 0;
   if ( this->GetNumMessages() < 1 )
   {
     this->messages.push_back( newMessage );
     this->Modified();
+    this->InvokeEvent( this->MessageAddedEvent, &( insertLocation = 0 ) );
 	  return;
   }
   if ( newMessage->GetTime() >= this->GetCurrentMessage()->GetTime() )
   {
     this->messages.push_back( newMessage );
     this->Modified();
+    this->InvokeEvent( this->MessageAddedEvent, &( insertLocation = this->GetNumMessages() - 1 ) );
 	  return;
   }
   if ( newMessage->GetTime() <= this->GetMessageAt(0)->GetTime() )
   {
     this->messages.insert( messages.begin() + 0, newMessage );
-    this->Modified();
+    this->Modified();    
+    this->InvokeEvent( this->MessageAddedEvent, &( insertLocation = 0 ) );
 	  return;
   }
 
   // Use the binary search
-  int insertLocation = this->GetPriorMessageIndex( newMessage->GetTime() ) + 1;
+  insertLocation = this->GetPriorMessageIndex( newMessage->GetTime() ) + 1;
   this->messages.insert( this->messages.begin() + insertLocation, newMessage );
   this->Modified();
+  this->InvokeEvent( this->MessageAddedEvent, &insertLocation );
 }
 
 
@@ -212,8 +222,9 @@ void vtkMRMLTransformBufferNode
   {
     this->GetTransformAt(index)->Delete();
     this->transforms.erase( transforms.begin() + index );
+    this->Modified();
+    this->InvokeEvent( this->TransformRemovedEvent, &index );
   }
-  this->Modified();
 }
 
 
@@ -229,8 +240,8 @@ void vtkMRMLTransformBufferNode
 	    i--;
 	  }
   }
-
   this->Modified();
+  this->InvokeEvent( this->TransformRemovedEvent );
 }
 
 
@@ -241,8 +252,9 @@ void vtkMRMLTransformBufferNode
   {
     this->GetMessageAt(index)->Delete();
     this->messages.erase( messages.begin() + index );
+    this->Modified();
+    this->InvokeEvent( this->MessageRemovedEvent, &index );
   }
-  this->Modified();
 }
 
 
@@ -258,8 +270,8 @@ void vtkMRMLTransformBufferNode
 	    i--;
 	  }
   }
-
   this->Modified();
+  this->InvokeEvent( this->MessageRemovedEvent );
 }
 
 
@@ -438,6 +450,7 @@ void vtkMRMLTransformBufferNode
   }
   this->transforms.clear();
   this->Modified();
+  this->InvokeEvent( this->TransformRemovedEvent );
 }
 
 
@@ -451,6 +464,7 @@ void vtkMRMLTransformBufferNode
   }
   this->messages.clear();
   this->Modified();
+  this->InvokeEvent( this->MessageRemovedEvent );
 }
 
 
@@ -591,6 +605,7 @@ void vtkMRMLTransformBufferNode
 
   this->activeTransforms.push_back( name );
   this->Modified();
+  this->InvokeEvent( this->ActiveTransformAddedEvent );
 }
 
 
@@ -604,6 +619,7 @@ void vtkMRMLTransformBufferNode
 	    this->activeTransforms.erase( this->activeTransforms.begin() + i );
 	    i--;
       this->Modified();
+      this->InvokeEvent( this->ActiveTransformRemovedEvent );
 	  }
   }
 
@@ -623,6 +639,7 @@ void vtkMRMLTransformBufferNode
   this->activeTransforms.clear();
   this->activeTransforms = names;
   this->Modified();
+  this->InvokeEvent( this->ActiveTransformRemovedEvent );
 }
 
 
@@ -646,12 +663,10 @@ void vtkMRMLTransformBufferNode
     // If we didn't find a mathcing active transform then add one
     if ( ! activeTransformExists )
     {
-      this->AddActiveTransform( this->GetTransformAt(i)->GetDeviceName() );
+      this->AddActiveTransform( this->GetTransformAt(i)->GetDeviceName() ); // Takes care of modified events
     }
-
   }
 
-  this->Modified();
 }
 
 

@@ -54,12 +54,26 @@ public slots:
 protected slots:
 
   void onTransformBufferNodeModified();
+  void onTransformBufferTransformAdded( vtkObject* caller, void* callData, unsigned long event );
+  void onTransformBufferTransformRemoved( vtkObject* caller, void* callData, unsigned long event );
+  void onTransformBufferMessageAdded( vtkObject* caller, void* callData, unsigned long event );
+  void onTransformBufferMessageRemoved( vtkObject* caller, void* callData, unsigned long event );
+  void onTransformBufferActiveTransformAdded();
+  void onTransformBufferActiveTransformRemoved();
 
 signals:
 
    // Classes using this helper should listen to these signals to know when to update
   void transformBufferNodeChanged( vtkMRMLTransformBufferNode* );
+
+  // Should offer an interface for all the possible events the buffer node could invoke
   void transformBufferNodeModified();
+  void transformBufferTransformAdded( int );
+  void transformBufferTransformRemoved( int );
+  void transformBufferMessageAdded( int );
+  void transformBufferMessageRemoved( int );
+  void transformBufferActiveTransformAdded();
+  void transformBufferActiveTransformRemoved();
 
 protected:
 

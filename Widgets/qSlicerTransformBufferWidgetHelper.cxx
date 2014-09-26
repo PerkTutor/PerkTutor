@@ -71,8 +71,22 @@ void qSlicerTransformBufferWidgetHelper
 {
   // Reconnect listeners
   this->qvtkDisconnect( this->TransformBufferNode, vtkCommand::ModifiedEvent, this, SLOT( onTransformBufferNodeModified() ) );
+  this->qvtkDisconnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformAddedEvent, this, SLOT( onTransformBufferTransformAdded( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkDisconnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformRemovedEvent, this, SLOT( onTransformBufferTransformRemoved( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkDisconnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageAddedEvent, this, SLOT( onTransformBufferMessageAdded( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkDisconnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageRemovedEvent, this, SLOT( onTransformBufferMessageRemoved( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkDisconnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformAddedEvent, this, SLOT( onTransformBufferActiveTransformAdded() ) );
+  this->qvtkDisconnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent, this, SLOT( onTransformBufferActiveTransformRemoved() ) );
+
   this->TransformBufferNode = newTransformBufferNode;
+
   this->qvtkConnect( this->TransformBufferNode, vtkCommand::ModifiedEvent, this, SLOT( onTransformBufferNodeModified() ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformAddedEvent, this, SLOT( onTransformBufferTransformAdded( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformRemovedEvent, this, SLOT( onTransformBufferTransformRemoved( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageAddedEvent, this, SLOT( onTransformBufferMessageAdded( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageRemovedEvent, this, SLOT( onTransformBufferMessageRemoved( vtkObject*, void*, unsigned long ) ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformAddedEvent, this, SLOT( onTransformBufferActiveTransformAdded() ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent, this, SLOT( onTransformBufferActiveTransformRemoved() ) );
 
   emit transformBufferNodeChanged( this->TransformBufferNode );
 }
@@ -82,4 +96,58 @@ void qSlicerTransformBufferWidgetHelper
 ::onTransformBufferNodeModified()
 {
   emit transformBufferNodeModified();
+}
+
+
+void qSlicerTransformBufferWidgetHelper
+::onTransformBufferTransformAdded( vtkObject* caller, void* callData, unsigned long event )
+{
+  if ( callData != NULL )
+  {
+    emit transformBufferTransformAdded( *( reinterpret_cast< int* >( callData ) ) );
+  }
+}
+
+
+void qSlicerTransformBufferWidgetHelper
+::onTransformBufferTransformRemoved( vtkObject* caller, void* callData, unsigned long event )
+{
+  if ( callData != NULL )
+  {
+    emit transformBufferTransformRemoved( *( reinterpret_cast< int* >( callData ) ) );
+  }
+}
+
+
+void qSlicerTransformBufferWidgetHelper
+::onTransformBufferMessageAdded( vtkObject* caller, void* callData, unsigned long event )
+{
+  if ( callData != NULL )
+  {
+    emit transformBufferMessageAdded( *( reinterpret_cast< int* >( callData ) ) );
+  }
+}
+
+
+void qSlicerTransformBufferWidgetHelper
+::onTransformBufferMessageRemoved( vtkObject* caller, void* callData, unsigned long event )
+{
+  if ( callData != NULL )
+  {
+    emit transformBufferMessageRemoved( *( reinterpret_cast< int* >( callData ) ) );
+  }
+}
+
+
+void qSlicerTransformBufferWidgetHelper
+::onTransformBufferActiveTransformAdded()
+{
+  emit transformBufferActiveTransformAdded();
+}
+
+
+void qSlicerTransformBufferWidgetHelper
+::onTransformBufferActiveTransformRemoved()
+{
+  emit transformBufferActiveTransformRemoved();
 }

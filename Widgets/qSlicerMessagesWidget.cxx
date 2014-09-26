@@ -91,7 +91,8 @@ void qSlicerMessagesWidget
 
   // Listen for updates from the helper
   connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferMessageAdded( int ) ), this, SLOT( updateWidget() ) );
+  connect( this->BufferHelper, SIGNAL( transformBufferMessageRemoved( int ) ), this, SLOT( updateWidget() ) );
 
   this->updateWidget();  
 }

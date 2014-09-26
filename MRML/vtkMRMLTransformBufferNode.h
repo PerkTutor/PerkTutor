@@ -23,6 +23,7 @@
 #include <vector>
 
 // VTK includes
+#include "vtkCommand.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkTransform.h"
 #include "vtkMRMLNode.h"
@@ -123,6 +124,17 @@ public:
   unsigned long TransformsStatus;
   unsigned long MessagesStatus;
   unsigned long ActiveTransformsStatus;
+
+  // The events that the class should invole
+  enum
+  {
+    TransformAddedEvent = vtkCommand::UserEvent + 1,
+    TransformRemovedEvent,
+    MessageAddedEvent,
+    MessageRemovedEvent,
+    ActiveTransformAddedEvent,
+    ActiveTransformRemovedEvent,
+  };
 
 
 private:
