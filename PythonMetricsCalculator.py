@@ -207,7 +207,7 @@ class PythonMetricsCalculatorLogic:
   def CalculateAllMetrics( self ):  
     # Initialize all the metrics    
     import PythonMetrics
-    self.metrics = PythonMetrics.PerkTutorCoreMetrics
+    self.metrics = PythonMetrics.PerkTutorCoreMetrics[:]
     self.AddAllUserMetrics()
     
     # Initialize the metrics output
