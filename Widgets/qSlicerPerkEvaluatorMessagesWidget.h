@@ -25,7 +25,6 @@
 #include "qSlicerWidget.h"
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 
-#include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkSlicerPerkEvaluatorLogic.h"
 #include "qSlicerMessagesWidget.h"
 
@@ -37,11 +36,8 @@ qSlicerPerkEvaluatorMessagesWidget : public qSlicerMessagesWidget
 {
   Q_OBJECT
 public:
-  typedef qSlicerMessagesWidget Superclass;
   qSlicerPerkEvaluatorMessagesWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorMessagesWidget();
-
-  static qSlicerPerkEvaluatorMessagesWidget* New( qSlicerTransformBufferWidget* newBufferWidget, vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic );
 
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 

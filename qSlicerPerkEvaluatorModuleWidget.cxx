@@ -88,15 +88,15 @@ qSlicerPerkEvaluatorModuleWidget::qSlicerPerkEvaluatorModuleWidget(QWidget* _par
   : Superclass( _parent )
   , d_ptr( new qSlicerPerkEvaluatorModuleWidgetPrivate( *this ) )
 {
-  this->Timer = new QTimer( this );
-  this->TimerIntervalSec = 0.1;
+  this->PlaybackTimer = new QTimer( this );
+  this->PlaybackTimerIntervalSec = 0.1; // seconds
 }
 
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorModuleWidget::~qSlicerPerkEvaluatorModuleWidget()
 {
-  delete this->Timer;
+  delete this->PlaybackTimer;
 }
 
 
@@ -107,6 +107,7 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   d->logic()->SetPlaybackTime( value + d->logic()->GetMinTime() );
+  this->updateWidget();
 }
 
 
@@ -117,7 +118,7 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() + 0.2 );
-  this->UpdateGUI();
+  this->updateWidget();
 }
 
 
@@ -128,7 +129,7 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() - 0.2 );
-  this->UpdateGUI();
+  this->updateWidget();
 }
 
 
@@ -139,7 +140,7 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
-  this->UpdateGUI();
+  this->updateWidget();
 }
 
 
@@ -150,7 +151,7 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   d->logic()->SetPlaybackTime( d->logic()->GetMaxTime() );
-  this->UpdateGUI();
+  this->updateWidget();
 }
 
 
@@ -158,7 +159,7 @@ void qSlicerPerkEvaluatorModuleWidget
 void qSlicerPerkEvaluatorModuleWidget
 ::OnPlaybackPlayClicked()
 {
-  this->Timer->start( int( this->TimerIntervalSec * 1000 ) );
+  this->PlaybackTimer->start( int( this->PlaybackTimerIntervalSec * 1000 ) );
 }
 
 
@@ -166,7 +167,7 @@ void qSlicerPerkEvaluatorModuleWidget
 void qSlicerPerkEvaluatorModuleWidget
 ::OnPlaybackStopClicked()
 {
-  this->Timer->stop();
+  this->PlaybackTimer->stop();
 }
 
 
@@ -176,7 +177,7 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
-  double newPlaybackTime = d->logic()->GetPlaybackTime() + this->TimerIntervalSec;
+  double newPlaybackTime = d->logic()->GetPlaybackTime() + this->PlaybackTimerIntervalSec;
   if ( newPlaybackTime >= d->logic()->GetMaxTime() )
   {
     if ( d->PlaybackRepeatCheckBox->checkState() == Qt::Checked )
@@ -186,15 +187,15 @@ void qSlicerPerkEvaluatorModuleWidget
     else
     {
       d->logic()->SetPlaybackTime( d->logic()->GetMaxTime() );
-      this->Timer->stop();
+      this->PlaybackTimer->stop();
     }
   }
   else
   {
-    d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() + this->TimerIntervalSec );
+    d->logic()->SetPlaybackTime( d->logic()->GetPlaybackTime() + this->PlaybackTimerIntervalSec );
   }
   
-  this->UpdateGUI();
+  this->updateWidget();
 }
 
 
@@ -202,6 +203,7 @@ void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkBeginEdited()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
   d->logic()->SetMarkBegin( d->logic()->GetMinTime() + d->BeginSpinBox->value() );
 }
 
@@ -210,6 +212,7 @@ void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkBeginClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
   d->logic()->SetMarkBegin( d->logic()->GetPlaybackTime() );
   d->BeginSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
 }
@@ -219,6 +222,7 @@ void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkEndEdited()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
   d->logic()->SetMarkEnd( d->logic()->GetMinTime() + d->EndSpinBox->value() );
 }
 
@@ -227,6 +231,7 @@ void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkEndClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
   d->logic()->SetMarkEnd( d->logic()->GetPlaybackTime() );
   d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
 }
@@ -266,6 +271,9 @@ void qSlicerPerkEvaluatorModuleWidget
   dialog.setValue( 80 );
   
   d->MetricsTable->clear();
+  d->MetricsTable->setRowCount( 0 );
+  d->MetricsTable->setColumnCount( 0 ); 
+
   QStringList MetricsTableHeaders;
   MetricsTableHeaders << "Metric" << "Value";
   d->MetricsTable->setRowCount( metrics.size() );
@@ -377,6 +385,37 @@ qSlicerPerkEvaluatorModuleWidget
 
 }
 
+
+void
+qSlicerPerkEvaluatorModuleWidget
+::setupEmbeddedWidgets()
+{
+  Q_D(qSlicerPerkEvaluatorModuleWidget);
+
+  // Adding the embedded widgets
+  d->TransformBufferWidget = new qSlicerPerkEvaluatorTransformBufferWidget();
+  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
+  d->TransformBufferWidget->setMRMLScene( NULL );
+  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );  
+
+  d->MessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
+  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
+  d->MessagesWidget->setMRMLScene( NULL ); 
+  d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() ); 
+
+  d->TransformSelectionWidget = new qSlicerTransformSelectionWidget();
+  d->TransformSelectionGroupBox->layout()->addWidget( d->TransformSelectionWidget ); 
+  d->TransformSelectionWidget->setMRMLScene( NULL ); 
+  d->TransformSelectionWidget->setMRMLScene( d->logic()->GetMRMLScene() ); 
+
+  // Setting up connections for embedded widgets
+  // Connect the child widget to the transform buffer node change event (they already observe the modified event)
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->TransformSelectionWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+
+}
+
+
 void
 qSlicerPerkEvaluatorModuleWidget
 ::setup()
@@ -386,18 +425,7 @@ qSlicerPerkEvaluatorModuleWidget
   d->setupUi(this);
 
   // Embed widgets here
-  d->TransformBufferWidget = qSlicerPerkEvaluatorTransformBufferWidget::New( d->logic() );
-  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
-
-  d->MessagesWidget = qSlicerPerkEvaluatorMessagesWidget::New( d->TransformBufferWidget, d->logic() );
-  d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget ); 
-
-  d->TransformSelectionWidget = qSlicerTransformSelectionWidget::New( d->TransformBufferWidget, d->logic() );
-  d->TransformSelectionGroupBox->layout()->addWidget( d->TransformSelectionWidget ); 
-
-  this->Superclass::setup();
-
-  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
+  this->setupEmbeddedWidgets();
   
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
   connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
@@ -407,7 +435,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) );
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
 
-  connect( this->Timer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
+  connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 
   connect( d->BeginSpinBox, SIGNAL( editingFinished() ), this, SLOT( OnMarkBeginEdited() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
@@ -425,30 +453,51 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( OnNeedleOrientationChanged( QAbstractButton* ) ) );
 
-  // GUI refresh: updates every 10ms
-  QTimer *t = new QTimer( this );
-  connect( t,  SIGNAL( timeout() ), this, SLOT( UpdateGUI() ) );
-  t->start(10);
+  // If the transform buffer node is changed, update everything
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( resetWidget() ) );
+  connect( d->TransformBufferWidget->BufferHelper, SIGNAL( transformBufferTransformAdded( int ) ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is added
+  connect( d->TransformBufferWidget->BufferHelper, SIGNAL( transformBufferTransformRemoved( int ) ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is removed
 
-  this->UpdateGUI();
+  // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
+  // But resetting the tool trajectories is computationally expensive
+  // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
+
+  this->clearWidget();
+  this->updateWidget();
 }
 
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::UpdateGUI()
+::updateWidget()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
   // Playback slider
-  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );  
+  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+}
 
-  if ( this->BufferStatus == d->TransformBufferWidget->BufferStatus )
-  {
-    return;
-  }
-  this->BufferStatus = d->TransformBufferWidget->BufferStatus;
 
+void qSlicerPerkEvaluatorModuleWidget
+::resetWidget()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->logic()->UpdateToolTrajectories( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
+  d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+
+  // Should also clear everything to default
+  this->clearWidget();
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::clearWidget()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  // Do not update trajectories
+  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
   d->PlaybackSlider->setMinimum( 0.0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
 
@@ -459,7 +508,5 @@ void qSlicerPerkEvaluatorModuleWidget
 
   d->MetricsTable->clear();
   d->MetricsTable->setRowCount( 0 );
-  d->MetricsTable->setColumnCount( 0 ); 
-
+  d->MetricsTable->setColumnCount( 0 );
 }
-

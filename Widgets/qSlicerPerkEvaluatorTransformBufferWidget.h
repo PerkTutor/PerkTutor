@@ -28,7 +28,6 @@
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
 #include "qSlicerTransformBufferWidget.h"
 
 class qSlicerPerkEvaluatorTransformBufferWidgetPrivate;
@@ -39,18 +38,14 @@ qSlicerPerkEvaluatorTransformBufferWidget : public qSlicerTransformBufferWidget
 {
   Q_OBJECT
 public:
-  typedef qSlicerTransformBufferWidget Superclass;
   qSlicerPerkEvaluatorTransformBufferWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorTransformBufferWidget();
 
-  
-  static qSlicerPerkEvaluatorTransformBufferWidget* New( vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic );
-  
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 
 protected slots:
 
-  void onCurrentBufferNodeChanged();
+  void onTransformBufferNodeChanged( vtkMRMLNode* );
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorTransformBufferWidgetPrivate> d_ptr;

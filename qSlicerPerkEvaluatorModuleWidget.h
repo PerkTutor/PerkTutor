@@ -25,10 +25,7 @@ public:
   qSlicerPerkEvaluatorModuleWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorModuleWidget();
 
-  unsigned long BufferStatus;
-
 public slots:
-
 
   void OnPlaybackSliderChanged( double value );
   void OnPlaybackNextClicked();
@@ -55,20 +52,22 @@ public slots:
   void OnNeedleReferenceSelected();
   void OnNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
-  void UpdateGUI();
+  void updateWidget();
+  void resetWidget();
+  void clearWidget();
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorModuleWidgetPrivate> d_ptr;
   
   virtual void setup();
+  virtual void setupEmbeddedWidgets();
+
+  QTimer* PlaybackTimer;
+  double PlaybackTimerIntervalSec;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorModuleWidget);
- 
-  
-  double TimerIntervalSec;
-  QTimer* Timer;
   
 };
 

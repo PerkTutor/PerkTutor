@@ -63,8 +63,9 @@ void qSlicerPerkEvaluatorTransformBufferWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorTransformBufferWidget
-::qSlicerPerkEvaluatorTransformBufferWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorTransformBufferWidgetPrivate(*this) )
+::qSlicerPerkEvaluatorTransformBufferWidget(QWidget* parentWidget) : qSlicerTransformBufferWidget( parentWidget ), d_ptr( new qSlicerPerkEvaluatorTransformBufferWidgetPrivate(*this) )
 {
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
 
@@ -74,28 +75,15 @@ qSlicerPerkEvaluatorTransformBufferWidget
 }
 
 
-qSlicerPerkEvaluatorTransformBufferWidget* qSlicerPerkEvaluatorTransformBufferWidget
-::New( vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic )
-{
-  qSlicerPerkEvaluatorTransformBufferWidget* newTransformBufferWidget = new qSlicerPerkEvaluatorTransformBufferWidget();
-  newTransformBufferWidget->PerkEvaluatorLogic = newPerkEvaluatorLogic;
-  newTransformBufferWidget->TransformRecorderLogic = newPerkEvaluatorLogic->TransformRecorderLogic;
-  newTransformBufferWidget->BufferStatus = 0;
-  newTransformBufferWidget->BufferTransformsStatus = 0;
-  newTransformBufferWidget->BufferMessagesStatus = 0;
-  newTransformBufferWidget->BufferActiveTransformsStatus = 0;
-  newTransformBufferWidget->setup();
-  return newTransformBufferWidget;
-}
-
 void qSlicerPerkEvaluatorTransformBufferWidget
-::onCurrentBufferNodeChanged()
+::onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode )
 {
   Q_D(qSlicerPerkEvaluatorTransformBufferWidget);
-  
-  this->PerkEvaluatorLogic->UpdateToolTrajectories( this->GetBufferNode() );
+
+  this->BufferHelper->SetTransformBufferNode( vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode ) ); // Update widget taken care of already
+
+  this->PerkEvaluatorLogic->UpdateToolTrajectories( this->BufferHelper->GetTransformBufferNode() );
   this->PerkEvaluatorLogic->SetPlaybackTime( this->PerkEvaluatorLogic->GetMinTime() );
 
-  this->BufferStatus++;
-  this->updateWidget();
+  emit transformBufferNodeChanged( this->BufferHelper->GetTransformBufferNode() );
 }
