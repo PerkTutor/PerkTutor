@@ -161,6 +161,7 @@ void vtkSlicerTransformRecorderLogic
   }
 
   // Unobserve the node
+  vtkMRMLTransformNode* transformNode = vtkMRMLTransformNode::SafeDownCast( node );
   node->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
   bufferNode->RemoveActiveTransform( node->GetName() );
 }
@@ -284,7 +285,7 @@ void vtkSlicerTransformRecorderLogic
 {
   if ( bufferNode != NULL )
   {
-	bufferNode->ClearMessages();
+	  bufferNode->ClearMessages();
   }
 }
 
@@ -321,7 +322,7 @@ void vtkSlicerTransformRecorderLogic
       transformNode.TakeReference( vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) ) );
       transformNode->SetName( activeTransforms.at(i).c_str() );
       transformNode->SetScene( this->GetMRMLScene() );
-	  this->GetMRMLScene()->AddNode( transformNode );
+	    this->GetMRMLScene()->AddNode( transformNode );
     }
 
   }

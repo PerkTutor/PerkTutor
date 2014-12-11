@@ -24,12 +24,12 @@
 // Qt includes
 #include "qSlicerWidget.h"
 
+#include "qSlicerTransformBufferWidgetHelper.h"
+#include "vtkSlicerTransformRecorderLogic.h"
+
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
 #include "ui_qSlicerTransformBufferWidget.h"
-
-#include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
 
 class qSlicerTransformBufferWidgetPrivate;
 
@@ -43,33 +43,29 @@ public:
   qSlicerTransformBufferWidget(QWidget *parent=0);
   virtual ~qSlicerTransformBufferWidget();
 
-  
-  static qSlicerTransformBufferWidget* New( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic );
-  
-  vtkMRMLTransformBufferNode* GetBufferNode();
-
+  qSlicerTransformBufferWidgetHelper* BufferHelper;
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
-
-  // This widget will keep track if the buffer is changed
-  unsigned long BufferStatus;
-  // These quantities might be repeated by different buffers, so we still need the above
-  unsigned long BufferTransformsStatus;
-  unsigned long BufferMessagesStatus;
-  unsigned long BufferActiveTransformsStatus;
 
 protected slots:
 
   void onImportButtonClicked();
   void onExportButtonClicked();
-  void onCurrentBufferNodeChanged();
+
+  virtual void onTransformBufferNodeChanged( vtkMRMLNode* );
+  void onTransformBufferNodeModified();
 
   void updateWidget();
 
+signals:
+
+  void transformBufferNodeChanged( vtkMRMLTransformBufferNode* );
+  void transformBufferNodeModified();
+
 protected:
+
   QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
 
   virtual void setup();
-  virtual void enter();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerTransformBufferWidget);

@@ -28,17 +28,11 @@ public:
   qSlicerTransformRecorderModuleWidget(QWidget *parent=0);
   virtual ~qSlicerTransformRecorderModuleWidget();
 
-  // This widget will keep track if the buffer is changed
-  unsigned long BufferStatus;
-  // These quantities might be repeated by different buffers, so we still need the above
-  unsigned long BufferTransformsStatus;
-  unsigned long BufferMessagesStatus;
-  
 protected:
   QScopedPointer<qSlicerTransformRecorderModuleWidgetPrivate> d_ptr;
   
   virtual void setup();
-  virtual void enter();
+  virtual void setupEmbeddedWidgets();
 
 protected slots:
 

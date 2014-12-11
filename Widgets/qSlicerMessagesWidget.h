@@ -28,9 +28,8 @@
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
 #include "ui_qSlicerMessagesWidget.h"
 
+#include "qSlicerTransformBufferWidgetHelper.h"
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
-#include "qSlicerTransformBufferWidget.h"
 
 class qSlicerMessagesWidgetPrivate;
 
@@ -40,31 +39,23 @@ qSlicerMessagesWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  typedef qSlicerWidget Superclass;
   qSlicerMessagesWidget(QWidget *parent=0);
   virtual ~qSlicerMessagesWidget();
 
-  static qSlicerMessagesWidget* New( qSlicerTransformBufferWidget* newBufferWidget );
+  qSlicerTransformBufferWidgetHelper* BufferHelper;
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
 protected slots:
 
-  void onAddMessageButtonClicked();
-  void onRemoveMessageButtonClicked();
-  void onClearMessagesButtonClicked();
-  void updateWidget();
+  virtual void onAddMessageButtonClicked();
+  virtual void onRemoveMessageButtonClicked();
+  virtual void onClearMessagesButtonClicked();
+  virtual void updateWidget();
 
 protected:
   QScopedPointer<qSlicerMessagesWidgetPrivate> d_ptr;
 
   virtual void setup();
-  virtual void enter();
-
-  qSlicerTransformBufferWidget* BufferWidget;
-
-  // This widget will keep track if the buffer is changed
-  unsigned long BufferStatus;
-  // These quantities might be repeated by different buffers, so we still need the above
-  unsigned long BufferMessagesStatus;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerMessagesWidget);
