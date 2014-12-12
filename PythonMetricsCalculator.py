@@ -1,4 +1,4 @@
-import os, imp, glob
+import os, imp
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -191,24 +191,49 @@ class PythonMetricsCalculatorLogic:
     return outMetrics
         
         
-  def FilterNeedleMetrics( self, inMetrics, currentTransform ):
-    if ( self.peLogic.GetNeedleTransformNode() != None and currentTransform.GetName() == self.peLogic.GetNeedleTransformNode().GetName() ):
-      return inMetrics
-      
-    # Only output metrics not requiring needle
+  def FilterMetricsByTransformRole( self, inMetrics, currentTransformRole ):     
+    # Only output metrics which accept the current transform's role
     outMetrics = []
+    
+    # Discard if the transform has no role
+    if ( currentTransformRole == "" or currentTransformRole == "None" ):
+      return outMetrics
+    
+    print currentTransformRole
     for i in range( len( inMetrics ) ):
-      if ( inMetrics[i].RequiresNeedle() == False ):
-        outMetrics.append( inMetrics[i] )
+      currentMetricRoles = inMetrics[i].GetAcceptedTransformRoles()
+      print currentMetricRoles
+      for j in range( len( currentMetricRoles ) ):
+        if ( currentMetricRoles[j] == currentTransformRole or currentMetricRoles[j] == "Any" ):
+          outMetrics.append( inMetrics[i] )
         
     return outMetrics
+    
+    
+  def ReloadAllMetrics( self ):
+    import PythonMetrics
+    self.metrics = PythonMetrics.PerkTutorCoreMetrics
+    self.AddAllUserMetrics()
+    
+    
+  def GetAllTransformRoles( self ):
+    # Re-initialize all the metrics (in case new ones were added)
+    self.ReloadAllMetrics()
+  
+    allTransformRoles = [ "None" ] # Ensure "None" is always the first role (and the default)
+    for i in range( len( self.metrics ) ):
+      currentAcceptedRoles = self.metrics[i].GetAcceptedTransformRoles()
+      # Each metric may accept multiple roles, so we must check all of them
+      for j in range( len( currentAcceptedRoles ) ):
+        if ( currentAcceptedRoles[j] not in allTransformRoles ):
+          allTransformRoles.append( currentAcceptedRoles[j] )
+          
+    return allTransformRoles
 
 
   def CalculateAllMetrics( self ):  
     # Initialize all the metrics    
-    import PythonMetrics
-    self.metrics = PythonMetrics.PerkTutorCoreMetrics[:]
-    self.AddAllUserMetrics()
+    self.ReloadAllMetrics()
     
     # Initialize the metrics output
     metricStringList = []
@@ -219,15 +244,17 @@ class PythonMetricsCalculatorLogic:
 
     # Now iterate over all of the trajectories
     toolTransforms = vtk.vtkCollection()
-    self.peLogic.GetAnalyzeTransforms( toolTransforms )
+    self.peLogic.GetSceneVisibleTransformNodes( toolTransforms )
   
     for i in range( toolTransforms.GetNumberOfItems() ):
 
       currentTransform = toolTransforms.GetItemAsObject( i )
+      currentTransformRole = self.peLogic.GetTransformRole( currentTransform.GetName() )
+      print currentTransform.GetName(), ": ", currentTransformRole
     
       #Drop if based on tissue and needle as appropriate
       transformMetrics = self.FilterTissueMetrics( self.metrics, currentTransform )
-      transformMetrics = self.FilterNeedleMetrics( transformMetrics, currentTransform )
+      transformMetrics = self.FilterMetricsByTransformRole( transformMetrics, currentTransformRole )
   
       # Initialization
       for j in range( len( transformMetrics ) ):
