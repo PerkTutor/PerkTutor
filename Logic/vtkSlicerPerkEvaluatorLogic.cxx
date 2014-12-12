@@ -328,7 +328,6 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
     }
   }
 
-
   // Use the python metrics calculator module
   qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
   pythonManager->executeString( "import PythonMetricsCalculator" );
@@ -519,6 +518,48 @@ bool vtkSlicerPerkEvaluatorLogic
 
   return false;
 }
+
+
+std::string vtkSlicerPerkEvaluatorLogic
+::GetTransformRole( std::string transformNodeName )
+{
+  if ( this->TransformRoleMap.find( transformNodeName ) != this->TransformRoleMap.end() )
+  {
+    return this->TransformRoleMap[ transformNodeName ];
+  }
+  else
+  {
+    return "";
+  }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetTransformRole( std::string transformNodeName, std::string newTransformRole )
+{
+  this->TransformRoleMap[ transformNodeName ] = newTransformRole;
+}
+
+
+std::vector< std::string > vtkSlicerPerkEvaluatorLogic
+::GetAllTransformRoles()
+{
+  // Use the python metrics calculator module
+  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
+  pythonManager->executeString( "import PythonMetricsCalculator" );
+  pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( "PythonMetricsTransformRoles = PythonMetricsCalculatorLogic.GetAllTransformRoles()" );
+  QVariant result = pythonManager->getVariable( "PythonMetricsTransformRoles" );
+  QStringList transformRoles = result.toStringList();
+
+  std::vector< std::string > transformRolesVector( transformRoles.length(), "" );
+  for ( int i = 0; i < transformRoles.length(); i++ )
+  {
+    transformRolesVector.at( i ) = transformRoles.at( i ).toStdString();
+  }
+  return transformRolesVector;
+}
+
 
 
 void vtkSlicerPerkEvaluatorLogic

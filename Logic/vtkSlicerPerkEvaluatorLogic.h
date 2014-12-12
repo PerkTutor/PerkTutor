@@ -68,6 +68,10 @@ public:
   vtkMRMLTransformBufferNode* GetTransformBuffer();
   vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
 
+  std::string GetTransformRole( std::string transformNodeName );
+  void SetTransformRole( std::string transformNodeName, std::string newTransformRole );
+  std::vector< std::string > GetAllTransformRoles();
+
   void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void GetAnalyzeTransforms( vtkCollection* analyzeTransforms );
@@ -137,6 +141,7 @@ private:
   
   vtkMRMLTransformBufferNode* TransformBuffer;
   vtkSmartPointer< vtkCollection > AnalyzeTransforms;
+  std::map< std::string, std::string > TransformRoleMap;
   
   double PlaybackTime;
   double MarkBegin;

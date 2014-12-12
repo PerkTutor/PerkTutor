@@ -18,35 +18,34 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerTransformSelectionWidget_h
-#define __qSlicerTransformSelectionWidget_h
+#ifndef __qSlicerPerkEvaluatorRolesWidget_h
+#define __qSlicerPerkEvaluatorRolesWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
-#include <QtGui>
-
-#include "qSlicerTransformBufferWidgetHelper.h"
 
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
-#include "ui_qSlicerTransformSelectionWidget.h"
+#include "ui_qSlicerPerkEvaluatorRolesWidget.h"
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
-#include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLNode.h"
+#include "qSlicerTransformBufferWidget.h"
 
-class qSlicerTransformSelectionWidgetPrivate;
+class qSlicerPerkEvaluatorRolesWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_PERKEVALUATOR_WIDGETS_EXPORT 
-qSlicerTransformSelectionWidget : public qSlicerWidget
+qSlicerPerkEvaluatorRolesWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  qSlicerTransformSelectionWidget(QWidget *parent=0);
-  virtual ~qSlicerTransformSelectionWidget();
-
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+  typedef qSlicerWidget Superclass;
+  qSlicerPerkEvaluatorRolesWidget(QWidget *parent=0);
+  virtual ~qSlicerPerkEvaluatorRolesWidget();
+  
   qSlicerTransformBufferWidgetHelper* BufferHelper;
+  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 
 public slots:
 
@@ -54,23 +53,29 @@ public slots:
 
 protected slots:
 
-  void onTransformSelectionChanged();
-  void onSelectAllClicked();
-  void onUnselectAllClicked();
+  virtual void onRolesChanged() = 0;
   void updateWidget();
 
 protected:
-  QScopedPointer<qSlicerTransformSelectionWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerPerkEvaluatorRolesWidgetPrivate> d_ptr;
 
   virtual void setup();
+  virtual void enter();
+
+  virtual std::string getFixedHeader();
+  virtual std::string getMovingHeader();
+
+  virtual std::vector< std::string > getAllFixed() = 0; // Just a list of all fixed options
+  virtual std::vector< std::string > getAllMoving() = 0; // Just a list of all moving option
+  virtual std::string getMovingFromFixed( std::string fixed ) = 0;
   
   // Have two maps to correspond transforms nodes <-> ComboBox widgets
-  std::map< vtkMRMLLinearTransformNode*, QComboBox* > NodeToComboBoxMap;
-  std::map< QComboBox*, vtkMRMLLinearTransformNode* > ComboBoxToNodeMap;
+  std::map< std::string, QComboBox* > FixedToComboBoxMap;
+  std::map< QComboBox*, std::string > ComboBoxToFixedMap;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerTransformSelectionWidget);
-  Q_DISABLE_COPY(qSlicerTransformSelectionWidget);
+  Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorRolesWidget);
+  Q_DISABLE_COPY(qSlicerPerkEvaluatorRolesWidget);
 
 };
 

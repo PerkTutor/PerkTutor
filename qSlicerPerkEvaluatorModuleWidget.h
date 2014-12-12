@@ -7,7 +7,7 @@
 #include <QtGui>
 #include "qSlicerPerkEvaluatorTransformBufferWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
-#include "qSlicerTransformSelectionWidget.h"
+#include "qSlicerPerkEvaluatorTransformRolesWidget.h"
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
 class qSlicerPerkEvaluatorModuleWidgetPrivate;

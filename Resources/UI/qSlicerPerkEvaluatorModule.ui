@@ -592,7 +592,7 @@
         </widget>
        </item>
        <item>
-        <widget class="ctkCollapsibleGroupBox" name="TransformSelectionGroupBox">
+        <widget class="ctkCollapsibleGroupBox" name="TransformRolesGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -600,7 +600,7 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Transform Selection</string>
+          <string>Transform Roles</string>
          </property>
          <property name="collapsed">
           <bool>true</bool>
