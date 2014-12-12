@@ -1,4 +1,4 @@
 [submodule "PythonMetrics"]
 	path = PythonMetrics
-	url = https://github.com/mholden8/PythonMetrics.git
+	url = https://github.com/PerkTutor/PythonMetrics.git
 	branch = Core
