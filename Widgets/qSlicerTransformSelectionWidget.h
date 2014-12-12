@@ -38,7 +38,7 @@ class qSlicerTransformSelectionWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_PERKEVALUATOR_WIDGETS_EXPORT 
-qSlicerTransformSelectionWidget : public virtual qSlicerWidget
+qSlicerTransformSelectionWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
