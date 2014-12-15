@@ -1,4 +1,4 @@
-import os, imp
+import os, imp, glob
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -216,7 +216,7 @@ class PythonMetricsCalculatorLogic:
     
   def ReloadAllMetrics( self ):
     import PythonMetrics
-    self.metrics = PythonMetrics.PerkTutorCoreMetrics
+    self.metrics = PythonMetrics.PerkTutorCoreMetrics[:]
     self.AddAllUserMetrics()
     
     
