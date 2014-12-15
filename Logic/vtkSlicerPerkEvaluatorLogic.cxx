@@ -131,7 +131,8 @@ void vtkSlicerPerkEvaluatorLogic
   }
   this->ToolTrajectories.clear();
 
-  this->AnalyzeTransforms->RemoveAllItems();
+  this->TransformRoleMap.clear(); // Remove all the transform roles
+  // NOTE: Do not chnage the model roles, because this may be constant procedure to procedure
 
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
@@ -397,7 +398,7 @@ void vtkSlicerPerkEvaluatorLogic
 	    node->SetName( toolName.c_str() );
     }
 
-    this->AnalyzeTransforms->AddItem( node );
+    this->SetTransformRole( node->GetName(), "Any" );
 
     // Add to the tool trajectories
     ToolTrajectory currentTrajectory;
