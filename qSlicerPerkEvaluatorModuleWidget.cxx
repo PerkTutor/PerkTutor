@@ -336,7 +336,14 @@ qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( d->BodyNodeComboBox->currentNode() );
-  d->logic()->SetBodyModelNode( mnode );
+  if ( mnode != NULL )
+  {
+    d->logic()->SetAnatomyNodeName( "Tissue", mnode->GetName() );
+  }
+  else
+  {
+    d->logic()->SetAnatomyNodeName( "Tissue", "" );
+  }
 }
 
 
@@ -348,7 +355,14 @@ qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
   
   vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( d->NeedleReferenceComboBox->currentNode() );
-  d->logic()->SetNeedleTransformNode( tnode );
+  if ( tnode != NULL )
+  {
+    d->logic()->SetTransformRole( tnode->GetName(), "Needle" );
+  }
+  else
+  {
+    d->logic()->SetTransformRole( "", "Needle" );
+  }
 }
 
 
@@ -419,7 +433,6 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->TransformRolesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->AnatomyRolesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-
 }
 
 
