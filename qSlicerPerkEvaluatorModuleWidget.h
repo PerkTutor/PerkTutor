@@ -8,6 +8,7 @@
 #include "qSlicerPerkEvaluatorTransformBufferWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
+#include "qSlicerPerkEvaluatorAnatomyRolesWidget.h"
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
 class qSlicerPerkEvaluatorModuleWidgetPrivate;

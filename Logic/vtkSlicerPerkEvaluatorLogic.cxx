@@ -5,6 +5,7 @@
 // MRML includes
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
+#include "vtkMRMLMarkupsFiducialNode.h"
 #include "vtkMRMLTransformNode.h"
 
 // VTK includes
@@ -561,7 +562,6 @@ std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 }
 
 
-
 void vtkSlicerPerkEvaluatorLogic
 ::GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes )
 {
@@ -571,16 +571,92 @@ void vtkSlicerPerkEvaluatorLogic
   }
   visibleTransformNodes->RemoveAllItems();
 
-  vtkSmartPointer< vtkCollection > nodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkSmartPointer< vtkCollection > transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
   
-  for ( int i = 0; i < nodes->GetNumberOfItems(); i++ )
+  for ( int i = 0; i < transformNodes->GetNumberOfItems(); i++ )
   {
-    vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( nodes->GetItemAsObject( i ) );
+    vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNodes->GetItemAsObject( i ) );
     if ( transformNode != NULL && transformNode->GetHideFromEditors() == false )
     {
-      visibleTransformNodes->AddItem( nodes->GetItemAsObject( i ) );
+      visibleTransformNodes->AddItem( transformNode );
     }
   }
+}
+
+
+std::string vtkSlicerPerkEvaluatorLogic
+::GetAnatomyNodeName( std::string anatomyRole )
+{
+  if ( this->AnatomyNodeMap.find( anatomyRole ) != this->AnatomyNodeMap.end() )
+  {
+    return this->AnatomyNodeMap[ anatomyRole ];
+  }
+  else
+  {
+    return "";
+  }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName )
+{
+  this->AnatomyNodeMap[ anatomyRole ] = newAnatomyNodeName;
+}
+
+
+std::vector< std::string > vtkSlicerPerkEvaluatorLogic
+::GetAllAnatomyRoles()
+{
+  // Use the python metrics calculator module
+  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
+  pythonManager->executeString( "import PythonMetricsCalculator" );
+  pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( "PythonMetricsAnatomyRoles = PythonMetricsCalculatorLogic.GetAllAnatomyRoles()" );
+  QVariant result = pythonManager->getVariable( "PythonMetricsAnatomyRoles" );
+  QStringList anatomyRoles = result.toStringList();
+
+  std::vector< std::string > anatomyRolesVector( anatomyRoles.length(), "" );
+  for ( int i = 0; i < anatomyRoles.length(); i++ )
+  {
+    anatomyRolesVector.at( i ) = anatomyRoles.at( i ).toStdString();
+  }
+  return anatomyRolesVector;
+}
+
+
+
+void vtkSlicerPerkEvaluatorLogic
+::GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes )
+{
+  if ( visibleAnatomyNodes == NULL )
+  {
+    return;
+  }
+  visibleAnatomyNodes->RemoveAllItems();
+
+  // Assume that all anatomy are either models or fiducials
+  // We could allow all nodes, but then the user interface would be cluttered
+  vtkSmartPointer< vtkCollection > modelNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLModelNode" );  
+  for ( int i = 0; i < modelNodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast( modelNodes->GetItemAsObject( i ) );
+    if ( modelNode != NULL && modelNode->GetHideFromEditors() == false )
+    {
+      visibleAnatomyNodes->AddItem( modelNode );
+    }
+  }
+
+  vtkSmartPointer< vtkCollection > fiducialNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMarkupsFiducialNode" );
+  for ( int i = 0; i < fiducialNodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLMarkupsFiducialNode* fiducialNode = vtkMRMLMarkupsFiducialNode::SafeDownCast( fiducialNodes->GetItemAsObject( i ) );
+    if ( fiducialNode != NULL && fiducialNode->GetHideFromEditors() == false )
+    {
+      visibleAnatomyNodes->AddItem( fiducialNode );
+    }
+  }
+
 }
 
 

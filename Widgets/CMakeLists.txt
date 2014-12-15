@@ -16,6 +16,8 @@ set(${KIT}_SRCS
   qSlicerPerkEvaluatorRolesWidget.h
   qSlicerPerkEvaluatorTransformRolesWidget.cxx
   qSlicerPerkEvaluatorTransformRolesWidget.h
+  qSlicerPerkEvaluatorAnatomyRolesWidget.cxx
+  qSlicerPerkEvaluatorAnatomyRolesWidget.h
   )
   
 set(${KIT}_MOC_SRCS
@@ -23,6 +25,7 @@ set(${KIT}_MOC_SRCS
   qSlicerPerkEvaluatorMessagesWidget.h
   qSlicerPerkEvaluatorTransformBufferWidget.h
   qSlicerPerkEvaluatorTransformRolesWidget.h
+  qSlicerPerkEvaluatorAnatomyRolesWidget.h
   )
   
 set(${KIT}_UI_SRCS

@@ -77,7 +77,7 @@ qSlicerPerkEvaluatorTransformRolesWidget
 std::string qSlicerPerkEvaluatorTransformRolesWidget
 ::getFixedHeader()
 {
-  return "Transform";
+  return "Transform Node";
 }
 
 

@@ -50,6 +50,7 @@ public:
   qSlicerPerkEvaluatorTransformBufferWidget* TransformBufferWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
   qSlicerPerkEvaluatorTransformRolesWidget* TransformRolesWidget;
+  qSlicerPerkEvaluatorAnatomyRolesWidget* AnatomyRolesWidget;
 };
 
 
@@ -408,10 +409,17 @@ qSlicerPerkEvaluatorModuleWidget
   d->TransformRolesWidget->setMRMLScene( NULL ); 
   d->TransformRolesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
+  d->AnatomyRolesWidget = new qSlicerPerkEvaluatorAnatomyRolesWidget();
+  d->AnatomyRolesGroupBox->layout()->addWidget( d->AnatomyRolesWidget );
+  d->AnatomyRolesWidget->setMRMLScene( NULL ); 
+  d->AnatomyRolesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->TransformRolesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->AnatomyRolesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+
 }
 
 

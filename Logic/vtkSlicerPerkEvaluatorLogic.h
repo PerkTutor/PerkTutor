@@ -72,12 +72,17 @@ public:
   void SetTransformRole( std::string transformNodeName, std::string newTransformRole );
   std::vector< std::string > GetAllTransformRoles();
 
+  std::string GetAnatomyNodeName( std::string anatomyRole );
+  void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
+  std::vector< std::string > GetAllAnatomyRoles();
+
   void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
   void GetAnalyzeTransforms( vtkCollection* analyzeTransforms );
   bool IsAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
+  void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes );
   
   double GetTotalTime() const;
   double GetMinTime() const;
@@ -142,6 +147,7 @@ private:
   vtkMRMLTransformBufferNode* TransformBuffer;
   vtkSmartPointer< vtkCollection > AnalyzeTransforms;
   std::map< std::string, std::string > TransformRoleMap;
+  std::map< std::string, std::string > AnatomyNodeMap;
   
   double PlaybackTime;
   double MarkBegin;

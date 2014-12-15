@@ -145,9 +145,10 @@ void qSlicerPerkEvaluatorRolesWidget
   d->RolesTable->setRowCount( 0 );
   d->RolesTable->setColumnCount( 0 );
   
-  // This is where the
+  // This is where the moving and fixed labels are grabbed
   std::vector< std::string > fixed = this->getAllFixed();
   std::vector< std::string > moving = this->getAllMoving();
+  moving.insert( moving.begin(), "" ); // Put it at the beginning so we have a "blank" option that is default
 
   d->RolesTable->setRowCount( fixed.size() );
   d->RolesTable->setColumnCount( 2 );
