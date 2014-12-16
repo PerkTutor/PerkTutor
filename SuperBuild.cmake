@@ -30,7 +30,7 @@ foreach( proj ${PerkTutor_Modules} )
     -D${proj}_SOURCE_DIR:PATH=${${proj}_SOURCE_DIR}
     -D${proj}_BINARY_DIR:PATH=${${proj}_BINARY_DIR}
   )
-  message( STATUS "Source: "${${proj}_SOURCE_DIR} )
+  message( STATUS "Source: " ${${proj}_SOURCE_DIR} )
   ExternalProject_Add(
     ${proj}Download
     GIT_REPOSITORY ${PERKTUTOR_REPOSITORY_${proj}_URL}
