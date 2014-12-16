@@ -86,10 +86,14 @@ public:
   void RemoveMessage( vtkMRMLTransformBufferNode* bufferNode, int index );
   void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
 
-  void ImportFromFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
+  void AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode );
+
+  void AddTransformsToScene( vtkMRMLTransformBufferNode* bufferNode );
+
+  void ImportFromXMLFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
   void ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
 
-  void AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode );
+  void ImportFromMHAFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
   
 private:
 
