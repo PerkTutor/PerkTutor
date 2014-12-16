@@ -1,4 +1,4 @@
-import os, imp, glob
+import os, imp, glob, sys
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -174,8 +174,16 @@ class PythonMetricsCalculatorLogic:
     allScripts = glob.glob( metricPath + "/*.py" )
   
     for j in range( len( allScripts ) ):
-      currentMetricModule = imp.load_source( "PerkEvaluatorUserMetric" + str( j ), allScripts[j] )
-      self.metrics.append( currentMetricModule.PerkEvaluatorMetric() )
+    
+      metricModuleString = "PerkEvaluatorUserMetric_" + os.path.splitext( os.path.basename( allScripts[j] ) )[0] # this puts the file name at the end
+      
+      try:
+        # If it can't load properly, then just ignore
+        currentMetricModule = imp.load_source( metricModuleString, allScripts[j] )
+        metricInstance = currentMetricModule.PerkEvaluatorMetric() # Test that we can create an instance of the metric
+        self.metrics.append( metricInstance )
+      except:
+        print "Could not load metric: ", metricModuleString, "."
       
       
   def FilterMetricsByAnatomyRole( self, inMetrics, specifiedAnatomyRoles ):
