@@ -637,25 +637,26 @@ void vtkSlicerPerkEvaluatorLogic
   visibleAnatomyNodes->RemoveAllItems();
 
   // Assume that all anatomy are either models or fiducials
-  // We could allow all nodes, but then the user interface would be cluttered
-  vtkSmartPointer< vtkCollection > modelNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLModelNode" );  
-  for ( int i = 0; i < modelNodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast( modelNodes->GetItemAsObject( i ) );
-    if ( modelNode != NULL && modelNode->GetHideFromEditors() == false )
-    {
-      visibleAnatomyNodes->AddItem( modelNode );
-    }
-  }
+  std::vector< std::string > anatomyNodeTypes;
+  anatomyNodeTypes.push_back( "vtkMRMLModelNode" );
+  anatomyNodeTypes.push_back( "vtkMRMLMarkupsFiducialNode" );
+  // Add more node types here if it is necessary
 
-  vtkSmartPointer< vtkCollection > fiducialNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMarkupsFiducialNode" );
-  for ( int i = 0; i < fiducialNodes->GetNumberOfItems(); i++ )
+  // We could allow all nodes, but then the user interface would be cluttered
+
+  for ( int i = 0; i < anatomyNodeTypes.size(); i++ )
   {
-    vtkMRMLMarkupsFiducialNode* fiducialNode = vtkMRMLMarkupsFiducialNode::SafeDownCast( fiducialNodes->GetItemAsObject( i ) );
-    if ( fiducialNode != NULL && fiducialNode->GetHideFromEditors() == false )
+
+    vtkSmartPointer< vtkCollection > nodes = this->GetMRMLScene()->GetNodesByClass( anatomyNodeTypes.at( i ).c_str() );  
+    for ( int j = 0; j < nodes->GetNumberOfItems(); j++ )
     {
-      visibleAnatomyNodes->AddItem( fiducialNode );
+      vtkMRMLNode* currentNode = vtkMRMLNode::SafeDownCast( nodes->GetItemAsObject( j ) );
+      if ( currentNode != NULL && currentNode->GetHideFromEditors() == false )
+      {
+        visibleAnatomyNodes->AddItem( currentNode );
+      }
     }
+
   }
 
 }
