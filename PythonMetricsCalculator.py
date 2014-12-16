@@ -286,13 +286,8 @@ class PythonMetricsCalculatorLogic:
       for j in range( len( transformMetrics ) ):
         transformMetrics[j].Initialize()
         
-      # Grab anatomy nodes
-      for j in range( len( transformMetrics ) ):
-        currentMetricAnatomyRoles = transformMetrics[j].GetRequiredAnatomyRoles()
-        for k in range( len( currentMetricAnatomyRoles ) ):
-          currentAnatomyNodeName = self.peLogic.GetAnatomyNodeName( currentMetricAnatomyRoles[k] )
-          currentAnatomyNode = self.peLogic.GetMRMLScene().GetFirstNodeByName( currentAnatomyNodeName )
-          transformMetrics[j].AddAnatomyRole( currentMetricAnatomyRoles[k], currentAnatomyNode )
+      # Grab anatomy nodes, removing any metrics for which the required nodes are not available
+      transformMetrics = self.AddMetricAnatomyNodes( transformMetrics )            
       
       # Calculation
       self.CalculateTransformMetrics( currentTransform, transformMetrics )
@@ -307,6 +302,30 @@ class PythonMetricsCalculatorLogic:
         metricStringList.append( str( transformMetrics[j].GetMetric() ) )  
   
     return metricStringList
+    
+    
+  def AddMetricAnatomyNodes( self, transformMetrics ):
+  
+    # Keep track of which metrics all anatomies are sucessfully delivered to
+    anatomiesFulfilled = [ True ] * len( transformMetrics )
+  
+    for i in range( len( transformMetrics ) ):
+      currentMetricAnatomyRoles = transformMetrics[i].GetRequiredAnatomyRoles()
+      
+      for j in range( len( currentMetricAnatomyRoles ) ):
+        currentAnatomyNodeName = self.peLogic.GetAnatomyNodeName( currentMetricAnatomyRoles[j] )
+        currentAnatomyNode = self.peLogic.GetMRMLScene().GetFirstNodeByName( currentAnatomyNodeName )
+        added = transformMetrics[i].AddAnatomyRole( currentMetricAnatomyRoles[j], currentAnatomyNode )
+        
+        if ( added == False ):
+          anatomiesFulfilled[i] = False
+          
+    newTransformMetrics = []
+    for i in range( len( anatomiesFulfilled ) ):
+      if ( anatomiesFulfilled[i] == True ):
+        newTransformMetrics.append( transformMetrics[i] )
+        
+    return newTransformMetrics
   
   
 
