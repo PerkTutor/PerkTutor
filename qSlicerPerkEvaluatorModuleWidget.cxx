@@ -318,17 +318,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 
-void qSlicerPerkEvaluatorModuleWidget
-::OnTraceTrajectoriesChanged()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  d->logic()->SetTraceTrajectories( d->TraceTrajectoriesCheckBox->checkState() );
-}
-
-
-
-
 void
 qSlicerPerkEvaluatorModuleWidget
 ::OnBodyModelNodeSelected()
@@ -467,7 +456,6 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
   connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( OnClipboardClicked() ) );
   d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
-  connect( d->TraceTrajectoriesCheckBox, SIGNAL( stateChanged( int ) ), this, SLOT( OnTraceTrajectoriesChanged() ) );
 
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );

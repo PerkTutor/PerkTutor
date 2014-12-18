@@ -22,9 +22,6 @@
 
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
-#include "vtkPolyLine.h"
-#include "vtkPoints.h"
-#include "vtkCellArray.h"
 
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
 #include "vtkSlicerTransformRecorderLogic.h"
@@ -76,11 +73,6 @@ public:
   void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
   std::vector< std::string > GetAllAnatomyRoles();
 
-  void AddAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
-  void RemoveAnalyzeTransform ( vtkMRMLLinearTransformNode* newAnalyzeTransform );
-  void GetAnalyzeTransforms( vtkCollection* analyzeTransforms );
-  bool IsAnalyzeTransform( vtkMRMLLinearTransformNode* newAnalyzeTransform );
-
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
   void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes );
   
@@ -95,7 +87,6 @@ public:
   void SetMarkEnd( double end );
   double GetMarkEnd();
   void SetNeedleBase( double x, double y, double z );
-  void SetTraceTrajectories( bool newTraceTrajectories );
 
   typedef std::pair<std::string,double> MetricType;  
   std::vector<MetricType> GetMetrics();
@@ -103,26 +94,7 @@ public:
   void SetMetricsDirectory( std::string newDirectory );
   std::string GetMetricsDirectory();
 
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
-
-  vtkXMLDataParser* Parser;
-  vtkXMLDataElement* ParseXMLFile( std::string fileName );
-  
-  // Reference to body model node.  
-public:
-  vtkGetObjectMacro( BodyModelNode, vtkMRMLModelNode );
-  void SetBodyModelNode( vtkMRMLModelNode* node );
-private:
-  vtkMRMLModelNode* BodyModelNode;
-  
-  
-  // Reference to the needle coordinate system.
-public:
-  vtkGetObjectMacro( NeedleTransformNode, vtkMRMLLinearTransformNode );
-  void SetNeedleTransformNode( vtkMRMLLinearTransformNode* node );
-private:
-  vtkMRMLLinearTransformNode* NeedleTransformNode;
-  
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;  
   
 private:
 
@@ -132,20 +104,10 @@ private:
 private:
   
   void ClearData();
-  //double GetTimestampFromElement( vtkXMLDataElement* element );
-  
-  std::vector<MetricType> CalculateToolMetrics( vtkMRMLLinearTransformNode* analyzeTransform );
-  std::vector<MetricType> CalculateNeedleMetrics();
-
-  void ShowTraceTrajectories( vtkPoints* curvePoints, vtkPolyLine* curvePolyLine, int validIDs, std::string toolName );
-  double TriangleArea( double* p1, double* p2, double* p3 );
-  
-  void IncrementTimestamp( std::string baseTrajectoryName );
 
   std::vector< ToolTrajectory > ToolTrajectories;
   
   vtkMRMLTransformBufferNode* TransformBuffer;
-  vtkSmartPointer< vtkCollection > AnalyzeTransforms;
   std::map< std::string, std::string > TransformRoleMap;
   std::map< std::string, std::string > AnatomyNodeMap;
   
@@ -153,8 +115,6 @@ private:
   double MarkBegin;
   double MarkEnd;
   double NeedleBase[4];
-
-  bool TraceTrajectories;
 
   std::string MetricsDirectory;
 
