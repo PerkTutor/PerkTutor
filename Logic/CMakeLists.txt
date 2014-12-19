@@ -18,6 +18,7 @@ set(${KIT}_TARGET_LIBRARIES
   SlicerBaseLogic 
   qSlicerBaseQTCore
   vtkSlicerTransformRecorderModuleLogic
+  vtkSlicerPerkEvaluatorModuleMRML
   )
 
 #-----------------------------------------------------------------------------

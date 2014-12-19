@@ -327,6 +327,24 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
+        <widget class="qMRMLNodeComboBox" name="PerkEvaluatorNodeComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="nodeTypes">
+          <stringlist>
+           <string>vtkMRMLPerkEvaluatorNode</string>
+          </stringlist>
+         </property>
+         <property name="renameEnabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="MeasurementParametersGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -341,7 +359,7 @@
           <item>
            <layout class="QGridLayout" name="gridLayout_3">
             <item row="0" column="0">
-             <widget class="QLabel" name="label_4">
+             <widget class="QLabel" name="TissueNodeLabel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -349,7 +367,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Body surface node: </string>
+               <string>Tissue model node: </string>
               </property>
              </widget>
             </item>
@@ -372,7 +390,7 @@
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="label_5">
+             <widget class="QLabel" name="NeedleTransformLabel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -380,7 +398,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Needle reference frame:</string>
+               <string>Needle transform node:</string>
               </property>
              </widget>
             </item>
@@ -405,7 +423,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="MeasurementRangeLabel">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -459,7 +477,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QLabel" name="label_6">
+             <widget class="QLabel" name="DashLabel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -872,6 +890,22 @@
     <hint type="destinationlabel">
      <x>257</x>
      <y>158</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerPerkEvaluatorModule</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>PerkEvaluatorNodeComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>311</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>142</y>
     </hint>
    </hints>
   </connection>

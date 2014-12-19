@@ -38,23 +38,26 @@ public slots:
 
   void OnTimeout();
 
-  void OnMarkBeginEdited();
+  void OnAnalyzeClicked();
+  void OnClipboardClicked();
+
+  void OnMarkBeginChanged();
   void OnMarkBeginClicked();
-  void OnMarkEndEdited();
+  void OnMarkEndChanged();
   void OnMarkEndClicked();
 
   void OnMetricsDirectoryClicked();
 
-  void OnAnalyzeClicked();
-  void OnClipboardClicked();
-
-  void OnBodyModelNodeSelected();
-  void OnNeedleReferenceSelected();
-  void OnNeedleOrientationChanged( QAbstractButton* newOrientationButton );
+  void onTissueModelChanged( vtkMRMLNode* node );
+  void onNeedleTransformChanged( vtkMRMLNode* node );
+  void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
   void updateWidget();
   void resetWidget();
   void clearWidget();
+
+  void mrmlNodeChanged( vtkMRMLNode* );
+  void updateWidgetFromMRMLNode();
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorModuleWidgetPrivate> d_ptr;

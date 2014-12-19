@@ -94,11 +94,16 @@ void qSlicerPerkEvaluatorAnatomyRolesWidget
 {
   Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
 
+  if ( this->PerkEvaluatorNode == NULL )
+  {
+    return;
+  }
+
   // Find who the sender is and the corresponding node
   QComboBox* sender = (QComboBox*) this->sender();
   std::string anatomyRole = this->ComboBoxToFixedMap[ sender ];
   
-  this->PerkEvaluatorLogic->SetAnatomyNodeName( anatomyRole, sender->currentText().toStdString() );
+  this->PerkEvaluatorNode->SetAnatomyNodeName( anatomyRole, sender->currentText().toStdString() );
 
   this->updateWidget();
 }
@@ -137,6 +142,11 @@ std::string qSlicerPerkEvaluatorAnatomyRolesWidget
 ::getMovingFromFixed( std::string fixed )
 {
   Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
+
+  if ( this->PerkEvaluatorNode == NULL )
+  {
+    return "";
+  }
   
-  return this->PerkEvaluatorLogic->GetAnatomyNodeName( fixed );
+  return this->PerkEvaluatorNode->GetAnatomyNodeName( fixed );
 }

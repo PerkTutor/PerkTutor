@@ -61,32 +61,32 @@ protected:
 
 public:
   
-  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
-  vtkMRMLTransformBufferNode* GetTransformBuffer();
+  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode ); //
+  vtkMRMLTransformBufferNode* GetTransformBuffer(); //
   vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
 
-  std::string GetTransformRole( std::string transformNodeName );
-  void SetTransformRole( std::string transformNodeName, std::string newTransformRole );
+  std::string GetTransformRole( std::string transformNodeName ); //
+  void SetTransformRole( std::string transformNodeName, std::string newTransformRole ); //
   std::vector< std::string > GetAllTransformRoles();
 
-  std::string GetAnatomyNodeName( std::string anatomyRole );
-  void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
+  std::string GetAnatomyNodeName( std::string anatomyRole ); //
+  void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName ); //
   std::vector< std::string > GetAllAnatomyRoles();
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
   void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes );
   
-  double GetTotalTime() const;
-  double GetMinTime() const;
-  double GetMaxTime() const;
+  double GetTotalTime() const; //
+  double GetMinTime() const; //
+  double GetMaxTime() const; //
   double GetPlaybackTime() const;
   
   void SetPlaybackTime( double time );
-  void SetMarkBegin( double begin );
-  double GetMarkBegin();
-  void SetMarkEnd( double end );
-  double GetMarkEnd();
-  void SetNeedleBase( double x, double y, double z );
+  void SetMarkBegin( double begin ); //
+  double GetMarkBegin(); //
+  void SetMarkEnd( double end ); //
+  double GetMarkEnd(); //
+  void SetNeedleBase( double x, double y, double z ); //
 
   typedef std::pair<std::string,double> MetricType;  
   std::vector<MetricType> GetMetrics();

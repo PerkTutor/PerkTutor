@@ -22,15 +22,16 @@
 #define __qSlicerPerkEvaluatorRolesWidget_h
 
 // Qt includes
+#include <QtGui>
 #include "qSlicerWidget.h"
 
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 #include "ui_qSlicerPerkEvaluatorRolesWidget.h"
 
-#include "vtkSlicerPerkEvaluatorLogic.h"
 #include "vtkMRMLNode.h"
-#include "qSlicerTransformBufferWidget.h"
+#include "vtkSlicerPerkEvaluatorLogic.h"
+#include "vtkMRMLPerkEvaluatorNode.h"
 
 class qSlicerPerkEvaluatorRolesWidgetPrivate;
 
@@ -44,12 +45,13 @@ public:
   qSlicerPerkEvaluatorRolesWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorRolesWidget();
   
-  qSlicerTransformBufferWidgetHelper* BufferHelper;
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+  vtkMRMLPerkEvaluatorNode* PerkEvaluatorNode;
 
 public slots:
 
   virtual void setMRMLScene( vtkMRMLScene* newScene );
+  void setPerkEvaluatorNode( vtkMRMLNode* node );
 
 protected slots:
 

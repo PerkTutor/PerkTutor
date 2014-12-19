@@ -1,14 +1,18 @@
 
+// Standard includes 
+#include <ctime>
+#include <fstream>
+#include <sstream>
+#include <string>
+
 // Qt includes
 #include <QDebug>
 #include <QtCore>
 #include <QtGui>
 #include <QTimer>
 
-#include <ctime>
-#include <fstream>
-#include <sstream>
-#include <string>
+// VTK includes
+#include "vtkCommand.h"
 
 // SlicerQt includes
 #include "qSlicerPerkEvaluatorModuleWidget.h"
@@ -18,6 +22,7 @@
 #include <qSlicerCoreApplication.h>
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
+#include "vtkMRMLPerkEvaluatorNode.h"
 
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLNode.h"
@@ -199,62 +204,6 @@ void qSlicerPerkEvaluatorModuleWidget
   this->updateWidget();
 }
 
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnMarkBeginEdited()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  d->logic()->SetMarkBegin( d->logic()->GetMinTime() + d->BeginSpinBox->value() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnMarkBeginClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  d->logic()->SetMarkBegin( d->logic()->GetPlaybackTime() );
-  d->BeginSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnMarkEndEdited()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  d->logic()->SetMarkEnd( d->logic()->GetMinTime() + d->EndSpinBox->value() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnMarkEndClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  d->logic()->SetMarkEnd( d->logic()->GetPlaybackTime() );
-  d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnMetricsDirectoryClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  QString fileName = QFileDialog::getExistingDirectory( this, tr("Open metrics directory"), "", QFileDialog::ShowDirsOnly );
-  
-  if ( fileName.isEmpty() == false )
-  {
-    d->logic()->SetMetricsDirectory( fileName.toStdString() );
-  }
-
-  d->MetricsDirectoryButton->setText( QString( d->logic()->GetMetricsDirectory().c_str() ) );
-}
-
-
-
 void qSlicerPerkEvaluatorModuleWidget
 ::OnAnalyzeClicked()
 {
@@ -318,20 +267,74 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 
-void
-qSlicerPerkEvaluatorModuleWidget
-::OnBodyModelNodeSelected()
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkBeginChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetMarkBegin( d->logic()->GetMinTime() + d->BeginSpinBox->value() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkBeginClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->BeginSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkEndChanged()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetMarkEnd( d->logic()->GetMinTime() + d->EndSpinBox->value() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnMarkEndClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+}
+
+
+void
+qSlicerPerkEvaluatorModuleWidget
+::onTissueModelChanged( vtkMRMLNode* node )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
   
-  vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( d->BodyNodeComboBox->currentNode() );
+  vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( node );
   if ( mnode != NULL )
   {
-    d->logic()->SetAnatomyNodeName( "Tissue", mnode->GetName() );
+    peNode->SetAnatomyNodeName( "Tissue", mnode->GetName() );
   }
   else
   {
-    d->logic()->SetAnatomyNodeName( "Tissue", "" );
+    peNode->SetAnatomyNodeName( "Tissue", "" );
   }
 }
 
@@ -339,52 +342,86 @@ qSlicerPerkEvaluatorModuleWidget
 
 void
 qSlicerPerkEvaluatorModuleWidget
-::OnNeedleReferenceSelected()
+::onNeedleTransformChanged( vtkMRMLNode* node )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
   
-  vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( d->NeedleReferenceComboBox->currentNode() );
+  vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( node );
   if ( tnode != NULL )
   {
-    d->logic()->SetTransformRole( tnode->GetName(), "Needle" );
+    peNode->SetTransformRole( tnode->GetName(), "Needle" );
   }
   else
   {
-    d->logic()->SetTransformRole( "", "Needle" );
+    while( peNode->GetFirstTransformNodeName( "Needle" ).compare( "" ) != 0 )
+    {
+      peNode->SetTransformRole( peNode->GetFirstTransformNodeName( "Needle" ), "" );
+    }
   }
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnMetricsDirectoryClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  QString fileName = QFileDialog::getExistingDirectory( this, tr("Open metrics directory"), "", QFileDialog::ShowDirsOnly );  
+  if ( fileName.isEmpty() == false )
+  {
+    peNode->SetMetricsDirectory( fileName.toStdString() );
+  }
+  d->MetricsDirectoryButton->setText( fileName );
+}
+
 
 void
 qSlicerPerkEvaluatorModuleWidget
-::OnNeedleOrientationChanged( QAbstractButton* newOrientationButton )
+::onNeedleOrientationChanged( QAbstractButton* newOrientationButton )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
 
   if ( newOrientationButton == d->PlusXRadioButton )
   {
-    d->logic()->SetNeedleBase( 1.0, 0.0, 0.0 );
+    peNode->SetNeedleOrientation( vtkMRMLPerkEvaluatorNode::PlusX );
   }
   if ( newOrientationButton == d->MinusXRadioButton )
   {
-    d->logic()->SetNeedleBase( -1.0, 0.0, 0.0 );
+    peNode->SetNeedleOrientation( vtkMRMLPerkEvaluatorNode::MinusX );
   }
   if ( newOrientationButton == d->PlusYRadioButton )
   {
-    d->logic()->SetNeedleBase( 0.0, 1.0, 0.0 );
+    peNode->SetNeedleOrientation( vtkMRMLPerkEvaluatorNode::PlusY );
   }
   if ( newOrientationButton == d->MinusYRadioButton )
   {
-    d->logic()->SetNeedleBase( 0.0, -1.0, 0.0 );
+    peNode->SetNeedleOrientation( vtkMRMLPerkEvaluatorNode::MinusY );
   }
   if ( newOrientationButton == d->PlusZRadioButton )
   {
-    d->logic()->SetNeedleBase( 0.0, 0.0, 1.0 );
+    peNode->SetNeedleOrientation( vtkMRMLPerkEvaluatorNode::PlusZ );
   }
   if ( newOrientationButton == d->MinusZRadioButton )
   {
-    d->logic()->SetNeedleBase( 0.0, 0.0, -1.0 );
+    peNode->SetNeedleOrientation( vtkMRMLPerkEvaluatorNode::MinusZ );
   }
 
 }
@@ -420,8 +457,6 @@ qSlicerPerkEvaluatorModuleWidget
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->TransformRolesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->AnatomyRolesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
 }
 
 
@@ -435,7 +470,8 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Embed widgets here
   this->setupEmbeddedWidgets();
-  
+
+  // Perk Evaluator node independent
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
   connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
   connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
@@ -446,20 +482,9 @@ qSlicerPerkEvaluatorModuleWidget
 
   connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 
-  connect( d->BeginSpinBox, SIGNAL( editingFinished() ), this, SLOT( OnMarkBeginEdited() ) );
-  connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
-  connect( d->EndSpinBox, SIGNAL( editingFinished() ), this, SLOT( OnMarkEndEdited() ) );
-  connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
-
-  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
-
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
   connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( OnClipboardClicked() ) );
   d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
-
-  connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnBodyModelNodeSelected() ) );
-  connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnNeedleReferenceSelected() ) );
-  connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( OnNeedleOrientationChanged( QAbstractButton* ) ) );
 
   // If the transform buffer node is changed, update everything
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( resetWidget() ) );
@@ -469,6 +494,27 @@ qSlicerPerkEvaluatorModuleWidget
   // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
   // But resetting the tool trajectories is computationally expensive
   // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
+
+
+
+  // Perk Evaluator node dependent
+  connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
+  connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
+  connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
+  connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
+
+  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
+
+  connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTissueModelChanged( vtkMRMLNode* ) ) );
+  connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onNeedleTransformChanged( vtkMRMLNode* ) ) );
+  connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
+
+
+  // Connect the Perk Evaluator node to the update
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update
+  // Connect to update the roles widgets
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformRolesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->AnatomyRolesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
   this->clearWidget();
   this->updateWidget();
@@ -517,4 +563,73 @@ void qSlicerPerkEvaluatorModuleWidget
   d->MetricsTable->clear();
   d->MetricsTable->setRowCount( 0 );
   d->MetricsTable->setColumnCount( 0 );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::mrmlNodeChanged( vtkMRMLNode* peNode )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  this->qvtkDisconnectAll(); // Remove connections to previous node
+  if ( peNode != NULL )
+  {
+    this->qvtkConnect( peNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRMLNode() ) );
+  }
+
+  this->updateWidgetFromMRMLNode();
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::updateWidgetFromMRMLNode()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  // Grab the MRML node
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  // NOTE: The "Roles" widgets update themselves, so nothing needs to be done for them
+
+  d->BeginSpinBox->setValue( peNode->GetMarkBegin() );
+  d->EndSpinBox->setValue( peNode->GetMarkEnd() );
+
+  vtkMRMLNode* needleNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetFirstTransformNodeName( "Needle" ).c_str() );
+  d->NeedleReferenceComboBox->setCurrentNode( needleNode );
+
+  vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
+  d->BodyNodeComboBox->setCurrentNode( tissueNode );
+
+  d->MetricsDirectoryButton->setText( QString( peNode->GetMetricsDirectory().c_str() ) );
+
+  if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusX )
+  {
+    d->PlusXRadioButton->setChecked( Qt::Checked );
+  }
+  if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::MinusX )
+  {
+    d->MinusXRadioButton->setChecked( Qt::Checked );
+  }
+  if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusY )
+  {
+    d->PlusYRadioButton->setChecked( Qt::Checked );
+  }
+  if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::MinusY )
+  {
+    d->MinusYRadioButton->setChecked( Qt::Checked );
+  }
+  if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusZ )
+  {
+    d->PlusZRadioButton->setChecked( Qt::Checked );
+  }
+  if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::MinusZ )
+  {
+    d->MinusZRadioButton->setChecked( Qt::Checked );
+  }
+
+  
 }

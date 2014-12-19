@@ -2,6 +2,8 @@
 // PerkEvaluator Logic includes
 #include "vtkSlicerPerkEvaluatorLogic.h"
 
+#include "vtkMRMLPerkEvaluatorNode.h"
+
 // MRML includes
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLTransformNode.h"
@@ -152,7 +154,14 @@ void vtkSlicerPerkEvaluatorLogic
 void vtkSlicerPerkEvaluatorLogic
 ::RegisterNodes()
 {
-  assert(this->GetMRMLScene() != 0);
+  if( ! this->GetMRMLScene() )
+  {
+    return;
+  }
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( peNode );
+  peNode->Delete();
 }
 
 

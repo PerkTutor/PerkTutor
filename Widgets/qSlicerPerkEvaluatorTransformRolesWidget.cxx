@@ -94,11 +94,16 @@ void qSlicerPerkEvaluatorTransformRolesWidget
 {
   Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
 
+  if ( this->PerkEvaluatorNode == NULL )
+  {
+    return;
+  }
+
   // Find who the sender is and the corresponding node
   QComboBox* sender = (QComboBox*) this->sender();
   std::string transformName = this->ComboBoxToFixedMap[ sender ];
   
-  this->PerkEvaluatorLogic->SetTransformRole( transformName, sender->currentText().toStdString() );
+  this->PerkEvaluatorNode->SetTransformRole( transformName, sender->currentText().toStdString() );
 
   this->updateWidget();
 }
@@ -137,6 +142,11 @@ std::string qSlicerPerkEvaluatorTransformRolesWidget
 ::getMovingFromFixed( std::string fixed )
 {
   Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
+
+  if ( this->PerkEvaluatorNode == NULL )
+  {
+    return "";
+  }
   
-  return this->PerkEvaluatorLogic->GetTransformRole( fixed );
+  return this->PerkEvaluatorNode->GetTransformRole( fixed );
 }

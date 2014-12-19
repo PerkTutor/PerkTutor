@@ -20,10 +20,7 @@
 
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorRolesWidget.h"
-#include "qSlicerAbstractCoreModule.h"
-#include "qSlicerApplication.h"
-#include "qSlicerModuleManager.h"
-#include "vtkSlicerMarkupsLogic.h"
+#include "qSlicerTransformBufferWidgetHelper.h"
 
 #include <QtGui>
 
@@ -69,8 +66,8 @@ void qSlicerPerkEvaluatorRolesWidgetPrivate
 qSlicerPerkEvaluatorRolesWidget
 ::qSlicerPerkEvaluatorRolesWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorRolesWidgetPrivate(*this) )
 {
-  this->BufferHelper = new qSlicerTransformBufferWidgetHelper();
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->PerkEvaluatorNode = NULL;
   this->setup();
 }
 
@@ -89,10 +86,9 @@ void qSlicerPerkEvaluatorRolesWidget
 
   d->setupUi(this);
 
-  // Set all the connections here
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferTransformAdded( int ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferTransformRemoved( int ) ), this, SLOT( updateWidget() ) ); // In case a new transform name has been added/removed
+  this->setMRMLScene( this->PerkEvaluatorLogic->GetMRMLScene() );
+
+  // No connections to set...
 }
 
 
@@ -110,6 +106,22 @@ void qSlicerPerkEvaluatorRolesWidget
 {
 }
 
+
+void qSlicerPerkEvaluatorRolesWidget
+::setPerkEvaluatorNode( vtkMRMLNode* node )
+{
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( node );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  this->qvtkDisconnect( this->PerkEvaluatorNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->PerkEvaluatorNode = peNode;
+  this->qvtkConnect( this->PerkEvaluatorNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+
+  this->updateWidget();
+}
 
 std::string qSlicerPerkEvaluatorRolesWidget
 ::getFixedHeader()
@@ -129,11 +141,6 @@ void qSlicerPerkEvaluatorRolesWidget
 ::updateWidget()
 {
   Q_D(qSlicerPerkEvaluatorRolesWidget);
-
-  if ( this->PerkEvaluatorLogic == NULL )
-  {
-    return;
-  }
 
   // Check what the current row and column are
   int currentRow = d->RolesTable->currentRow();
