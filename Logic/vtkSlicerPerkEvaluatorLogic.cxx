@@ -280,6 +280,17 @@ vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
 }
 
 
+std::vector< std::string > vtkSlicerPerkEvaluatorLogic
+::GetAllBufferToolNames()
+{
+  std::vector< std::string > bufferToolNames( this->ToolTrajectories.size(), "" );
+  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  {
+    bufferToolNames.at( i ) = this->ToolTrajectories.at( i ).Node->GetName();
+  }
+  return bufferToolNames;
+}
+
 
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 ::GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode )

@@ -388,6 +388,36 @@ qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::OnAutoUpdateMeasurementRangeToggled()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetAutoUpdateMeasurementRange( d->AutoUpdateMeasurementRangeCheckBox->isChecked() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnAutoUpdateTransformRolesToggled()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetAutoUpdateTransformRoles( d->AutoUpdateTransformRolesCheckBox->isChecked() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::OnMetricsDirectoryClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -523,10 +553,12 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
   connect( d->MarkEndButton, SIGNAL( clicked() ), this, SLOT( OnMarkEndClicked() ) );
 
-  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
-
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTissueModelChanged( vtkMRMLNode* ) ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onNeedleTransformChanged( vtkMRMLNode* ) ) );
+
+  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
+  connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
+  connect( d->AutoUpdateTransformRolesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateTransformRolesToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
 
 
@@ -540,6 +572,30 @@ qSlicerPerkEvaluatorModuleWidget
   this->updateWidget();
 }
 
+
+void
+qSlicerPerkEvaluatorModuleWidget
+::enter()
+{
+  Q_D(qSlicerPerkEvaluatorModuleWidget);
+
+  this->qSlicerAbstractModuleWidget::enter();
+
+  // Create a node by default if none already exists
+  int numPENodes = this->mrmlScene()->GetNumberOfNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+  if ( numPENodes == 0 )
+  {
+    vtkSmartPointer< vtkMRMLNode > peNode;
+    peNode.TakeReference( this->mrmlScene()->CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" ) );
+    peNode->SetScene( this->mrmlScene() );
+    this->mrmlScene()->AddNode( peNode );
+    d->PerkEvaluatorNodeComboBox->setCurrentNode( peNode );
+  }
+  else
+  {
+    this->updateWidgetFromMRMLNode();
+  }
+}
 
 
 void qSlicerPerkEvaluatorModuleWidget
@@ -559,6 +615,28 @@ void qSlicerPerkEvaluatorModuleWidget
 
   d->logic()->UpdateToolTrajectories( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
   d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
+
+  // This is where we need to update parameters on buffer node changed
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+
+  if ( peNode != NULL && peNode->GetAutoUpdateMeasurementRange() )
+  {
+    peNode->SetMarkBegin( 0.0 );
+    peNode->SetMarkEnd( d->logic()->GetTotalTime() );
+  }
+
+  if ( peNode != NULL && peNode->GetAutoUpdateTransformRoles() )
+  {
+    std::vector< std::string > anyRoleTransforms = d->logic()->GetAllBufferToolNames();
+    for ( int i = 0; i < anyRoleTransforms.size(); i++ )
+    {
+      // If it already has a non-generic role, let it maintain the more specific role (since the generic metrics will be computed regardless)
+      if ( peNode->GetTransformRole( anyRoleTransforms.at( i ) ).compare( "" ) == 0 )
+      {
+        peNode->SetTransformRole( anyRoleTransforms.at( i ), "Any" );
+      }
+    }
+  }
 
   // Should also clear everything to default
   this->clearWidget();
@@ -620,6 +698,8 @@ void qSlicerPerkEvaluatorModuleWidget
   d->BodyNodeComboBox->setCurrentNode( tissueNode );
 
   d->MetricsDirectoryButton->setText( QString( peNode->GetMetricsDirectory().c_str() ) );
+  d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 
+  d->AutoUpdateTransformRolesCheckBox->setChecked( peNode->GetAutoUpdateTransformRoles() ); 
 
   if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusX )
   {

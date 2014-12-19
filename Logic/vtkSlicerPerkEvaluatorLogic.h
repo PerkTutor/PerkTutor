@@ -65,6 +65,8 @@ public:
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
 
+  std::vector< std::string > GetAllBufferToolNames();
+
   std::vector< std::string > GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode );
   std::vector< std::string > GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode );
 

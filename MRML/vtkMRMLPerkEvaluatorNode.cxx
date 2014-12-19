@@ -48,6 +48,8 @@ void vtkMRMLPerkEvaluatorNode
 
   vtkIndent indent(nIndent);
   
+  of << indent << "AutoUpdateMeasurementRange=\"" << this->AutoUpdateMeasurementRange << "\"";
+  of << indent << "AutoUpdateTransformRoles=\"" << this->AutoUpdateTransformRoles << "\"";
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
   of << indent << "MarkEnd=\"" << this->MarkBegin << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
@@ -71,6 +73,14 @@ void vtkMRMLPerkEvaluatorNode
     attName  = *(atts++);
     attValue = *(atts++);
  
+    if ( ! strcmp( attName, "AutoUpdateMeasurementRange" ) )
+    {
+      this->AutoUpdateMeasurementRange = atoi( attValue );
+    }
+    if ( ! strcmp( attName, "AutoUpdateTransformRoles" ) )
+    {
+      this->AutoUpdateTransformRoles = atoi( attValue );
+    }
     if ( ! strcmp( attName, "MarkBegin" ) )
     {
       this->MarkBegin = atof( attValue );
@@ -100,6 +110,8 @@ void vtkMRMLPerkEvaluatorNode
   Superclass::Copy( anode );
   vtkMRMLPerkEvaluatorNode *node = ( vtkMRMLPerkEvaluatorNode* ) anode;
 
+  this->AutoUpdateMeasurementRange = node->AutoUpdateMeasurementRange;
+  this->AutoUpdateTransformRoles = node->AutoUpdateTransformRoles;
   this->MarkBegin = node->MarkBegin;
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
@@ -116,6 +128,9 @@ void vtkMRMLPerkEvaluatorNode
 vtkMRMLPerkEvaluatorNode
 ::vtkMRMLPerkEvaluatorNode()
 {
+  this->AutoUpdateMeasurementRange = true;
+  this->AutoUpdateTransformRoles = true;
+
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
   
@@ -134,6 +149,41 @@ vtkMRMLPerkEvaluatorNode
 
 // Getters and setters -----------------------------------------------------------------------------
 
+
+bool vtkMRMLPerkEvaluatorNode
+::GetAutoUpdateMeasurementRange()
+{
+  return this->AutoUpdateMeasurementRange;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetAutoUpdateMeasurementRange( bool update )
+{
+  if ( update != this->AutoUpdateMeasurementRange )
+  {
+    this->AutoUpdateMeasurementRange = update;
+    this->Modified();
+  }
+}
+
+
+bool vtkMRMLPerkEvaluatorNode
+::GetAutoUpdateTransformRoles()
+{
+  return this->AutoUpdateTransformRoles;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetAutoUpdateTransformRoles( bool update )
+{
+  if ( update != this->AutoUpdateTransformRoles )
+  {
+    this->AutoUpdateTransformRoles = update;
+    this->Modified();
+  }
+}
 
 // Let the user set whatever values the want for MarkEnd and MarkBegin
 // If they are too large/small, that is ok. Only analyze within the range.

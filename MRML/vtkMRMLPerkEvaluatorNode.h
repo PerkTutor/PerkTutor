@@ -77,6 +77,13 @@ protected:
   
 public:
 
+  // Whether to update the parameters when the transform buffer node is changed
+  bool GetAutoUpdateMeasurementRange();
+  void SetAutoUpdateMeasurementRange( bool update );
+
+  bool GetAutoUpdateTransformRoles();
+  void SetAutoUpdateTransformRoles( bool update );
+
   // Analysis start/end times
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
@@ -119,6 +126,9 @@ MarkBegin
 NeedleOrientation
 MetricsDirectory
 */
+
+  bool AutoUpdateMeasurementRange;
+  bool AutoUpdateTransformRoles;
 
   double MarkBegin;
   double MarkEnd;

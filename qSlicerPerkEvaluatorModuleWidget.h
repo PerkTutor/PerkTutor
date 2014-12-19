@@ -47,6 +47,8 @@ public slots:
   void OnMarkEndClicked();
 
   void OnMetricsDirectoryClicked();
+  void OnAutoUpdateMeasurementRangeToggled();
+  void OnAutoUpdateTransformRolesToggled();
 
   void onTissueModelChanged( vtkMRMLNode* node );
   void onNeedleTransformChanged( vtkMRMLNode* node );
@@ -64,6 +66,7 @@ protected:
   
   virtual void setup();
   virtual void setupEmbeddedWidgets();
+  virtual void enter();
 
   QTimer* PlaybackTimer;
   double PlaybackTimerIntervalSec;
