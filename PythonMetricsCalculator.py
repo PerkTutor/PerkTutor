@@ -163,11 +163,16 @@ class PythonMetricsCalculatorLogic:
   # We need this in order to determine the tissue model node, etc.  
   def SetPerkEvaluatorLogic( self, newPELogic ):
     self.peLogic = newPELogic  
+    self.mrmlScene = self.peLogic.GetMRMLScene()
+    
+    
+  def SetPerkEvaluatorNodeID( self, newPENodeID ):
+    self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
       
       
   def AddAllUserMetrics( self ): 
     # Read the metric scripts 
-    metricPath = self.peLogic.GetMetricsDirectory()    
+    metricPath = self.peNode.GetMetricsDirectory()    
     if ( metricPath == "" ):
       return
     
@@ -272,7 +277,7 @@ class PythonMetricsCalculatorLogic:
     # Get all of the specified anatomy roles
     specifiedAnatomyRoles = []
     for role in ( self.GetAllAnatomyRoles() ):
-      if ( self.peLogic.GetAnatomyNodeName( role ) != "" ):
+      if ( self.peNode.GetAnatomyNodeName( role ) != "" ):
         specifiedAnatomyRoles.append( role )
         
     # Filter out all metrics for which the anatomies are not available
@@ -285,7 +290,7 @@ class PythonMetricsCalculatorLogic:
     for i in range( toolTransforms.GetNumberOfItems() ):
 
       currentTransform = toolTransforms.GetItemAsObject( i )
-      currentTransformRole = self.peLogic.GetTransformRole( currentTransform.GetName() )
+      currentTransformRole = self.peNode.GetTransformRole( currentTransform.GetName() )
     
       #Drop if based on tissue and needle as appropriate
       transformMetrics = self.FilterMetricsByTransformRole( anatomyMetrics, currentTransformRole )
@@ -321,8 +326,8 @@ class PythonMetricsCalculatorLogic:
       currentMetricAnatomyRoles = transformMetrics[i].GetRequiredAnatomyRoles()
       
       for j in range( len( currentMetricAnatomyRoles ) ):
-        currentAnatomyNodeName = self.peLogic.GetAnatomyNodeName( currentMetricAnatomyRoles[j] )
-        currentAnatomyNode = self.peLogic.GetMRMLScene().GetFirstNodeByName( currentAnatomyNodeName )
+        currentAnatomyNodeName = self.peNode.GetAnatomyNodeName( currentMetricAnatomyRoles[j] )
+        currentAnatomyNode = self.mrmlScene.GetFirstNodeByName( currentAnatomyNodeName )
         added = transformMetrics[i].AddAnatomyRole( currentMetricAnatomyRoles[j], currentAnatomyNode )
         
         if ( added == False ):
@@ -349,7 +354,7 @@ class PythonMetricsCalculatorLogic:
     
     # Get the node associated with the trajectory we are interested in
     transformName = currentTransform.GetName()
-    node = self.peLogic.GetMRMLScene().GetFirstNodeByName( transformName )
+    node = self.mrmlScene.GetFirstNodeByName( transformName )
     
     # Get the self and parent transform buffer
     selfAndParentBuffer = self.peLogic.GetSelfAndParentTransformBuffer( node )
@@ -360,20 +365,20 @@ class PythonMetricsCalculatorLogic:
     # Now iterate
     for i in range( selfAndParentBuffer.GetNumTransforms() ):
       
-      time = selfAndParentBuffer.GetTransformAt(i).GetTime()
-      
-      self.peLogic.SetPlaybackTime( time )
+      absTime = selfAndParentBuffer.GetTransformAt(i).GetTime()
+      self.peLogic.SetPlaybackTime( absTime )
+      relTime = absTime - self.peLogic.GetMinTime()
       
       matrix.Identity()
       currentTransform.GetMatrixTransformToWorld( matrix )
       
-      if ( time < self.peLogic.GetMarkBegin() or time > self.peLogic.GetMarkEnd() ):
+      if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
         continue
       
       matrix.MultiplyPoint( origin, point )
       
       for j in range( len( transformMetrics ) ):
-        transformMetrics[j].AddTimestamp( time, matrix, point )
+        transformMetrics[j].AddTimestamp( absTime, matrix, point )
     
     self.peLogic.SetPlaybackTime( originalPlaybackTime )    
 
