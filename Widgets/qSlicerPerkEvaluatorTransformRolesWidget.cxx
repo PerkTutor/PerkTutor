@@ -114,7 +114,12 @@ std::vector< std::string > qSlicerPerkEvaluatorTransformRolesWidget
 {
   Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
   
-  return this->PerkEvaluatorLogic->GetAllTransformRoles();
+  if ( this->PerkEvaluatorNode == NULL )
+  {
+    return std::vector< std::string >();
+  }
+
+  return this->PerkEvaluatorLogic->GetAllTransformRoles( this->PerkEvaluatorNode );
 }
 
 

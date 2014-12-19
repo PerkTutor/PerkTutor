@@ -16,6 +16,7 @@
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLPerkEvaluatorNode.h"
 
 // STD includes
 #include <cstdlib>
@@ -61,38 +62,24 @@ protected:
 
 public:
   
-  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode ); //
-  vtkMRMLTransformBufferNode* GetTransformBuffer(); //
+  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
 
-  std::string GetTransformRole( std::string transformNodeName ); //
-  void SetTransformRole( std::string transformNodeName, std::string newTransformRole ); //
-  std::vector< std::string > GetAllTransformRoles();
-
-  std::string GetAnatomyNodeName( std::string anatomyRole ); //
-  void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName ); //
-  std::vector< std::string > GetAllAnatomyRoles();
+  std::vector< std::string > GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode );
+  std::vector< std::string > GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode );
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
   void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes );
   
-  double GetTotalTime() const; //
-  double GetMinTime() const; //
-  double GetMaxTime() const; //
+  double GetTotalTime() const;
+  double GetMinTime() const;
+  double GetMaxTime() const;
+
   double GetPlaybackTime() const;
-  
   void SetPlaybackTime( double time );
-  void SetMarkBegin( double begin ); //
-  double GetMarkBegin(); //
-  void SetMarkEnd( double end ); //
-  double GetMarkEnd(); //
-  void SetNeedleBase( double x, double y, double z ); //
 
   typedef std::pair<std::string,double> MetricType;  
-  std::vector<MetricType> GetMetrics();
-
-  void SetMetricsDirectory( std::string newDirectory );
-  std::string GetMetricsDirectory();
+  std::vector<MetricType> GetMetrics( vtkMRMLPerkEvaluatorNode* peNode );
 
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;  
   
@@ -106,18 +93,8 @@ private:
   void ClearData();
 
   std::vector< ToolTrajectory > ToolTrajectories;
-  
-  vtkMRMLTransformBufferNode* TransformBuffer;
-  std::map< std::string, std::string > TransformRoleMap;
-  std::map< std::string, std::string > AnatomyNodeMap;
-  
+
   double PlaybackTime;
-  double MarkBegin;
-  double MarkEnd;
-  double NeedleBase[4];
-
-  std::string MetricsDirectory;
-
 };
 
 const double NEEDLE_LENGTH = 300; // Assume 300mm

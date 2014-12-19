@@ -209,6 +209,12 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
   QProgressDialog dialog;
   dialog.setModal( true );
   dialog.setLabelText( "Please wait while analyzing procedure..." );
@@ -216,7 +222,7 @@ void qSlicerPerkEvaluatorModuleWidget
   dialog.setValue( 10 );
 
   // Metrics table  
-  std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics();
+  std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics( peNode );
 
   dialog.setValue( 80 );
   
@@ -278,7 +284,7 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  peNode->SetMarkBegin( d->logic()->GetMinTime() + d->BeginSpinBox->value() );
+  peNode->SetMarkBegin( d->BeginSpinBox->value() );
 }
 
 
@@ -287,7 +293,14 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
   d->BeginSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+  peNode->SetMarkBegin( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() ); // Do this, otherwise the value will be rounded
 }
 
 
@@ -302,7 +315,7 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  peNode->SetMarkEnd( d->logic()->GetMinTime() + d->EndSpinBox->value() );
+  peNode->SetMarkEnd( d->EndSpinBox->value() );
 }
 
 
@@ -311,7 +324,14 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
   d->EndSpinBox->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+  peNode->SetMarkEnd( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() ); // Do this, otherwise the value will be rounded
 }
 
 
@@ -551,14 +571,9 @@ void qSlicerPerkEvaluatorModuleWidget
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
   // Do not update trajectories
-  d->PlaybackSlider->setValue( d->logic()->GetPlaybackTime() - d->logic()->GetMinTime() );
+  this->updateWidget();
   d->PlaybackSlider->setMinimum( 0.0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetTotalTime() );
-
-  d->logic()->SetMarkBegin( d->logic()->GetMinTime() );
-  d->BeginSpinBox->setValue( 0.0 );
-  d->logic()->SetMarkEnd( d->logic()->GetMaxTime() );
-  d->EndSpinBox->setValue( d->logic()->GetTotalTime() );
 
   d->MetricsTable->clear();
   d->MetricsTable->setRowCount( 0 );

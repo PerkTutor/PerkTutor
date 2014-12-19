@@ -2,8 +2,6 @@
 // PerkEvaluator Logic includes
 #include "vtkSlicerPerkEvaluatorLogic.h"
 
-#include "vtkMRMLPerkEvaluatorNode.h"
-
 // MRML includes
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLTransformNode.h"
@@ -82,15 +80,8 @@ vtkSlicerPerkEvaluatorLogic
 ::vtkSlicerPerkEvaluatorLogic()
 {
   this->PlaybackTime = 0.0;
-  this->MarkBegin = 0.0;
-  this->MarkEnd = 0.0;
-  this->SetNeedleBase( 1.0, 0.0, 0.0 );
-
-  this->MetricsDirectory = "";
 
   this->TransformRecorderLogic = NULL;
-
-  this->TransformBuffer = NULL;
 }
 
 
@@ -110,13 +101,6 @@ void vtkSlicerPerkEvaluatorLogic
     this->ToolTrajectories.at(i).Buffer->Delete();
   }
   this->ToolTrajectories.clear();
-
-  this->TransformRoleMap.clear(); // Remove all the transform roles
-  // NOTE: Do not chnage the model roles, because this may be constant procedure to procedure
-
-  this->MarkBegin = 0.0;
-  this->MarkEnd = 0.0;
-  this->PlaybackTime = 0.0;
 }
 
 
@@ -188,89 +172,17 @@ void vtkSlicerPerkEvaluatorLogic
 // -----------------------------------------------------------------------------------
 
 
-
-
-void vtkSlicerPerkEvaluatorLogic
-::SetMarkBegin( double begin )
-{
-  if ( begin <= this->GetMinTime() )
-  {
-    this->MarkBegin = this->GetMinTime();
-  }
-  else if ( begin >= this->GetMaxTime() )
-  {
-    this->MarkBegin = this->GetMaxTime();
-  }
-  else
-  {
-    this->MarkBegin = begin;
-  }
-}
-
-
-double vtkSlicerPerkEvaluatorLogic
-::GetMarkBegin()
-{
-  return this->MarkBegin;
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::SetMarkEnd( double end )
-{
-  if ( end <= this->GetMinTime() )
-  {
-    this->MarkEnd = this->GetMinTime();
-  }
-  else if ( end >= this->GetMaxTime() )
-  {
-    this->MarkEnd = this->GetMaxTime();
-  }
-  else
-  {
-    this->MarkEnd = end;
-  }
-}
-
-
-double vtkSlicerPerkEvaluatorLogic
-::GetMarkEnd()
-{
-  return this->MarkEnd;
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::SetNeedleBase( double x, double y, double z )
-{
-  // Observe that this function takes a unit vector in the direction of the base
-  this->NeedleBase[0] = x * NEEDLE_LENGTH;
-  this->NeedleBase[1] = y * NEEDLE_LENGTH;
-  this->NeedleBase[2] = z * NEEDLE_LENGTH;
-  this->NeedleBase[3] = 1.0;
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::SetMetricsDirectory( std::string newDirectory )
-{
-  this->MetricsDirectory = newDirectory;
-}
-
-
-std::string vtkSlicerPerkEvaluatorLogic
-::GetMetricsDirectory()
-{
-  return this->MetricsDirectory;
-}
-
 std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
-::GetMetrics()
+::GetMetrics( vtkMRMLPerkEvaluatorNode* peNode )
 {
   std::vector<MetricType> metrics;
 
   // Check conditions
-  if ( this->MarkBegin >= this->MarkEnd || this->MarkBegin < this->GetMinTime() || this->MarkEnd > this->GetMaxTime() )
+  if ( peNode == NULL )
+  {
+    return metrics;
+  }
+  if ( peNode->GetMarkBegin() >= peNode->GetMarkEnd() ) // Is a test for to see if the MarkBegin and MarkEnd are within the bounds of the procedure time really necessary?
   {
     return metrics;
   }
@@ -279,6 +191,7 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
   pythonManager->executeString( "import PythonMetricsCalculator" );
   pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
   pythonManager->executeString( "PythonMetricsVariable = PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
   QVariant result = pythonManager->getVariable( "PythonMetricsVariable" );
   QStringList pythonMetrics = result.toStringList();
@@ -309,7 +222,6 @@ void vtkSlicerPerkEvaluatorLogic
     return;
   }
 
-  this->TransformBuffer = bufferNode;
   std::vector< vtkMRMLTransformBufferNode* > toolBuffers = bufferNode->SplitBufferByName();
 
   for ( int i = 0; i < toolBuffers.size(); i++ )
@@ -325,7 +237,9 @@ void vtkSlicerPerkEvaluatorLogic
 	    node->SetName( toolName.c_str() );
     }
 
-    this->SetTransformRole( node->GetName(), "Any" );
+    // TODO: This may not be optimal
+    // Only set all of the nodes in the buffer to have role "Any" when the PerkEvaluator node is created?
+    // this->SetTransformRole( node->GetName(), "Any" );
 
     // Add to the tool trajectories
     ToolTrajectory currentTrajectory;
@@ -337,12 +251,6 @@ void vtkSlicerPerkEvaluatorLogic
 
 }
 
-
-vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
-::GetTransformBuffer()
-{
-  return this->TransformBuffer;
-}
 
 
 vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
@@ -372,34 +280,20 @@ vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
 }
 
 
-std::string vtkSlicerPerkEvaluatorLogic
-::GetTransformRole( std::string transformNodeName )
-{
-  if ( this->TransformRoleMap.find( transformNodeName ) != this->TransformRoleMap.end() )
-  {
-    return this->TransformRoleMap[ transformNodeName ];
-  }
-  else
-  {
-    return "";
-  }
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::SetTransformRole( std::string transformNodeName, std::string newTransformRole )
-{
-  this->TransformRoleMap[ transformNodeName ] = newTransformRole;
-}
-
 
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
-::GetAllTransformRoles()
+::GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode )
 {
+  if ( peNode == NULL )
+  {
+    return std::vector< std::string >();
+  }
+
   // Use the python metrics calculator module
   qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
   pythonManager->executeString( "import PythonMetricsCalculator" );
   pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
   pythonManager->executeString( "PythonMetricsTransformRoles = PythonMetricsCalculatorLogic.GetAllTransformRoles()" );
   QVariant result = pythonManager->getVariable( "PythonMetricsTransformRoles" );
   QStringList transformRoles = result.toStringList();
@@ -435,34 +329,19 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
-std::string vtkSlicerPerkEvaluatorLogic
-::GetAnatomyNodeName( std::string anatomyRole )
-{
-  if ( this->AnatomyNodeMap.find( anatomyRole ) != this->AnatomyNodeMap.end() )
-  {
-    return this->AnatomyNodeMap[ anatomyRole ];
-  }
-  else
-  {
-    return "";
-  }
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName )
-{
-  this->AnatomyNodeMap[ anatomyRole ] = newAnatomyNodeName;
-}
-
-
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
-::GetAllAnatomyRoles()
+::GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode )
 {
+  if ( peNode == NULL )
+  {
+    return std::vector< std::string >();
+  }
+
   // Use the python metrics calculator module
   qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
   pythonManager->executeString( "import PythonMetricsCalculator" );
   pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
   pythonManager->executeString( "PythonMetricsAnatomyRoles = PythonMetricsCalculatorLogic.GetAllAnatomyRoles()" );
   QVariant result = pythonManager->getVariable( "PythonMetricsAnatomyRoles" );
   QStringList anatomyRoles = result.toStringList();

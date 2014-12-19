@@ -133,8 +133,13 @@ std::vector< std::string > qSlicerPerkEvaluatorAnatomyRolesWidget
 ::getAllFixed()
 {
   Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
+
+  if ( this->PerkEvaluatorNode == NULL )
+  {
+    return std::vector< std::string >();
+  }
   
-  return this->PerkEvaluatorLogic->GetAllAnatomyRoles();
+  return this->PerkEvaluatorLogic->GetAllAnatomyRoles( this->PerkEvaluatorNode );
 }
 
 
