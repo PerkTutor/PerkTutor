@@ -51,11 +51,24 @@ void vtkMRMLPerkEvaluatorNode
   of << indent << "AutoUpdateMeasurementRange=\"" << this->AutoUpdateMeasurementRange << "\"";
   of << indent << "AutoUpdateTransformRoles=\"" << this->AutoUpdateTransformRoles << "\"";
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
-  of << indent << "MarkEnd=\"" << this->MarkBegin << "\"";
+  of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
   of << indent << "MetricsDirectory=\"" << this->MetricsDirectory << "\"";
   
-  // Ignore the maps for now...
+  // Add the transform role map
+  int transformRoleCounter = 0;
+  for ( std::map< std::string, std::string >::iterator itr = this->TransformRoleMap.begin(); itr != this->TransformRoleMap.end(); itr++ )
+  {
+    of << indent << "TransformRoleMap" << transformRoleCounter << "=\"" << itr->first << " " << itr->second << "\"";
+    transformRoleCounter++;
+  }
+  // Add the anatomy node map
+  int anatomyNodeCounter = 0;
+  for ( std::map< std::string, std::string >::iterator itr = this->AnatomyNodeMap.begin(); itr != this->AnatomyNodeMap.end(); itr++ )
+  {
+    of << indent << "AnatomyNodeMap" << anatomyNodeCounter << "=\"" << itr->first << " " << itr->second << "\"";
+    anatomyNodeCounter++;
+  }
 }
 
 
@@ -63,6 +76,10 @@ void vtkMRMLPerkEvaluatorNode
 ::ReadXMLAttributes( const char** atts )
 {
   Superclass::ReadXMLAttributes(atts);
+
+  // Don't maintain any roles that aren't in the read xml
+  this->TransformRoleMap.clear();
+  this->AnatomyNodeMap.clear();
 
   // Read all MRML node attributes from two arrays of names and values
   const char* attName;
@@ -96,6 +113,22 @@ void vtkMRMLPerkEvaluatorNode
     if ( ! strcmp( attName, "MetricsDirectory" ) )
     {
       this->MetricsDirectory = std::string( attValue );
+    }
+
+    if ( std::string( attName ).find( "TransformRoleMap" ) != std::string::npos )
+    {
+      std::stringstream transformRoleStream( attValue );
+      std::string transformNodeName; transformRoleStream >> transformNodeName; 
+      std::string transformRole; transformRoleStream >> transformRole;
+      this->TransformRoleMap[ transformNodeName ] = transformRole;
+    }
+    
+    if ( std::string( attName ).find( "AnatomyNodeMap" ) != std::string::npos )
+    {
+      std::stringstream anatomyNodeStream( attValue );
+      std::string anatomyRole; anatomyNodeStream >> anatomyRole; 
+      std::string anatomyNodeName; anatomyNodeStream >> anatomyNodeName;
+      this->AnatomyNodeMap[ anatomyRole ] = anatomyNodeName;
     }
     
   }

@@ -111,11 +111,8 @@ void qSlicerPerkEvaluatorRolesWidget
 ::setPerkEvaluatorNode( vtkMRMLNode* node )
 {
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( node );
-  if ( peNode == NULL )
-  {
-    return;
-  }
 
+  // This is ok if the node is null
   this->qvtkDisconnect( this->PerkEvaluatorNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
   this->PerkEvaluatorNode = peNode;
   this->qvtkConnect( this->PerkEvaluatorNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
