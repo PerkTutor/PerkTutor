@@ -1,4 +1,4 @@
-import os, imp, glob
+import os, imp, glob, sys
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -163,52 +163,109 @@ class PythonMetricsCalculatorLogic:
   # We need this in order to determine the tissue model node, etc.  
   def SetPerkEvaluatorLogic( self, newPELogic ):
     self.peLogic = newPELogic  
+    self.mrmlScene = self.peLogic.GetMRMLScene()
+    
+    
+  def SetPerkEvaluatorNodeID( self, newPENodeID ):
+    self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
       
       
   def AddAllUserMetrics( self ): 
     # Read the metric scripts 
-    metricPath = self.peLogic.GetMetricsDirectory()    
+    metricPath = self.peNode.GetMetricsDirectory()    
     if ( metricPath == "" ):
       return
     
     allScripts = glob.glob( metricPath + "/*.py" )
   
     for j in range( len( allScripts ) ):
-      currentMetricModule = imp.load_source( "PerkEvaluatorUserMetric" + str( j ), allScripts[j] )
-      self.metrics.append( currentMetricModule.PerkEvaluatorMetric() )
+    
+      metricModuleString = "PerkEvaluatorUserMetric_" + os.path.splitext( os.path.basename( allScripts[j] ) )[0] # this puts the file name at the end
+      
+      try:
+        # If it can't load properly, then just ignore
+        currentMetricModule = imp.load_source( metricModuleString, allScripts[j] )
+        metricInstance = currentMetricModule.PerkEvaluatorMetric() # Test that we can create an instance of the metric
+        self.metrics.append( metricInstance )
+      except:
+        print "Could not load metric: ", metricModuleString, "."
       
       
-  def FilterTissueMetrics( self, inMetrics, currentTransform ):
-    if ( self.peLogic.GetBodyModelNode() != None ):
-      return inMetrics
-      
-    # Only output metrics not requiring tissue
+  def FilterMetricsByAnatomyRole( self, inMetrics, specifiedAnatomyRoles ):
+    # Only output metrics for which all of the required anatomy roles are fulfilled
     outMetrics = []
+    
     for i in range( len( inMetrics ) ):
-      if ( inMetrics[i].RequiresTissueNode() == False ):
-        outMetrics.append( inMetrics[i] )
+      currentMetricRoles = inMetrics[i].GetRequiredAnatomyRoles()
+      
+      anatomyRolesSatisfied = True
+      for j in range( len( currentMetricRoles ) ):
+        if ( currentMetricRoles[j] not in specifiedAnatomyRoles ):
+          anatomyRolesSatisfied = False
+          
+      if ( anatomyRolesSatisfied == True ):
+        outMetrics.append( inMetrics[i] )      
         
     return outMetrics
         
         
-  def FilterNeedleMetrics( self, inMetrics, currentTransform ):
-    if ( self.peLogic.GetNeedleTransformNode() != None and currentTransform.GetName() == self.peLogic.GetNeedleTransformNode().GetName() ):
-      return inMetrics
-      
-    # Only output metrics not requiring needle
+  def FilterMetricsByTransformRole( self, inMetrics, currentTransformRole ):     
+    # Only output metrics which accept the current transform's role
     outMetrics = []
+    
+    # Discard if the transform has no role
+    if ( currentTransformRole == "" or currentTransformRole == "None" ):
+      return outMetrics
+    
     for i in range( len( inMetrics ) ):
-      if ( inMetrics[i].RequiresNeedle() == False ):
-        outMetrics.append( inMetrics[i] )
+      currentMetricRoles = inMetrics[i].GetAcceptedTransformRoles()
+      
+      for j in range( len( currentMetricRoles ) ):
+        if ( currentMetricRoles[j] == currentTransformRole or currentMetricRoles[j] == "Any" ):
+          outMetrics.append( inMetrics[i] )
         
     return outMetrics
+    
+    
+  def ReloadAllMetrics( self ):
+    import PythonMetrics
+    self.metrics = PythonMetrics.PerkTutorCoreMetrics[:]
+    self.AddAllUserMetrics()
+    
+    
+  def GetAllAnatomyRoles( self ):
+    # Re-initialize all the metrics (in case new ones were added)
+    self.ReloadAllMetrics()
+  
+    allAnatomyRoles = []
+    for i in range( len( self.metrics ) ):
+      currentRequiredRoles = self.metrics[i].GetRequiredAnatomyRoles()
+      # Each metric may require multiple roles, so we must check all of them
+      for j in range( len( currentRequiredRoles ) ):
+        if ( currentRequiredRoles[j] not in allAnatomyRoles ):
+          allAnatomyRoles.append( currentRequiredRoles[j] )
+          
+    return allAnatomyRoles
+    
+    
+  def GetAllTransformRoles( self ):
+    # Re-initialize all the metrics (in case new ones were added)
+    self.ReloadAllMetrics()
+  
+    allTransformRoles = []
+    for i in range( len( self.metrics ) ):
+      currentAcceptedRoles = self.metrics[i].GetAcceptedTransformRoles()
+      # Each metric may accept multiple roles, so we must check all of them
+      for j in range( len( currentAcceptedRoles ) ):
+        if ( currentAcceptedRoles[j] not in allTransformRoles ):
+          allTransformRoles.append( currentAcceptedRoles[j] )
+          
+    return allTransformRoles
 
 
   def CalculateAllMetrics( self ):  
     # Initialize all the metrics    
-    import PythonMetrics
-    self.metrics = PythonMetrics.PerkTutorCoreMetrics[:]
-    self.AddAllUserMetrics()
+    self.ReloadAllMetrics()
     
     # Initialize the metrics output
     metricStringList = []
@@ -216,37 +273,76 @@ class PythonMetricsCalculatorLogic:
     # Exit if there are no metrics (e.g. no metrics directory was specified)
     if ( len( self.metrics ) == 0 ):
       return metricStringList
+      
+    # Get all of the specified anatomy roles
+    specifiedAnatomyRoles = []
+    for role in ( self.GetAllAnatomyRoles() ):
+      if ( self.peNode.GetAnatomyNodeName( role ) != "" ):
+        specifiedAnatomyRoles.append( role )
+        
+    # Filter out all metrics for which the anatomies are not available
+    anatomyMetrics = self.FilterMetricsByAnatomyRole( self.metrics, specifiedAnatomyRoles )
 
     # Now iterate over all of the trajectories
     toolTransforms = vtk.vtkCollection()
-    self.peLogic.GetAnalyzeTransforms( toolTransforms )
+    self.peLogic.GetSceneVisibleTransformNodes( toolTransforms )
   
     for i in range( toolTransforms.GetNumberOfItems() ):
 
       currentTransform = toolTransforms.GetItemAsObject( i )
+      currentTransformRole = self.peNode.GetTransformRole( currentTransform.GetName() )
     
       #Drop if based on tissue and needle as appropriate
-      transformMetrics = self.FilterTissueMetrics( self.metrics, currentTransform )
-      transformMetrics = self.FilterNeedleMetrics( transformMetrics, currentTransform )
+      transformMetrics = self.FilterMetricsByTransformRole( anatomyMetrics, currentTransformRole )
   
       # Initialization
       for j in range( len( transformMetrics ) ):
-        transformMetrics[j].Initialize( self.peLogic.GetBodyModelNode() )
+        transformMetrics[j].Initialize()
+        
+      # Grab anatomy nodes, removing any metrics for which the required nodes are not available
+      transformMetrics = self.AddMetricAnatomyNodes( transformMetrics )            
       
       # Calculation
-      self.CalculateTransformMetric( currentTransform, transformMetrics )
+      self.CalculateTransformMetrics( currentTransform, transformMetrics )
+      
+      # Finalize all the metric computations
+      for j in range( len( transformMetrics ) ):
+        transformMetrics[j].Finalize()
     
       # Get the metrics
       for j in range( len( transformMetrics ) ):
-        transformMetrics[j].Finalize()
         metricStringList.append( currentTransform.GetName() + " " + transformMetrics[j].GetMetricName() + " (" + str( transformMetrics[j].GetMetricUnit() ) + ")" )
         metricStringList.append( str( transformMetrics[j].GetMetric() ) )  
   
     return metricStringList
+    
+    
+  def AddMetricAnatomyNodes( self, transformMetrics ):
+  
+    # Keep track of which metrics all anatomies are sucessfully delivered to
+    anatomiesFulfilled = [ True ] * len( transformMetrics )
+  
+    for i in range( len( transformMetrics ) ):
+      currentMetricAnatomyRoles = transformMetrics[i].GetRequiredAnatomyRoles()
+      
+      for j in range( len( currentMetricAnatomyRoles ) ):
+        currentAnatomyNodeName = self.peNode.GetAnatomyNodeName( currentMetricAnatomyRoles[j] )
+        currentAnatomyNode = self.mrmlScene.GetFirstNodeByName( currentAnatomyNodeName )
+        added = transformMetrics[i].AddAnatomyRole( currentMetricAnatomyRoles[j], currentAnatomyNode )
+        
+        if ( added == False ):
+          anatomiesFulfilled[i] = False
+          
+    newTransformMetrics = []
+    for i in range( len( anatomiesFulfilled ) ):
+      if ( anatomiesFulfilled[i] == True ):
+        newTransformMetrics.append( transformMetrics[i] )
+        
+    return newTransformMetrics
   
   
 
-  def CalculateTransformMetric( self, currentTransform, transformMetrics ):
+  def CalculateTransformMetrics( self, currentTransform, transformMetrics ):
     # Initialize the origin, previous point, current point
     origin = [ 0, 0, 0, 1 ]
     point = [ 0, 0, 0, 1 ]
@@ -258,7 +354,7 @@ class PythonMetricsCalculatorLogic:
     
     # Get the node associated with the trajectory we are interested in
     transformName = currentTransform.GetName()
-    node = self.peLogic.GetMRMLScene().GetFirstNodeByName( transformName )
+    node = self.mrmlScene.GetFirstNodeByName( transformName )
     
     # Get the self and parent transform buffer
     selfAndParentBuffer = self.peLogic.GetSelfAndParentTransformBuffer( node )
@@ -269,20 +365,20 @@ class PythonMetricsCalculatorLogic:
     # Now iterate
     for i in range( selfAndParentBuffer.GetNumTransforms() ):
       
-      time = selfAndParentBuffer.GetTransformAt(i).GetTime()
-      
-      self.peLogic.SetPlaybackTime( time )
+      absTime = selfAndParentBuffer.GetTransformAt(i).GetTime()
+      self.peLogic.SetPlaybackTime( absTime )
+      relTime = absTime - self.peLogic.GetMinTime()
       
       matrix.Identity()
       currentTransform.GetMatrixTransformToWorld( matrix )
       
-      if ( time < self.peLogic.GetMarkBegin() or time > self.peLogic.GetMarkEnd() ):
+      if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
         continue
       
       matrix.MultiplyPoint( origin, point )
       
       for j in range( len( transformMetrics ) ):
-        transformMetrics[j].AddTimestamp( time, matrix, point )
+        transformMetrics[j].AddTimestamp( absTime, matrix, point )
     
     self.peLogic.SetPlaybackTime( originalPlaybackTime )    
 
