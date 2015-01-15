@@ -437,9 +437,6 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     sceneFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Scenes/Lumbar/TransformBuffer_Lumbar_Scene.mrml"
     resultsFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Results/Lumbar.xml"
     
-    #print sceneFile
-    #print resultsFile
-    
     # Load the scene
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
@@ -479,19 +476,25 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     
     # Setup the analysis
     peLogic = slicer.modules.perkevaluator.logic()
-    
+
     peLogic.UpdateToolTrajectories( transformBufferNode )
     peLogic.SetPlaybackTime( peLogic.GetMinTime() )
-    peLogic.AddAnalyzeTransform( needleTransformNode )
     
-    peLogic.SetBodyModelNode( tissueModelNode )
-    peLogic.SetNeedleTransformNode( needleTransformNode )
+    # Setup the parameters
+    peNode = activeScene.CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" )
     
-    peLogic.SetMarkBegin( peLogic.GetMinTime() )
-    peLogic.SetMarkEnd( peLogic.GetMaxTime() )
+    peNode.SetAnatomyNodeName( "Tissue", tissueModelNode.GetName() )
+    peNode.SetTransformRole( needleTransformNode.GetName(), "Needle" )
+    
+    peNode.SetMarkBegin( 0 )
+    peNode.SetMarkEnd( peLogic.GetTotalTime() )
+    
+    activeScene.AddNode( peNode )
     
     # Calculate the metrics
     pmcLogic = PythonMetricsCalculatorLogic()
+    pmcLogic.SetPerkEvaluatorNodeID( peNode.GetID() )
+    
     metricStringList = pmcLogic.CalculateAllMetrics()
     if ( len( metricStringList ) == 0 ):
       raise Exception( "No metrics were calculated." )
