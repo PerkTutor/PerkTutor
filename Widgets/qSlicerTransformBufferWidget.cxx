@@ -139,7 +139,7 @@ void qSlicerTransformBufferWidget
     }
     
     dialog.setValue( 10 );
-    this->TransformRecorderLogic->ImportFromFile( importBufferNode, filename.toStdString() );
+    this->TransformRecorderLogic->ImportFromXMLFile( importBufferNode, filename.toStdString() );
 
     // Triggers the buffer node changed signal
     d->BufferNodeComboBox->setCurrentNode( NULL );

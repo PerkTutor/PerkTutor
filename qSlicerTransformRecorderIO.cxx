@@ -19,6 +19,7 @@
 ==============================================================================*/
 
 // Qt includes
+#include "QFileInfo.h"
 
 // SlicerQt includes
 #include "qSlicerTransformRecorderIO.h"
@@ -80,7 +81,7 @@ qSlicerIO::IOFileType qSlicerTransformRecorderIO::fileType() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerTransformRecorderIO::extensions() const
 {
-  return QStringList() << "Transform Buffer (*.xml)";
+  return QStringList() << "Transform Buffer (*.xml)" << "Transform Buffer (*.mha)";
 }
 
 //-----------------------------------------------------------------------------
@@ -89,12 +90,31 @@ bool qSlicerTransformRecorderIO::load(const IOProperties& properties)
   Q_D(qSlicerTransformRecorderIO);
   Q_ASSERT( properties.contains("fileName") );
   QString fileName = properties["fileName"].toString();
+
+  QFileInfo fileInfo( fileName );
+  QString extension = fileInfo.suffix();
+  QString baseName = fileInfo.baseName();
   
   vtkSmartPointer< vtkMRMLTransformBufferNode > importBufferNode;
   importBufferNode.TakeReference( vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) ) );
   importBufferNode->SetScene( this->mrmlScene() );
   this->mrmlScene()->AddNode( importBufferNode );
-  d->TransformRecorderLogic->ImportFromFile( importBufferNode, fileName.toStdString() );
+
+  if ( extension.toStdString().compare( "xml" ) == 0 )
+  {
+    d->TransformRecorderLogic->ImportFromXMLFile( importBufferNode, fileName.toStdString() );
+  }  
+  if ( extension.toStdString().compare( "mha" ) == 0 )
+  {
+    d->TransformRecorderLogic->ImportFromMHAFile( importBufferNode, fileName.toStdString() ); 
+  }
+
+  importBufferNode->SetActiveTransformsFromBuffer();
+  d->TransformRecorderLogic->AddTransformsToScene( importBufferNode );
+
+  std::stringstream importBufferName;
+  importBufferName << importBufferNode->GetName() << "_" << baseName.toStdString();
+  importBufferNode->SetName( importBufferName.str().c_str() );
 
   return true; // TODO: Check to see read was successful first
 }
