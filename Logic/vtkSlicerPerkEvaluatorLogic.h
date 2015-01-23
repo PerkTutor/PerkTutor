@@ -16,7 +16,9 @@
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLTableNode.h"
 #include "vtkMRMLPerkEvaluatorNode.h"
+
 
 // STD includes
 #include <cstdlib>
@@ -81,7 +83,7 @@ public:
   void SetPlaybackTime( double time );
 
   typedef std::pair<std::string,double> MetricType;  
-  std::vector<MetricType> GetMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  vtkMRMLTableNode* GetMetrics( vtkMRMLPerkEvaluatorNode* peNode );
 
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;  
   
@@ -95,6 +97,9 @@ private:
   void ClearData();
 
   std::vector< ToolTrajectory > ToolTrajectories;
+  vtkMRMLTableNode* MetricsNode;
+
+  void FindOrCreateMetricsNode( vtkMRMLTransformBufferNode* bufferNode );
 
   double PlaybackTime;
 };

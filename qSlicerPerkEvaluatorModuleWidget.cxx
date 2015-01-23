@@ -13,6 +13,7 @@
 
 // VTK includes
 #include "vtkCommand.h"
+#include "vtkTable.h"
 
 // SlicerQt includes
 #include "qSlicerPerkEvaluatorModuleWidget.h"
@@ -222,7 +223,11 @@ void qSlicerPerkEvaluatorModuleWidget
   dialog.setValue( 10 );
 
   // Metrics table  
-  std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> metrics = d->logic()->GetMetrics( peNode );
+  vtkMRMLTableNode* metricsNode = d->logic()->GetMetrics( peNode );
+  if ( metricsNode == NULL )
+  {
+    return;
+  }
 
   dialog.setValue( 80 );
   
@@ -232,16 +237,25 @@ void qSlicerPerkEvaluatorModuleWidget
 
   QStringList MetricsTableHeaders;
   MetricsTableHeaders << "Metric" << "Value";
-  d->MetricsTable->setRowCount( metrics.size() );
+  d->MetricsTable->setRowCount( metricsNode->GetTable()->GetNumberOfRows() );
   d->MetricsTable->setColumnCount( 2 );
   d->MetricsTable->setHorizontalHeaderLabels( MetricsTableHeaders );
   d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
   
-  for ( int i = 0; i < metrics.size(); ++ i )
+  for ( int i = 0; i < metricsNode->GetTable()->GetNumberOfRows(); i++ )
   {
-    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( metrics.at(i).first ) );
-    QTableWidgetItem* valueItem = new QTableWidgetItem( QString::number( metrics.at(i).second, 'f', 2 ) );
+    QString nameString;
+    nameString = nameString + QString( metricsNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
+    nameString = nameString + QString( " " );
+    nameString = nameString + QString( metricsNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
+    QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
     d->MetricsTable->setItem( i, 0, nameItem );
+
+    QString valueString;
+    valueString = valueString + QString( metricsNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
+    valueString = valueString + QString( " " );
+    valueString = valueString + QString( metricsNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
+    QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
     d->MetricsTable->setItem( i, 1, valueItem );
   }
 
