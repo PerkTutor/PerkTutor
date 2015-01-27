@@ -61,6 +61,7 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
   ${MRML_LIBRARIES}
+  ${QT_LIBRARIES}
   )
 
 # Resources
