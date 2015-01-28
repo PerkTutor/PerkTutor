@@ -19,7 +19,7 @@
 ==============================================================================*/
 
 // Qt includes
-#include "QFileInfo.h"
+#include <QFileInfo>
 
 // SlicerQt includes
 #include "qSlicerTransformRecorderIO.h"
