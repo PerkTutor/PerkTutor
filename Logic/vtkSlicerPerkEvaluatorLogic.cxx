@@ -205,6 +205,7 @@ vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
   pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetMetricsNodeID( '%1' )" ).arg( this->MetricsNode->GetID() ) );
   pythonManager->executeString( "PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
 
+  this->MetricsNode->StorableModified();
   return this->MetricsNode;
 }
 
@@ -262,7 +263,7 @@ void vtkSlicerPerkEvaluatorLogic
   for ( int i = 0; i < tableNodes->GetNumberOfItems(); i++ )
   {
     vtkMRMLTableNode* currentNode = vtkMRMLTableNode::SafeDownCast( tableNodes->GetItemAsObject( i ) );
-    if ( currentNode == NULL )
+    if ( currentNode == NULL || currentNode->GetNodeReferenceID( "TransformBuffer" ) == NULL )
     {
       continue;
     }
@@ -536,4 +537,38 @@ void vtkSlicerPerkEvaluatorLogic
 
   }
 
+}
+
+
+// THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
+vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
+::AddTable(const char* fileName, const char* name)
+{
+  if (this->GetMRMLScene() == 0 || fileName == 0)
+    {
+    return 0;
+    }
+
+  // Storage node
+  vtkNew<vtkMRMLTableStorageNode> tableStorageNode;
+  tableStorageNode->SetFileName(fileName);
+  this->GetMRMLScene()->AddNode(tableStorageNode.GetPointer());
+
+  // Storable node
+  vtkNew<vtkMRMLTableNode> tableNode;
+  this->GetMRMLScene()->AddNode(tableNode.GetPointer());
+
+  // Read
+  int res = tableStorageNode->ReadData(tableNode.GetPointer());
+  if (res == 0) // failed to read
+    {
+    this->GetMRMLScene()->RemoveNode(tableStorageNode.GetPointer());
+    this->GetMRMLScene()->RemoveNode(tableNode.GetPointer());
+    return 0;
+    }
+  if (name)
+    {
+    tableNode->SetName(name);
+    }
+  return tableNode.GetPointer();
 }
