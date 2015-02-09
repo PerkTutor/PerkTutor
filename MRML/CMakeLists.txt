@@ -32,6 +32,7 @@ set(module_mrml_target_libraries
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
+  vtkIOInfovis
   vtkSlicerTransformRecorderModuleMRML
   )
 
