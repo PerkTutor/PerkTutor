@@ -27,12 +27,13 @@ class FuzzyRule:
       
   # Setting the base function
   # This will be of the form "IF inputName is inputGroup THEN ..."
-  def AddInputMembershipFunction( self, newInputMembershipFunction, inputName, inputGroup ):
+  def AddInputMembershipFunction( self, newInputMembershipFunction, inputName ):
     if ( inputName not in self.InputMembershipFunctions ):
       self.InputMembershipFunctions[ inputName ] = MembershipFunction.MembershipFunction()
       self.InputMembershipFunctions[ inputName ].SetComposeFunction( self.ComposeFunction )
       
     self.InputMembershipFunctions[ inputName ].AddBaseFunction( newInputMembershipFunction )
+    # No need to deal with the group - it is handled by composing all functions with the same name
     
   # This will be of the form "... THEN output is function"
   def SetOutputMembershipFunction( self, newOutputMembershipFunction ):
