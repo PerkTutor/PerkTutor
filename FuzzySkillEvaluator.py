@@ -113,9 +113,6 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
     
     self.MinSkill = 0
     self.MaxSkill = 100
-    
-    self.MinUniverse = 0
-    self.MaxUniverse = 100
     self.NumSteps = 1e3 # This is constant, and should not depend on max and min values
     
     self.InputMemberships = dict()
@@ -252,8 +249,16 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
   
   
   # Compute the step size
-  def StepSize():
-    return ( self.MaxUniverse - self.MinUniverse ) / self.NumSteps
+  def StepSize( self ):
+    return ( self.MaxSkillUniverse() - self.MinSkillUniverse() ) / self.NumSteps
+    
+  # Minimum possible value in the universe of overall "skill"
+  def MinSkillUniverse( self ):
+    return self.MinSkill - ( self.MaxSkill - self.MinSkill ) / float( len( self.GroupNames ) - 1 )
+  
+  # Maximum possible value in the universe of overall "skill"  
+  def MaxSkillUniverse( self ):
+    return self.MaxSkill + ( self.MaxSkill - self.MinSkill ) / float( len( self.GroupNames ) - 1 )
     
     
   # Run the whole thing
@@ -270,7 +275,7 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
     consequence = self.ComputeFuzzyOutput( inputValues )
     
     # Defuzzify to get crisp skill level
-    return FuzzyLogic.Defuzzification.Defuzzify( consequence, "COM" )
+    return FuzzyLogic.Defuzzification.Defuzzify( consequence, "COM", self.MinSkillUniverse(), self.MaxSkillUniverse(), self.StepSize() )
     
     
     
@@ -291,6 +296,38 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
       metricDict[ totalMetricName ] = metricValue
       
     return metricDict
+    
+    
+  # Use a chart node to plot a membership function
+  # Mostly for debugging, but it may be interesting to look at membership functions from the Python interactor
+  def PlotMembershipFunctions( membershipFunctions, min, max ):
+
+    step = ( max - min ) / self.NumSteps
+
+    # Setting up the array of values
+    chartNode = slicer.mrmlScene.AddNode( slicer.vtkMRMLChartNode() )
+  
+    for i in range( len( membershipFunctions ) ):
+      arrayNode = slicer.mrmlScene.AddNode( slicer.vtkMRMLDoubleArrayNode() )
+      array = arrayNode.GetArray()
+      array.SetNumberOfTuples( int( ( max - min ) / step ) )
+    
+      for j in range( array.GetNumberOfTuples() ):
+        array.SetComponent( j, 0, min + j * step )
+        array.SetComponent( j, 1, membershipFunctions[ i ].Evaluate( min + j * step ) )
+        array.SetComponent( j, 2, 0 )
+      
+      # Add array into a chart node
+      chartNode.AddArray( "Membership Function " + str( i ), arrayNode.GetID() )
+      
+    chartNode.SetProperty( 'default', 'title', 'Membership Functions' )
+    chartNode.SetProperty( 'default', 'xAxisLabel', 'Membership Value' )
+    chartNode.SetProperty( 'default', 'yAxisLabel', 'Element' )
+  
+    # Set the chart in the chart view node
+    chartViewNode = slicer.mrmlScene.GetNthNodeByClass( 0, "vtkMRMLChartViewNode" )
+    chartViewNode.SetChartNodeID( chartNode.GetID() )
+
         
         
 

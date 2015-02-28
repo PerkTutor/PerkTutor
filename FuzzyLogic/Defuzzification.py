@@ -5,29 +5,25 @@ import BinaryFunction
 
 # TODO: Should this should be the only externally called method?
 # TODO: Reset compose function for input membership functions
-def Defuzzify( membershipFunction, method ):
+def Defuzzify( membershipFunction, method, min, max, step ):
   if ( method == "COA" ):
-    return DefuzzifyCOA( membershipFunction )
+    return DefuzzifyCOA( membershipFunction, min, max, step )
   if ( method == "COM" ):
-    return DefuzzifyCOM( membershipFunction )
+    return DefuzzifyCOM( membershipFunction, min, max, step )
   if ( method == "MOM" ):
-    return DefuzzifyMOM( membershipFunction )
+    return DefuzzifyMOM( membershipFunction, min, max, step )
   if ( method == "CMCOA" ):
-    return DefuzzifyCMCOA( membershipFunction )
+    return DefuzzifyCMCOA( membershipFunction, min, max, step )
   if ( method == "CMCOM" ):
-    return DefuzzifyCMCOM( membershipFunction )
+    return DefuzzifyCMCOM( membershipFunction, min, max, step )
   if ( method == "CMMOM" ):
-    return DefuzzifyCMMOM( membershipFunction )
+    return DefuzzifyCMMOM( membershipFunction, min, max, step )
     
     
     
-def Integrate( function ):
-  
-  min = -100
-  max = 200
+def Integrate( function, min, max, step ):
   
   loc = min
-  step = 1e-2
   integral = 0
   
   while( loc < max ):
@@ -37,14 +33,10 @@ def Integrate( function ):
   return integral
   
   
-def MaxValue( function ):
-  
-  min = -100
-  max = 200
+def MaxValue( function, min, max, step ):
   
   loc = min
-  step = 1e-2
-  maxVal = 0
+  maxVal = - float( 'inf' ) # In theory, this can be zero since the max value should always be at least zero (but let's make it more robust in practice)
   
   while( loc < max ):
     if ( function.Evaluate( loc ) > maxVal ):
@@ -54,7 +46,7 @@ def MaxValue( function ):
   return maxVal
 
   
-def DefuzzifyCOA( membershipFunction ):
+def DefuzzifyCOA( membershipFunction, min, max, step ):
   
   membershipFunction.SetComposeFunction( BinaryFunction.GodelSNorm() )
   
@@ -66,14 +58,14 @@ def DefuzzifyCOA( membershipFunction ):
   denominatorFunction = MembershipFunction.MembershipFunction()
   denominatorFunction.AddBaseFunction( membershipFunction )
   
-  num = Integrate( numeratorFunction )  
-  denom = Integrate( denominatorFunction )
+  num = Integrate( numeratorFunction, min, max, step )  
+  denom = Integrate( denominatorFunction, min, max, step )
 
   return num / denom
 
 
   
-def DefuzzifyCOM( membershipFunction ):
+def DefuzzifyCOM( membershipFunction, min, max, step ):
   
   membershipFunction.SetComposeFunction( AddBinaryFunction() )
   
@@ -85,13 +77,13 @@ def DefuzzifyCOM( membershipFunction ):
   denominatorFunction = MembershipFunction.MembershipFunction()
   denominatorFunction.AddBaseFunction( membershipFunction )
   
-  num = Integrate( numeratorFunction )  
-  denom = Integrate( denominatorFunction )
+  num = Integrate( numeratorFunction, min, max, step )  
+  denom = Integrate( denominatorFunction, min, max, step )
 
   return num / denom
   
   
-def DefuzzifyMOM( membershipFunction ):
+def DefuzzifyMOM( membershipFunction, min, max, step ):
   
   membershipFunction.SetComposeFunction( BinaryFunction.GodelSNorm() )
   
@@ -113,39 +105,39 @@ def DefuzzifyMOM( membershipFunction ):
   denominatorFunction = MembershipFunction.MembershipFunction()
   denominatorFunction.AddBaseFunction( maxFunction )
   
-  num = Integrate( numeratorFunction )  
-  denom = Integrate( denominatorFunction )
+  num = Integrate( numeratorFunction, min, max, step )  
+  denom = Integrate( denominatorFunction, min, max, step )
 
   return num / denom
   
 
-def DefuzzifyCMCOA( membershipFunction ):  
-  coa = DefuzzifyCOA( membershipFunction )
-  return DefuzzifyCM( membershipFunction, coa )
+def DefuzzifyCMCOA( membershipFunction, min, max, step ):  
+  coa = DefuzzifyCOA( membershipFunction, min, max, step )
+  return DefuzzifyCM( membershipFunction, coa, step )
   
   
-def DefuzzifyCMCOM( membershipFunction ):  
-  com = DefuzzifyCOM( membershipFunction )
-  return DefuzzifyCM( membershipFunction, com )
+def DefuzzifyCMCOM( membershipFunction, min, max, step ):  
+  com = DefuzzifyCOM( membershipFunction, min, max, step )
+  return DefuzzifyCM( membershipFunction, com, step )
   
   
-def DefuzzifyCMMOM( membershipFunction ):  
-  mom = DefuzzifyMOM( membershipFunction )
-  return DefuzzifyCM( membershipFunction, mom )
+def DefuzzifyCMMOM( membershipFunction, min, max, step ):  
+  mom = DefuzzifyMOM( membershipFunction, min, max, step )
+  return DefuzzifyCM( membershipFunction, mom, step )
    
     
-def DefuzzifyCM( membershipFunction, start ):
+def DefuzzifyCM( membershipFunction, start, step ):
 
   maxVal = MaxValue( membershipFunction )
   
   locPlus = start
   locMinus = start
-  step = 1e-2
+  precision = - math.floor( math.log10( step ) )
     
   while( True ):
-    if ( round( membershipFunction.Evaluate( locPlus ) - maxVal, 4 ) == 0 ):
+    if ( round( membershipFunction.Evaluate( locPlus ) - maxVal, precision ) == 0 ):
       return locPlus
-    if ( round( membershipFunction.Evaluate( locMinus ) - maxVal, 4 ) == 0 ):
+    if ( round( membershipFunction.Evaluate( locMinus ) - maxVal, precision ) == 0 ):
       return locMinus
       
     locPlus += step
