@@ -17,7 +17,7 @@ set(FUZZY_LOGIC_PYTHON_SCRIPTS
   FuzzyLogic/MembershipFunction.py
   FuzzyLogic/BinaryFunction.py
   FuzzyLogic/FuzzyRule.py
-  FuzzyLogic/Defuzzification.py
+  FuzzyLogic/Defuzzifier.py
   )
 
 set(MODULE_PYTHON_SCRIPTS

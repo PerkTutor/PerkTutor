@@ -1,4 +1,4 @@
 import MembershipFunction
 import FuzzyRule
-import Defuzzification
+import Defuzzifier
 import BinaryFunction

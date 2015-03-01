@@ -131,9 +131,10 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
     self.FuzzyRules = []
     
     self.AntecedentComposeFunction = FuzzyLogic.BinaryFunction.GodelTNorm()
-    self.TransformTechnique = "Clip"
+    self.OutputDefuzzifier = FuzzyLogic.Defuzzifier.DefuzzifierCOM()
     
-    self.DefuzzificationMethod = "COM"
+    self.TransformTechnique = "Clip"
+        
      
   # Use the approach from Riojas et al. 2011
   # Use triangular membership functions distributed on 0-100
@@ -285,7 +286,7 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
     consequence = self.ComputeFuzzyOutput( inputValues )
     
     # Defuzzify to get crisp skill level
-    fuzzySkill = FuzzyLogic.Defuzzification.Defuzzify( consequence, "COM", self.MinSkillUniverse(), self.MaxSkillUniverse(), self.StepSize() )
+    fuzzySkill = self.OutputDefuzzifier.Evaluate( consequence, self.MinSkillUniverse(), self.MaxSkillUniverse(), self.StepSize() )
     
     # Ensure the output is between the min and max
     fuzzySkill = min( [ fuzzySkill, self.MaxSkill ] )
