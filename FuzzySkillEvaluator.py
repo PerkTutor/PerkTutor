@@ -71,6 +71,15 @@ class FuzzySkillEvaluatorWidget(ScriptedLoadableModuleWidget):
     self.computeButton.toolTip = "Compute the overall skill level"
     self.computeButton.enabled = True
     parametersFormLayout.addRow( self.computeButton )
+    
+    #
+    # Output skill label
+    #
+    self.skillLabel = qt.QLabel( "" )
+    self.skillLabel.toolTip = "Overall skill level"
+    self.skillLabel.enabled = True
+    parametersFormLayout.addRow( "Skill level: ", self.skillLabel )
+    
 
     # connections
     self.computeButton.connect( 'clicked(bool)' , self.onComputeButtonClicked )
@@ -88,8 +97,9 @@ class FuzzySkillEvaluatorWidget(ScriptedLoadableModuleWidget):
   def onComputeButtonClicked(self):
     logic = FuzzySkillEvaluatorLogic()
     metricDict = logic.CreateMetricDictionary( self.metricsTableSelector.currentNode() )
-    print logic.ComputeFuzzySkill( metricDict )
-
+    
+    skill = logic.ComputeFuzzySkill( metricDict )
+    self.skillLabel.setText( str( skill ) )
 
 #
 # FuzzySkillEvaluatorLogic
@@ -275,7 +285,12 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
     consequence = self.ComputeFuzzyOutput( inputValues )
     
     # Defuzzify to get crisp skill level
-    return FuzzyLogic.Defuzzification.Defuzzify( consequence, "COM", self.MinSkillUniverse(), self.MaxSkillUniverse(), self.StepSize() )
+    fuzzySkill = FuzzyLogic.Defuzzification.Defuzzify( consequence, "COM", self.MinSkillUniverse(), self.MaxSkillUniverse(), self.StepSize() )
+    
+    # Ensure the output is between the min and max
+    fuzzySkill = min( [ fuzzySkill, self.MaxSkill ] )
+    fuzzySkill = max( [ fuzzySkill, self.MinSkill ] )
+    return int( fuzzySkill )
     
     
     
