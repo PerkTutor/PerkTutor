@@ -45,7 +45,7 @@ class FuzzyRule:
     
   # Find the output membership function clipped or scaled by input membership function values
   # Input is a dict with keys being function names and values being specific values
-  def Evaluate( self, inputValues, type ):
+  def Evaluate( self, inputValues, transformOutputFunction ):
     if ( self.ComposeFunction == None or self.OutputMembershipFunction == None ):
       emptyMembershipFunction = MembershipFunction.FlatMembershipFunction()
       emptyMembershipFunction.SetParameters( [ 0 ] )
@@ -70,13 +70,6 @@ class FuzzyRule:
     # Compose the flat membership function
     flatMembershipFunction = MembershipFunction.FlatMembershipFunction()
     flatMembershipFunction.SetParameters( [ totalMembership ] )
-      
-    # Now, create the clip or scale function as appropriate
-    transformOutputFunction = None
-    if ( type == "Scale" ):
-      transformOutputFunction = BinaryFunction.GoguenTNorm()
-    else: # This is clip
-      transformOutputFunction = BinaryFunction.GodelTNorm()
       
     # Apply clipping or scaling to output membership function
     transformedOutputMembershipFunction = MembershipFunction.MembershipFunction()

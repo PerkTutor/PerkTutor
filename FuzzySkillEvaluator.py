@@ -43,6 +43,8 @@ class FuzzySkillEvaluatorWidget(ScriptedLoadableModuleWidget):
     ScriptedLoadableModuleWidget.setup(self)
 
     # Instantiate and connect widgets ...
+    # Give the widget access to a persistent logic
+    self.fseLogic = FuzzySkillEvaluatorLogic()
 
     #
     # Parameters Area
@@ -80,21 +82,102 @@ class FuzzySkillEvaluatorWidget(ScriptedLoadableModuleWidget):
     self.skillLabel.enabled = True
     parametersFormLayout.addRow( "Skill level: ", self.skillLabel )
     
+    #
+    # Advanced Area
+    #
+    advancedCollapsibleButton = ctk.ctkCollapsibleButton()
+    advancedCollapsibleButton.text = "Advanced"
+    advancedCollapsibleButton.collapsed = True
+    self.layout.addWidget( advancedCollapsibleButton )
 
+    # Layout within the dummy collapsible button
+    advancedFormLayout = qt.QFormLayout( advancedCollapsibleButton )
+    
+    #
+    # Antecedent compose function selector
+    #
+    self.antecedentComposeFunctionSelector = qt.QComboBox()
+    self.antecedentComposeFunctionSelector.toolTip = "Select the function to be used to compose antecedents in each fuzzy rule."
+    self.antecedentComposeFunctionSelector.enabled = True
+    
+    antecedentComposeFunctionNames = self.fseLogic.GetAllAntecedentComposeFunctionNames()
+    defaultIndex = 0
+    for i in range( len ( antecedentComposeFunctionNames ) ):
+      self.antecedentComposeFunctionSelector.addItem( antecedentComposeFunctionNames[ i ] )
+      if ( antecedentComposeFunctionNames[ i ] == self.fseLogic.AntecedentComposeFunctionName ):
+        defaultIndex = i
+    self.antecedentComposeFunctionSelector.setCurrentIndex( defaultIndex )
+    
+    advancedFormLayout.addRow( "Antecedent compose function: ", self.antecedentComposeFunctionSelector )
+        
+    #
+    # Output Defuzzifier selector
+    #
+    self.outputDefuzzifierSelector = qt.QComboBox()
+    self.outputDefuzzifierSelector.toolTip = "Select the defuzzification technique for the output membership function."
+    self.outputDefuzzifierSelector.enabled = True
+    
+    outputDefuzzifierNames = self.fseLogic.GetAllOutputDefuzzifierNames()
+    defaultIndex = 0
+    for i in range( len ( outputDefuzzifierNames ) ):
+      self.outputDefuzzifierSelector.addItem( outputDefuzzifierNames[ i ] )
+      if ( outputDefuzzifierNames[ i ] == self.fseLogic.OutputDefuzzifierName ):
+        defaultIndex = i
+    self.outputDefuzzifierSelector.setCurrentIndex( defaultIndex )
+    
+    advancedFormLayout.addRow( "Output Defuzzifier: ", self.outputDefuzzifierSelector )
+    
+    #
+    # transform technique selector
+    #
+    self.transformTechniqueSelector = qt.QComboBox()
+    self.transformTechniqueSelector.toolTip = "Select the transform technique to apply to consequence functions."
+    self.transformTechniqueSelector.enabled = True
+    
+    transformTechniqueNames = self.fseLogic.GetAllTransformTechniqueNames()
+    defaultIndex = 0
+    for i in range( len ( transformTechniqueNames ) ):
+      self.transformTechniqueSelector.addItem( transformTechniqueNames[ i ] )
+      if ( transformTechniqueNames[ i ] == self.fseLogic.TransformTechniqueName ):
+        defaultIndex = i
+    self.transformTechniqueSelector.setCurrentIndex( defaultIndex )
+    
+    advancedFormLayout.addRow( "Transform technique: ", self.transformTechniqueSelector )
+    
     # connections
     self.computeButton.connect( 'clicked(bool)' , self.onComputeButtonClicked )
+    self.antecedentComposeFunctionSelector.connect( 'currentIndexChanged(QString)', self.onAntecedentComposeFunctionSelected )
+    self.outputDefuzzifierSelector.connect( 'currentIndexChanged(QString)', self.onOutputDefuzzifierSelected )
+    self.transformTechniqueSelector.connect( 'currentIndexChanged(QString)', self.onTransformTechniqueSelected )
     
     # Add vertical spacer
     self.layout.addStretch(1)
+    
+    
+
 
 
   def cleanup(self):
     pass
 
-  def onSelect(self):
-    pass
+  def onAntecedentComposeFunctionSelected( self ):
+    selection = self.antecedentComposeFunctionSelector.currentText
+    self.fseLogic.SetAntecedentComposeFunction( selection )
+    #print self.fseLogic.AntecedentComposeFunction
+    
+  
+  def onOutputDefuzzifierSelected( self ):
+    selection = self.outputDefuzzifierSelector.currentText
+    self.fseLogic.SetOutputDefuzzifier( selection )
+    #print self.fseLogic.OutputDefuzzifier
+    
+  
+  def onTransformTechniqueSelected( self ):
+    selection = self.transformTechniqueSelector.currentText
+    self.fseLogic.SetTransformTechnique( selection )
+    #print self.fseLogic.TransformTechnique
 
-  def onComputeButtonClicked(self):
+  def onComputeButtonClicked( self ):
     logic = FuzzySkillEvaluatorLogic()
     metricDict = logic.CreateMetricDictionary( self.metricsTableSelector.currentNode() )
     
@@ -130,12 +213,63 @@ class FuzzySkillEvaluatorLogic(ScriptedLoadableModuleLogic):
     
     self.FuzzyRules = []
     
-    self.AntecedentComposeFunction = FuzzyLogic.BinaryFunction.GodelTNorm()
-    self.OutputDefuzzifier = FuzzyLogic.Defuzzifier.DefuzzifierCOM()
-    
-    self.TransformTechnique = "Clip"
+    self.SetupFunctionDicts()        
+    self.SetAntecedentComposeFunction( "GodelTNorm" )
+    self.SetOutputDefuzzifier( "COM" )
+    self.SetTransformTechnique( "Clip" )
         
-     
+        
+  def SetupFunctionDicts( self ):
+    self.AntecedentComposeFunctionDict = dict()
+    self.AntecedentComposeFunctionDict[ "GodelTNorm" ] = FuzzyLogic.BinaryFunction.GodelTNorm()
+    self.AntecedentComposeFunctionDict[ "GodelSNorm" ] = FuzzyLogic.BinaryFunction.GodelSNorm()
+    self.AntecedentComposeFunctionDict[ "GoguenTNorm" ] = FuzzyLogic.BinaryFunction.GoguenTNorm()
+    self.AntecedentComposeFunctionDict[ "GoguenSNorm" ] = FuzzyLogic.BinaryFunction.GoguenSNorm()
+    self.AntecedentComposeFunctionDict[ "LukasiewiczTNorm" ] = FuzzyLogic.BinaryFunction.LukasiewiczTNorm()
+    self.AntecedentComposeFunctionDict[ "LukasiewiczSNorm" ] = FuzzyLogic.BinaryFunction.LukasiewiczSNorm()
+    self.AntecedentComposeFunctionDict[ "NilpotentTNorm" ] = FuzzyLogic.BinaryFunction.NilpotentTNorm()
+    self.AntecedentComposeFunctionDict[ "NilpotentSNorm" ] = FuzzyLogic.BinaryFunction.NilpotentSNorm()
+    self.AntecedentComposeFunctionDict[ "DrasticTNorm" ] = FuzzyLogic.BinaryFunction.DrasticTNorm()
+    self.AntecedentComposeFunctionDict[ "DrasticSNorm" ] = FuzzyLogic.BinaryFunction.DrasticSNorm()
+    
+    self.OutputDefuzzifierDict = dict()
+    self.OutputDefuzzifierDict[ "COA" ] = FuzzyLogic.Defuzzifier.DefuzzifierCOA()
+    self.OutputDefuzzifierDict[ "COM" ] = FuzzyLogic.Defuzzifier.DefuzzifierCOM()
+    self.OutputDefuzzifierDict[ "MOM" ] = FuzzyLogic.Defuzzifier.DefuzzifierMOM()
+    self.OutputDefuzzifierDict[ "CMCOA" ] = FuzzyLogic.Defuzzifier.DefuzzifierCMCOA()
+    self.OutputDefuzzifierDict[ "CMCOM" ] = FuzzyLogic.Defuzzifier.DefuzzifierCMCOM()
+    self.OutputDefuzzifierDict[ "CMMOM" ] = FuzzyLogic.Defuzzifier.DefuzzifierCMMOM()
+    
+    self.TransformTechniqueDict = dict()
+    self.TransformTechniqueDict[ "Clip" ] = FuzzyLogic.BinaryFunction.GodelTNorm()
+    self.TransformTechniqueDict[ "Scale" ] = FuzzyLogic.BinaryFunction.GoguenTNorm()
+
+    
+  # Set the appropriaate function values
+  def SetAntecedentComposeFunction( self, name ):
+    if ( name in self.AntecedentComposeFunctionDict ):
+      self.AntecedentComposeFunction = self.AntecedentComposeFunctionDict[ name ]
+      self.AntecedentComposeFunctionName = name
+
+  def SetOutputDefuzzifier( self, name ):
+    if ( name in self.OutputDefuzzifierDict ):
+      self.OutputDefuzzifier = self.OutputDefuzzifierDict[ name ]
+      self.OutputDefuzzifierName = name
+
+  def SetTransformTechnique( self, name ):
+    if ( name in self.TransformTechniqueDict ):
+      self.TransformTechnique = self.TransformTechniqueDict[ name ]
+      self.TransformTechniqueName = name
+    
+  def GetAllAntecedentComposeFunctionNames( self ):
+    return self.AntecedentComposeFunctionDict.keys()
+    
+  def GetAllOutputDefuzzifierNames( self ):
+    return self.OutputDefuzzifierDict.keys()
+    
+  def GetAllTransformTechniqueNames( self ):
+    return self.TransformTechniqueDict.keys()
+    
   # Use the approach from Riojas et al. 2011
   # Use triangular membership functions distributed on 0-100
   # Width is such that one reaches zero when the next reaches one
