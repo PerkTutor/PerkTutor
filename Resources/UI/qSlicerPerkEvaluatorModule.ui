@@ -34,7 +34,7 @@
         <x>0</x>
         <y>0</y>
         <width>606</width>
-        <height>824</height>
+        <height>797</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -318,8 +318,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
-        <height>824</height>
+        <width>328</width>
+        <height>323</height>
        </rect>
       </property>
       <attribute name="label">
@@ -610,6 +610,34 @@
         </widget>
        </item>
        <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="AdvancedToolboxPage">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>176</width>
+        <height>117</height>
+       </rect>
+      </property>
+      <attribute name="label">
+       <string>Advanced</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_13">
+       <item>
         <widget class="ctkCollapsibleGroupBox" name="TransformRolesGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -644,7 +672,7 @@
         </widget>
        </item>
        <item>
-        <widget class="ctkCollapsibleGroupBox" name="AdvancedGroupBox">
+        <widget class="ctkCollapsibleGroupBox" name="OptionsGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -652,10 +680,10 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Advanced</string>
+          <string>Options</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
@@ -875,7 +903,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="verticalSpacer">
+        <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
