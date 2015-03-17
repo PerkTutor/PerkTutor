@@ -488,6 +488,7 @@ qSlicerPerkEvaluatorModuleWidget
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->TransformBufferWidget->setMRMLScene( NULL );
   d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );  
+  d->TransformBufferWidget->BufferHelper->SetTransformBufferNode( NULL );
 
   d->MessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
