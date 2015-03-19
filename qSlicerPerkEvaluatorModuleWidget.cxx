@@ -433,7 +433,7 @@ void qSlicerPerkEvaluatorModuleWidget
   {
     peNode->SetMetricsDirectory( fileName.toStdString() );
   }
-  d->MetricsDirectoryButton->setText( fileName );
+
 }
 
 
@@ -698,7 +698,11 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
   d->BodyNodeComboBox->setCurrentNode( tissueNode );
 
-  d->MetricsDirectoryButton->setText( QString( peNode->GetMetricsDirectory().c_str() ) );
+  // Get the name of the base directory
+  QDir metricsDirectory( peNode->GetMetricsDirectory().c_str() );
+  d->MetricsDirectoryButton->setText( metricsDirectory.dirName() );
+  d->MetricsDirectoryButton->setToolTip( metricsDirectory.absolutePath() );
+
   d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 
   d->AutoUpdateTransformRolesCheckBox->setChecked( peNode->GetAutoUpdateTransformRoles() ); 
 
