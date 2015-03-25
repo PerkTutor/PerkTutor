@@ -168,6 +168,28 @@ class PythonMetricsCalculatorLogic:
     
   def SetPerkEvaluatorNodeID( self, newPENodeID ):
     self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
+    
+    
+  def SetMetricsNodeID( self, newMetricsNodeID ):
+    self.metricsNode = self.mrmlScene.GetNodeByID( newMetricsNodeID )
+    
+    
+  def InitializeMetricsTable( self ):
+    self.metricsNode.GetTable().Initialize()
+    
+    transformNameColumn = vtk.vtkStringArray()
+    transformNameColumn.SetName( "TransformName" )
+    metricNameColumn = vtk.vtkStringArray()
+    metricNameColumn.SetName( "MetricName" )
+    metricUnitColumn = vtk.vtkStringArray()
+    metricUnitColumn.SetName( "MetricUnit" )
+    metricValueColumn = vtk.vtkStringArray()
+    metricValueColumn.SetName( "MetricValue" )
+    
+    self.metricsNode.GetTable().AddColumn( transformNameColumn )
+    self.metricsNode.GetTable().AddColumn( metricNameColumn )
+    self.metricsNode.GetTable().AddColumn( metricUnitColumn )
+    self.metricsNode.GetTable().AddColumn( metricValueColumn )
       
       
   def AddAllUserMetrics( self ): 
@@ -268,7 +290,7 @@ class PythonMetricsCalculatorLogic:
     self.ReloadAllMetrics()
     
     # Initialize the metrics output
-    metricStringList = []
+    self.InitializeMetricsTable()
       
     # Exit if there are no metrics (e.g. no metrics directory was specified)
     if ( len( self.metrics ) == 0 ):
@@ -311,11 +333,14 @@ class PythonMetricsCalculatorLogic:
     
       # Get the metrics
       for j in range( len( transformMetrics ) ):
-        metricStringList.append( currentTransform.GetName() + " " + transformMetrics[j].GetMetricName() + " (" + str( transformMetrics[j].GetMetricUnit() ) + ")" )
-        metricStringList.append( str( transformMetrics[j].GetMetric() ) )  
-  
-    return metricStringList
-    
+        currentMetricRow = vtk.vtkVariantArray()
+        currentMetricRow.InsertNextValue( currentTransform.GetName() )
+        currentMetricRow.InsertNextValue( transformMetrics[j].GetMetricName() )
+        currentMetricRow.InsertNextValue( transformMetrics[j].GetMetricUnit() )
+        currentMetricRow.InsertNextValue( transformMetrics[j].GetMetric() )
+        self.metricsNode.GetTable().InsertNextRow( currentMetricRow )        
+
+        
     
   def AddMetricAnatomyNodes( self, transformMetrics ):
   
