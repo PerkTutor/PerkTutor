@@ -20,13 +20,19 @@ set(module_mrml_include_directories
 set(module_mrml_SRCS
   vtkMRMLPerkEvaluatorNode.cxx
   vtkMRMLPerkEvaluatorNode.h
+  vtkMRMLTableNode.cxx
+  vtkMRMLTableNode.h
+  vtkMRMLTableStorageNode.cxx
+  vtkMRMLTableStorageNode.h
   )
 
 # Additional Target libraries
 set(module_mrml_target_libraries
+  ${VTK_LIBRARIES}
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
+  vtkIOInfovis
   vtkSlicerTransformRecorderModuleMRML
   )
 

@@ -16,7 +16,9 @@
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLTableNode.h"
 #include "vtkMRMLPerkEvaluatorNode.h"
+
 
 // STD includes
 #include <cstdlib>
@@ -61,6 +63,9 @@ protected:
   virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
 
 public:
+
+  // THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
+  vtkMRMLTableNode* AddTable(const char* fileName, const char* name = 0);
   
   void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
   vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
@@ -81,7 +86,7 @@ public:
   void SetPlaybackTime( double time );
 
   typedef std::pair<std::string,double> MetricType;  
-  std::vector<MetricType> GetMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  vtkMRMLTableNode* GetMetrics( vtkMRMLPerkEvaluatorNode* peNode );
 
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;  
   
@@ -95,6 +100,9 @@ private:
   void ClearData();
 
   std::vector< ToolTrajectory > ToolTrajectories;
+  vtkMRMLTableNode* MetricsNode;
+
+  void FindOrCreateMetricsNode( vtkMRMLTransformBufferNode* bufferNode );
 
   double PlaybackTime;
 };

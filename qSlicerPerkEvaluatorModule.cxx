@@ -25,6 +25,11 @@
 // ExtensionTemplate includes
 #include "qSlicerPerkEvaluatorModule.h"
 #include "qSlicerPerkEvaluatorModuleWidget.h"
+#include "qSlicerTablesReader.h"
+
+#include "qSlicerNodeWriter.h"
+#include "qSlicerCoreIOManager.h"
+#include "qSlicerCoreApplication.h"
 
 //-----------------------------------------------------------------------------
 Q_EXPORT_PLUGIN2(qSlicerPerkEvaluatorModule, qSlicerPerkEvaluatorModule);
@@ -105,6 +110,7 @@ void qSlicerPerkEvaluatorModule::setup()
 {
   this->Superclass::setup();
 
+  qSlicerCoreApplication* app = qSlicerCoreApplication::application();
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( this->logic() );
   qSlicerAbstractCoreModule* TransformRecorderModule = qSlicerCoreApplication::application()->moduleManager()->module("TransformRecorder");
 
@@ -112,6 +118,11 @@ void qSlicerPerkEvaluatorModule::setup()
   {
     PerkEvaluatorLogic->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( TransformRecorderModule->logic() );
   }
+  
+  // Register the IO
+  app->coreIOManager()->registerIO( new qSlicerTablesReader( PerkEvaluatorLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "PerkEvaluator", QString( "Table" ), QStringList() << "vtkMRMLTableNode", this ) );
+  
 }
 
 //-----------------------------------------------------------------------------

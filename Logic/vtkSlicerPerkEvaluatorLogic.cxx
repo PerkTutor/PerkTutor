@@ -5,6 +5,8 @@
 // MRML includes
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLTransformNode.h"
+#include "vtkMRMLTableNode.h"
+#include "vtkMRMLTableStorageNode.h"
 
 // VTK includes
 #include <vtkDataArray.h>
@@ -101,6 +103,8 @@ void vtkSlicerPerkEvaluatorLogic
     this->ToolTrajectories.at(i).Buffer->Delete();
   }
   this->ToolTrajectories.clear();
+
+  this->MetricsNode = NULL;
 }
 
 
@@ -146,6 +150,13 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::New();
   this->GetMRMLScene()->RegisterNodeClass( peNode );
   peNode->Delete();
+
+  vtkMRMLTableNode* tNode = vtkMRMLTableNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( tNode );
+  tNode->Delete();
+  vtkMRMLTableStorageNode* tsNode = vtkMRMLTableStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( tsNode );
+  tsNode->Delete();
 }
 
 
@@ -172,19 +183,18 @@ void vtkSlicerPerkEvaluatorLogic
 // -----------------------------------------------------------------------------------
 
 
-std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
+vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
 ::GetMetrics( vtkMRMLPerkEvaluatorNode* peNode )
 {
-  std::vector<MetricType> metrics;
 
   // Check conditions
   if ( peNode == NULL )
   {
-    return metrics;
+    return NULL;
   }
   if ( peNode->GetMarkBegin() >= peNode->GetMarkEnd() ) // Is a test for to see if the MarkBegin and MarkEnd are within the bounds of the procedure time really necessary?
   {
-    return metrics;
+    return NULL;
   }
 
   // Use the python metrics calculator module
@@ -192,22 +202,11 @@ std::vector<vtkSlicerPerkEvaluatorLogic::MetricType> vtkSlicerPerkEvaluatorLogic
   pythonManager->executeString( "import PythonMetricsCalculator" );
   pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
   pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
-  pythonManager->executeString( "PythonMetricsVariable = PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
-  QVariant result = pythonManager->getVariable( "PythonMetricsVariable" );
-  QStringList pythonMetrics = result.toStringList();
+  pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetMetricsNodeID( '%1' )" ).arg( this->MetricsNode->GetID() ) );
+  pythonManager->executeString( "PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
 
-  int i = 0;
-  while ( i < pythonMetrics.length() )
-  {
-    MetricType currentPythonMetric;
-    currentPythonMetric.first = pythonMetrics.at( i ).toStdString();
-    currentPythonMetric.second = atof( pythonMetrics.at( i + 1 ).toStdString().c_str() );
-    metrics.push_back( currentPythonMetric );
-    i = i + 2;
-  }
-
-
-  return metrics;
+  this->MetricsNode->StorableModified();
+  return this->MetricsNode;
 }
 
 
@@ -247,6 +246,42 @@ void vtkSlicerPerkEvaluatorLogic
     currentTrajectory.Buffer = toolBuffers.at(i);
     this->ToolTrajectories.push_back( currentTrajectory );
 
+  }
+
+  this->FindOrCreateMetricsNode( bufferNode );
+
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::FindOrCreateMetricsNode( vtkMRMLTransformBufferNode* bufferNode )
+{
+  // Also, find the metrics table node associated with the buffer  
+  this->MetricsNode = NULL;
+
+  vtkSmartPointer< vtkCollection > tableNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLTableNode" );
+  for ( int i = 0; i < tableNodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLTableNode* currentNode = vtkMRMLTableNode::SafeDownCast( tableNodes->GetItemAsObject( i ) );
+    if ( currentNode == NULL || currentNode->GetNodeReferenceID( "TransformBuffer" ) == NULL )
+    {
+      continue;
+    }
+
+    if ( strcmp( currentNode->GetNodeReferenceID( "TransformBuffer" ), bufferNode->GetID() ) == 0 )
+    {
+      this->MetricsNode = currentNode;
+    }
+  }
+
+  if ( this->MetricsNode == NULL )
+  {
+    vtkSmartPointer< vtkMRMLTableNode > newMetricsNode;
+    newMetricsNode.TakeReference( vtkMRMLTableNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLTableNode" ) ) );
+    newMetricsNode->SetScene( this->GetMRMLScene() );
+    newMetricsNode->SetNodeReferenceID( "TransformBuffer", bufferNode->GetID() );
+    this->GetMRMLScene()->AddNode( newMetricsNode );
+    this->MetricsNode = newMetricsNode;
   }
 
 }
@@ -502,4 +537,38 @@ void vtkSlicerPerkEvaluatorLogic
 
   }
 
+}
+
+
+// THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
+vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
+::AddTable(const char* fileName, const char* name)
+{
+  if (this->GetMRMLScene() == 0 || fileName == 0)
+    {
+    return 0;
+    }
+
+  // Storage node
+  vtkNew<vtkMRMLTableStorageNode> tableStorageNode;
+  tableStorageNode->SetFileName(fileName);
+  this->GetMRMLScene()->AddNode(tableStorageNode.GetPointer());
+
+  // Storable node
+  vtkNew<vtkMRMLTableNode> tableNode;
+  this->GetMRMLScene()->AddNode(tableNode.GetPointer());
+
+  // Read
+  int res = tableStorageNode->ReadData(tableNode.GetPointer());
+  if (res == 0) // failed to read
+    {
+    this->GetMRMLScene()->RemoveNode(tableStorageNode.GetPointer());
+    this->GetMRMLScene()->RemoveNode(tableNode.GetPointer());
+    return 0;
+    }
+  if (name)
+    {
+    tableNode->SetName(name);
+    }
+  return tableNode.GetPointer();
 }
