@@ -21,6 +21,8 @@
 // FooBar Widgets includes
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
 
+#include "qSlicerTransformBufferWidget.h" // TODO: Remove when GetSlicerModuleLogic made into helper function
+
 #include <QtGui>
 
 
@@ -65,7 +67,7 @@ void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 qSlicerWorkflowSegmentationRecorderControlsWidget
 ::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
-  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
+  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
 }
 
 
@@ -80,7 +82,7 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
   //this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
-  this->TransformRecorderLogic->ClearTransforms( this->BufferHelper->GetTransformBufferNode() );
+  this->TransformRecorderLogic->ClearTransforms( this->TransformBufferNode );
   this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
   
   this->updateWidget();

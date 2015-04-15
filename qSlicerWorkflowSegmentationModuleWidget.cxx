@@ -123,8 +123,8 @@ void qSlicerWorkflowSegmentationModuleWidget
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
 
 }
 
@@ -398,9 +398,9 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
   }
 
   // This updates the tasks
-  d->logic()->Update( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
+  d->logic()->Update( d->TransformBufferWidget->getTransformBufferNode() );
 
-  this->InstructionLabel->setText( d->logic()->GetToolInstructions( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() ).c_str() );
+  this->InstructionLabel->setText( d->logic()->GetToolInstructions( d->TransformBufferWidget->getTransformBufferNode() ).c_str() );
 
   d->ToolsAvailableTableWidget->setRowCount( 0 );
   d->ToolsAvailableTableWidget->setColumnCount( 1 );
