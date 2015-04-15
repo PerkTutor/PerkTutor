@@ -24,6 +24,25 @@
 #include <QtGui>
 
 
+// Helper functions -------------------------------------------------------------
+
+#include "qSlicerApplication.h"
+#include "qSlicerModuleManager.h"
+#include "qSlicerAbstractCoreModule.h"
+
+// TODO: This should really be a helper function
+vtkMRMLAbstractLogic* qSlicerTransformBufferWidget
+::GetSlicerModuleLogic( std::string moduleName )
+{
+  qSlicerAbstractCoreModule* Module = qSlicerApplication::application()->moduleManager()->module( moduleName.c_str() );
+  if ( Module != NULL )
+  {
+    return Module->logic();
+  }
+  return NULL;
+}
+
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerTransformBufferWidgetPrivate
@@ -65,8 +84,8 @@ void qSlicerTransformBufferWidgetPrivate
 qSlicerTransformBufferWidget
 ::qSlicerTransformBufferWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTransformBufferWidgetPrivate(*this) )
 {
-  this->BufferHelper = new qSlicerTransformBufferWidgetHelper();
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "TransformRecorder" ) );
+  this->TransformBufferNode = NULL;
+  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
 
@@ -89,11 +108,25 @@ void qSlicerTransformBufferWidget
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( onImportButtonClicked() ) );
   connect( d->ExportButton, SIGNAL( clicked() ), this, SLOT( onExportButtonClicked() ) );
 
-  // Listen for updates from the helper
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeModified() ), this, SLOT( onTransformBufferNodeModified() ) );
-
   this->updateWidget();  
+}
+
+vtkMRMLTransformBufferNode* qSlicerTransformBufferWidget
+::getTransformBufferNode()
+{
+  Q_D(qSlicerTransformBufferWidget);
+
+  return this->TransformBufferNode;
+}
+
+
+void qSlicerTransformBufferWidget
+::setTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
+{
+  Q_D(qSlicerTransformBufferWidget);
+
+  d->BufferNodeComboBox->setCurrentNode( newTransformBufferNode );
+  // If it is a new transform buffer, then the onTransformBufferNodeChanged will be called automatically
 }
 
 
@@ -102,8 +135,15 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  this->BufferHelper->SetTransformBufferNode( vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode ) ); // Update widget taken care of already
-  emit transformBufferNodeChanged( this->BufferHelper->GetTransformBufferNode() );
+  this->qvtkDisconnectAll();
+
+  this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
+
+  this->qvtkConnect( this->TransformBufferNode, vtkCommand::ModifiedEvent, this, SLOT( onTransformBufferNodeModified() ) );
+
+  this->updateWidget();
+
+  emit transformBufferNodeChanged( this->TransformBufferNode );
 }
 
 
@@ -130,7 +170,7 @@ void qSlicerTransformBufferWidget
     dialog.show();
 
     // We should create a new buffer node if there isn't one already selected
-    vtkSmartPointer< vtkMRMLTransformBufferNode > importBufferNode = this->BufferHelper->GetTransformBufferNode();
+    vtkSmartPointer< vtkMRMLTransformBufferNode > importBufferNode = this->TransformBufferNode;
     if ( importBufferNode == NULL )
     {
       importBufferNode.TakeReference( vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) ) );
@@ -161,7 +201,7 @@ void qSlicerTransformBufferWidget
   
   if ( ! filename.isEmpty() )
   {
-    this->TransformRecorderLogic->ExportToFile( this->BufferHelper->GetTransformBufferNode(), filename.toStdString() );
+    this->TransformRecorderLogic->ExportToFile( this->TransformBufferNode, filename.toStdString() );
   }
 
   // No need to update the buffer - it is not changed
@@ -174,5 +214,5 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);
 
-  d->BufferNodeComboBox->setCurrentNode( this->BufferHelper->GetTransformBufferNode() );
+  d->BufferNodeComboBox->setCurrentNode( this->TransformBufferNode );
 }

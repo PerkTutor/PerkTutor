@@ -24,7 +24,8 @@
 // Qt includes
 #include "qSlicerWidget.h"
 
-#include "qSlicerTransformBufferWidgetHelper.h"
+#include "vtkSlicerModuleLogic.h"
+#include "vtkMRMLTransformBufferNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 // FooBar Widgets includes
@@ -42,9 +43,12 @@ public:
   typedef qSlicerWidget Superclass;
   qSlicerTransformBufferWidget(QWidget *parent=0);
   virtual ~qSlicerTransformBufferWidget();
+  
+  static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );
+  // TODO: This really should be a helper function
 
-  qSlicerTransformBufferWidgetHelper* BufferHelper;
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  virtual void setTransformBufferNode( vtkMRMLTransformBufferNode* );
+  virtual vtkMRMLTransformBufferNode* getTransformBufferNode();
 
 protected slots:
 
@@ -64,6 +68,9 @@ signals:
 protected:
 
   QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
+
+  vtkMRMLTransformBufferNode* TransformBufferNode;
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
   virtual void setup();
 

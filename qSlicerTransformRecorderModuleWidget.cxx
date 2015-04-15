@@ -107,6 +107,7 @@ void qSlicerTransformRecorderModuleWidget
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->TransformBufferWidget->setMRMLScene( NULL );
   d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  d->TransformBufferWidget->setTransformBufferNode( NULL ); // Do not automatically select a node on entering the widget
 
   d->RecorderControlsWidget = new qSlicerRecorderControlsWidget();
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
@@ -120,9 +121,8 @@ void qSlicerTransformRecorderModuleWidget
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
 }
 
 
@@ -150,7 +150,7 @@ void qSlicerTransformRecorderModuleWidget
   Q_D( qSlicerTransformRecorderModuleWidget );
 
   // The statistics should be reset to zeros if no buffer is selected
-  if ( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() == NULL )
+  if ( d->TransformBufferWidget->getTransformBufferNode() == NULL )
   {
     d->TotalTimeResultLabel->setText( "0.00" );
     d->NumTransformsResultLabel->setText( "0" );
@@ -162,17 +162,17 @@ void qSlicerTransformRecorderModuleWidget
 
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->TransformBufferWidget->BufferHelper->GetTransformBufferNode()->GetTotalTime();
+  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetTotalTime();
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->BufferHelper->GetTransformBufferNode()->GetNumTransforms();;
+  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumTransforms();;
   d->NumTransformsResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->BufferHelper->GetTransformBufferNode()->GetNumMessages();;
+  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumMessages();;
   d->NumMessagesResultLabel->setText( ss.str().c_str() );
    
 }

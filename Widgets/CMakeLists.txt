@@ -8,8 +8,6 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  qSlicerTransformBufferWidgetHelper.h
-  qSlicerTransformBufferWidgetHelper.cxx
   qSlicerMessagesWidget.h
   qSlicerMessagesWidget.cxx
   qSlicerRecorderControlsWidget.h
@@ -19,7 +17,6 @@ set(${KIT}_SRCS
   )
 
 set(${KIT}_MOC_SRCS
-  qSlicerTransformBufferWidgetHelper.h
   qSlicerMessagesWidget.h
   qSlicerRecorderControlsWidget.h
   qSlicerTransformBufferWidget.h

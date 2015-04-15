@@ -23,6 +23,8 @@
 
 #include <QtGui>
 
+#include "qSlicerTransformBufferWidget.h" // TODO: Remove when GetSlicerModuleLogic made into helper function
+
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
@@ -65,8 +67,8 @@ void qSlicerMessagesWidgetPrivate
 qSlicerMessagesWidget
 ::qSlicerMessagesWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerMessagesWidgetPrivate(*this) )
 {
-  this->BufferHelper = new qSlicerTransformBufferWidgetHelper();
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "TransformRecorder" ) );
+  this->TransformBufferNode = NULL;
+  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
 
@@ -89,12 +91,23 @@ void qSlicerMessagesWidget
   connect( d->ClearMessagesButton, SIGNAL( clicked() ), this, SLOT( onClearMessagesButtonClicked() ) );
   connect( d->MessagesTableWidget, SIGNAL( cellDoubleClicked( int, int ) ), this, SLOT( onMessageDoubleClicked( int, int ) ) );
 
-  // Listen for updates from the helper
-  connect( this->BufferHelper, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferMessageAdded( int ) ), this, SLOT( updateWidget() ) );
-  connect( this->BufferHelper, SIGNAL( transformBufferMessageRemoved( int ) ), this, SLOT( updateWidget() ) );
-
   this->updateWidget();  
+}
+
+
+void qSlicerMessagesWidget
+::setTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
+{
+  Q_D(qSlicerMessagesWidget);
+
+  this->qvtkDisconnectAll();
+
+  this->TransformBufferNode = newTransformBufferNode;
+
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageAddedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageRemovedEvent, this, SLOT( updateWidget() ) );
+
+  this->updateWidget();
 }
 
 
@@ -113,7 +126,7 @@ void qSlicerMessagesWidget
   }
 
   // Record the timestamp
-  this->TransformRecorderLogic->AddMessage( this->BufferHelper->GetTransformBufferNode(), messageName.toStdString(), time );
+  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, messageName.toStdString(), time );
   
   this->updateWidget();
 }
@@ -124,7 +137,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->TransformRecorderLogic->RemoveMessage( this->BufferHelper->GetTransformBufferNode(), d->MessagesTableWidget->currentRow() );
+  this->TransformRecorderLogic->RemoveMessage( this->TransformBufferNode, d->MessagesTableWidget->currentRow() );
 
   this->updateWidget();
 }
@@ -135,7 +148,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
-  this->TransformRecorderLogic->ClearMessages( this->BufferHelper->GetTransformBufferNode() );
+  this->TransformRecorderLogic->ClearMessages( this->TransformBufferNode );
   
   this->updateWidget();
 }
@@ -160,19 +173,19 @@ void qSlicerMessagesWidget
   d->MessagesTableWidget->setHorizontalHeaderLabels( MessagesTableHeaders ); 
   d->MessagesTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
 
-  if ( this->BufferHelper->GetTransformBufferNode() == NULL )
+  if ( this->TransformBufferNode == NULL )
   {
     return;
   }
 
   // Iterate over all the messages in the buffer and add them in order
-  d->MessagesTableWidget->setRowCount( this->BufferHelper->GetTransformBufferNode()->GetNumMessages() );
-  for ( int i = 0; i < this->BufferHelper->GetTransformBufferNode()->GetNumMessages(); i++ )
+  d->MessagesTableWidget->setRowCount( this->TransformBufferNode->GetNumMessages() );
+  for ( int i = 0; i < this->TransformBufferNode->GetNumMessages(); i++ )
   {
-    double messageTime = this->BufferHelper->GetTransformBufferNode()->GetMessageAt(i)->GetTime() - this->BufferHelper->GetTransformBufferNode()->GetMinimumTime();
+    double messageTime = this->TransformBufferNode->GetMessageAt(i)->GetTime() - this->TransformBufferNode->GetMinimumTime();
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
     timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
-	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->BufferHelper->GetTransformBufferNode()->GetMessageAt(i)->GetName() ) );
+	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAt(i)->GetName() ) );
     messageItem->setFlags( messageItem->flags() & ~Qt::ItemIsEditable );
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 
