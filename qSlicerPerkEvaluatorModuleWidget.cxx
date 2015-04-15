@@ -501,8 +501,8 @@ qSlicerPerkEvaluatorModuleWidget
   d->TransformBufferWidget = new qSlicerPerkEvaluatorTransformBufferWidget();
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->TransformBufferWidget->setMRMLScene( NULL );
-  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );  
-  d->TransformBufferWidget->BufferHelper->SetTransformBufferNode( NULL );
+  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  d->TransformBufferWidget->setTransformBufferNode( NULL ); // Do not automatically select a node on entering the widget
 
   d->MessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
@@ -521,7 +521,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
 }
 
 
@@ -553,9 +553,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // If the transform buffer node is changed, update everything
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( resetWidget() ) );
-  connect( d->TransformBufferWidget->BufferHelper, SIGNAL( transformBufferTransformAdded( int ) ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is added
-  connect( d->TransformBufferWidget->BufferHelper, SIGNAL( transformBufferTransformRemoved( int ) ), this, SLOT( clearWidget() ) ); // Still need to clear because metrics will be different if a transform is removed
-
+ 
   // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
   // But resetting the tool trajectories is computationally expensive
   // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
@@ -578,13 +576,10 @@ qSlicerPerkEvaluatorModuleWidget
 
 
   // Connect the Perk Evaluator node to the update
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update
-  // Connect to update the roles widgets
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformRolesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->AnatomyRolesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
+  // NOTE: The roles widgets will be updated with the other components of the widget
 
   this->clearWidget();
-  this->updateWidget();
 }
 
 
@@ -628,7 +623,7 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
-  d->logic()->UpdateToolTrajectories( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
+  d->logic()->UpdateToolTrajectories( d->TransformBufferWidget->getTransformBufferNode() );
   d->logic()->SetPlaybackTime( d->logic()->GetMinTime() );
 
   // This is where we need to update parameters on buffer node changed
@@ -701,7 +696,9 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  // NOTE: The "Roles" widgets update themselves, so nothing needs to be done for them
+  // Update the roles widget every time the Perk Evaluator node is modified
+  d->TransformRolesWidget->setPerkEvaluatorNode( peNode );
+  d->AnatomyRolesWidget->setPerkEvaluatorNode( peNode );
 
   d->BeginSpinBox->setValue( peNode->GetMarkBegin() );
   d->EndSpinBox->setValue( peNode->GetMarkEnd() );
