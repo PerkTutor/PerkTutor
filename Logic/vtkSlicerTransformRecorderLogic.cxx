@@ -279,7 +279,7 @@ void vtkSlicerTransformRecorderLogic
   }
 
   vtkMessageRecord* newMessage = vtkMessageRecord::New();
-  newMessage->SetName( messageName );
+  newMessage->SetMessageString( messageName );
   newMessage->SetTime( time );
   bufferNode->AddMessage( newMessage );
 }
@@ -336,7 +336,7 @@ void vtkSlicerTransformRecorderLogic
   {
     if ( bufferNode->GetTransformAt(i)->GetDeviceName().compare( transformNode->GetName() ) == 0 )
 	{
-      if ( bufferNode->GetTransformAt(i)->GetTransform().compare( matrixsstring.str() ) == 0 )
+      if ( bufferNode->GetTransformAt(i)->GetTransformString().compare( matrixsstring.str() ) == 0 )
 	  {
         return; // If it is a duplicate then exit, we have nothing to record
 	  }
@@ -346,7 +346,7 @@ void vtkSlicerTransformRecorderLogic
 
 
   vtkTransformRecord* transformRecord = vtkTransformRecord::New();
-  transformRecord->SetTransform( matrixsstring.str() );
+  transformRecord->SetTransformString( matrixsstring.str() );
   transformRecord->SetDeviceName( transformNode->GetName() );
   transformRecord->SetTime( this->GetCurrentTimestamp() );
   bufferNode->AddTransform( transformRecord );
@@ -496,7 +496,7 @@ void vtkSlicerTransformRecorderLogic
 
       // Create the transform record
       vtkTransformRecord* transformRecord =  vtkTransformRecord::New();
-      transformRecord->SetTransform( value );
+      transformRecord->SetTransformString( value );
       transformRecord->SetDeviceName( transformName );
       transformRecord->SetTime( frameNumber );
 

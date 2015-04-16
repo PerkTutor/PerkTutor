@@ -89,12 +89,16 @@ void vtkMRMLTransformBufferNode
 
   for ( int i = 0; i < node->GetNumTransforms(); i++ )
   {
-    this->AddTransform( node->GetTransformAt(i)->DeepCopy() );
+    vtkSmartPointer< vtkTransformRecord > newTransform = vtkSmartPointer< vtkTransformRecord >::New();
+    newTransform->Copy( node->GetTransformAt( i ) );
+    this->AddTransform( newTransform );
   }
 
   for ( int i = 0; i < node->GetNumMessages(); i++ )
   {
-    this->AddMessage( node->GetMessageAt(i)->DeepCopy() );
+    vtkSmartPointer< vtkMessageRecord > newMessage = vtkSmartPointer< vtkMessageRecord >::New();
+    newMessage->Copy( node->GetMessageAt( i ) );
+    this->AddMessage( newMessage );
   }
 
   for ( int i = 0; i < node->GetActiveTransforms().size(); i++ )
@@ -263,7 +267,7 @@ void vtkMRMLTransformBufferNode
 {
   for ( int i = 0; i < this->messages.size(); i++ )
   {
-    if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
+    if ( this->GetMessageAt(i)->GetMessageString().compare( name ) == 0 )
 	  {
       this->GetMessageAt(i)->Delete();
 	    this->messages.erase( messages.begin() + i );
@@ -322,7 +326,7 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
 {
   for ( int i = 0; i < this->messages.size(); i++ )
   {
-    if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
+    if ( this->GetMessageAt(i)->GetMessageString().compare( name ) == 0 )
 	{
 	  return this->GetMessageAt(i);
 	}
@@ -686,7 +690,9 @@ std::vector<vtkMRMLTransformBufferNode*> vtkMRMLTransformBufferNode
 	    // Observe that a device buffer only exists if it has a transform, thus, the current transform is always available
       if ( deviceBuffers.at(j)->GetCurrentTransform()->GetDeviceName().compare( this->GetTransformAt(i)->GetDeviceName() ) == 0 )
 	    {
-        deviceBuffers.at(j)->AddTransform( this->GetTransformAt(i)->DeepCopy() );
+        vtkSmartPointer< vtkTransformRecord > newTransform = vtkSmartPointer< vtkTransformRecord >::New();
+        newTransform->Copy( this->GetTransformAt( i ) );
+        deviceBuffers.at(j)->AddTransform( newTransform );
 		    deviceExists = true;
 	    }
 	  }
@@ -694,7 +700,9 @@ std::vector<vtkMRMLTransformBufferNode*> vtkMRMLTransformBufferNode
 	  if ( ! deviceExists )
 	  {
 	    vtkMRMLTransformBufferNode* newDeviceBuffer = vtkMRMLTransformBufferNode::New();
-	    newDeviceBuffer->AddTransform( this->GetTransformAt(i)->DeepCopy() );
+      vtkSmartPointer< vtkTransformRecord > newTransform = vtkSmartPointer< vtkTransformRecord >::New();
+      newTransform->Copy( this->GetTransformAt( i ) );
+	    newDeviceBuffer->AddTransform( newTransform );
 	    deviceBuffers.push_back( newDeviceBuffer );
 	  }
 
@@ -705,7 +713,9 @@ std::vector<vtkMRMLTransformBufferNode*> vtkMRMLTransformBufferNode
   {
     for ( int j = 0; j < deviceBuffers.size(); j++ )
 	  {
-      deviceBuffers.at(j)->AddMessage( this->GetMessageAt(i)->DeepCopy() );
+      vtkSmartPointer< vtkMessageRecord > newMessage = vtkSmartPointer< vtkMessageRecord >::New();
+      newMessage->Copy( this->GetMessageAt( i ) );
+      deviceBuffers.at(j)->AddMessage( newMessage );
 	  }
   }
 

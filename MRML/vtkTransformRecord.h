@@ -29,15 +29,17 @@
 #include "vtkXMLDataElement.h"
 
 // TransformRecorder includes
+#include "vtkLogRecord.h"
+
 #include "vtkSlicerTransformRecorderModuleMRMLExport.h"
 
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
-vtkTransformRecord : public vtkObject
+vtkTransformRecord : public vtkLogRecord
 {
 public:
-  vtkTypeMacro( vtkTransformRecord, vtkObject );
+  vtkTypeMacro( vtkTransformRecord, vtkLogRecord );
 
   // Standard MRML node methods  
   static vtkTransformRecord *New();  
@@ -50,33 +52,22 @@ protected:
   
 public:
 
-  vtkTransformRecord* DeepCopy();
+  void Copy( vtkTransformRecord* otherRecord );
   
-  void SetTransform( std::string newTransform );
-  std::string GetTransform();
+  void SetTransformString( std::string newTransformString );
+  std::string GetTransformString();
 
   void SetDeviceName( std::string newDeviceName );
   std::string GetDeviceName();
-
-  void SetTimeStampSec( int newTimeStampSec );
-  int GetTimeStampSec();
-
-  void SetTimeStampNSec( int newTimeStampNSec );
-  int GetTimeStampNSec();
-
-  void SetTime( double time );
-  double GetTime();
 
   std::string ToXMLString( int indent = 2 );
   void FromXMLElement( vtkXMLDataElement* element );
 
 
-private:
+protected:
   
   std::string DeviceName;
-  std::string Transform;
-  long int TimeStampSec; 
-  int TimeStampNSec;
+  std::string TransformString; // To be consistent with "MessageString" in vtkMessageRecord
   
 };  
 

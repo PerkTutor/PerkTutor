@@ -185,7 +185,7 @@ void qSlicerMessagesWidget
     double messageTime = this->TransformBufferNode->GetMessageAt(i)->GetTime() - this->TransformBufferNode->GetMinimumTime();
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
     timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
-	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAt(i)->GetName() ) );
+	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAt(i)->GetMessageString() ) );
     messageItem->setFlags( messageItem->flags() & ~Qt::ItemIsEditable );
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 

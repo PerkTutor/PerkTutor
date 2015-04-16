@@ -12,8 +12,8 @@
 
 =========================================================================auto=*/
 
-#ifndef __vtkMessageRecord_h
-#define __vtkMessageRecord_h
+#ifndef __vtkLogRecord_h
+#define __vtkLogRecord_h
 
 // Standard includes
 #include <ctime>
@@ -29,43 +29,47 @@
 #include "vtkXMLDataElement.h"
 
 // TransformRecorder includes
-#include  "vtkLogRecord.h"
-
 #include "vtkSlicerTransformRecorderModuleMRMLExport.h"
 
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
-vtkMessageRecord : public vtkLogRecord
+vtkLogRecord : public vtkObject
 {
 public:
-  vtkTypeMacro( vtkMessageRecord, vtkLogRecord );
+  vtkTypeMacro( vtkLogRecord, vtkObject );
 
   // Standard MRML node methods  
-  static vtkMessageRecord *New();  
+  static vtkLogRecord *New();  
   
 protected:
 
   // Constructor/desctructor
-  vtkMessageRecord();
-  virtual ~vtkMessageRecord();
+  vtkLogRecord();
+  virtual ~vtkLogRecord();
   
   
 public:
 
-  void Copy( vtkMessageRecord* otherRecord );
+  void Copy( vtkLogRecord* otherRecord );
   
-  void SetMessageString( std::string newMessageString );
-  std::string GetMessageString();
+  void SetTimeStampSec( int newTimeStampSec );
+  int GetTimeStampSec();
 
-  std::string ToXMLString( int indent = 2 );
-  void FromXMLElement( vtkXMLDataElement* element );
+  void SetTimeStampNSec( int newTimeStampNSec );
+  int GetTimeStampNSec();
+
+  void SetTime( double time );
+  double GetTime();
+
+  virtual std::string ToXMLString( int indent = 2 );
+  virtual void FromXMLElement( vtkXMLDataElement* element );
 
 
 protected:
-  
-  // I would like to call this "Message", but there is a Windows conflict with the "GetMessage" function
-  std::string MessageString;
+
+  long int TimeStampSec; 
+  int TimeStampNSec;
   
 };  
 

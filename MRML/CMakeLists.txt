@@ -28,6 +28,10 @@ set(module_mrml_SRCS
   vtkMRMLTransformBufferNode.h
   vtkMRMLTransformBufferStorageNode.cxx
   vtkMRMLTransformBufferStorageNode.h
+  vtkLogRecordBuffer.cxx
+  vtkLogRecordBuffer.h
+  vtkLogRecord.h
+  vtkLogRecord.cxx
   vtkTransformRecord.cxx
   vtkTransformRecord.h
   vtkMessageRecord.cxx
