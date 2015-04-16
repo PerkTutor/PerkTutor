@@ -2,6 +2,10 @@
 
 #include "vtkMRMLPerkEvaluatorNode.h"
 
+// Constants ------------------------------------------------------------------
+static const char* TRANSFORM_BUFFER_REFERENCE_ROLE = "TransformBuffer";
+static const char* METRICS_TABLE_REFERENCE_ROLE = "MetricsTable";
+
 
 // Standard MRML Node Methods ------------------------------------------------------------
 
@@ -169,6 +173,9 @@ vtkMRMLPerkEvaluatorNode
   
   this->NeedleOrientation = vtkMRMLPerkEvaluatorNode::PlusX;
   this->MetricsDirectory = "";
+
+  this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
+  this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
 }
 
 
@@ -323,6 +330,9 @@ void vtkMRMLPerkEvaluatorNode
 }
 
 
+
+// Transform/Anatomy roles ---------------------------------------------------------------------------------------
+
 std::string vtkMRMLPerkEvaluatorNode
 ::GetTransformRole( std::string transformNodeName )
 {
@@ -400,3 +410,52 @@ void vtkMRMLPerkEvaluatorNode
   }
 }
 
+
+
+// Transform buffer/metrics table References ----------------------------------------------------------------------
+
+std::string vtkMRMLPerkEvaluatorNode
+::GetNodeReferenceIDString( std::string referenceRole )
+{
+  const char* refID = this->GetNodeReferenceID( referenceRole.c_str() );
+  std::string refIDString;
+
+  if ( refID == NULL )
+  {
+    refIDString = "";
+  }
+  else
+  {
+    refIDString = refID;
+  }
+
+  return refIDString;
+}
+
+
+
+std::string vtkMRMLPerkEvaluatorNode
+::GetTransformBufferID()
+{
+  return this->GetNodeReferenceIDString( TRANSFORM_BUFFER_REFERENCE_ROLE );
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetTransformBufferID( std::string newTransformBufferID )
+{
+  this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str() );
+}
+
+std::string vtkMRMLPerkEvaluatorNode
+::GetMetricsTableID()
+{
+  return this->GetNodeReferenceIDString( METRICS_TABLE_REFERENCE_ROLE );
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetMetricsTableID( std::string newMetricsTableID )
+{
+  this->SetAndObserveNodeReferenceID( METRICS_TABLE_REFERENCE_ROLE, newMetricsTableID.c_str() );
+}

@@ -525,7 +525,7 @@ void vtkSlicerPerkEvaluatorLogic
   for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
   {	
     vtkMRMLLinearTransformNode* node = this->ToolTrajectories.at(i).Node;
-    std::string transformString = this->ToolTrajectories.at(i).Buffer->GetTransformAtTime( time )->GetTransform();
+    std::string transformString = this->ToolTrajectories.at(i).Buffer->GetTransformAtTime( time )->GetTransformString();
 
 #ifdef TRANSFORM_NODE_MATRIX_COPY_REQUIRED
     vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();

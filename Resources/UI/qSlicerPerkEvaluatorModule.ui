@@ -15,6 +15,24 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="qMRMLNodeComboBox" name="PerkEvaluatorNodeComboBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="nodeTypes">
+      <stringlist>
+       <string>vtkMRMLPerkEvaluatorNode</string>
+      </stringlist>
+     </property>
+     <property name="renameEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QToolBox" name="ModuleToolBoxWidget">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -34,7 +52,7 @@
         <x>0</x>
         <y>0</y>
         <width>606</width>
-        <height>797</height>
+        <height>771</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -318,32 +336,14 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>328</width>
-        <height>323</height>
+        <width>606</width>
+        <height>771</height>
        </rect>
       </property>
       <attribute name="label">
        <string>Analysis</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_9">
-       <item>
-        <widget class="qMRMLNodeComboBox" name="PerkEvaluatorNodeComboBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="nodeTypes">
-          <stringlist>
-           <string>vtkMRMLPerkEvaluatorNode</string>
-          </stringlist>
-         </property>
-         <property name="renameEnabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QGroupBox" name="MeasurementParametersGroupBox">
          <property name="sizePolicy">
@@ -629,8 +629,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>176</width>
-        <height>117</height>
+        <width>606</width>
+        <height>771</height>
        </rect>
       </property>
       <attribute name="label">

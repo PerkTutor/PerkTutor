@@ -40,14 +40,10 @@
 // PerkEvaluator includes
 #include "vtkSlicerPerkEvaluatorModuleMRMLExport.h"
 
-// Includes from Transform Recorder
-#include "vtkMRMLTransformBufferNode.h"
 
-struct TransformTrajectory
-{
-  vtkMRMLTransformBufferNode* Buffer;
-  vtkMRMLLinearTransformNode* Node;
-};
+// Includes from other modules
+#include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLTableNode.h"
 
 
 class VTK_SLICER_PERKEVALUATOR_MODULE_MRML_EXPORT
@@ -111,12 +107,20 @@ public:
   std::string GetAnatomyNodeName( std::string anatomyRole );
   std::string GetFirstAnatomyRole( std::string anatomyNodeName );
   void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
-  
-  
 
 
+  // Reference to transform buffer and to metrics node
+  std::string GetNodeReferenceIDString( std::string referenceRole );
+
+  std::string GetTransformBufferID();
+  void SetTransformBufferID( std::string newTransformBufferID );
+
+  std::string GetMetricsTableID();
+  void SetMetricsTableID( std::string newMetricsTableID );
   
-private:
+
+  
+protected:
 
 /* To store:
 TransformRoleMap
