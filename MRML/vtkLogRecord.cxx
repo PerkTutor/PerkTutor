@@ -23,6 +23,11 @@ vtkLogRecord
 void vtkLogRecord
 ::Copy( vtkLogRecord* otherRecord )
 {
+  if ( otherRecord == NULL )
+  {
+    return;
+  }
+
   this->SetTimeStampSec( otherRecord->GetTimeStampSec() );
   this->SetTimeStampNSec( otherRecord->GetTimeStampNSec() );
 }

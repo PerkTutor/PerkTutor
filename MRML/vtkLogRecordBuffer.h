@@ -59,11 +59,13 @@ protected:
   
 public:
 
+  void Copy( vtkLogRecordBuffer* otherBuffer );
+
   void Concatenate( vtkLogRecordBuffer* catBuffer );
   
-  void AddRecord( vtkLogRecord* newRecord );
+  int AddRecord( vtkLogRecord* newRecord ); // Return the index of the added location
 
-  void RemoveRecord( int index );
+  bool RemoveRecord( int index ); // Return whether the remove was successful
   
   vtkLogRecord* GetRecord( int index );
   vtkLogRecord* GetCurrentRecord();

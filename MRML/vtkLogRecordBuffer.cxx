@@ -22,7 +22,25 @@ vtkLogRecordBuffer
 
 
 
-// Transforms and Messages ------------------------------------------------------------------------
+// Records ------------------------------------------------------------------------
+
+void vtkLogRecordBuffer
+::Copy( vtkLogRecordBuffer* otherBuffer )
+{
+  if ( otherBuffer == NULL )
+  {
+    return;
+  }
+
+  // Copy all of the records
+  for ( int i = 0; i < otherBuffer->GetNumRecords(); i++ )
+  {
+    vtkSmartPointer< vtkLogRecord > newRecord = vtkSmartPointer< vtkLogRecord >::New();
+    newRecord->Copy( otherBuffer->GetRecord( i ) );
+    this->AddRecord( newRecord );
+  }
+
+}
 
 
 void vtkLogRecordBuffer
@@ -36,7 +54,7 @@ void vtkLogRecordBuffer
 }
 
 
-void vtkLogRecordBuffer
+int vtkLogRecordBuffer
 ::AddRecord( vtkLogRecord* newRecord )
 {
   // Ensure that we put it into sorted order (usually it will go at the end)
@@ -44,39 +62,46 @@ void vtkLogRecordBuffer
   if ( this->GetNumRecords() < 1 )
   {
     this->Records.push_back( newRecord );
-	  return;
+	  return 0;
   }
   if ( newRecord->GetTime() >= this->GetCurrentRecord()->GetTime() )
   {
     this->Records.push_back( newRecord );
-	  return;
+	  return this->GetNumRecords() - 1;
   }
   if ( newRecord->GetTime() <= this->GetRecord(0)->GetTime() )
   {
     this->Records.insert( this->Records.begin() + 0, newRecord );
-	  return;
+	  return 0;
   }
 
   // Use the binary search
   insertLocation = this->GetPriorRecordIndex( newRecord->GetTime() ) + 1;
   this->Records.insert( this->Records.begin() + insertLocation, newRecord );
+  return insertLocation;
 }
 
 
-void vtkLogRecordBuffer
+bool vtkLogRecordBuffer
 ::RemoveRecord( int index )
 {
   if ( index >= 0 && index < this->GetNumRecords() )
   {
     this->Records.erase( this->Records.begin() + index );
+    return true;
   }
+  return false;
 }
 
 
 vtkLogRecord* vtkLogRecordBuffer
 ::GetRecord( int index )
 {
-  return this->Records.at( index );
+  if ( index >= 0 && index < this->GetNumRecords() )
+  {
+    return this->Records.at( index );
+  }
+  return NULL;
 }
 
 

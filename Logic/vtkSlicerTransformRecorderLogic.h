@@ -69,26 +69,15 @@ public:
   /// Initialize listening to MRML events
   void InitializeEventListeners();
 
-  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
-  
-  double GetCurrentTimestamp();
-
-  // Functions to control recording.
-  void AddObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
-  void RemoveObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
-  bool IsObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node );
-
-  void SetRecording( vtkMRMLTransformBufferNode* bufferNode, bool isRecording );
-  bool GetRecording( vtkMRMLTransformBufferNode* bufferNode );
+  // Convenience methods for intersection between widget and MRML
   void ClearTransforms( vtkMRMLTransformBufferNode* bufferNode );
 
-  void AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string name, double time );
+  void AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string messageString, double time );
   void RemoveMessage( vtkMRMLTransformBufferNode* bufferNode, int index );
   void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
 
-  void AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode );
-
-  void AddTransformsToScene( vtkMRMLTransformBufferNode* bufferNode );
+  void ObserveAllRecordedTransforms( vtkMRMLTransformBufferNode* bufferNode );
+  void AddAllRecordedTransformsToScene( vtkMRMLTransformBufferNode* bufferNode );
 
   void ImportFromXMLFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
   void ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
@@ -100,9 +89,6 @@ private:
   vtkSlicerTransformRecorderLogic(const vtkSlicerTransformRecorderLogic&); // Not implemented
   void operator=(const vtkSlicerTransformRecorderLogic&);               // Not implemented
   // Reference to the module MRML node.
-
-  std::vector<vtkMRMLTransformBufferNode*> RecordingBuffers;
-  double Clock0;
 
 };
 

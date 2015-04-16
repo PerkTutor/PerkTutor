@@ -23,6 +23,11 @@ vtkTransformRecord
 void vtkTransformRecord
 ::Copy( vtkTransformRecord* otherRecord )
 {
+  if ( otherRecord == NULL )
+  {
+    return;
+  }
+
   this->vtkLogRecord::Copy( otherRecord );
   this->SetTransformString( otherRecord->GetTransformString() );
   this->SetDeviceName( otherRecord->GetDeviceName() );

@@ -22,6 +22,11 @@ vtkMessageRecord
 void vtkMessageRecord
 ::Copy( vtkMessageRecord* otherRecord )
 {
+  if ( otherRecord == NULL )
+  {
+    return;
+  }
+
   this->vtkLogRecord::Copy( otherRecord );
   this->SetMessageString( otherRecord->GetMessageString() );
 }
