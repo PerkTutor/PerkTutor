@@ -109,8 +109,7 @@ bool qSlicerTransformRecorderIO::load(const IOProperties& properties)
     d->TransformRecorderLogic->ImportFromMHAFile( importBufferNode, fileName.toStdString() ); 
   }
 
-  importBufferNode->SetActiveTransformsFromBuffer();
-  d->TransformRecorderLogic->AddTransformsToScene( importBufferNode );
+  d->TransformRecorderLogic->ObserveAllRecordedTransforms( importBufferNode ); // Automatically adds all transforms to the scene
 
   std::stringstream importBufferName;
   importBufferName << importBufferNode->GetName() << "_" << baseName.toStdString();

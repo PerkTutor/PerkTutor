@@ -116,7 +116,7 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);  
 
-  double time = this->TransformRecorderLogic->GetCurrentTimestamp();
+  double time = this->TransformBufferNode->GetCurrentTimestamp();
 
   QString messageName = QInputDialog::getText( this, tr("Add Message"), tr("Input text for the new message:") );
 
@@ -182,10 +182,10 @@ void qSlicerMessagesWidget
   d->MessagesTableWidget->setRowCount( this->TransformBufferNode->GetNumMessages() );
   for ( int i = 0; i < this->TransformBufferNode->GetNumMessages(); i++ )
   {
-    double messageTime = this->TransformBufferNode->GetMessageAt(i)->GetTime() - this->TransformBufferNode->GetMinimumTime();
+    double messageTime = this->TransformBufferNode->GetMessageAtIndex(i)->GetTime() - this->TransformBufferNode->GetMinimumTime();
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
     timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
-	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAt(i)->GetMessageString() ) );
+	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAtIndex(i)->GetMessageString() ) );
     messageItem->setFlags( messageItem->flags() & ~Qt::ItemIsEditable );
     d->MessagesTableWidget->setItem( i, 0, timeItem );
     d->MessagesTableWidget->setItem( i, 1, messageItem ); 

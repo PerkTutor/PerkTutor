@@ -97,10 +97,10 @@ public:
   void RemoveMessage( int index );
   void RemoveMessagesByName( std::string name );
 
-  vtkTransformRecord* GetTransform( int index, std::string transformName );
+  vtkTransformRecord* GetTransformAtIndex( int index, std::string transformName );
   vtkTransformRecord* GetCurrentTransform( std::string transformName );
 
-  vtkMessageRecord* GetMessage( int index );
+  vtkMessageRecord* GetMessageAtIndex( int index );
   vtkMessageRecord* GetCurrentMessage();
 
   vtkTransformRecord* GetTransformAtTime( double time, std::string transformName );
@@ -122,10 +122,12 @@ public:
   void AddActiveTransformID( std::string transformID );
   void RemoveActiveTransformID( std::string transformID );
   std::vector< std::string > GetActiveTransformIDs();
+  bool IsActiveTransformID( std::string transformID );
   void SetActiveTransformIDs( std::vector< std::string > transformIDs );
 
   void StartRecording();
   void StopRecording();
+  bool GetRecording();
   double GetCurrentTimestamp();
 
   void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );

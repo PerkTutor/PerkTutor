@@ -54,7 +54,6 @@ protected slots:
   void onClearButtonClicked();
 
   void onCheckedTransformsChanged();
-  void onActiveTransformsUpdated();
 
   void updateWidget();
 

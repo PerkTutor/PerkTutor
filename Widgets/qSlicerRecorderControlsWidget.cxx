@@ -114,14 +114,6 @@ void qSlicerRecorderControlsWidget
 void qSlicerRecorderControlsWidget
 ::onTransformBufferActiveTransformsChanged()
 {
-  this->updateWidget();
-  this->onCheckedTransformsChanged(); // TODO: This is just a hack until the observed transforms are synced with the active transforms
-}
-
-
-void qSlicerRecorderControlsWidget
-::onActiveTransformsUpdated()
-{
   Q_D(qSlicerRecorderControlsWidget);
 
   // Disable to the onCheckedChanged listener when initializing the selections
@@ -131,7 +123,7 @@ void qSlicerRecorderControlsWidget
   // Assume the default is not checked, and check all those that are observed
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    if ( this->TransformRecorderLogic->IsObservedTransformNode( this->TransformBufferNode, d->TransformCheckableComboBox->nodeFromIndex(i) ) )
+    if ( this->TransformBufferNode->IsActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
     {
 	    d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
     }
@@ -155,11 +147,11 @@ void qSlicerRecorderControlsWidget
   {
     if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked  )
     {
-      this->TransformRecorderLogic->AddObservedTransformNode( this->TransformBufferNode, d->TransformCheckableComboBox->nodeFromIndex(i) );
+      this->TransformBufferNode->AddActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() );
     }
     else
     {
-      this->TransformRecorderLogic->RemoveObservedTransformNode( this->TransformBufferNode, d->TransformCheckableComboBox->nodeFromIndex(i) );
+      this->TransformBufferNode->RemoveActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() );
     }
   }
 
@@ -173,7 +165,7 @@ void qSlicerRecorderControlsWidget
   Q_D(qSlicerRecorderControlsWidget);  
   
   // The observed transforms should be dealt with in the TransformRecorder logic
-  this->TransformRecorderLogic->SetRecording( this->TransformBufferNode, true );
+  this->TransformBufferNode->StartRecording();
   d->StatusResultLabel->setText( "Recording" );
   
   this->updateWidget();
@@ -185,7 +177,7 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);  
 
-  this->TransformRecorderLogic->SetRecording( this->TransformBufferNode, false );
+  this->TransformBufferNode->StopRecording();
   d->StatusResultLabel->setText( "Waiting" );
   
   this->updateWidget();
@@ -209,7 +201,7 @@ void qSlicerRecorderControlsWidget
   Q_D(qSlicerRecorderControlsWidget);
 
   // Set the text indicating recording
-  if ( this->TransformRecorderLogic->GetRecording( this->TransformBufferNode ) )
+  if ( this->TransformBufferNode->GetRecording() )
   {
     d->StatusResultLabel->setText( "Recording" );
   }
@@ -218,5 +210,5 @@ void qSlicerRecorderControlsWidget
     d->StatusResultLabel->setText( "Waiting" );
   }
 
-  this->onActiveTransformsUpdated();
+  this->onTransformBufferActiveTransformsChanged();
 }

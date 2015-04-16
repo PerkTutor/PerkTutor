@@ -144,7 +144,7 @@ void vtkMRMLTransformBufferNode
 
   for ( int i = 0; i < catBuffer->GetNumMessages(); i++ )
   {
-    this->AddMessage( catBuffer->GetMessage( i ) );
+    this->AddMessage( catBuffer->GetMessageAtIndex( i ) );
   }
 
 }
@@ -231,7 +231,7 @@ void vtkMRMLTransformBufferNode
 {
   for ( int i = 0; i < this->MessageRecordBuffer->GetNumRecords(); i++ )
   {
-    if ( this->GetMessage(i)->GetMessageString().compare( name ) == 0 )
+    if ( this->GetMessageAtIndex(i)->GetMessageString().compare( name ) == 0 )
 	  {
       this->RemoveMessage( i );
 	    i--;
@@ -244,7 +244,7 @@ void vtkMRMLTransformBufferNode
 
 
 vtkTransformRecord* vtkMRMLTransformBufferNode
-::GetTransform( int index, std::string transformName )
+::GetTransformAtIndex( int index, std::string transformName )
 {
   if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
   {
@@ -268,7 +268,7 @@ vtkTransformRecord* vtkMRMLTransformBufferNode
 
 
 vtkMessageRecord* vtkMRMLTransformBufferNode
-::GetMessage( int index )
+::GetMessageAtIndex( int index )
 {
   return vtkMessageRecord::SafeDownCast( this->MessageRecordBuffer->GetRecord( index ) );
 }
@@ -477,6 +477,22 @@ std::vector< std::string > vtkMRMLTransformBufferNode
 }
   
 
+bool vtkMRMLTransformBufferNode
+::IsActiveTransformID( std::string transformID )
+{
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( ACTIVE_TRANSFORM_REFERENCE_ROLE ); i++ )
+  {
+    if ( transformID.compare( this->GetNthNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 void vtkMRMLTransformBufferNode
 ::SetActiveTransformIDs( std::vector< std::string > transformIDs )
 {
@@ -508,6 +524,13 @@ void vtkMRMLTransformBufferNode
 ::StopRecording()
 {
   this->RecordingState = false;
+}
+
+
+bool vtkMRMLTransformBufferNode
+::GetRecording()
+{
+  return this->RecordingState;
 }
 
 
