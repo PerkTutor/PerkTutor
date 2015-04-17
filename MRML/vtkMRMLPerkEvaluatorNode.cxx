@@ -58,6 +58,7 @@ void vtkMRMLPerkEvaluatorNode
   of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
   of << indent << "MetricsDirectory=\"" << this->MetricsDirectory << "\"";
+  of << indent << "PlaybackTime=\"" << this->PlaybackTime << "\"";
   
   // Add the transform role map
   int transformRoleCounter = 0;
@@ -118,6 +119,10 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->MetricsDirectory = std::string( attValue );
     }
+    if ( ! strcmp( attName, "PlaybackTime" ) )
+    {
+      this->PlaybackTime = atof( attValue );
+    }
 
     if ( std::string( attName ).find( "TransformRoleMap" ) != std::string::npos )
     {
@@ -153,6 +158,7 @@ void vtkMRMLPerkEvaluatorNode
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
   this->MetricsDirectory = std::string( node->MetricsDirectory );
+  this->PlaybackTime = node->PlaybackTime;
   
   this->TransformRoleMap = std::map< std::string, std::string >( node->TransformRoleMap );
   this->AnatomyNodeMap = std::map< std::string, std::string >( node->AnatomyNodeMap );
@@ -173,6 +179,8 @@ vtkMRMLPerkEvaluatorNode
   
   this->NeedleOrientation = vtkMRMLPerkEvaluatorNode::PlusX;
   this->MetricsDirectory = "";
+
+  this->PlaybackTime = 0.0;
 
   this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
@@ -330,6 +338,24 @@ void vtkMRMLPerkEvaluatorNode
 }
 
 
+double vtkMRMLPerkEvaluatorNode
+::GetPlaybackTime()
+{
+  return this->PlaybackTime;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetPlaybackTime( double newPlaybackTime )
+{
+  if ( newPlaybackTime != this->PlaybackTime )
+  {
+    this->PlaybackTime = newPlaybackTime;
+    this->Modified();
+  }
+}
+
+
 
 // Transform/Anatomy roles ---------------------------------------------------------------------------------------
 
@@ -433,6 +459,12 @@ std::string vtkMRMLPerkEvaluatorNode
 }
 
 
+vtkMRMLTransformBufferNode* vtkMRMLPerkEvaluatorNode
+::GetTransformBufferNode()
+{
+  return vtkMRMLTransformBufferNode::SafeDownCast( this->GetNodeReference( TRANSFORM_BUFFER_REFERENCE_ROLE ) );
+}
+
 
 std::string vtkMRMLPerkEvaluatorNode
 ::GetTransformBufferID()
@@ -446,6 +478,14 @@ void vtkMRMLPerkEvaluatorNode
 {
   this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str() );
 }
+
+
+vtkMRMLTableNode* vtkMRMLPerkEvaluatorNode
+::GetMetricsTableNode()
+{
+  return vtkMRMLTableNode::SafeDownCast( this->GetNodeReference( METRICS_TABLE_REFERENCE_ROLE ) );
+}
+
 
 std::string vtkMRMLPerkEvaluatorNode
 ::GetMetricsTableID()

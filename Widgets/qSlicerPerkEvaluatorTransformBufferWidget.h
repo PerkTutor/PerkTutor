@@ -41,14 +41,17 @@ public:
   qSlicerPerkEvaluatorTransformBufferWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorTransformBufferWidget();
 
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
-
 protected slots:
 
-  void onTransformBufferNodeChanged( vtkMRMLNode* );
+  virtual void setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode );
+
+  void onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
 
 protected:
   QScopedPointer<qSlicerPerkEvaluatorTransformBufferWidgetPrivate> d_ptr;
+
+  vtkMRMLPerkEvaluatorNode* PerkEvaluatorNode;
+  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorTransformBufferWidget);

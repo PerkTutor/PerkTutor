@@ -65,6 +65,7 @@ void qSlicerPerkEvaluatorTransformBufferWidgetPrivate
 qSlicerPerkEvaluatorTransformBufferWidget
 ::qSlicerPerkEvaluatorTransformBufferWidget(QWidget* parentWidget) : qSlicerTransformBufferWidget( parentWidget ), d_ptr( new qSlicerPerkEvaluatorTransformBufferWidgetPrivate(*this) )
 {
+  this->PerkEvaluatorNode = NULL;
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
@@ -72,6 +73,17 @@ qSlicerPerkEvaluatorTransformBufferWidget
 qSlicerPerkEvaluatorTransformBufferWidget
 ::~qSlicerPerkEvaluatorTransformBufferWidget()
 {
+}
+
+
+void qSlicerPerkEvaluatorTransformBufferWidget
+::setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode )
+{
+  Q_D(qSlicerPerkEvaluatorTransformBufferWidget);
+
+  this->PerkEvaluatorNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( newPerkEvaluatorNode );
+
+  this->updateWidget();
 }
 
 
@@ -88,8 +100,7 @@ void qSlicerPerkEvaluatorTransformBufferWidget
 
   this->updateWidget();
 
-  this->PerkEvaluatorLogic->UpdateToolTrajectories( this->TransformBufferNode );
-  this->PerkEvaluatorLogic->SetPlaybackTime( this->PerkEvaluatorLogic->GetMinTime() );
+  this->PerkEvaluatorLogic->SetRelativePlaybackTime( this->PerkEvaluatorNode, 0 );
 
   emit transformBufferNodeChanged( this->TransformBufferNode );
 }

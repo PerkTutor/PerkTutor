@@ -39,9 +39,9 @@ public:
   qSlicerPerkEvaluatorMessagesWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorMessagesWidget();
 
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
-
 protected slots:
+
+  virtual void setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode );
 
   void onAddMessageButtonClicked();
   void onMessageDoubleClicked( int row, int column );
@@ -49,6 +49,9 @@ protected slots:
 protected:
   QScopedPointer<qSlicerPerkEvaluatorMessagesWidgetPrivate> d_ptr;
 
+  vtkMRMLPerkEvaluatorNode* PerkEvaluatorNode;
+  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+  
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorMessagesWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorMessagesWidget);

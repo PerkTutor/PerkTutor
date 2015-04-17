@@ -81,8 +81,6 @@ vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
 vtkSlicerPerkEvaluatorLogic
 ::vtkSlicerPerkEvaluatorLogic()
 {
-  this->PlaybackTime = 0.0;
-
   this->TransformRecorderLogic = NULL;
 }
 
@@ -91,20 +89,6 @@ vtkSlicerPerkEvaluatorLogic
 vtkSlicerPerkEvaluatorLogic::
 ~vtkSlicerPerkEvaluatorLogic()
 {
-  this->ClearData();
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::ClearData()
-{
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
-  {
-    this->ToolTrajectories.at(i).Buffer->Delete();
-  }
-  this->ToolTrajectories.clear();
-
-  this->MetricsNode = NULL;
 }
 
 
@@ -124,7 +108,6 @@ void vtkSlicerPerkEvaluatorLogic
 void vtkSlicerPerkEvaluatorLogic
 ::OnMRMLSceneEndClose()
 {
-  this->ClearData();
 }
 
 
@@ -151,6 +134,7 @@ void vtkSlicerPerkEvaluatorLogic
   this->GetMRMLScene()->RegisterNodeClass( peNode );
   peNode->Delete();
 
+  // TODO: Remove when table nodes integrated into Slicer core
   vtkMRMLTableNode* tNode = vtkMRMLTableNode::New();
   this->GetMRMLScene()->RegisterNodeClass( tNode );
   tNode->Delete();
@@ -183,18 +167,18 @@ void vtkSlicerPerkEvaluatorLogic
 // -----------------------------------------------------------------------------------
 
 
-vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
-::GetMetrics( vtkMRMLPerkEvaluatorNode* peNode )
+void vtkSlicerPerkEvaluatorLogic
+::ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode )
 {
 
   // Check conditions
   if ( peNode == NULL )
   {
-    return NULL;
+    return;
   }
-  if ( peNode->GetMarkBegin() >= peNode->GetMarkEnd() ) // Is a test for to see if the MarkBegin and MarkEnd are within the bounds of the procedure time really necessary?
+  if ( peNode->GetMarkBegin() >= peNode->GetMarkEnd() ) // TODO: Is a test for to see if the MarkBegin and MarkEnd are within the bounds of the procedure time really necessary?
   {
-    return NULL;
+    return;
   }
 
   // Use the python metrics calculator module
@@ -202,128 +186,48 @@ vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
   pythonManager->executeString( "import PythonMetricsCalculator" );
   pythonManager->executeString( "PythonMetricsCalculatorLogic = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
   pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
-  pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetMetricsNodeID( '%1' )" ).arg( this->MetricsNode->GetID() ) );
+  pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetMetricsNodeID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
   pythonManager->executeString( "PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
 
-  this->MetricsNode->StorableModified();
-  return this->MetricsNode;
-}
-
-
-//Read XML file that was written by TransformRecorder module.
-void vtkSlicerPerkEvaluatorLogic
-::UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode )
-{
-  this->ClearData();
-  // The import function from the Transform Recorder Logic will automatically add the transform nodes to the scene
-  if ( bufferNode == NULL )
-  {
-    return;
-  }
-
-  std::vector< vtkMRMLTransformBufferNode* > toolBuffers = bufferNode->SplitBufferByName();
-
-  for ( int i = 0; i < toolBuffers.size(); i++ )
-  {	
-    std::string toolName = toolBuffers.at(i)->GetCurrentTransform()->GetDeviceName();
-
-    vtkMRMLLinearTransformNode* node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( toolName.c_str(), "vtkMRMLLinearTransformNode" ) );
-    if ( node == NULL )
-    {
-      node = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) );
-	    this->GetMRMLScene()->AddNode( node );
-	    node->SetScene( this->GetMRMLScene() );
-	    node->SetName( toolName.c_str() );
-    }
-
-    // TODO: This may not be optimal
-    // Only set all of the nodes in the buffer to have role "Any" when the PerkEvaluator node is created?
-    // this->SetTransformRole( node->GetName(), "Any" );
-
-    // Add to the tool trajectories
-    ToolTrajectory currentTrajectory;
-    currentTrajectory.Node = node;
-    currentTrajectory.Buffer = toolBuffers.at(i);
-    this->ToolTrajectories.push_back( currentTrajectory );
-
-  }
-
-  this->FindOrCreateMetricsNode( bufferNode );
-
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::FindOrCreateMetricsNode( vtkMRMLTransformBufferNode* bufferNode )
-{
-  // Also, find the metrics table node associated with the buffer  
-  this->MetricsNode = NULL;
-
-  vtkSmartPointer< vtkCollection > tableNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLTableNode" );
-  for ( int i = 0; i < tableNodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLTableNode* currentNode = vtkMRMLTableNode::SafeDownCast( tableNodes->GetItemAsObject( i ) );
-    if ( currentNode == NULL || currentNode->GetNodeReferenceID( "TransformBuffer" ) == NULL )
-    {
-      continue;
-    }
-
-    if ( strcmp( currentNode->GetNodeReferenceID( "TransformBuffer" ), bufferNode->GetID() ) == 0 )
-    {
-      this->MetricsNode = currentNode;
-    }
-  }
-
-  if ( this->MetricsNode == NULL )
-  {
-    vtkSmartPointer< vtkMRMLTableNode > newMetricsNode;
-    newMetricsNode.TakeReference( vtkMRMLTableNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLTableNode" ) ) );
-    newMetricsNode->SetScene( this->GetMRMLScene() );
-    newMetricsNode->SetNodeReferenceID( "TransformBuffer", bufferNode->GetID() );
-    this->GetMRMLScene()->AddNode( newMetricsNode );
-    this->MetricsNode = newMetricsNode;
-  }
-
+  peNode->GetMetricsTableNode()->StorableModified(); // Make sure the metrics table is saved be default
 }
 
 
 
-vtkMRMLTransformBufferNode* vtkSlicerPerkEvaluatorLogic
-::GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transformNode )
+
+vtkLogRecordBuffer* vtkSlicerPerkEvaluatorLogic
+::GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode )
 {
+  // TODO: We only care about this for times. Is there a more efficient way to do this?
+
   // Iterate through the parents and add to temporary transform buffer if in the selected transform buffer for analysis
-  vtkMRMLTransformBufferNode* selfParentBuffer = vtkMRMLTransformBufferNode::New();
+  vtkSmartPointer< vtkLogRecordBuffer > selfParentBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+
+  if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
+  {
+    return selfParentBuffer;
+  }
+
+  std::vector< std::string > recordedTransformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
 
   vtkMRMLLinearTransformNode* parent = transformNode;
   while( parent != NULL )
   {
+
     // Check if the parent's name matches one of the trajectory names
-    for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+    for ( int i = 0; i < recordedTransformNames.size(); i++ )
     {
-      if ( this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetDeviceName().compare( parent->GetName() ) == 0 )
+      if ( recordedTransformNames.at( i ).compare( parent->GetName() ) == 0 )
 	    {
-        // Concatenate into the transform if so
-        vtkMRMLTransformBufferNode* currentCopyBuffer = vtkMRMLTransformBufferNode::New();
-        currentCopyBuffer->Copy( this->ToolTrajectories.at( i ).Buffer );
-        selfParentBuffer->Concatenate( currentCopyBuffer );
+        // Concatenate into the record buffer if so. Note: No need to deep copy - the times are really all we need
+        selfParentBuffer->Concatenate( peNode->GetTransformBufferNode()->GetTransformRecordBuffer( recordedTransformNames.at( i ) ) );
 	    }
     }
+
 	  parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
   }
 
   return selfParentBuffer;
-}
-
-
-std::vector< std::string > vtkSlicerPerkEvaluatorLogic
-::GetAllBufferToolNames()
-{
-  std::vector< std::string > bufferToolNames( this->ToolTrajectories.size(), "" );
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
-  {
-    bufferToolNames.at( i ) = this->ToolTrajectories.at( i ).Node->GetName();
-  }
-  return bufferToolNames;
 }
 
 
@@ -437,110 +341,86 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
-double vtkSlicerPerkEvaluatorLogic
-::GetTotalTime() const
-{
-  double minTime = this->GetMinTime();
-  double maxTime = this->GetMaxTime();
-  
-  double totalTime = maxTime - minTime;
-  
-  if ( totalTime < 0 )
-  {
-    return 0.0;
-  }
-  else
-  {
-    return totalTime;
-  }
-
-}
-
-
-
-double vtkSlicerPerkEvaluatorLogic
-::GetMinTime() const
-{
-  if ( this->ToolTrajectories.size() == 0 )
-  {
-    return 0.0;
-  }
-
-  double minTime = std::numeric_limits< double >::max();
-  
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
-  {
-    if ( this->ToolTrajectories.at(i).Buffer->GetTransformAt(0)->GetTime() < minTime )
-    {
-      minTime = this->ToolTrajectories.at(i).Buffer->GetTransformAt(0)->GetTime();
-    }
-  }
-  
-  return minTime;
-}
-
-
-
-double vtkSlicerPerkEvaluatorLogic
-::GetMaxTime() const
-{
-  if ( this->ToolTrajectories.size() == 0 )
-  {
-    return 0.0;
-  }
-
-  double maxTime = - std::numeric_limits< double >::max();
-  
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
-  {
-    if ( this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetTime() > maxTime )
-    {
-      maxTime = this->ToolTrajectories.at(i).Buffer->GetCurrentTransform()->GetTime();
-    }
-  }
-  
-  return maxTime;
-}
-
-
-
-double vtkSlicerPerkEvaluatorLogic
-::GetPlaybackTime() const
-{
-  return this->PlaybackTime;
-}
-
-
 
 void vtkSlicerPerkEvaluatorLogic
-::SetPlaybackTime( double time )
+::UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode )
 {
-  if ( time < this->GetMinTime() || time > this->GetMaxTime() )
+  if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
   {
     return;
   }
   
-  this->PlaybackTime = time;  
+  std::vector< std::string > recordedTransformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
 
-  for ( int i = 0; i < this->ToolTrajectories.size(); i++ )
+  for ( int i = 0; i < recordedTransformNames.size(); i++ )
   {	
-    vtkMRMLLinearTransformNode* node = this->ToolTrajectories.at(i).Node;
-    std::string transformString = this->ToolTrajectories.at(i).Buffer->GetTransformAtTime( time )->GetTransformString();
+    // Find the linear transform node assicated with the transform name
+    vtkMRMLLinearTransformNode* linearTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( recordedTransformNames.at( i ).c_str(), "vtkMRMLLinearTransformNode" ) );
+    if ( linearTransformNode == NULL )
+    {
+      continue;
+    }
 
-#ifdef TRANSFORM_NODE_MATRIX_COPY_REQUIRED
+    std::string transformString = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), recordedTransformNames.at( i ) )->GetTransformString();
+
     vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
     transformMatrix->DeepCopy( MatrixStrToDouble( transformString ) );
-    node->SetMatrixTransformToParent( transformMatrix );
-#else
-	node->GetMatrixTransformToParent()->DeepCopy( MatrixStrToDouble( transformString ) );
-#endif
-
+    linearTransformNode->SetMatrixTransformToParent( transformMatrix );
   }
 
 }
 
 
-// THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
+// Get/Set playback for node -----------------------------------------------------------------------
+
+double vtkSlicerPerkEvaluatorLogic
+::GetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode )
+{
+  if ( peNode == NULL )
+  {
+    return 0.0;
+  }
+  if ( peNode->GetTransformBufferNode() == NULL )
+  {
+    return peNode->GetPlaybackTime();
+  }
+
+  return peNode->GetPlaybackTime() - peNode->GetTransformBufferNode()->GetMinimumTime();
+}
+
+void vtkSlicerPerkEvaluatorLogic
+::SetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double time )
+{
+  if ( peNode == NULL )
+  {
+    return;
+  }
+  if ( peNode->GetTransformBufferNode() == NULL )
+  {
+    peNode->SetPlaybackTime( time );
+  }
+
+  peNode->SetPlaybackTime( time + peNode->GetTransformBufferNode()->GetMinimumTime() );
+}
+
+
+double vtkSlicerPerkEvaluatorLogic
+::GetMaximumRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode )
+{
+  if ( peNode == NULL )
+  {
+    return 0.0;
+  }
+  if ( peNode->GetTransformBufferNode() == NULL )
+  {
+    return 0.0;
+  }
+
+  return peNode->GetTransformBufferNode()->GetMaximumTime();
+}
+
+
+// TODO: THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
 vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
 ::AddTable(const char* fileName, const char* name)
 {

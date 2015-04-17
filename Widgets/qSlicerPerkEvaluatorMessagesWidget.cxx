@@ -67,6 +67,7 @@ void qSlicerPerkEvaluatorMessagesWidgetPrivate
 qSlicerPerkEvaluatorMessagesWidget
 ::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
 {
+  this->PerkEvaluatorNode = NULL;
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
@@ -74,6 +75,17 @@ qSlicerPerkEvaluatorMessagesWidget
 qSlicerPerkEvaluatorMessagesWidget
 ::~qSlicerPerkEvaluatorMessagesWidget()
 {
+}
+
+
+void qSlicerPerkEvaluatorMessagesWidget
+::setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode )
+{
+  Q_D(qSlicerPerkEvaluatorMessagesWidget);
+
+  this->PerkEvaluatorNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( newPerkEvaluatorNode );
+
+  this->updateWidget();
 }
 
 
@@ -90,7 +102,7 @@ void qSlicerPerkEvaluatorMessagesWidget
   }
 
   // Record the timestamp
-  double time = this->PerkEvaluatorLogic->GetPlaybackTime();
+  double time = this->PerkEvaluatorNode->GetPlaybackTime();
   this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, messageName.toStdString(), time );
   
   this->updateWidget();  // Force this update widget
@@ -102,8 +114,8 @@ void qSlicerPerkEvaluatorMessagesWidget
 {
   Q_D(qSlicerPerkEvaluatorMessagesWidget);  
 
-  double messageTime = this->TransformBufferNode->GetMessageAt( row )->GetTime();
-  this->PerkEvaluatorLogic->SetPlaybackTime( messageTime );
+  double messageTime = this->TransformBufferNode->GetMessageAtIndex( row )->GetTime();
+  this->PerkEvaluatorNode->SetPlaybackTime( messageTime );
 
   this->updateWidget();  // Force this update widget
 }

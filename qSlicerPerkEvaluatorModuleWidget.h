@@ -54,10 +54,7 @@ public slots:
   void onNeedleTransformChanged( vtkMRMLNode* node );
   void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
-  void updateWidget();
-  void resetWidget();
-  void clearWidget();
-
+  void onTransformBufferChanged();
   void mrmlNodeChanged( vtkMRMLNode* );
   void updateWidgetFromMRMLNode();
 
@@ -69,7 +66,9 @@ protected:
   virtual void enter();
 
   QTimer* PlaybackTimer;
+  // TODO: Should these be moved to the PerkEvaluator node? Should these be changeable by the user?
   double PlaybackTimerIntervalSec;
+  double FrameStepSec;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);

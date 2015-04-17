@@ -80,7 +80,7 @@ public:
   bool GetAutoUpdateTransformRoles();
   void SetAutoUpdateTransformRoles( bool update );
 
-  // Analysis start/end times
+  // Analysis start/end times (note: these are relative times)
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
   
@@ -97,6 +97,10 @@ public:
   // Metrics directory
   std::string GetMetricsDirectory();
   void SetMetricsDirectory( std::string newMetricsDirectory );
+
+  // Playback time
+  double GetPlaybackTime();
+  void SetPlaybackTime( double newPlaybackTime );
   
 
   // Getters/setters associated with roles
@@ -112,9 +116,11 @@ public:
   // Reference to transform buffer and to metrics node
   std::string GetNodeReferenceIDString( std::string referenceRole );
 
+  vtkMRMLTransformBufferNode* GetTransformBufferNode();
   std::string GetTransformBufferID();
   void SetTransformBufferID( std::string newTransformBufferID );
 
+  vtkMRMLTableNode* GetMetricsTableNode();
   std::string GetMetricsTableID();
   void SetMetricsTableID( std::string newMetricsTableID );
   
@@ -129,6 +135,7 @@ MarkEnd
 MarkBegin
 NeedleOrientation
 MetricsDirectory
+PlaybackTime
 */
 
   bool AutoUpdateMeasurementRange;
@@ -140,6 +147,8 @@ MetricsDirectory
   NeedleOrientationEnum NeedleOrientation;
   
   std::string MetricsDirectory;
+
+  double PlaybackTime;
 
   std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
   std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names
