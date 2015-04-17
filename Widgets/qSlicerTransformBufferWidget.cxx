@@ -121,7 +121,7 @@ vtkMRMLTransformBufferNode* qSlicerTransformBufferWidget
 
 
 void qSlicerTransformBufferWidget
-::setTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
+::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
 {
   Q_D(qSlicerTransformBufferWidget);
 

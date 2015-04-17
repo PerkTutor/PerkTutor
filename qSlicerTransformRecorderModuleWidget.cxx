@@ -121,8 +121,8 @@ void qSlicerTransformRecorderModuleWidget
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
 }
 
 
@@ -137,7 +137,7 @@ void qSlicerTransformRecorderModuleWidget
   this->setupEmbeddedWidgets();
 
   // If the transform buffer node is changed, update everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( updateWidget() ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( updateWidget() ) );
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
 
   this->updateWidget();

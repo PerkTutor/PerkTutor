@@ -45,7 +45,7 @@ public:
 
 protected slots:
 
-  virtual void setTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode );
+  virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
 
   virtual void onTransformBufferActiveTransformsChanged();
 

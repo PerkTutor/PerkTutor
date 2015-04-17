@@ -106,7 +106,9 @@ public:
   vtkTransformRecord* GetTransformAtTime( double time, std::string transformName );
   vtkMessageRecord* GetMessageAtTime( double time );
 
-  std::vector< std::string > GetAllRecordedTransforms();
+  vtkLogRecordBuffer* GetTransformRecordBuffer( std::string transformName );
+
+  std::vector< std::string > GetAllRecordedTransformNames();
 
   int GetNumTransforms();
   int GetNumMessages();

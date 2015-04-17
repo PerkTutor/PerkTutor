@@ -47,7 +47,7 @@ public:
   static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );
   // TODO: This really should be a helper function
 
-  virtual void setTransformBufferNode( vtkMRMLTransformBufferNode* );
+  virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
   virtual vtkMRMLTransformBufferNode* getTransformBufferNode();
 
 protected slots:
@@ -55,14 +55,14 @@ protected slots:
   void onImportButtonClicked();
   void onExportButtonClicked();
 
-  virtual void onTransformBufferNodeChanged( vtkMRMLNode* );
+  virtual void onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
   void onTransformBufferNodeModified();
 
   void updateWidget();
 
 signals:
 
-  void transformBufferNodeChanged( vtkMRMLTransformBufferNode* );
+  void transformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
   void transformBufferNodeModified();
 
 protected:

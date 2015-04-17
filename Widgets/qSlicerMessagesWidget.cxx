@@ -96,16 +96,19 @@ void qSlicerMessagesWidget
 
 
 void qSlicerMessagesWidget
-::setTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
+::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
 {
   Q_D(qSlicerMessagesWidget);
 
   this->qvtkDisconnectAll();
 
-  this->TransformBufferNode = newTransformBufferNode;
+  this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
 
   this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageAddedEvent, this, SLOT( updateWidget() ) );
   this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageRemovedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformAddedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformRemovedEvent, this, SLOT( updateWidget() ) );
+  // Have to listen to the transform add/remove events in case that changes the relative time of the messages
 
   this->updateWidget();
 }

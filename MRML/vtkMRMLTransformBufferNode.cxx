@@ -300,8 +300,15 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
 }
 
 
+vtkLogRecordBuffer* vtkMRMLTransformBufferNode
+::GetTransformRecordBuffer( std::string transformName )
+{
+  return this->TransformRecordBuffers[ transformName ];
+}
+
+
 std::vector< std::string > vtkMRMLTransformBufferNode
-::GetAllRecordedTransforms()
+::GetAllRecordedTransformNames()
 {
   std::vector< std::string > recordedTransforms;
   std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
@@ -342,7 +349,7 @@ double vtkMRMLTransformBufferNode
 ::GetMaximumTime()
 {
   // Max over all transform names
-  int maxTime = - std::numeric_limits< double >::max();
+  double maxTime = - std::numeric_limits< double >::max();
   std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
@@ -357,7 +364,7 @@ double vtkMRMLTransformBufferNode
     maxTime = this->MessageRecordBuffer->GetMaximumTime();
   }
 
-  return 0.0;
+  return maxTime;
 }
 
 
@@ -366,7 +373,7 @@ double vtkMRMLTransformBufferNode
 ::GetMinimumTime()
 {
   // Min over all transform names
-  int minTime = std::numeric_limits< double >::max();
+  double minTime = std::numeric_limits< double >::max();
   std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
@@ -381,7 +388,7 @@ double vtkMRMLTransformBufferNode
     minTime = this->MessageRecordBuffer->GetMinimumTime();
   }
 
-  return 0.0;
+  return minTime;
 }
 
 
@@ -405,6 +412,9 @@ void vtkMRMLTransformBufferNode
 {
   // No need to explicitly call the VTK delete function on each of these VTK objects (since we use smart pointers)
   this->TransformRecordBuffers.clear(); // Everything else will be automatically taken care of by smart pointers
+
+  this->Modified();
+  this->InvokeEvent( this->TransformRemovedEvent );
 }
 
 
@@ -413,6 +423,9 @@ void vtkMRMLTransformBufferNode
 {
   // Do not delete the buffer, just clear it
   this->MessageRecordBuffer->Clear();
+
+  this->Modified();
+  this->InvokeEvent( this->MessageRemovedEvent );
 }
 
 
@@ -573,19 +586,17 @@ void vtkMRMLTransformBufferNode
       matrixsstring << transformMatrix->GetElement( row, col ) << " ";
     }
   }
-
-  // Find the relevant record buffer, and make sure it is not a duplicate
-  if ( this->TransformRecordBuffers.find( transformNode->GetName() ) == this->TransformRecordBuffers.end() )
-  {
-    return;
-  }
   
   // Look for the most recent value of this transform
-  // If the value hasn't changed, we don't record
-  vtkTransformRecord* testDuplicateRecord = vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformNode->GetName() ]->GetCurrentRecord() );
-  if ( testDuplicateRecord->GetTransformString().compare( matrixsstring.str() ) == 0 )
+  if ( this->TransformRecordBuffers.find( transformNode->GetName() ) != this->TransformRecordBuffers.end() )
   {
-    return; // If it is a duplicate then exit, we have nothing to record  
+    // If the value hasn't changed, we don't record
+    // Find the relevant record buffer, and make sure it is not a duplicate
+    vtkTransformRecord* testDuplicateRecord = vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformNode->GetName() ]->GetCurrentRecord() );
+    if ( testDuplicateRecord->GetTransformString().compare( matrixsstring.str() ) == 0 )
+    {
+      return; // If it is a duplicate then exit, we have nothing to record  
+    }
   }
 
 

@@ -96,13 +96,13 @@ void qSlicerRecorderControlsWidget
 
 
 void qSlicerRecorderControlsWidget
-::setTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode )
+::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
 {
   Q_D(qSlicerRecorderControlsWidget);
 
   this->qvtkDisconnectAll();
 
-  this->TransformBufferNode = newTransformBufferNode;
+  this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
 
   this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformAddedEvent, this, SLOT( onTransformBufferActiveTransformsChanged() ) );
   this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent, this, SLOT( onTransformBufferActiveTransformsChanged() ) );
@@ -123,7 +123,7 @@ void qSlicerRecorderControlsWidget
   // Assume the default is not checked, and check all those that are observed
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    if ( this->TransformBufferNode->IsActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
+    if ( this->TransformBufferNode != NULL && this->TransformBufferNode->IsActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
     {
 	    d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
     }
@@ -141,6 +141,11 @@ void qSlicerRecorderControlsWidget
 ::onCheckedTransformsChanged()
 {
   Q_D(qSlicerRecorderControlsWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
     
   // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
@@ -199,6 +204,11 @@ void qSlicerRecorderControlsWidget
 ::updateWidget()
 {
   Q_D(qSlicerRecorderControlsWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
 
   // Set the text indicating recording
   if ( this->TransformBufferNode->GetRecording() )

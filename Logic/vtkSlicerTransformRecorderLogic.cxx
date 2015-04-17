@@ -171,7 +171,7 @@ void vtkSlicerTransformRecorderLogic
   this->AddAllRecordedTransformsToScene( bufferNode );
 
   // Now, observe all of them
-  std::vector< std::string > recordedTransforms = bufferNode->GetAllRecordedTransforms();
+  std::vector< std::string > recordedTransforms = bufferNode->GetAllRecordedTransformNames();
   for ( int i = 0; i < recordedTransforms.size(); i++ )
   {	
     vtkSmartPointer< vtkMRMLLinearTransformNode > transformNode;
@@ -191,7 +191,7 @@ void vtkSlicerTransformRecorderLogic
   // This adds all the recorded transforms to the scene
   // Note: The active transforms should already be in the scene anyway
 
-  std::vector< std::string > recordedTransforms = bufferNode->GetAllRecordedTransforms();
+  std::vector< std::string > recordedTransforms = bufferNode->GetAllRecordedTransformNames();
   for ( int i = 0; i < recordedTransforms.size(); i++ )
   {	
     vtkSmartPointer< vtkMRMLLinearTransformNode > transformNode;
