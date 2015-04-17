@@ -117,6 +117,7 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, value );
+  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -129,6 +130,7 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetRelativePlaybackTime( peNode ) + this->FrameStepSec );
+  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -141,6 +143,7 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetRelativePlaybackTime( peNode ) - this->FrameStepSec );
+  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -153,6 +156,7 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, 0 );
+  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -165,6 +169,7 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
+  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -199,16 +204,19 @@ void qSlicerPerkEvaluatorModuleWidget
     if ( d->PlaybackRepeatCheckBox->checkState() == Qt::Checked )
     {
       d->logic()->SetRelativePlaybackTime( peNode, 0 );
+      d->logic()->UpdateSceneToPlaybackTime( peNode );
     }
     else
     {
       d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
+      d->logic()->UpdateSceneToPlaybackTime( peNode );
       this->PlaybackTimer->stop();
     }
   }
   else
   {
     d->logic()->SetRelativePlaybackTime( peNode, newRelativePlaybackTime );
+    d->logic()->UpdateSceneToPlaybackTime( peNode );
   }
 
 }
@@ -534,7 +542,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+
 }
 
 
@@ -565,13 +573,12 @@ qSlicerPerkEvaluatorModuleWidget
   d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
 
   // If the transform buffer node is changed, update everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( onTransformBufferChanged() ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged() ) );
  
   // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
   // But resetting the tool trajectories is computationally expensive
   // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
-
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
 
 
   // Perk Evaluator node dependent

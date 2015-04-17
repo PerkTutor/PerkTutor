@@ -96,11 +96,18 @@ void qSlicerPerkEvaluatorTransformBufferWidget
 
   this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
 
+  if ( this->PerkEvaluatorNode != NULL )
+  {
+    if ( this->TransformBufferNode != NULL )
+    {
+      this->PerkEvaluatorNode->SetTransformBufferID( newTransformBufferNode->GetID() );
+    }
+    this->PerkEvaluatorLogic->SetRelativePlaybackTime( this->PerkEvaluatorNode, 0 );
+  }
+
   this->qvtkDisconnect( this->TransformBufferNode, vtkCommand::ModifiedEvent, this, SLOT( onTransformBufferNodeModified() ) );
 
   this->updateWidget();
-
-  this->PerkEvaluatorLogic->SetRelativePlaybackTime( this->PerkEvaluatorNode, 0 );
 
   emit transformBufferNodeChanged( this->TransformBufferNode );
 }

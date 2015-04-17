@@ -398,6 +398,7 @@ void vtkSlicerPerkEvaluatorLogic
   if ( peNode->GetTransformBufferNode() == NULL )
   {
     peNode->SetPlaybackTime( time );
+    return;
   }
 
   peNode->SetPlaybackTime( time + peNode->GetTransformBufferNode()->GetMinimumTime() );
@@ -416,7 +417,7 @@ double vtkSlicerPerkEvaluatorLogic
     return 0.0;
   }
 
-  return peNode->GetTransformBufferNode()->GetMaximumTime();
+  return peNode->GetTransformBufferNode()->GetMaximumTime() - peNode->GetTransformBufferNode()->GetMinimumTime();
 }
 
 
