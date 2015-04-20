@@ -98,7 +98,7 @@ int vtkMRMLTableStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
       vtkNew<vtkDelimitedTextReader> reader;
       reader->SetFileName(fullName.c_str());
       reader->SetFieldDelimiterCharacters(",");
-      reader->SetHaveHeaders(false);
+      reader->SetHaveHeaders(true); // TODO: Changed from original vtkMRMLTableNode code. Should this be an option in the reader?
       reader->SetDetectNumericColumns(true);
       reader->Update();
       tableNode->SetTable(reader->GetOutput());

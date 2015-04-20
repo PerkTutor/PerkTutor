@@ -417,7 +417,7 @@ double vtkSlicerPerkEvaluatorLogic
     return 0.0;
   }
 
-  return peNode->GetTransformBufferNode()->GetMaximumTime() - peNode->GetTransformBufferNode()->GetMinimumTime();
+  return peNode->GetTransformBufferNode()->GetTotalTime();
 }
 
 

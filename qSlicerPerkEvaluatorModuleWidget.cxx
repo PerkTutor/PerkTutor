@@ -53,8 +53,9 @@ public:
   vtkSlicerPerkEvaluatorLogic* logic() const;
 
   // Add embedded widgets here
-  qSlicerPerkEvaluatorTransformBufferWidget* TransformBufferWidget;
+  qSlicerTransformBufferWidget* TransformBufferWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
+  qSlicerMetricsTableWidget* MetricsTableWidget;
   qSlicerPerkEvaluatorTransformRolesWidget* TransformRolesWidget;
   qSlicerPerkEvaluatorAnatomyRolesWidget* AnatomyRolesWidget;
 };
@@ -117,7 +118,6 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, value );
-  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -130,7 +130,6 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetRelativePlaybackTime( peNode ) + this->FrameStepSec );
-  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -143,7 +142,6 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetRelativePlaybackTime( peNode ) - this->FrameStepSec );
-  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -156,7 +154,6 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, 0 );
-  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -169,7 +166,6 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
 
   d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
-  d->logic()->UpdateSceneToPlaybackTime( peNode );
 }
 
 
@@ -204,19 +200,16 @@ void qSlicerPerkEvaluatorModuleWidget
     if ( d->PlaybackRepeatCheckBox->checkState() == Qt::Checked )
     {
       d->logic()->SetRelativePlaybackTime( peNode, 0 );
-      d->logic()->UpdateSceneToPlaybackTime( peNode );
     }
     else
     {
       d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
-      d->logic()->UpdateSceneToPlaybackTime( peNode );
       this->PlaybackTimer->stop();
     }
   }
   else
   {
     d->logic()->SetRelativePlaybackTime( peNode, newRelativePlaybackTime );
-    d->logic()->UpdateSceneToPlaybackTime( peNode );
   }
 
 }
@@ -250,64 +243,9 @@ void qSlicerPerkEvaluatorModuleWidget
   d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
 
   dialog.setValue( 80 );
-  
-  // Set up the table
-  d->MetricsTable->clear();
-  d->MetricsTable->setRowCount( 0 );
-  d->MetricsTable->setColumnCount( 0 ); 
-
-  QStringList MetricsTableHeaders;
-  MetricsTableHeaders << "Metric" << "Value";
-  d->MetricsTable->setRowCount( metricsTableNode->GetTable()->GetNumberOfRows() );
-  d->MetricsTable->setColumnCount( 2 );
-  d->MetricsTable->setHorizontalHeaderLabels( MetricsTableHeaders );
-  d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
-  
-  // Add the computed values to the table
-  for ( int i = 0; i < metricsTableNode->GetTable()->GetNumberOfRows(); i++ )
-  {
-    QString nameString;
-    nameString = nameString + QString( metricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
-    nameString = nameString + QString( " " );
-    nameString = nameString + QString( metricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
-    QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
-    d->MetricsTable->setItem( i, 0, nameItem );
-
-    QString valueString;
-    valueString = valueString + QString( metricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
-    valueString = valueString + QString( " " );
-    valueString = valueString + QString( metricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
-    QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
-    d->MetricsTable->setItem( i, 1, valueItem );
-  }
 
   dialog.close();
 }
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnClipboardClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  // TODO: Should this be taken directly from the metrics table node?
-  // Grab all of the contents from whatever is currently on the metrics table
-  QString clipString = QString( "" );
-
-  for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
-  {
-    for ( int j = 0; j < d->MetricsTable->columnCount(); j++ )
-    {
-      QTableWidgetItem* currentItem = d->MetricsTable->item( i, j );
-      clipString.append( currentItem->text() );
-      clipString.append( QString( "\t" ) );
-    }
-    clipString.append( QString( "\n" ) );
-  }
-
-  QApplication::clipboard()->setText( clipString );
-}
-
 
 
 void qSlicerPerkEvaluatorModuleWidget
@@ -519,7 +457,7 @@ qSlicerPerkEvaluatorModuleWidget
   Q_D(qSlicerPerkEvaluatorModuleWidget);
 
   // Adding the embedded widgets
-  d->TransformBufferWidget = new qSlicerPerkEvaluatorTransformBufferWidget();
+  d->TransformBufferWidget = new qSlicerTransformBufferWidget();
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->TransformBufferWidget->setMRMLScene( NULL );
   d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
@@ -529,6 +467,11 @@ qSlicerPerkEvaluatorModuleWidget
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
   d->MessagesWidget->setMRMLScene( NULL ); 
   d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() ); 
+
+  d->MetricsTableWidget = new qSlicerMetricsTableWidget();
+  d->ResultsGroupBox->layout()->addWidget( d->MetricsTableWidget );
+  d->MetricsTableWidget->setMRMLScene( NULL ); 
+  d->MetricsTableWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
   d->TransformRolesWidget = new qSlicerPerkEvaluatorTransformRolesWidget();
   d->TransformRolesGroupBox->layout()->addWidget( d->TransformRolesWidget );
@@ -569,16 +512,17 @@ qSlicerPerkEvaluatorModuleWidget
   connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
-  connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( OnClipboardClicked() ) );
-  d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
 
   // If the transform buffer node is changed, update everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged() ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
+  connect( d->MetricsTableWidget, SIGNAL( metricsTableNodeChanged( vtkMRMLNode* ) ), this, SLOT( onMetricsTableChanged( vtkMRMLNode* ) ) );
  
   // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
   // But resetting the tool trajectories is computationally expensive
   // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+
+
 
 
   // Perk Evaluator node dependent
@@ -599,7 +543,7 @@ qSlicerPerkEvaluatorModuleWidget
   // Connect the Perk Evaluator node to the update
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
 
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformBufferWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
+  //connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformBufferWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
   // NOTE: The roles widgets will be updated with the other components of the widget
 
@@ -633,13 +577,19 @@ qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::onTransformBufferChanged()
+::onTransformBufferChanged( vtkMRMLNode* newTransformBuffer )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
   // This is where we need to update parameters on buffer node changed
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-  if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetTransformBufferID( newTransformBuffer->GetID() );
+  if ( peNode->GetTransformBufferNode() == NULL )
   {
     return;
   }
@@ -663,7 +613,24 @@ void qSlicerPerkEvaluatorModuleWidget
     }
   }
 
-  // The Perk Evaluator node will be updated and automatically call the "updateWidgetFromMRML" function to deal with the widget
+  // The Perk Evaluator node automatically call the "updateWidgetFromMRML" function to deal with the widget
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::onMetricsTableChanged( vtkMRMLNode* newMetricsTable )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  // This is where we need to update parameters on buffer node changed
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetMetricsTableID( newMetricsTable->GetID() );
+  // The Perk Evaluator node automatically call the "updateWidgetFromMRML" function to deal with the widget
 }
 
 
@@ -744,5 +711,5 @@ void qSlicerPerkEvaluatorModuleWidget
     d->MinusZRadioButton->setChecked( Qt::Checked );
   }
 
-  
+  d->logic()->UpdateSceneToPlaybackTime( peNode );  
 }

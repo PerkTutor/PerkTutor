@@ -10,8 +10,8 @@ set(${KIT}_INCLUDE_DIRECTORIES
 set(${KIT}_SRCS
   qSlicerPerkEvaluatorMessagesWidget.cxx
   qSlicerPerkEvaluatorMessagesWidget.h
-  qSlicerPerkEvaluatorTransformBufferWidget.cxx
-  qSlicerPerkEvaluatorTransformBufferWidget.h
+  qSlicerMetricsTableWidget.cxx
+  qSlicerMetricsTableWidget.h
   qSlicerPerkEvaluatorRolesWidget.cxx
   qSlicerPerkEvaluatorRolesWidget.h
   qSlicerPerkEvaluatorTransformRolesWidget.cxx
@@ -23,17 +23,19 @@ set(${KIT}_SRCS
 set(${KIT}_MOC_SRCS
   qSlicerPerkEvaluatorRolesWidget.h
   qSlicerPerkEvaluatorMessagesWidget.h
-  qSlicerPerkEvaluatorTransformBufferWidget.h
+  qSlicerMetricsTableWidget.h
   qSlicerPerkEvaluatorTransformRolesWidget.h
   qSlicerPerkEvaluatorAnatomyRolesWidget.h
   )
   
 set(${KIT}_UI_SRCS
   Resources/UI/qSlicerPerkEvaluatorRolesWidget.ui
+  Resources/UI/qSlicerMetricsTableWidget.ui
   )
 
 set(${KIT}_RESOURCES
   Resources/UI/qSlicerPerkEvaluatorRolesWidget.ui
+  Resources/UI/qSlicerMetricsTableWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES

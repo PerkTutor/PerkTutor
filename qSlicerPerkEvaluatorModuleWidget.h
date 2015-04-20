@@ -5,10 +5,12 @@
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
-#include "qSlicerPerkEvaluatorTransformBufferWidget.h"
+#include "qSlicerTransformBufferWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
+#include "qSlicerMetricsTableWidget.h"
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
 #include "qSlicerPerkEvaluatorAnatomyRolesWidget.h"
+
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
 class qSlicerPerkEvaluatorModuleWidgetPrivate;
@@ -39,7 +41,6 @@ public slots:
   void OnTimeout();
 
   void OnAnalyzeClicked();
-  void OnClipboardClicked();
 
   void OnMarkBeginChanged();
   void OnMarkBeginClicked();
@@ -54,8 +55,9 @@ public slots:
   void onNeedleTransformChanged( vtkMRMLNode* node );
   void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
-  void onTransformBufferChanged();
-  void mrmlNodeChanged( vtkMRMLNode* );
+  void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
+  void onMetricsTableChanged( vtkMRMLNode* newMetricsTable );
+  void mrmlNodeChanged( vtkMRMLNode* peNode );
   void updateWidgetFromMRMLNode();
 
 protected:
