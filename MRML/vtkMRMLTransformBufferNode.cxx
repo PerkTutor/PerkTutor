@@ -353,13 +353,13 @@ double vtkMRMLTransformBufferNode
   std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    if ( itr->second->GetMaximumTime() > maxTime )
+    if ( itr->second->GetNumRecords() > 0 && itr->second->GetMaximumTime() > maxTime )
     {
       maxTime = itr->second->GetMaximumTime();
     }
   }
 
-  if ( this->MessageRecordBuffer->GetMaximumTime() > maxTime )
+  if ( this->MessageRecordBuffer->GetNumRecords() > 0 && this->MessageRecordBuffer->GetMaximumTime() > maxTime )
   {
     maxTime = this->MessageRecordBuffer->GetMaximumTime();
   }
@@ -377,13 +377,13 @@ double vtkMRMLTransformBufferNode
   std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    if ( itr->second->GetMinimumTime() < minTime )
+    if ( itr->second->GetNumRecords() > 0 && itr->second->GetMinimumTime() < minTime )
     {
       minTime = itr->second->GetMinimumTime();
     }
   }
 
-  if ( this->MessageRecordBuffer->GetMinimumTime() < minTime )
+  if ( this->MessageRecordBuffer->GetNumRecords() > 0 && this->MessageRecordBuffer->GetMinimumTime() < minTime )
   {
     minTime = this->MessageRecordBuffer->GetMinimumTime();
   }
