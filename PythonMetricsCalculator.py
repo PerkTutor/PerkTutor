@@ -374,25 +374,28 @@ class PythonMetricsCalculatorLogic:
     # We will calculate the point here, since it is important, otherwise, the metrics are on their own
     
     # Start at the beginning (but remember where we were)
-    originalPlaybackTime = self.peLogic.GetPlaybackTime()
-    self.peLogic.SetPlaybackTime( self.peLogic.GetMinTime() )
+    originalPlaybackTime = self.peNode.GetPlaybackTime()
     
     # Get the node associated with the trajectory we are interested in
     transformName = currentTransform.GetName()
     node = self.mrmlScene.GetFirstNodeByName( transformName )
     
     # Get the self and parent transform buffer
-    selfAndParentBuffer = self.peLogic.GetSelfAndParentTransformBuffer( node )
+    timesArray = vtk.vtkDoubleArray()
+    self.peLogic.GetSelfAndParentTimes( self.peNode, node, timesArray )
+    
+    self.peNode.SetPlaybackTime( timesArray.GetValue( 0 ), True )
     
     # Initialize the matrices
     matrix = vtk.vtkMatrix4x4()
     
     # Now iterate
-    for i in range( selfAndParentBuffer.GetNumTransforms() ):
+    for i in range( timesArray.GetNumberOfTuples() ):
       
-      absTime = selfAndParentBuffer.GetTransformAt(i).GetTime()
-      self.peLogic.SetPlaybackTime( absTime )
-      relTime = absTime - self.peLogic.GetMinTime()
+      absTime = timesArray.GetValue( i )
+      self.peNode.SetPlaybackTime( absTime, True )
+      self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
+      relTime = absTime - self.peNode.GetTransformBufferNode().GetMinimumTime()
       
       matrix.Identity()
       currentTransform.GetMatrixTransformToWorld( matrix )
@@ -405,7 +408,7 @@ class PythonMetricsCalculatorLogic:
       for j in range( len( transformMetrics ) ):
         transformMetrics[j].AddTimestamp( absTime, matrix, point )
     
-    self.peLogic.SetPlaybackTime( originalPlaybackTime )    
+    self.peNode.SetPlaybackTime( originalPlaybackTime ) # Scene automatically updated
 
 
 
