@@ -44,6 +44,12 @@
        <property name="baseName">
         <string>MetricsTable</string>
        </property>
+       <property name="noneEnabled">
+        <bool>false</bool>
+       </property>
+       <property name="renameEnabled">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>

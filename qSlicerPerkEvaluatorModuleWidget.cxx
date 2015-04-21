@@ -567,12 +567,24 @@ qSlicerPerkEvaluatorModuleWidget
     peNode.TakeReference( this->mrmlScene()->CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" ) );
     peNode->SetScene( this->mrmlScene() );
     this->mrmlScene()->AddNode( peNode );
-    d->PerkEvaluatorNodeComboBox->setCurrentNode( peNode );
+
+    // Also, when we create a new Perk Evaluator node, then create a metrics node for it by default
+    vtkSmartPointer< vtkMRMLNode > mtNode;
+    mtNode.TakeReference( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTableNode" ) );
+    mtNode->SetName( "MetricsTable" );
+    mtNode->SetScene( this->mrmlScene() );
+    this->mrmlScene()->AddNode( mtNode );
+
+    vtkMRMLPerkEvaluatorNode::SafeDownCast( peNode )->SetMetricsTableID( mtNode->GetID() );
+
+    d->PerkEvaluatorNodeComboBox->setCurrentNode( peNode ); // Automatically updates widget
   }
   else
   {
     this->updateWidgetFromMRMLNode();
   }
+
+
 }
 
 
@@ -624,7 +636,7 @@ void qSlicerPerkEvaluatorModuleWidget
 
   // This is where we need to update parameters on buffer node changed
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-  if ( peNode == NULL )
+  if ( peNode == NULL || newMetricsTable == NULL )
   {
     return;
   }
@@ -661,9 +673,10 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  // Update the roles widget every time the Perk Evaluator node is modified
+  // Update the roles widgets and metrics table widget every time the Perk Evaluator node is modified
   d->TransformRolesWidget->setPerkEvaluatorNode( peNode );
   d->AnatomyRolesWidget->setPerkEvaluatorNode( peNode );
+  d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
 
   d->BeginSpinBox->setValue( peNode->GetMarkBegin() );
   d->EndSpinBox->setValue( peNode->GetMarkEnd() );
