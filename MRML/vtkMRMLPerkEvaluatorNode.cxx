@@ -346,12 +346,15 @@ double vtkMRMLPerkEvaluatorNode
 
 
 void vtkMRMLPerkEvaluatorNode
-::SetPlaybackTime( double newPlaybackTime )
+::SetPlaybackTime( double newPlaybackTime, bool analysis )
 {
   if ( newPlaybackTime != this->PlaybackTime )
   {
     this->PlaybackTime = newPlaybackTime;
-    this->Modified();
+    if ( ! analysis )
+    {
+      this->Modified();
+    }
   }
 }
 

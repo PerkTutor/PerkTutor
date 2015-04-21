@@ -189,23 +189,23 @@ void vtkSlicerPerkEvaluatorLogic
   pythonManager->executeString( QString( "PythonMetricsCalculatorLogic.SetMetricsNodeID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
   pythonManager->executeString( "PythonMetricsCalculatorLogic.CalculateAllMetrics()" );
 
-  peNode->GetMetricsTableNode()->StorableModified(); // Make sure the metrics table is saved be default
+  peNode->GetMetricsTableNode()->Modified(); // Table has been modified
+  peNode->GetMetricsTableNode()->StorableModified(); // Make sure the metrics table is saved by default
 }
 
 
 
 
-vtkLogRecordBuffer* vtkSlicerPerkEvaluatorLogic
-::GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode )
+void vtkSlicerPerkEvaluatorLogic
+::GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode, vtkLogRecordBuffer* selfParentRecordBuffer )
 {
   // TODO: We only care about this for times. Is there a more efficient way to do this?
+  selfParentRecordBuffer->Clear();
 
   // Iterate through the parents and add to temporary transform buffer if in the selected transform buffer for analysis
-  vtkSmartPointer< vtkLogRecordBuffer > selfParentBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
-
   if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
   {
-    return selfParentBuffer;
+    return;
   }
 
   std::vector< std::string > recordedTransformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
@@ -220,14 +220,31 @@ vtkLogRecordBuffer* vtkSlicerPerkEvaluatorLogic
       if ( recordedTransformNames.at( i ).compare( parent->GetName() ) == 0 )
 	    {
         // Concatenate into the record buffer if so. Note: No need to deep copy - the times are really all we need
-        selfParentBuffer->Concatenate( peNode->GetTransformBufferNode()->GetTransformRecordBuffer( recordedTransformNames.at( i ) ) );
+        selfParentRecordBuffer->Concatenate( peNode->GetTransformBufferNode()->GetTransformRecordBuffer( recordedTransformNames.at( i ) ) );
 	    }
     }
 
 	  parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
   }
 
-  return selfParentBuffer;
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode, vtkDoubleArray* timesArray )
+{
+  // TODO: We only care about this for times. Is there a more efficient way to do this?
+  vtkSmartPointer< vtkLogRecordBuffer > selfParentRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+  this->GetSelfAndParentRecordBuffer( peNode, transformNode, selfParentRecordBuffer );
+
+  // Now, just grab the times
+  timesArray->SetNumberOfComponents( 1 );
+  timesArray->SetNumberOfTuples( selfParentRecordBuffer->GetNumRecords() );
+  
+  for ( int i = 0; i < selfParentRecordBuffer->GetNumRecords(); i++ )
+  {
+    timesArray->SetValue( i, selfParentRecordBuffer->GetRecord( i )->GetTime() );
+  }
 }
 
 

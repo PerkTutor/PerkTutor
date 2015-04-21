@@ -100,7 +100,7 @@ public:
 
   // Playback time
   double GetPlaybackTime();
-  void SetPlaybackTime( double newPlaybackTime );
+  void SetPlaybackTime( double newPlaybackTime, bool analysis = false );
   
 
   // Getters/setters associated with roles

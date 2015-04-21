@@ -25,6 +25,7 @@
 
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
+#include "vtkDoubleArray.h"
 
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
 #include "vtkSlicerTransformRecorderLogic.h"
@@ -60,7 +61,8 @@ public:
   // TODO: THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
   vtkMRMLTableNode* AddTable(const char* fileName, const char* name = 0);
   
-  vtkLogRecordBuffer* GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform );
+  void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
+  void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
 
   std::vector< std::string > GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode );
   std::vector< std::string > GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode );
