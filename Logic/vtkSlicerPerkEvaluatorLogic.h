@@ -30,6 +30,8 @@
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
+#include "PerkTutorCommon.h"
+
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class VTK_SLICER_PERKEVALUATOR_MODULE_LOGIC_EXPORT

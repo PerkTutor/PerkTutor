@@ -67,7 +67,7 @@ void qSlicerPerkEvaluatorRolesWidgetPrivate
 qSlicerPerkEvaluatorRolesWidget
 ::qSlicerPerkEvaluatorRolesWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorRolesWidgetPrivate(*this) )
 {
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "PerkEvaluator" ) );
   this->PerkEvaluatorNode = NULL;
   this->setup();
 }

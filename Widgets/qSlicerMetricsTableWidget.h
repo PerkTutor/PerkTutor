@@ -35,6 +35,8 @@
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 #include "ui_qSlicerMetricsTableWidget.h"
 
+#include "PerkTutorCommon.h"
+
 class qSlicerMetricsTableWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
@@ -46,9 +48,6 @@ public:
   typedef qSlicerWidget Superclass;
   qSlicerMetricsTableWidget(QWidget *parent=0);
   virtual ~qSlicerMetricsTableWidget();
-  
-  static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );
-  // TODO: This really should be a helper function
 
   virtual void setMetricsTableNode( vtkMRMLNode* newMetricsTableNode );
   virtual vtkMRMLTableNode* getMetricsTableNode();

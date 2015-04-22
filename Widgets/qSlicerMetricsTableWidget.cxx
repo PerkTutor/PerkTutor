@@ -24,25 +24,6 @@
 #include <QtGui>
 
 
-// Helper functions -------------------------------------------------------------
-
-#include "qSlicerApplication.h"
-#include "qSlicerModuleManager.h"
-#include "qSlicerAbstractCoreModule.h"
-
-// TODO: This should really be a helper function
-vtkMRMLAbstractLogic* qSlicerMetricsTableWidget
-::GetSlicerModuleLogic( std::string moduleName )
-{
-  qSlicerAbstractCoreModule* Module = qSlicerApplication::application()->moduleManager()->module( moduleName.c_str() );
-  if ( Module != NULL )
-  {
-    return Module->logic();
-  }
-  return NULL;
-}
-
-
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerMetricsTableWidgetPrivate
@@ -85,7 +66,7 @@ qSlicerMetricsTableWidget
 ::qSlicerMetricsTableWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerMetricsTableWidgetPrivate(*this) )
 {
   this->MetricsTableNode = NULL;
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerMetricsTableWidget::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "PerkEvaluator" ) );
   this->setup();
 }
 

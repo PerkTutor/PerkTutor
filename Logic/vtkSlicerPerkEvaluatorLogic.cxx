@@ -32,45 +32,6 @@
 #include "qSlicerPythonManager.h"
 
 
-// Helper functions ------------------------------------------------------------------------
-
-
-double*
-MatrixStrToDouble( std::string str )
-{
-  std::stringstream ss( str );
-  
-  double e00; ss >> e00; double e01; ss >> e01; double e02; ss >> e02; double e03; ss >> e03;
-  double e10; ss >> e10; double e11; ss >> e11; double e12; ss >> e12; double e13; ss >> e13;
-  double e20; ss >> e20; double e21; ss >> e21; double e22; ss >> e22; double e23; ss >> e23;
-  double e30; ss >> e30; double e31; ss >> e31; double e32; ss >> e32; double e33; ss >> e33;
-
-  double* dmat = new double[16];
-
-  dmat[0] = e00;
-  dmat[1] = e01;
-  dmat[2] = e02;
-  dmat[3] = e03;
-
-  dmat[4] = e10;
-  dmat[5] = e11;
-  dmat[6] = e12;
-  dmat[7] = e13;
-
-  dmat[8] = e20;
-  dmat[9] = e21;
-  dmat[10] = e22;
-  dmat[11] = e23;
-
-  dmat[12] = e30;
-  dmat[13] = e31;
-  dmat[14] = e32;
-  dmat[15] = e33;
-  
-  return dmat;
-}
-
-
 //----------------------------------------------------------------------------
 
 vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
@@ -378,10 +339,10 @@ void vtkSlicerPerkEvaluatorLogic
       continue;
     }
 
-    std::string transformString = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), recordedTransformNames.at( i ) )->GetTransformString();
+    std::string matrixString = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), recordedTransformNames.at( i ) )->GetTransformString();
 
     vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-    transformMatrix->DeepCopy( MatrixStrToDouble( transformString ) );
+    PerkTutorCommon::MatrixStringTo4x4( matrixString, transformMatrix );
     linearTransformNode->SetMatrixTransformToParent( transformMatrix );
   }
 

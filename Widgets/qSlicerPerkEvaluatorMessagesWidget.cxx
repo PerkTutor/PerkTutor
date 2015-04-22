@@ -68,7 +68,7 @@ qSlicerPerkEvaluatorMessagesWidget
 ::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
 {
   this->PerkEvaluatorNode = NULL;
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
 
