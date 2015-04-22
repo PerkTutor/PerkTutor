@@ -53,6 +53,8 @@
 #include "vtkLogRecord.h"
 #include "vtkLogRecordBuffer.h"
 
+#include "PerkTutorCommon.h"
+
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT

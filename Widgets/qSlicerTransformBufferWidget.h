@@ -43,9 +43,6 @@ public:
   typedef qSlicerWidget Superclass;
   qSlicerTransformBufferWidget(QWidget *parent=0);
   virtual ~qSlicerTransformBufferWidget();
-  
-  static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );
-  // TODO: This really should be a helper function
 
   virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
   virtual vtkMRMLTransformBufferNode* getTransformBufferNode();

@@ -16,9 +16,8 @@ set(module_logic_export_directive "VTK_SLICER_TRANSFORMRECORDER_MODULE_LOGIC_EXP
 
 # Additional directories to include
 set(module_logic_include_directories
-  ${Slicer_Base_INCLUDE_DIRS}
-  #${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF/MRML
-  # ${OpenIGTLinkIF_SOURCE_DIR}/MRML
+  ${PerkTutorCommon_SOURCE_DIR}
+  ${PerkTutorCommon_BINARY_DIR}
   )
 
 # Source files
@@ -31,7 +30,8 @@ set(module_logic_SRCS
 set(module_logic_target_libraries
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
-  SlicerBaseLogic 
+  SlicerBaseLogic
+  PerkTutorCommon
   vtkSlicerTransformRecorderModuleMRML
   )
 

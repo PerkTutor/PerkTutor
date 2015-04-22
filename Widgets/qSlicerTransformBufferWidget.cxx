@@ -24,25 +24,6 @@
 #include <QtGui>
 
 
-// Helper functions -------------------------------------------------------------
-
-#include "qSlicerApplication.h"
-#include "qSlicerModuleManager.h"
-#include "qSlicerAbstractCoreModule.h"
-
-// TODO: This should really be a helper function
-vtkMRMLAbstractLogic* qSlicerTransformBufferWidget
-::GetSlicerModuleLogic( std::string moduleName )
-{
-  qSlicerAbstractCoreModule* Module = qSlicerApplication::application()->moduleManager()->module( moduleName.c_str() );
-  if ( Module != NULL )
-  {
-    return Module->logic();
-  }
-  return NULL;
-}
-
-
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerTransformBufferWidgetPrivate
@@ -85,7 +66,7 @@ qSlicerTransformBufferWidget
 ::qSlicerTransformBufferWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTransformBufferWidgetPrivate(*this) )
 {
   this->TransformBufferNode = NULL;
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "TransformRecorder" ) );
+  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
 

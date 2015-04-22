@@ -577,15 +577,8 @@ void vtkMRMLTransformBufferNode
   vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
   transformNode->GetMatrixTransformToParent( transformMatrix );
 
-  // Record the transform into a string  
-  std::stringstream matrixsstring;
-  for ( int row = 0; row < 4; ++ row )
-  {
-    for ( int col = 0; col < 4; ++ col )
-    {
-      matrixsstring << transformMatrix->GetElement( row, col ) << " ";
-    }
-  }
+  // Record the transform into a string
+  std::string matrixString = PerkTutorCommon::Matrix4x4ToString( transformMatrix );
   
   // Look for the most recent value of this transform
   if ( this->TransformRecordBuffers.find( transformNode->GetName() ) != this->TransformRecordBuffers.end() )
@@ -593,7 +586,7 @@ void vtkMRMLTransformBufferNode
     // If the value hasn't changed, we don't record
     // Find the relevant record buffer, and make sure it is not a duplicate
     vtkTransformRecord* testDuplicateRecord = vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformNode->GetName() ]->GetCurrentRecord() );
-    if ( testDuplicateRecord->GetTransformString().compare( matrixsstring.str() ) == 0 )
+    if ( testDuplicateRecord->GetTransformString().compare( matrixString ) == 0 )
     {
       return; // If it is a duplicate then exit, we have nothing to record  
     }
@@ -601,7 +594,7 @@ void vtkMRMLTransformBufferNode
 
 
   vtkSmartPointer< vtkTransformRecord > newTransformRecord = vtkSmartPointer< vtkTransformRecord >::New();
-  newTransformRecord->SetTransformString( matrixsstring.str() );
+  newTransformRecord->SetTransformString( matrixString );
   newTransformRecord->SetDeviceName( transformNode->GetName() );
   newTransformRecord->SetTime( this->GetCurrentTimestamp() );
   this->AddTransform( newTransformRecord );
