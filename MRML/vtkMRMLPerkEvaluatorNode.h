@@ -101,6 +101,9 @@ public:
   // Playback time
   double GetPlaybackTime();
   void SetPlaybackTime( double newPlaybackTime, bool analysis = false );
+
+  bool GetRealTimeProcessing();
+  void SetRealTimeProcessing( bool newRealTimeProcessing );
   
 
   // Getters/setters associated with roles
@@ -123,6 +126,13 @@ public:
   vtkMRMLTableNode* GetMetricsTableNode();
   std::string GetMetricsTableID();
   void SetMetricsTableID( std::string newMetricsTableID );
+
+  // Pass along transform buffer events
+  void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
+  enum
+  {
+    TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
+  };
   
 
   
@@ -149,6 +159,8 @@ PlaybackTime
   std::string MetricsDirectory;
 
   double PlaybackTime;
+
+  bool RealTimeProcessing;
 
   std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
   std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names

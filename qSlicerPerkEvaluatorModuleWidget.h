@@ -45,6 +45,8 @@ public slots:
   void OnBatchPerkEvaluatorNodeClicked();
   void OnBatchTransformBufferClicked();
 
+  void OnRealTimeProcessingToggled();
+
   void OnMarkBeginChanged();
   void OnMarkBeginClicked();
   void OnMarkEndChanged();

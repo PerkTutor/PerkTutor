@@ -59,6 +59,7 @@ void vtkMRMLPerkEvaluatorNode
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
   of << indent << "MetricsDirectory=\"" << this->MetricsDirectory << "\"";
   of << indent << "PlaybackTime=\"" << this->PlaybackTime << "\"";
+  of << indent << "RealTimeProcessing=\"" << this->RealTimeProcessing << "\"";
   
   // Add the transform role map
   int transformRoleCounter = 0;
@@ -123,6 +124,10 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->PlaybackTime = atof( attValue );
     }
+    if ( ! strcmp( attName, "RealTimeProcessing" ) )
+    {
+      this->RealTimeProcessing = atof( attValue );
+    }
 
     if ( std::string( attName ).find( "TransformRoleMap" ) != std::string::npos )
     {
@@ -159,6 +164,7 @@ void vtkMRMLPerkEvaluatorNode
   this->NeedleOrientation = node->NeedleOrientation;
   this->MetricsDirectory = std::string( node->MetricsDirectory );
   this->PlaybackTime = node->PlaybackTime;
+  this->RealTimeProcessing = node->RealTimeProcessing;
   
   this->TransformRoleMap = std::map< std::string, std::string >( node->TransformRoleMap );
   this->AnatomyNodeMap = std::map< std::string, std::string >( node->AnatomyNodeMap );
@@ -181,6 +187,8 @@ vtkMRMLPerkEvaluatorNode
   this->MetricsDirectory = "";
 
   this->PlaybackTime = 0.0;
+
+  this->RealTimeProcessing = false;
 
   this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
@@ -359,6 +367,24 @@ void vtkMRMLPerkEvaluatorNode
 }
 
 
+bool vtkMRMLPerkEvaluatorNode
+::GetRealTimeProcessing()
+{
+  return this->RealTimeProcessing;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetRealTimeProcessing( bool newRealTimeProcessing )
+{
+  if ( newRealTimeProcessing != this->RealTimeProcessing )
+  {
+    this->RealTimeProcessing = newRealTimeProcessing;
+    this->Modified();
+  }
+}
+
+
 
 // Transform/Anatomy roles ---------------------------------------------------------------------------------------
 
@@ -479,7 +505,9 @@ std::string vtkMRMLPerkEvaluatorNode
 void vtkMRMLPerkEvaluatorNode
 ::SetTransformBufferID( std::string newTransformBufferID )
 {
-  this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str() );
+  vtkNew< vtkIntArray > events;
+  events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
+  this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
 
   // Auto-update as necessary
   if ( this->GetTransformBufferNode() == NULL )
@@ -529,4 +557,33 @@ void vtkMRMLPerkEvaluatorNode
 ::SetMetricsTableID( std::string newMetricsTableID )
 {
   this->SetAndObserveNodeReferenceID( METRICS_TABLE_REFERENCE_ROLE, newMetricsTableID.c_str() );
+}
+
+
+// MRML node event processing -----------------------------------------------------------------
+
+void vtkMRMLPerkEvaluatorNode
+::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
+{
+  // TODO: Are regular modified events automatically propogated?
+
+  // Do nothing if there is not real-time processing
+  if ( ! this->RealTimeProcessing )
+  {
+    return;
+  }
+
+  // The caller will be the node that was modified
+  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( caller );
+  if ( transformBuffer == NULL || event != vtkMRMLTransformBufferNode::TransformAddedEvent )
+  {
+    return;
+  }
+
+  vtkMRMLTransformBufferNode::TransformEventDataType* eventData = reinterpret_cast< vtkMRMLTransformBufferNode::TransformEventDataType* >( callData );
+  if ( transformBuffer->GetTransformRecordBuffer( eventData->first )->GetNumRecords() == eventData->second + 1 )
+  {
+    this->InvokeEvent( TransformRealTimeAddedEvent, &eventData->first );
+  }
+
 }

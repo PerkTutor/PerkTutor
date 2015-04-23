@@ -80,7 +80,9 @@ public:
 
   void ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode );
 
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;  
+  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
+  void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );
+
   
 private:
 

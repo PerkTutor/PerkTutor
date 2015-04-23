@@ -327,6 +327,21 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::OnRealTimeProcessingToggled()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetRealTimeProcessing( d->RealTimeProcessingCheckBox->isChecked() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkBeginChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -625,6 +640,8 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->BatchPerkEvaluatorNodeButton, SIGNAL( clicked() ), this, SLOT( OnBatchPerkEvaluatorNodeClicked() ) );
   connect( d->BatchTransformBufferButton, SIGNAL( clicked() ), this, SLOT( OnBatchTransformBufferClicked() ) );
 
+  connect( d->RealTimeProcessingCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnRealTimeProcessingToggled() ) );
+
 
   // Advanced tab
 
@@ -672,6 +689,12 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
   if ( peNode == NULL )
   {
+    return;
+  }
+
+  if ( newTransformBuffer == NULL )
+  {
+    peNode->SetTransformBufferID( "" );
     return;
   }
 
@@ -741,6 +764,8 @@ void qSlicerPerkEvaluatorModuleWidget
 
   vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
   d->BodyNodeComboBox->setCurrentNode( tissueNode );
+
+  d->RealTimeProcessingCheckBox->setChecked( peNode->GetRealTimeProcessing() );
 
   // Get the name of the base directory
   QDir metricsDirectory( peNode->GetMetricsDirectory().c_str() );

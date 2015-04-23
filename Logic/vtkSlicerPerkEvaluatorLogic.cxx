@@ -42,7 +42,6 @@ vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
 vtkSlicerPerkEvaluatorLogic
 ::vtkSlicerPerkEvaluatorLogic()
 {
-  this->TransformRecorderLogic = NULL;
 }
 
 
@@ -396,6 +395,37 @@ double vtkSlicerPerkEvaluatorLogic
   }
 
   return peNode->GetTransformBufferNode()->GetTotalTime();
+}
+
+
+// Node update methods ----------------------------------------------------------
+
+void vtkSlicerPerkEvaluatorLogic
+::ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData )
+{
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( caller );
+  // The caller must be a vtkMRMLPerkEvaluatorNode
+  if ( peNode != NULL && peNode->GetRealTimeProcessing() && event == vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent )
+  {
+    // Do whatever, calling the Python Metrics Calculator module
+  }
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData )
+{
+  vtkMRMLScene* callerNode = vtkMRMLScene::SafeDownCast( caller );
+
+  // If the added node was a fiducial registration wizard node then observe it
+  vtkMRMLNode* addedNode = reinterpret_cast< vtkMRMLNode* >( callData );
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( addedNode );
+  if ( event == vtkMRMLScene::NodeAddedEvent && peNode != NULL )
+  {
+    // Observe if a real-time transform event is added
+    peNode->AddObserver( vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+  }
+
 }
 
 
