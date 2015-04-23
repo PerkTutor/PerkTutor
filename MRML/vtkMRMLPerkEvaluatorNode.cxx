@@ -480,6 +480,34 @@ void vtkMRMLPerkEvaluatorNode
 ::SetTransformBufferID( std::string newTransformBufferID )
 {
   this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str() );
+
+  // Auto-update as necessary
+  if ( this->GetTransformBufferNode() == NULL )
+  {
+    return;
+  }
+
+  // Measurement range
+  if ( this->GetAutoUpdateMeasurementRange() )
+  {
+    this->SetMarkBegin( 0.0 );
+    this->SetMarkEnd( this->GetTransformBufferNode()->GetTotalTime() );
+  }
+
+  // Transform roles
+  if ( this->GetAutoUpdateTransformRoles() )
+  {
+    std::vector< std::string > anyRoleTransforms = this->GetTransformBufferNode()->GetAllRecordedTransformNames();
+    for ( int i = 0; i < anyRoleTransforms.size(); i++ )
+    {
+      // If it already has a non-generic role, let it maintain the more specific role (since the generic metrics will be computed regardless)
+      if ( this->GetTransformRole( anyRoleTransforms.at( i ) ).compare( "" ) == 0 )
+      {
+        this->SetTransformRole( anyRoleTransforms.at( i ), "Any" );
+      }
+    }
+  }
+
 }
 
 

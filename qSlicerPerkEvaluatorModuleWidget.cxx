@@ -669,7 +669,6 @@ void qSlicerPerkEvaluatorModuleWidget
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
-  // This is where we need to update parameters on buffer node changed
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
   if ( peNode == NULL )
   {
@@ -677,30 +676,6 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   peNode->SetTransformBufferID( newTransformBuffer->GetID() );
-  if ( peNode->GetTransformBufferNode() == NULL )
-  {
-    return;
-  }
-
-  if ( peNode->GetAutoUpdateMeasurementRange() )
-  {
-    peNode->SetMarkBegin( 0.0 );
-    peNode->SetMarkEnd( peNode->GetTransformBufferNode()->GetTotalTime() );
-  }
-
-  if ( peNode->GetAutoUpdateTransformRoles() )
-  {
-    std::vector< std::string > anyRoleTransforms = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
-    for ( int i = 0; i < anyRoleTransforms.size(); i++ )
-    {
-      // If it already has a non-generic role, let it maintain the more specific role (since the generic metrics will be computed regardless)
-      if ( peNode->GetTransformRole( anyRoleTransforms.at( i ) ).compare( "" ) == 0 )
-      {
-        peNode->SetTransformRole( anyRoleTransforms.at( i ), "Any" );
-      }
-    }
-  }
-
   // The Perk Evaluator node automatically call the "updateWidgetFromMRML" function to deal with the widget
 }
 
