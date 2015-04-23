@@ -249,6 +249,84 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::OnBatchPerkEvaluatorNodeClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  QProgressDialog dialog;
+  dialog.setModal( true );
+  dialog.setLabelText( "Please wait while analyzing procedures..." );
+  dialog.show();
+  dialog.setValue( 0 );
+
+  // Iterate over all nodes and calculate
+  QList< vtkMRMLNode* > peNodeBatch = d->BatchPerkEvaluatorNodeComboBox->checkedNodes();
+
+  for ( int i = 0; i < peNodeBatch.size(); i++ )
+  {
+    int progress = 100 * i / peNodeBatch.size();
+    dialog.setValue( progress );
+
+    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodeBatch.at( i ) );
+    if ( peNode == NULL )
+    {
+      continue;
+    }
+
+    d->logic()->ComputeMetrics( peNode );
+  }
+
+  dialog.setValue( 100 );
+  dialog.close();
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnBatchTransformBufferClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  QProgressDialog dialog;
+  dialog.setModal( true );
+  dialog.setLabelText( "Please wait while analyzing procedures..." );
+  dialog.show();
+  dialog.setValue( 0 );
+
+  // Remember the original Perk Evaluator node
+  vtkMRMLNode* originalPerkEvaluatorNode = d->PerkEvaluatorNodeComboBox->currentNode();
+
+  // Iterate over all nodes and calculate
+  QList< vtkMRMLNode* > transformBufferBatch = d->BatchTransformBufferComboBox->checkedNodes();
+
+  for ( int i = 0; i < transformBufferBatch.size(); i++ )
+  {
+    int progress = 100 * i / transformBufferBatch.size();
+    dialog.setValue( progress );
+
+    vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( transformBufferBatch.at( i ) );
+    if ( transformBuffer == NULL )
+    {
+      continue;
+    }
+
+    // Create relevant nodes automatically
+    // TODO: Should this be done in the logic?
+    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->addNode() );
+    peNode->Copy( originalPerkEvaluatorNode );
+    d->MetricsTableWidget->addMetricsTableNode();
+    d->TransformBufferWidget->setTransformBufferNode( transformBuffer );
+
+    d->logic()->ComputeMetrics( peNode );
+  }
+
+  d->PerkEvaluatorNodeComboBox->setCurrentNode( originalPerkEvaluatorNode );
+
+  dialog.setValue( 100 );
+  dialog.close();
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkBeginChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -500,7 +578,18 @@ qSlicerPerkEvaluatorModuleWidget
   // Embed widgets here
   this->setupEmbeddedWidgets();
 
-  // Perk Evaluator node independent
+  // Perk Evaluator Node
+
+  // Connect the Perk Evaluator node to the update
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
+
+  //connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformBufferWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
+  // NOTE: The roles widgets will be updated with the other components of the widget
+
+
+  // Display tab
+
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
   connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
   connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
@@ -510,8 +599,6 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
 
   connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
-
-  connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
 
   // If the transform buffer node is changed, update everything
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
@@ -523,9 +610,8 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
 
 
+  // Analysis tab
 
-
-  // Perk Evaluator node dependent
   connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
@@ -534,18 +620,21 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->BodyNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTissueModelChanged( vtkMRMLNode* ) ) );
   connect( d->NeedleReferenceComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onNeedleTransformChanged( vtkMRMLNode* ) ) );
 
+  connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
+
+  connect( d->BatchPerkEvaluatorNodeButton, SIGNAL( clicked() ), this, SLOT( OnBatchPerkEvaluatorNodeClicked() ) );
+  connect( d->BatchTransformBufferButton, SIGNAL( clicked() ), this, SLOT( OnBatchTransformBufferClicked() ) );
+
+
+  // Advanced tab
+
   connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->AutoUpdateTransformRolesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateTransformRolesToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
 
 
-  // Connect the Perk Evaluator node to the update
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
 
-  //connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformBufferWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
-  // NOTE: The roles widgets will be updated with the other components of the widget
 
   this->updateWidgetFromMRMLNode();
 }
