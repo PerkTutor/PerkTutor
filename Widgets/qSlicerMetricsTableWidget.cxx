@@ -92,6 +92,7 @@ void qSlicerMetricsTableWidget
   this->updateWidget();  
 }
 
+
 vtkMRMLTableNode* qSlicerMetricsTableWidget
 ::getMetricsTableNode()
 {
@@ -108,6 +109,15 @@ void qSlicerMetricsTableWidget
 
   d->MetricsTableNodeComboBox->setCurrentNode( newMetricsTableNode );
   // If it is a new table node, then the onTransformBufferNodeChanged will be called automatically
+}
+
+
+vtkMRMLTableNode* qSlicerMetricsTableWidget
+::addMetricsTableNode()
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  return vtkMRMLTableNode::SafeDownCast( d->MetricsTableNodeComboBox->addNode() ); // Automatically calls "onMetricsTableNodeChanged" function
 }
 
 

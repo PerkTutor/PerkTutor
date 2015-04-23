@@ -51,6 +51,7 @@ public:
 
   virtual void setMetricsTableNode( vtkMRMLNode* newMetricsTableNode );
   virtual vtkMRMLTableNode* getMetricsTableNode();
+  virtual vtkMRMLTableNode* addMetricsTableNode();
 
 protected slots:
 

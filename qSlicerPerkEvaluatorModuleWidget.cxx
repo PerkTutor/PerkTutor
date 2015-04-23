@@ -563,21 +563,8 @@ qSlicerPerkEvaluatorModuleWidget
   int numPENodes = this->mrmlScene()->GetNumberOfNodesByClass( "vtkMRMLPerkEvaluatorNode" );
   if ( numPENodes == 0 )
   {
-    vtkSmartPointer< vtkMRMLNode > peNode;
-    peNode.TakeReference( this->mrmlScene()->CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" ) );
-    peNode->SetScene( this->mrmlScene() );
-    this->mrmlScene()->AddNode( peNode );
-
-    // Also, when we create a new Perk Evaluator node, then create a metrics node for it by default
-    vtkSmartPointer< vtkMRMLNode > mtNode;
-    mtNode.TakeReference( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTableNode" ) );
-    mtNode->SetName( "MetricsTable" );
-    mtNode->SetScene( this->mrmlScene() );
-    this->mrmlScene()->AddNode( mtNode );
-
-    vtkMRMLPerkEvaluatorNode::SafeDownCast( peNode )->SetMetricsTableID( mtNode->GetID() );
-
-    d->PerkEvaluatorNodeComboBox->setCurrentNode( peNode ); // Automatically updates widget
+    d->PerkEvaluatorNodeComboBox->addNode();
+    d->MetricsTableWidget->addMetricsTableNode();
   }
   else
   {
