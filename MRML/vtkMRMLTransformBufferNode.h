@@ -140,6 +140,7 @@ public:
   void FromXMLElement( vtkXMLDataElement* element );
 
   // The events that the class should invole
+  typedef std::pair< std::string, int > TransformEventDataType;
   enum
   {
     TransformAddedEvent = vtkCommand::UserEvent + 1,

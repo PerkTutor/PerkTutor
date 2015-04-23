@@ -163,9 +163,13 @@ void vtkMRMLTransformBufferNode
   // Add to the appropriate transform record buffer
   int insertLocation = this->TransformRecordBuffers[ newTransform->GetDeviceName() ]->AddRecord( newTransform );
 
+  TransformEventDataType transformAddedData;
+  transformAddedData.first = newTransform->GetDeviceName();
+  transformAddedData.second = insertLocation;
+
   // Invoke appropriate events
   this->Modified();
-  this->InvokeEvent( this->TransformAddedEvent, &insertLocation );
+  this->InvokeEvent( this->TransformAddedEvent, &transformAddedData );
 }
 
 
@@ -364,6 +368,11 @@ double vtkMRMLTransformBufferNode
     maxTime = this->MessageRecordBuffer->GetMaximumTime();
   }
 
+  if ( maxTime == - std::numeric_limits< double >::max() )
+  {
+    maxTime = 0.0; // Safety in case the transform buffer is completely empty
+  }
+
   return maxTime;
 }
 
@@ -386,6 +395,11 @@ double vtkMRMLTransformBufferNode
   if ( this->MessageRecordBuffer->GetNumRecords() > 0 && this->MessageRecordBuffer->GetMinimumTime() < minTime )
   {
     minTime = this->MessageRecordBuffer->GetMinimumTime();
+  }
+
+  if ( minTime == std::numeric_limits< double >::max() )
+  {
+    minTime = 0.0; // Safety in case the transform buffer is completely empty
   }
 
   return minTime;
