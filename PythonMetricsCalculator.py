@@ -373,11 +373,11 @@ class PythonMetricsCalculatorLogic:
     self.peLogic.GetSceneVisibleTransformNodes( transformCollection )
   
     for i in range( transformCollection.GetNumberOfItems() ):
-      currentTransform = transformCollection.GetItemAsObject( i )
+      currentTransformNode = transformCollection.GetItemAsObject( i )
       
       # Need the transform times
       timesArray = vtk.vtkDoubleArray()
-      self.peLogic.GetSelfAndParentTimes( self.peNode, currentTransform, timesArray )
+      self.peLogic.GetSelfAndParentTimes( self.peNode, currentTransformNode, timesArray )
       
       self.peNode.SetPlaybackTime( timesArray.GetValue( 0 ), True )
         
@@ -390,29 +390,41 @@ class PythonMetricsCalculatorLogic:
         if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
           continue
         
-        self.UpdateTransformMetrics( currentTransform.GetName(), absTime, False )
+        self.UpdateTransformMetrics( currentTransformNode, absTime, False )
       
     self.peNode.SetPlaybackTime( originalPlaybackTime ) # Scene automatically updated
     self.OutputAllTransformMetricsToMetricsTable()
 
     
+  def UpdateSelfAndChildMetrics( self, transformName, absTime ):
+    # Get the recorded transform node
+    updatedTransformNode = self.mrmlScene.GetFirstNodeByName( transformName )
+    
+    # Get all transforms in the scene
+    transformCollection = vtk.vtkCollection()
+    self.peLogic.GetSceneVisibleTransformNodes( transformCollection )
+    
+    # Update all metrics associated with children of the recorded transform
+    for i in range( transformCollection.GetNumberOfItems() ):
+      currentTransformNode = transformCollection.GetItemAsObject( i )
+      if ( self.peLogic.IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
+        self.UpdateTransformMetrics( currentTransformNode, absTime, True )
 
-  def UpdateTransformMetrics( self, transformName, absTime, updateTable ):
+        
+  def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
   
     # First, initialize the metric if it doesn't already exist
-    if( transformName not in self.transformMetrics ):
-      self.InitializeNewTransformMetric( transformName )
+    if( transformNode.GetName() not in self.transformMetrics ):
+      self.InitializeNewTransformMetric( transformNode.GetName() )
       
     # The assumption is that the scene is already appropriately updated
-    transformNode = self.mrmlScene.GetFirstNodeByName( transformName )
-    
     matrix = vtk.vtkMatrix4x4()
     matrix.Identity()
     transformNode.GetMatrixTransformToWorld( matrix )
     point = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ), matrix.GetElement( 3, 3 ) ]
     
-    for i in range( len( self.transformMetrics[ transformName ] ) ):
-      self.transformMetrics[ transformName ][ i ].AddTimestamp( absTime, matrix, point )
+    for i in range( len( self.transformMetrics[ transformNode.GetName() ] ) ):
+      self.transformMetrics[ transformNode.GetName() ][ i ].AddTimestamp( absTime, matrix, point )
       
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
