@@ -132,6 +132,7 @@ public:
   enum
   {
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
+    RealTimeProcessingStartedEvent,
   };
   
 

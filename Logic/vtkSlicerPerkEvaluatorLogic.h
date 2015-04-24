@@ -80,6 +80,8 @@ public:
 
   void ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode );
 
+  void SetupRealTimeProcessing( vtkMRMLPerkEvaluatorNode* peNode );
+
   void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
   void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );
 

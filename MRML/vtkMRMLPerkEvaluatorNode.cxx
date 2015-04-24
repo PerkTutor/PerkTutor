@@ -381,6 +381,10 @@ void vtkMRMLPerkEvaluatorNode
   {
     this->RealTimeProcessing = newRealTimeProcessing;
     this->Modified();
+    if ( newRealTimeProcessing )
+    {
+      this->InvokeEvent( RealTimeProcessingStartedEvent );
+    }
   }
 }
 
