@@ -1,4 +1,4 @@
-import os, imp, glob, sys
+import os, imp, glob, sys, copy
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -155,27 +155,36 @@ class PythonMetricsCalculatorLogic:
   requiring an instance of the Widget
   """
   def __init__( self ):
-    self.metrics = []
+  
+    self.allMetrics = []
+    self.transformMetrics = dict()
+    
     # By default, grab the instantiated module's logic (though other logics are possible)
     self.SetPerkEvaluatorLogic( slicer.modules.perkevaluator.logic() )
+    self.SetMRMLScene( self.peLogic.GetMRMLScene() )
     
   
   # We need this in order to determine the tissue model node, etc.  
+  def SetMRMLScene( self, newScene ):
+    self.mrmlScene = newScene
+  
+
   def SetPerkEvaluatorLogic( self, newPELogic ):
-    self.peLogic = newPELogic  
-    self.mrmlScene = self.peLogic.GetMRMLScene()
+    self.peLogic = newPELogic    
     
-    
+
   def SetPerkEvaluatorNodeID( self, newPENodeID ):
     self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
+    # Now we can find all of the metrics
+    self.allMetrics = self.GetFreshMetrics()
+ 
     
-    
-  def SetMetricsNodeID( self, newMetricsNodeID ):
-    self.metricsNode = self.mrmlScene.GetNodeByID( newMetricsNodeID )
+  def SetMetricsTableID( self, newMetricsTableID ):
+    self.metricsTable = self.mrmlScene.GetNodeByID( newMetricsTableID )
     
     
   def InitializeMetricsTable( self ):
-    self.metricsNode.GetTable().Initialize()
+    self.metricsTable.GetTable().Initialize()
     
     transformNameColumn = vtk.vtkStringArray()
     transformNameColumn.SetName( "TransformName" )
@@ -186,17 +195,36 @@ class PythonMetricsCalculatorLogic:
     metricValueColumn = vtk.vtkStringArray()
     metricValueColumn.SetName( "MetricValue" )
     
-    self.metricsNode.GetTable().AddColumn( transformNameColumn )
-    self.metricsNode.GetTable().AddColumn( metricNameColumn )
-    self.metricsNode.GetTable().AddColumn( metricUnitColumn )
-    self.metricsNode.GetTable().AddColumn( metricValueColumn )
+    self.metricsTable.GetTable().AddColumn( transformNameColumn )
+    self.metricsTable.GetTable().AddColumn( metricNameColumn )
+    self.metricsTable.GetTable().AddColumn( metricUnitColumn )
+    self.metricsTable.GetTable().AddColumn( metricValueColumn )
       
       
-  def AddAllUserMetrics( self ): 
-    # Read the metric scripts 
+  def OutputAllTransformMetricsToMetricsTable( self ):
+    self.InitializeMetricsTable()
+    
+    for t in self.transformMetrics:
+      for i in range( len( self.transformMetrics[ t ] ) ):
+        self.transformMetrics[ t ][ i ].Finalize()
+        print self.transformMetrics[ t ][ i ].GetMetricName()
+        print self.transformMetrics[ t ][ i ].GetMetric()
+        currentMetricRow = vtk.vtkVariantArray()
+        currentMetricRow.InsertNextValue( t )
+        currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetricName() )
+        currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetricUnit() )
+        currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetric() )
+        
+        self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
+      
+
+  def GetAllUserMetrics( self ): 
+    metricsList = []
+    
+    # Read the metric scripts    
     metricPath = self.peNode.GetMetricsDirectory()    
     if ( metricPath == "" ):
-      return
+      return metricsList
     
     allScripts = glob.glob( metricPath + "/*.py" )
   
@@ -208,10 +236,42 @@ class PythonMetricsCalculatorLogic:
         # If it can't load properly, then just ignore
         currentMetricModule = imp.load_source( metricModuleString, allScripts[j] )
         metricInstance = currentMetricModule.PerkEvaluatorMetric() # Test that we can create an instance of the metric
-        self.metrics.append( metricInstance )
+        metricsList.append( metricInstance )
       except:
         print "Could not load metric: ", metricModuleString, "."
-      
+        
+    return metricsList
+    
+    
+  def GetFreshMetrics( self ):
+    # Import every metrics we can find
+    import PythonMetrics
+    coreMetrics = PythonMetrics.PerkTutorCoreMetrics[:]
+    userMetrics = self.GetAllUserMetrics()
+    
+    return ( coreMetrics + userMetrics )
+    
+    
+  def InitializeNewTransformMetric( self, newTransformName ):
+    # Get a fresh set of metrics
+    newTransformMetrics = self.GetFreshMetrics()    
+    newTransformMetrics = self.FilterMetricsByAnatomyRole( self.allMetrics, self.GetAllSpecifiedAnatomyRoles() )
+    newTransformMetrics = self.AddMetricAnatomyNodes( newTransformMetrics )
+  
+    # Add each required metric for the new transform    
+    # Only the metrics which the transform is the role for
+    newTransformRole = self.peNode.GetTransformRole( newTransformName )
+    newTransformMetrics = self.FilterMetricsByTransformRole( newTransformMetrics, newTransformRole )
+    
+    # Copy each metric
+    copyTransformMetrics = []
+    for i in range( len( newTransformMetrics ) ):
+      copyTransformMetrics.append( copy.deepcopy( newTransformMetrics[ i ] ) )
+      copyTransformMetrics[ i ].Initialize() # TODO: Remove this - should not have Initialize or Finalize functions
+    
+    self.transformMetrics[ newTransformName ] = copyTransformMetrics
+    
+    
       
   def FilterMetricsByAnatomyRole( self, inMetrics, specifiedAnatomyRoles ):
     # Only output metrics for which all of the required anatomy roles are fulfilled
@@ -249,99 +309,6 @@ class PythonMetricsCalculatorLogic:
     return outMetrics
     
     
-  def ReloadAllMetrics( self ):
-    import PythonMetrics
-    self.metrics = PythonMetrics.PerkTutorCoreMetrics[:]
-    self.AddAllUserMetrics()
-    
-    
-  def GetAllAnatomyRoles( self ):
-    # Re-initialize all the metrics (in case new ones were added)
-    self.ReloadAllMetrics()
-  
-    allAnatomyRoles = []
-    for i in range( len( self.metrics ) ):
-      currentRequiredRoles = self.metrics[i].GetRequiredAnatomyRoles()
-      # Each metric may require multiple roles, so we must check all of them
-      for j in range( len( currentRequiredRoles ) ):
-        if ( currentRequiredRoles[j] not in allAnatomyRoles ):
-          allAnatomyRoles.append( currentRequiredRoles[j] )
-          
-    return allAnatomyRoles
-    
-    
-  def GetAllTransformRoles( self ):
-    # Re-initialize all the metrics (in case new ones were added)
-    self.ReloadAllMetrics()
-  
-    allTransformRoles = []
-    for i in range( len( self.metrics ) ):
-      currentAcceptedRoles = self.metrics[i].GetAcceptedTransformRoles()
-      # Each metric may accept multiple roles, so we must check all of them
-      for j in range( len( currentAcceptedRoles ) ):
-        if ( currentAcceptedRoles[j] not in allTransformRoles ):
-          allTransformRoles.append( currentAcceptedRoles[j] )
-          
-    return allTransformRoles
-
-
-  def CalculateAllMetrics( self ):  
-    # Initialize all the metrics    
-    self.ReloadAllMetrics()
-    
-    # Initialize the metrics output
-    self.InitializeMetricsTable()
-      
-    # Exit if there are no metrics (e.g. no metrics directory was specified)
-    if ( len( self.metrics ) == 0 ):
-      return metricStringList
-      
-    # Get all of the specified anatomy roles
-    specifiedAnatomyRoles = []
-    for role in ( self.GetAllAnatomyRoles() ):
-      if ( self.peNode.GetAnatomyNodeName( role ) != "" ):
-        specifiedAnatomyRoles.append( role )
-        
-    # Filter out all metrics for which the anatomies are not available
-    anatomyMetrics = self.FilterMetricsByAnatomyRole( self.metrics, specifiedAnatomyRoles )
-
-    # Now iterate over all of the trajectories
-    toolTransforms = vtk.vtkCollection()
-    self.peLogic.GetSceneVisibleTransformNodes( toolTransforms )
-  
-    for i in range( toolTransforms.GetNumberOfItems() ):
-
-      currentTransform = toolTransforms.GetItemAsObject( i )
-      currentTransformRole = self.peNode.GetTransformRole( currentTransform.GetName() )
-    
-      #Drop if based on tissue and needle as appropriate
-      transformMetrics = self.FilterMetricsByTransformRole( anatomyMetrics, currentTransformRole )
-  
-      # Initialization
-      for j in range( len( transformMetrics ) ):
-        transformMetrics[j].Initialize()
-        
-      # Grab anatomy nodes, removing any metrics for which the required nodes are not available
-      transformMetrics = self.AddMetricAnatomyNodes( transformMetrics )            
-      
-      # Calculation
-      self.CalculateTransformMetrics( currentTransform, transformMetrics )
-      
-      # Finalize all the metric computations
-      for j in range( len( transformMetrics ) ):
-        transformMetrics[j].Finalize()
-    
-      # Get the metrics
-      for j in range( len( transformMetrics ) ):
-        currentMetricRow = vtk.vtkVariantArray()
-        currentMetricRow.InsertNextValue( currentTransform.GetName() )
-        currentMetricRow.InsertNextValue( transformMetrics[j].GetMetricName() )
-        currentMetricRow.InsertNextValue( transformMetrics[j].GetMetricUnit() )
-        currentMetricRow.InsertNextValue( transformMetrics[j].GetMetric() )
-        self.metricsNode.GetTable().InsertNextRow( currentMetricRow )        
-
-        
-    
   def AddMetricAnatomyNodes( self, transformMetrics ):
   
     # Keep track of which metrics all anatomies are sucessfully delivered to
@@ -364,52 +331,97 @@ class PythonMetricsCalculatorLogic:
         newTransformMetrics.append( transformMetrics[i] )
         
     return newTransformMetrics
-  
-  
-
-  def CalculateTransformMetrics( self, currentTransform, transformMetrics ):
-    # Initialize the origin, previous point, current point
-    origin = [ 0, 0, 0, 1 ]
-    point = [ 0, 0, 0, 1 ]
-    # We will calculate the point here, since it is important, otherwise, the metrics are on their own
     
+  
+  def GetAllSpecifiedAnatomyRoles( self ):
+    specifiedAnatomyRoles = []
+    
+    for role in ( self.GetAllAnatomyRoles() ):
+      if ( self.peNode.GetAnatomyNodeName( role ) != "" ):
+        specifiedAnatomyRoles.append( role )
+        
+    return specifiedAnatomyRoles
+
+        
+  def GetAllAnatomyRoles( self ):  
+    allAnatomyRoles = []
+    for i in range( len( self.allMetrics ) ):
+      currentRequiredRoles = self.allMetrics[i].GetRequiredAnatomyRoles()
+      # Each metric may require multiple roles, so we must check all of them
+      for j in range( len( currentRequiredRoles ) ):
+        if ( currentRequiredRoles[j] not in allAnatomyRoles ):
+          allAnatomyRoles.append( currentRequiredRoles[j] )
+          
+    return allAnatomyRoles
+    
+    
+  def GetAllTransformRoles( self ): 
+    allTransformRoles = []
+    for i in range( len( self.allMetrics ) ):
+      currentAcceptedRoles = self.allMetrics[i].GetAcceptedTransformRoles()
+      # Each metric may accept multiple roles, so we must check all of them
+      for j in range( len( currentAcceptedRoles ) ):
+        if ( currentAcceptedRoles[j] not in allTransformRoles ):
+          allTransformRoles.append( currentAcceptedRoles[j] )
+          
+    return allTransformRoles
+
+    
+
+  def CalculateAllMetrics( self ):  
     # Start at the beginning (but remember where we were)
     originalPlaybackTime = self.peNode.GetPlaybackTime()
     
-    # Get the node associated with the trajectory we are interested in
-    transformName = currentTransform.GetName()
-    node = self.mrmlScene.GetFirstNodeByName( transformName )
-    
-    # Get the self and parent transform buffer
-    timesArray = vtk.vtkDoubleArray()
-    self.peLogic.GetSelfAndParentTimes( self.peNode, node, timesArray )
-    
-    self.peNode.SetPlaybackTime( timesArray.GetValue( 0 ), True )
-    
-    # Initialize the matrices
-    matrix = vtk.vtkMatrix4x4()
-    
-    # Now iterate
-    for i in range( timesArray.GetNumberOfTuples() ):
+    # Now iterate over all of the trajectories
+    transformCollection = vtk.vtkCollection()
+    self.peLogic.GetSceneVisibleTransformNodes( transformCollection )
+  
+    for i in range( transformCollection.GetNumberOfItems() ):
+      currentTransform = transformCollection.GetItemAsObject( i )
       
-      absTime = timesArray.GetValue( i )
-      self.peNode.SetPlaybackTime( absTime, True )
-      self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
-      relTime = absTime - self.peNode.GetTransformBufferNode().GetMinimumTime()
+      # Need the transform times
+      timesArray = vtk.vtkDoubleArray()
+      self.peLogic.GetSelfAndParentTimes( self.peNode, currentTransform, timesArray )
       
-      matrix.Identity()
-      currentTransform.GetMatrixTransformToWorld( matrix )
+      self.peNode.SetPlaybackTime( timesArray.GetValue( 0 ), True )
+        
+      for j in range( timesArray.GetNumberOfTuples() ):
+        absTime = timesArray.GetValue( j )
+        self.peNode.SetPlaybackTime( absTime, True )
+        self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
+        relTime = absTime - self.peNode.GetTransformBufferNode().GetMinimumTime()
       
-      if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
-        continue
+        if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
+          continue
+        
+        self.UpdateTransformMetrics( currentTransform.GetName(), absTime, False )
       
-      matrix.MultiplyPoint( origin, point )
-      
-      for j in range( len( transformMetrics ) ):
-        transformMetrics[j].AddTimestamp( absTime, matrix, point )
-    
     self.peNode.SetPlaybackTime( originalPlaybackTime ) # Scene automatically updated
+    self.OutputAllTransformMetricsToMetricsTable()
 
+    
+
+  def UpdateTransformMetrics( self, transformName, absTime, updateTable ):
+  
+    # First, initialize the metric if it doesn't already exist
+    if( transformName not in self.transformMetrics ):
+      self.InitializeNewTransformMetric( transformName )
+      
+    # The assumption is that the scene is already appropriately updated
+    transformNode = self.mrmlScene.GetFirstNodeByName( transformName )
+    
+    matrix = vtk.vtkMatrix4x4()
+    matrix.Identity()
+    transformNode.GetMatrixTransformToWorld( matrix )
+    point = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ), matrix.GetElement( 3, 3 ) ]
+    
+    for i in range( len( self.transformMetrics[ transformName ] ) ):
+      self.transformMetrics[ transformName ][ i ].AddTimestamp( absTime, matrix, point )
+      
+    # Output the results to the metrics table node
+    # TODO: Do we have to clear it all and re-write it all?
+    if ( updateTable ):
+      self.OutputAllTransformMetricsToMetricsTable()
 
 
 
