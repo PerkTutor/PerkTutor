@@ -751,6 +751,7 @@ void qSlicerPerkEvaluatorModuleWidget
   d->TransformRolesWidget->setPerkEvaluatorNode( peNode );
   d->AnatomyRolesWidget->setPerkEvaluatorNode( peNode );
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
+  d->TransformBufferWidget->setTransformBufferNode( peNode->GetTransformBufferNode() );
 
   d->BeginSpinBox->setValue( peNode->GetMarkBegin() );
   d->EndSpinBox->setValue( peNode->GetMarkEnd() );
