@@ -173,6 +173,21 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
+bool vtkSlicerPerkEvaluatorLogic
+::IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child )
+{
+  while( child != NULL )
+  {
+    if ( strcmp( parent->GetID(), child->GetID() ) == 0 )
+    {
+      return true;
+    }
+    child = vtkMRMLLinearTransformNode::SafeDownCast( child->GetParentTransformNode() );
+  }
+
+  return false;
+}
+
 
 void vtkSlicerPerkEvaluatorLogic
 ::GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode, vtkLogRecordBuffer* selfParentRecordBuffer )
@@ -440,7 +455,7 @@ void vtkSlicerPerkEvaluatorLogic
     double absTime = peNode->GetTransformBufferNode()->GetTransformRecordBuffer( *transformName )->GetCurrentRecord()->GetTime();
     // Call the metrics update function
     qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager(); // This is a constant each time the function is called
-    pythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTime.UpdateTransformMetrics( '%1', %2, True )" ).arg( transformName->c_str() ).arg( absTime ) );
+    pythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTime.UpdateSelfAndChildMetrics( '%1', %2 )" ).arg( transformName->c_str() ).arg( absTime ) );
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }

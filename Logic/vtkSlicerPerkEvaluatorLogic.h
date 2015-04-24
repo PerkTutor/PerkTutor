@@ -63,6 +63,8 @@ public:
   // TODO: THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
   vtkMRMLTableNode* AddTable(const char* fileName, const char* name = 0);
   
+  bool IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child );
+
   void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
   void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
 
