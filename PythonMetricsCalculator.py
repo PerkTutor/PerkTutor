@@ -1,4 +1,4 @@
-import os, imp, glob, sys, copy
+import os, imp, glob, sys
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -206,9 +206,7 @@ class PythonMetricsCalculatorLogic:
     
     for t in self.transformMetrics:
       for i in range( len( self.transformMetrics[ t ] ) ):
-        self.transformMetrics[ t ][ i ].Finalize()
-        print self.transformMetrics[ t ][ i ].GetMetricName()
-        print self.transformMetrics[ t ][ i ].GetMetric()
+        self.transformMetrics[ t ][ i ].Finalize() # TODO: Remove this - should not have Initialize or Finalize functions
         currentMetricRow = vtk.vtkVariantArray()
         currentMetricRow.InsertNextValue( t )
         currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetricName() )
@@ -264,12 +262,10 @@ class PythonMetricsCalculatorLogic:
     newTransformMetrics = self.FilterMetricsByTransformRole( newTransformMetrics, newTransformRole )
     
     # Copy each metric
-    copyTransformMetrics = []
     for i in range( len( newTransformMetrics ) ):
-      copyTransformMetrics.append( copy.deepcopy( newTransformMetrics[ i ] ) )
-      copyTransformMetrics[ i ].Initialize() # TODO: Remove this - should not have Initialize or Finalize functions
+      newTransformMetrics[ i ].Initialize() # TODO: Remove this - should not have Initialize or Finalize functions
     
-    self.transformMetrics[ newTransformName ] = copyTransformMetrics
+    self.transformMetrics[ newTransformName ] = newTransformMetrics
     
     
       
