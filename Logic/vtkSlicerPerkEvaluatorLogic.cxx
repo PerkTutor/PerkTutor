@@ -136,7 +136,7 @@ void vtkSlicerPerkEvaluatorLogic
   {
     return;
   }
-  if ( peNode->GetMarkBegin() >= peNode->GetMarkEnd() ) // TODO: Is a test for to see if the MarkBegin and MarkEnd are within the bounds of the procedure time really necessary?
+  if ( peNode->GetMarkBegin() > peNode->GetMarkEnd() ) // TODO: Is a test for to see if the MarkBegin and MarkEnd are within the bounds of the procedure time really necessary?
   {
     return;
   }
@@ -371,7 +371,13 @@ void vtkSlicerPerkEvaluatorLogic
       continue;
     }
 
-    std::string matrixString = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), recordedTransformNames.at( i ) )->GetTransformString();
+    vtkTransformRecord* currentRecord = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), recordedTransformNames.at( i ) );
+    if ( currentRecord == NULL )
+    {
+      continue;
+    }
+
+    std::string matrixString = currentRecord->GetTransformString();
 
     vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
     PerkTutorCommon::MatrixStringTo4x4( matrixString, transformMatrix );

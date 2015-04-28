@@ -211,5 +211,4 @@ void qSlicerMetricsTableWidget
     QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
     d->MetricsTable->setItem( i, 1, valueItem );
   }
-
 }

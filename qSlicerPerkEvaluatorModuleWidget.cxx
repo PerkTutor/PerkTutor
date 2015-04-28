@@ -56,6 +56,7 @@ public:
   qSlicerTransformBufferWidget* TransformBufferWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
   qSlicerMetricsTableWidget* MetricsTableWidget;
+  qSlicerPerkEvaluatorRecorderControlsWidget* RecorderControlsWidget;
   qSlicerPerkEvaluatorTransformRolesWidget* TransformRolesWidget;
   qSlicerPerkEvaluatorAnatomyRolesWidget* AnatomyRolesWidget;
 };
@@ -327,21 +328,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnRealTimeProcessingToggled()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-  if ( peNode == NULL )
-  {
-    return;
-  }
-
-  peNode->SetRealTimeProcessing( d->RealTimeProcessingCheckBox->isChecked() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
 ::OnMarkBeginChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -566,6 +552,11 @@ qSlicerPerkEvaluatorModuleWidget
   d->MetricsTableWidget->setMRMLScene( NULL ); 
   d->MetricsTableWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
+  d->RecorderControlsWidget = new qSlicerPerkEvaluatorRecorderControlsWidget();
+  d->RealTimeProcessingGroupBox->layout()->addWidget( d->RecorderControlsWidget );
+  d->RecorderControlsWidget->setMRMLScene( NULL ); 
+  d->RecorderControlsWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
   d->TransformRolesWidget = new qSlicerPerkEvaluatorTransformRolesWidget();
   d->TransformRolesGroupBox->layout()->addWidget( d->TransformRolesWidget );
   d->TransformRolesWidget->setMRMLScene( NULL ); 
@@ -597,9 +588,6 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Connect the Perk Evaluator node to the update
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
-
-  //connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->TransformBufferWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
   // NOTE: The roles widgets will be updated with the other components of the widget
 
 
@@ -619,10 +607,9 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
   connect( d->MetricsTableWidget, SIGNAL( metricsTableNodeChanged( vtkMRMLNode* ) ), this, SLOT( onMetricsTableChanged( vtkMRMLNode* ) ) );
  
-  // TODO: If the transform buffer is updated, then we want to clear the widget, and reset the tool trajectories
-  // But resetting the tool trajectories is computationally expensive
-  // It might be better to update the trajectories only when necessary parts of the GUI are interacted with (i.e. Analyze, or playback controls)
+  // Update the messages widget when the transform buffer is changed
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 
   // Analysis tab
@@ -640,7 +627,9 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->BatchPerkEvaluatorNodeButton, SIGNAL( clicked() ), this, SLOT( OnBatchPerkEvaluatorNodeClicked() ) );
   connect( d->BatchTransformBufferButton, SIGNAL( clicked() ), this, SLOT( OnBatchTransformBufferClicked() ) );
 
-  connect( d->RealTimeProcessingCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnRealTimeProcessingToggled() ) );
+  // Update the recorder controls widget when the transform buffer is changed
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 
   // Advanced tab
@@ -765,8 +754,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
   vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
   d->BodyNodeComboBox->setCurrentNode( tissueNode );
-
-  d->RealTimeProcessingCheckBox->setChecked( peNode->GetRealTimeProcessing() );
 
   // Get the name of the base directory
   QDir metricsDirectory( peNode->GetMetricsDirectory().c_str() );

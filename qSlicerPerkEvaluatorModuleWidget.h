@@ -8,6 +8,7 @@
 #include "qSlicerTransformBufferWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
 #include "qSlicerMetricsTableWidget.h"
+#include "qSlicerPerkEvaluatorRecorderControlsWidget.h"
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
 #include "qSlicerPerkEvaluatorAnatomyRolesWidget.h"
 
@@ -44,8 +45,6 @@ public slots:
 
   void OnBatchPerkEvaluatorNodeClicked();
   void OnBatchTransformBufferClicked();
-
-  void OnRealTimeProcessingToggled();
 
   void OnMarkBeginChanged();
   void OnMarkBeginClicked();
