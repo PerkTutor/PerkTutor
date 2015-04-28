@@ -206,7 +206,6 @@ class PythonMetricsCalculatorLogic:
     
     for t in self.transformMetrics:
       for i in range( len( self.transformMetrics[ t ] ) ):
-        self.transformMetrics[ t ][ i ].Finalize() # TODO: Remove this - should not have Initialize or Finalize functions
         currentMetricRow = vtk.vtkVariantArray()
         currentMetricRow.InsertNextValue( t )
         currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetricName() )
@@ -260,10 +259,6 @@ class PythonMetricsCalculatorLogic:
     # Only the metrics which the transform is the role for
     newTransformRole = self.peNode.GetTransformRole( newTransformName )
     newTransformMetrics = self.FilterMetricsByTransformRole( newTransformMetrics, newTransformRole )
-    
-    # Copy each metric
-    for i in range( len( newTransformMetrics ) ):
-      newTransformMetrics[ i ].Initialize() # TODO: Remove this - should not have Initialize or Finalize functions
     
     self.transformMetrics[ newTransformName ] = newTransformMetrics
     
