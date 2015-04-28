@@ -374,6 +374,9 @@ class PythonMetricsCalculatorLogic:
       timesArray = vtk.vtkDoubleArray()
       self.peLogic.GetSelfAndParentTimes( self.peNode, currentTransformNode, timesArray )
       
+      if ( timesArray.GetNumberOfTuples() == 0 ):
+        continue
+      
       self.peNode.SetPlaybackTime( timesArray.GetValue( 0 ), True )
         
       for j in range( timesArray.GetNumberOfTuples() ):
@@ -387,7 +390,7 @@ class PythonMetricsCalculatorLogic:
         
         self.UpdateTransformMetrics( currentTransformNode, absTime, False )
       
-    self.peNode.SetPlaybackTime( originalPlaybackTime ) # Scene automatically updated
+    self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
     self.OutputAllTransformMetricsToMetricsTable()
 
     
