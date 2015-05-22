@@ -221,7 +221,7 @@ vtkMRMLTransformBufferNode* vtkRecordBuffer
 	{
 	  vtkMessageRecord* messageRecord = vtkMessageRecord::New();
 	  messageRecord->SetTime( this->GetRecordAt(i)->GetTime() );
-	  messageRecord->SetName( this->GetRecordAt(i)->GetLabel() );
+	  messageRecord->SetMessageString( this->GetRecordAt(i)->GetLabel() );
 	  transformBufferNode->AddMessage( messageRecord );
 	  prevLabel = this->GetRecordAt(i)->GetLabel();
 	}
@@ -242,7 +242,7 @@ void vtkRecordBuffer
   for ( int i = 0; i < newTransformBufferNode->GetNumTransforms(); i++ )
   {
     vtkTrackingRecord* trackingRecord = vtkTrackingRecord::New();
-    trackingRecord->FromTransformRecord( newTransformBufferNode->GetTransformAt(i) );
+    //trackingRecord->FromTransformRecord( newTransformBufferNode->GetTransformAt(i) );
     this->AddRecord( trackingRecord );
   }
 
@@ -251,12 +251,12 @@ void vtkRecordBuffer
   for ( int i = 0; i < newTransformBufferNode->GetNumMessages(); i++ )
   {
     for ( int j = 0; j < this->GetNumRecords(); j++ )
-	{
-      if ( this->GetRecordAt(j)->GetTime() > newTransformBufferNode->GetMessageAt(i)->GetTime() )
 	  {
-        this->GetRecordAt(j)->SetLabel( newTransformBufferNode->GetMessageAt(i)->GetName() );
+      //if ( this->GetRecordAt(j)->GetTime() > newTransformBufferNode->GetMessageAt(i)->GetTime() )
+	    //{
+        //this->GetRecordAt(j)->SetLabel( newTransformBufferNode->GetMessageAt(i)->GetMessageString() );
+	    //}
 	  }
-	}
   }
 
 }
@@ -272,7 +272,7 @@ void vtkRecordBuffer
   for ( int i = 0; i < newTransformBufferNode->GetNumTransforms(); i++ )
   {
     vtkTrackingRecord* trackingRecord = vtkTrackingRecord::New();
-    trackingRecord->FromTransformRecord( newTransformBufferNode->GetTransformAt(i) );
+    //trackingRecord->FromTransformRecord( newTransformBufferNode->GetTransformAt(i) );
     this->AddRecord( trackingRecord );
   }
 
@@ -283,26 +283,26 @@ void vtkRecordBuffer
     // Only accept if message is relevant
     bool relevant = false;
     for ( int j = 0; j < relevantMessages.size(); j++ )
-	{
-      if ( newTransformBufferNode->GetMessageAt(i)->GetName().compare( relevantMessages.at(j) ) == 0 )
 	  {
-        relevant = true;
+      //if ( newTransformBufferNode->GetMessageAt(i)->GetMessageString().compare( relevantMessages.at(j) ) == 0 )
+	    //{
+        //relevant = true;
+	    //}
 	  }
-	}
 
-	// Skip if the message is not relevant or a finishing method
-	if ( ! relevant && newTransformBufferNode->GetMessageAt(i)->GetName().compare( "Done" ) != 0 && newTransformBufferNode->GetMessageAt(i)->GetName().compare( "End" ) != 0 )
-	{
-      continue;
-	}
+	  // Skip if the message is not relevant or a finishing method
+	  //if ( ! relevant && newTransformBufferNode->GetMessageAt(i)->GetMessageString().compare( "Done" ) != 0 && newTransformBufferNode->GetMessageAt(i)->GetMessageString().compare( "End" ) != 0 )
+	  //{
+      //continue;
+	  //}
 
-	for ( int j = 0; j < this->GetNumRecords(); j++ )
-	{
-      if ( this->GetRecordAt(j)->GetTime() > newTransformBufferNode->GetMessageAt(i)->GetTime() )
+	  for ( int j = 0; j < this->GetNumRecords(); j++ )
 	  {
-        this->GetRecordAt(j)->SetLabel( newTransformBufferNode->GetMessageAt(i)->GetName() );
+      //if ( this->GetRecordAt(j)->GetTime() > newTransformBufferNode->GetMessageAt(i)->GetTime() )
+	    //{
+        //this->GetRecordAt(j)->SetLabel( newTransformBufferNode->GetMessageAt(i)->GetMessageString() );
+	    //}
 	  }
-	}
 
   }
 

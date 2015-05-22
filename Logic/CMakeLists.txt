@@ -5,7 +5,8 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_LOGIC_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-	${Slicer_Base_INCLUDE_DIRS}
+  ${PerkTutorCommon_SOURCE_DIR}
+  ${PerkTutorCommon_BINARY_DIR}
   )
 
 set(${KIT}_SRCS
@@ -18,7 +19,8 @@ set(${KIT}_SRCS
 set(${KIT}_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
-  SlicerBaseLogic 
+  SlicerBaseLogic
+  PerkTutorCommon
   vtkSlicerWorkflowSegmentationModuleMRML
   vtkSlicerTransformRecorderModuleLogic
   )

@@ -310,14 +310,15 @@ std::string vtkWorkflowToolCollection
   for ( int i = 0; i < this->GetNumTools(); i++ )
   {
     vtkMRMLTransformBufferNode* tempTransformBufferNode = this->GetToolAt(i)->Buffer->ToTransformBufferNode();
+
     for ( int j = 0; j < tempTransformBufferNode->GetNumTransforms(); j++ )
-	{      
-      transformBufferNode->AddTransform( tempTransformBufferNode->GetTransformAt(j) );
-	}
-	for ( int j = 0; j < tempTransformBufferNode->GetNumMessages(); j++ )
-	{      
-      transformBufferNode->AddMessage( tempTransformBufferNode->GetMessageAt(j) );
-	}
+	  {      
+      //transformBufferNode->AddTransform( tempTransformBufferNode->GetTransformAt(j) );
+	  }
+	  for ( int j = 0; j < tempTransformBufferNode->GetNumMessages(); j++ )
+	  {      
+      //transformBufferNode->AddMessage( tempTransformBufferNode->GetMessageAt(j) );
+	  }
   }
 
   return transformBufferNode->ToXMLString();
@@ -336,13 +337,13 @@ void vtkWorkflowToolCollection
   // For this one, check all tools each of which will handle all elements
   vtkMRMLTransformBufferNode* transformBufferNode = vtkMRMLTransformBufferNode::New();
   transformBufferNode->FromXMLElement( element );
-  std::vector<vtkMRMLTransformBufferNode*> transformBufferNodeVector = transformBufferNode->SplitBufferByName();
-  for ( int i = 0; i < transformBufferNodeVector.size(); i++ )
-  {
-    vtkWorkflowTool* currentTool = this->GetToolByName( transformBufferNodeVector.at(i)->GetCurrentTransform()->GetDeviceName() );
-	vtkRecordBuffer* currentBuffer = vtkRecordBuffer::New();
-	currentBuffer->FromTransformBufferNode( transformBufferNodeVector.at(i) );
-    currentTool->Buffer = currentBuffer;
-  }
+  //std::vector<vtkMRMLTransformBufferNode*> transformBufferNodeVector = transformBufferNode->SplitBufferByName();
+  //for ( int i = 0; i < transformBufferNodeVector.size(); i++ )
+  //{
+    //vtkWorkflowTool* currentTool = this->GetToolByName( transformBufferNodeVector.at(i)->GetCurrentTransform()->GetDeviceName() );
+	  //vtkRecordBuffer* currentBuffer = vtkRecordBuffer::New();
+	  //currentBuffer->FromTransformBufferNode( transformBufferNodeVector.at(i) );
+    //currentTool->Buffer = currentBuffer;
+  //}
 
 }

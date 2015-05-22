@@ -67,7 +67,7 @@ void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 qSlicerWorkflowSegmentationRecorderControlsWidget
 ::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
-  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( qSlicerTransformBufferWidget::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
+  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
 }
 
 

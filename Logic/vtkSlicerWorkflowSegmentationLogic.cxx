@@ -222,22 +222,22 @@ void vtkSlicerWorkflowSegmentationLogic
 {
   vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::New();
   transformBuffer->FromXMLElement( this->ParseXMLFile( fileName ) );  
-  std::vector<vtkMRMLTransformBufferNode*> transformBufferVector = transformBuffer->SplitBufferByName();
+  //std::vector<vtkMRMLTransformBufferNode*> transformBufferVector = transformBuffer->SplitBufferByName();
 
-  for ( int i = 0; i < transformBufferVector.size(); i++ )
-  {
-    vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( transformBufferVector.at(i)->GetCurrentTransform()->GetDeviceName() );
-	if ( currentAlgorithm != NULL )
-	{
-      vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
-	  currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i), currentAlgorithm->Tool->Procedure->GetTaskNames() ); // Note that this assumes the tool names are ok
-	  currentAlgorithm->AddTrainingBuffer( currentRecordBuffer );
-	  currentRecordBuffer->Delete(); // This is trimmed and a new copy is created and stored
-	}
-  }
+  //for ( int i = 0; i < transformBufferVector.size(); i++ )
+  //{
+    //vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( transformBufferVector.at(i)->GetCurrentTransform()->GetDeviceName() );
+	  //if ( currentAlgorithm != NULL )
+	  //{
+      //vtkRecordBuffer* currentRecordBuffer = vtkRecordBuffer::New();
+	    //currentRecordBuffer->FromTransformBufferNode( transformBufferVector.at(i), currentAlgorithm->Tool->Procedure->GetTaskNames() ); // Note that this assumes the tool names are ok
+	    //currentAlgorithm->AddTrainingBuffer( currentRecordBuffer );
+	    //currentRecordBuffer->Delete(); // This is trimmed and a new copy is created and stored
+	  //}
+  //}
 
   transformBuffer->Delete();
-  vtkDeleteVector( transformBufferVector );
+  //vtkDeleteVector( transformBufferVector );
 }
 
 
@@ -256,11 +256,11 @@ void vtkSlicerWorkflowSegmentationLogic
   }
 
   // If new transfrom, convert to label record and segment based on name
-  vtkTransformRecord* currentTransform = bufferNode->GetTransformAt( this->IndexToProcess );
+  //vtkTransformRecord* currentTransform = bufferNode->GetTransformAt( this->IndexToProcess );
   this->IndexToProcess++;
   
   vtkTrackingRecord* currentRecord = vtkTrackingRecord::New();
-  currentRecord->FromTransformRecord( currentTransform );
+  //currentRecord->FromTransformRecord( currentTransform );
 
   // TODO: Should workflow algorithms be specific to a transform or to a buffer?
   vtkWorkflowAlgorithm* currentWorkflowAlgorithm = this->GetWorkflowAlgorithmByName( currentRecord->GetLabel() );
@@ -268,7 +268,7 @@ void vtkSlicerWorkflowSegmentationLogic
   if ( currentWorkflowAlgorithm == NULL || ! currentWorkflowAlgorithm->Tool->Trained )
   {
     currentRecord->Delete();
-	return;
+	  return;
   }
 
   currentWorkflowAlgorithm->AddSegmentRecord( currentRecord );
@@ -279,7 +279,7 @@ void vtkSlicerWorkflowSegmentationLogic
   }
   if ( currentWorkflowAlgorithm->DoTask != currentWorkflowAlgorithm->DoneTask )
   {
-    this->TransformRecorderLogic->AddMessage( bufferNode, currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
+    //this->TransformRecorderLogic->AddMessage( bufferNode, currentWorkflowAlgorithm->DoTask->Name, currentTransform->GetTime() );
   }
 
 }
@@ -295,26 +295,27 @@ std::string vtkSlicerWorkflowSegmentationLogic
   }
 
   std::stringstream instructions;
-  std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
-  for ( int i = 0; i < activeTransforms.size(); i++ )
-  {
-    vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( activeTransforms.at(i) );
+  //std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
+  //for ( int i = 0; i < activeTransforms.size(); i++ )
+  //{
+    //vtkWorkflowAlgorithm* currentAlgorithm = this->GetWorkflowAlgorithmByName( activeTransforms.at(i) );
 
-    if ( currentAlgorithm == NULL || currentAlgorithm->DoTask == NULL )
-	{
-      continue;
-	}
+    //if ( currentAlgorithm == NULL || currentAlgorithm->DoTask == NULL )
+	  //{
+      //continue;
+	  //}
 
-    instructions << currentAlgorithm->Tool->Name << ": ";
-	instructions << currentAlgorithm->DoTask->Name << " - ";
-    instructions << currentAlgorithm->DoTask->Instruction;
+    //instructions << currentAlgorithm->Tool->Name << ": ";
+	  //instructions << currentAlgorithm->DoTask->Name << " - ";
+    //instructions << currentAlgorithm->DoTask->Instruction;
 
-	if ( i < activeTransforms.size() - 1 )
-	{
-      instructions << std::endl;	
-	}
+	  //if ( i < activeTransforms.size() - 1 )
+	  //{
+      //instructions << std::endl;	
+	  //}
 
-  }
+  //}
+
   return instructions.str();
 }
 

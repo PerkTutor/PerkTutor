@@ -30,6 +30,8 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/MRML
   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
+  ${PerkTutorCommon_SOURCE_DIR}
+  ${PerkTutorCommon_BINARY_DIR}
   ${qSlicerTransformRecorderModuleWidgets_SOURCE_DIR}
   ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
   ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
@@ -58,10 +60,10 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
   qSlicer${MODULE_NAME}ModuleWidgets
+  PerkTutorCommon
   vtkSlicerTransformRecorderModuleMRML
   vtkSlicerTransformRecorderModuleLogic
   qSlicerTransformRecorderModuleWidgets
-  ${MRML_LIBRARIES}
   )
   
 set(MODULE_RESOURCES

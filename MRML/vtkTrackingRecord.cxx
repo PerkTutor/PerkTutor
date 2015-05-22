@@ -162,7 +162,7 @@ vtkTransformRecord* vtkTrackingRecord
   vtkTransformRecord* transformRecord = vtkTransformRecord::New();
   transformRecord->SetTime( this->GetTime() );
   transformRecord->SetDeviceName( this->GetLabel() );
-  transformRecord->SetTransform( this->ToMatrixString() );
+  transformRecord->SetTransformString( this->ToMatrixString() );
   return transformRecord;
 }
 
@@ -172,7 +172,7 @@ void vtkTrackingRecord
 {
   this->SetTime( newTransformRecord->GetTime() );
   this->SetLabel( newTransformRecord->GetDeviceName() );
-  this->FromMatrixString( newTransformRecord->GetTransform() );
+  this->FromMatrixString( newTransformRecord->GetTransformString() );
 }
 
 
