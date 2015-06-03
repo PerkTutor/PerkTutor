@@ -17,8 +17,8 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkTrackingRecord.h"
-#include "vtkMarkovRecord.h"
+#include "vtkLabelRecord.h"
+#include "vtkMarkovVector.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -30,8 +30,6 @@ public:
   // Standard MRML methods
   static vtkMarkovModel* New();
 
-  vtkMarkovModel* DeepCopy();
-
 protected:
 
   // Constructo/destructor
@@ -40,9 +38,12 @@ protected:
 
 public:
 
+  //
+  void Copy( vtkMarkovModel* otherMarkov );
+
   void SetStates( std::vector<std::string> newStateNames );
   void SetStates( int newStates );
-  void SetSymbols( std::vector<std::string> newSymbolsNames );
+  void SetSymbols( std::vector<std::string> newSymbolNames );
   void SetSymbols( int newSymbols );
 
   void AddState( std::string newStateName );
@@ -54,15 +55,15 @@ public:
   int GetNumStates();
   int GetNumSymbols();
 
-  void SetA( std::vector<vtkLabelVector*> newA );
-  std::vector<vtkLabelVector*> GetA();
-  std::vector<vtkLabelVector*> GetZeroA();
-  std::vector<vtkLabelVector*> GetLogA();
+  void SetA( std::vector< vtkLabelVector* > newA );
+  std::vector< vtkLabelVector* > GetA();
+  std::vector< vtkLabelVector* > GetZeroA();
+  std::vector< vtkLabelVector* > GetLogA();
 
-  void SetB( std::vector<vtkLabelVector*> newB );
-  std::vector<vtkLabelVector*> GetB();
-  std::vector<vtkLabelVector*> GetZeroB();
-  std::vector<vtkLabelVector*> GetLogB();
+  void SetB( std::vector< vtkLabelVector* > newB );
+  std::vector< vtkLabelVector* > GetB();
+  std::vector< vtkLabelVector* > GetZeroB();
+  std::vector< vtkLabelVector* > GetLogB();
 
   void SetPi( vtkLabelVector* newPi );
   vtkLabelVector* GetPi();
@@ -73,9 +74,9 @@ public:
   void AddEstimationData( std::vector<vtkMarkovRecord*> sequence );
   void AddPseudoData( vtkLabelVector* pseudoPi, std::vector<vtkLabelVector*> pseudoA, std::vector<vtkLabelVector*> pseudoB );
   void EstimateParameters();
-  std::vector<vtkMarkovRecord*> CalculateStates( std::vector<vtkMarkovRecord*> sequence );
+  void CalculateStates( std::vector< vtkMarkovRecord* > sequence );
 
-  std::string ToXMLString();
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
 private:
@@ -85,12 +86,12 @@ private:
 
 protected:
 
-  std::vector<vtkLabelVector*> A; // State transition matrix
-  std::vector<vtkLabelVector*> B; // Observation matrix
-  vtkLabelVector* pi;	// Initial state vector
+  std::vector< vtkSmartPointer< vtkLabelVector > > A; // State transition matrix
+  std::vector< vtkSmartPointer< vtkLabelVector > > B; // Observation matrix
+  vtkSmartPointer< vtkLabelVector > Pi;	// Initial state vector
 
-  std::vector<std::string> stateNames;
-  std::vector<std::string> symbolNames;
+  std::vector< std::string > StateNames;
+  std::vector< std::string > SymbolNames;
 
 };
 

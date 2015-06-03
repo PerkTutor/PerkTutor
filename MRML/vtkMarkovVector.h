@@ -1,6 +1,6 @@
 
-#ifndef __vtkMarkovRecord_h
-#define __vtkMarkovRecord_h
+#ifndef __vtkMarkovVector_h
+#define __vtkMarkovVector_h
 
 // Standard Includes
 #include <string>
@@ -19,27 +19,24 @@
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
-vtkMarkovRecord : public vtkObject
+vtkMarkovVector : public vtkObject
 {
 public:
-  vtkTypeMacro( vtkMarkovRecord, vtkObject );
+  vtkTypeMacro( vtkMarkovVector, vtkObject );
 
   // Standard MRML methods
-  static vtkMarkovRecord* New();
-
-  vtkMarkovRecord* DeepCopy();
+  static vtkMarkovVector* New();
 
 protected:
 
   // Constructo/destructor
-  vtkMarkovRecord();
-  virtual ~vtkMarkovRecord();
-
-private:
-  std::string State;
-  std::string Symbol;
+  vtkMarkovVector();
+  virtual ~vtkMarkovVector();
 
 public:
+
+  //
+  void Copy( vtkMarkovVector* otherVector );
 
   std::string GetState();
   void SetState( std::string newState );
@@ -49,8 +46,12 @@ public:
   void SetSymbol( std::string newSymbol );
   void SetSymbol( int newSymbol );
 
-  std::string ToXMLString();
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
+  
+protected:
+  std::string State;
+  std::string Symbol;
 
 
 };

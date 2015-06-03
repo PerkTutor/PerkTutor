@@ -25,16 +25,14 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
-#include "vtkXMLDataElement.h"
 
 // WorkflowSegmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkWorkflowToolCollection.h"
+#include "vtkMRMLWorkflowToolNode.h"
 
 class
 VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
-vtkMRMLWorkflowSegmentationNode
-: public vtkMRMLNode
+vtkMRMLWorkflowSegmentationNode : public vtkMRMLNode
 {
 public:
   vtkTypeMacro( vtkMRMLWorkflowSegmentationNode, vtkMRMLNode );
@@ -60,37 +58,12 @@ protected:
   
 public:
 
-  // File name setters and getters
-  std::string GetWorkflowProcedureFileName();
-  void SetWorkflowProcedureFileName( std::string newWorkflowProcedureFileName );
-  std::string GetWorkflowInputFileName();
-  void SetWorkflowInputFileName( std::string newWorkflowInputFileName );
-  std::string GetWorkflowTrainingFileName();
-  void SetWorkflowTrainingFileName( std::string newWorkflowTrainingFileName );
-  
-  // File IO methods
-  void SaveWorkflowTraining( std::string newWorkflowTrainingFileName = "" );
-  void ImportWorkflowProcedure( std::string newWorkflowProcedureFileName = "" );
-  void ImportWorkflowInput( std::string newWorkflowInputFileName = "" );
-  void ImportWorkflowTraining( std::string newWorkflowTrainingFileName = "" );
-  void ImportAllWorkflowData();
-
-  vtkWorkflowTool* GetCompletionTool( vtkWorkflowTool* tool );
-
-protected:
-
-  // Input/output files
-  std::string WorkflowProcedureFileName;
-  std::string WorkflowInputFileName;
-  std::string WorkflowTrainingFileName;
-
-  vtkXMLDataParser* Parser;
-  vtkXMLDataElement* ParseXMLFile( std::string fileName );
-
-public:
-
-  vtkWorkflowToolCollection* ToolCollection;
-  vtkWorkflowToolCollection* ToolCompletion;
+  // Management of references to tools
+  void AddToolID( std::string toolID );
+  void RemoveToolID( std::string toolID );
+  std::vector< std::string > GeToolIDs();
+  bool IsToolID( std::string toolID );
+  void SetToolIDs( std::vector< std::string > toolIDs );
 
 };  
 

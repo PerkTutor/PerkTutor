@@ -27,32 +27,30 @@ public:
   // Standard MRML methods
   static vtkLabelVector* New();
 
-  vtkLabelVector* DeepCopy();
-
 protected:
 
   // Constructo/destructor
   vtkLabelVector();
   virtual ~vtkLabelVector();
 
-private:
-
-  std::vector<double> Values;
-  std::string Label;
-
+  
 public:
 
-  void Initialize( int size, double value );
+  //
+  void Copy( vtkLabelVector* otherVector );
 
-  void Add( double newValue );
-  void Set( int index, double newValue );
-  void Crement( int index, double step = 1 );
-  double Get( int index );
+  void AddElement( double newValue );
+  void SetElement( int index, double newValue );
+  void IncrementElement( int index, double step = 1 );
+  double GetElement( int index );
+  void FillElements( int size, double value );
   int Size();
-
-  void SetValues( std::vector<double> newValues );
-  std::vector<double> GetValues();
-
+  
+  void SetAllValues( std::vector< double > newValues );
+  std::vector< double > GetAllValues();
+  
+  void Concatenate( vtkLabelVector* otherVector );
+  
   std::string ToString();
   void FromString( std::string instring, int size );
 
@@ -60,55 +58,19 @@ public:
   void SetLabel( std::string newLabel );
   void SetLabel( int newLabel );
 
-  std::string ToXMLString( std::string name );
-  void FromXMLElement( vtkXMLDataElement* element, std::string name );
-
+  std::string ToXMLString( vtkIndent indent );
+  void FromXMLElement( vtkXMLDataElement* element );
+  
+  // Static helper methods
+  std::string VectorsToXMLString( std::vector< vtkLabelVector* > vectors, std::string name, vtkIndent indent );
+  std::string VectorsToXMLString( vtkLabelVector* vector, std::string name, vtkIndent indent );
+  std::vector< vtkLabelVector* > VectorsFromXMLElement( vtkXMLDataElement* element, std::string name ) // Note: This will create the labels vectors, whoever uses the function is responsible for deleting
+  
+protected:
+  
+  std::vector< double > Values;
+  std::string Label;
+  
 };
-
-
-template <class T> 
-void vtkDeleteVector( std::vector<T*> vector )
-{
-  for ( int i = 0; i < vector.size(); i++ )
-  {
-    vtkDelete( vector.at(i) );
-  }
-  vector.clear();
-}
-
-
-template <class T>
-void vtkDelete( T* object )
-{
-  if ( object != NULL )
-  {
-    object->Delete();
-  }
-}
-
-
-template <class T>
-std::vector<T*> vtkDeepCopyVector( std::vector<T*> vector )
-{
-  std::vector<T*> copyVector;
-  for ( int i = 0; i < vector.size(); i++ )
-  {
-    if ( vector.at(i) != NULL )
-	{
-      copyVector.push_back( vector.at(i)->DeepCopy() );
-	}
-  }
-  return copyVector;
-}
-
-
-template <class T>
-T* vtkDeleteAssign( T* assignTo, T* assignFrom )
-{
-  vtkDelete( assignTo );
-  return assignFrom;
-}
-
-
 
 #endif

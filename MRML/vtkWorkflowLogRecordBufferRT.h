@@ -1,6 +1,6 @@
 
-#ifndef __vtkRecordBufferRT_h
-#define __vtkRecordBufferRT_h
+#ifndef __vtkWorkflowLogRecordBufferRT_h
+#define __vtkWorkflowLogRecordBufferRT_h
 
 // Standard includes
 #include <ctime>
@@ -17,32 +17,29 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkRecordBuffer.h"
+#include "vtkWorkflowLogRecordBuffer.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
-vtkRecordBufferRT : public vtkRecordBuffer
+vtkWorkflowLogRecordBufferRT : public vtkWorkflowLogRecordBuffer
 {
 public:
-  vtkTypeMacro( vtkRecordBufferRT, vtkObject );
+  vtkTypeMacro( vtkWorkflowLogRecordBufferRT, vtkObject );
 
   // Standard MRML methods
-  static vtkRecordBufferRT* New();
-
-  vtkRecordBufferRT* DeepCopy();
+  static vtkWorkflowLogRecordBufferRT* New();
 
 protected:
 
   // Constructo/destructor
-  vtkRecordBufferRT();
-  virtual ~vtkRecordBufferRT();
+  vtkWorkflowLogRecordBufferRT();
+  virtual ~vtkWorkflowLogRecordBufferRT();
 
 public:
 
-  // Methods explicitly for workflow segmentation
-  vtkLabelRecord* GetRecordRT();
-  void SetRecordRT( vtkLabelRecord* newRecord );
+  // Note: There is no copy function, use the superclass copy function  
 
+  // Methods explicitly for workflow segmentation
   vtkLabelVector* DistancesRT( std::vector<vtkLabelVector*> labelVectors );
 
   vtkLabelRecord* DerivativeRT( int order = 1 );
@@ -55,7 +52,7 @@ public:
 
   vtkLabelRecord* fwdkmeansTransformRT( std::vector<vtkLabelVector*> centroids );
 
-  vtkMarkovRecord* ToMarkovRecordRT();
+  vtkMarkovVector* ToMarkovVectorRT();
 
 };
 

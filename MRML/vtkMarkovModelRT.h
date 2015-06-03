@@ -29,8 +29,6 @@ public:
   // Standard MRML methods
   static vtkMarkovModelRT* New();
 
-  vtkMarkovModelRT* DeepCopy();
-
 protected:
 
   // Constructo/destructor
@@ -39,13 +37,16 @@ protected:
 
 public:
 
-  vtkMarkovRecord* CalculateStateRT( vtkMarkovRecord* element );
+  //
+  void Copy( vtkMarkovModelRT* otherMarkov );
+
+  void CalculateStateRT( vtkMarkovVector* element );
 
 protected:
 
-  std::vector<vtkMarkovRecord*> sequence;
-  vtkLabelVector* currDelta;
-  vtkLabelVector* currPsi;
+  std::vector< vtkSmartPointer< vtkMarkovVector > > sequence;
+  vtkSmartPointer< vtkLabelVector > currDelta;
+  vtkSmartPointer< vtkLabelVector > currPsi;
 
 };
 

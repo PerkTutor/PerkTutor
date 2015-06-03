@@ -14,97 +14,80 @@ vtkStandardNewMacro( vtkMarkovModelRT );
 vtkMarkovModelRT
 ::vtkMarkovModelRT()
 {
-  this->currDelta = NULL;
-  this->currPsi = NULL;
+  this->currDelta = vtkSmartPointer< vtkLabelVector >::New();
+  this->currPsi = vtkSmartPointer< vtkLabelVector >::New();
 }
 
 
 vtkMarkovModelRT
 ::~vtkMarkovModelRT()
 {
-  vtkDeleteVector( this->sequence );
-
-  if ( this->currPsi != NULL )
-  {
-    this->currPsi->Delete();
-    this->currDelta->Delete();
-  }
+  this->sequence.clear();
 }
 
 
 vtkMarkovModelRT* vtkMarkovModelRT
-::DeepCopy()
+::Copy( vtkMarkovModelRT* otherMarkov )
 {
-  vtkMarkovModelRT* newMarkovModelRT = vtkMarkovModelRT::New();
+  this->vtkMarkovModel::Copy( otherMarkov );
 
-  for ( int i = 0; i < this->GetNumStates(); i++ )
+  // Must update the collected sequence. Psi and Delta will update automatically as we add sequence
+  for ( int i = 0; i < otherMarkov->sequence.size(); i++ )
   {
-    newMarkovModelRT->A.push_back( this->GetA().at(i)->DeepCopy() );
-	newMarkovModelRT->B.push_back( this->GetB().at(i)->DeepCopy() );
+    this->CalculateStateRT( otherMarkov->sequence.at(i) );
   }
-
-  newMarkovModelRT->pi = vtkDeleteAssign( newMarkovModelRT->pi, this->pi->DeepCopy() );
-
-  newMarkovModelRT->SetStates( this->stateNames );
-  newMarkovModelRT->SetSymbols( this->symbolNames );
-
-  // Must update the collecte sequence. Psi and Delta will update automatically as we add sequence
-  for ( int i = 0; i < this->sequence.size(); i++ )
-  {
-    newMarkovModelRT->CalculateStateRT( this->sequence.at(i) );
-  }
-
-  return newMarkovModelRT;
 }
 
 
-vtkMarkovRecord* vtkMarkovModelRT
-::CalculateStateRT( vtkMarkovRecord* element )
+void vtkMarkovModelRT
+::CalculateStateRT( vtkMarkovVector* element )
 {
 
   // Take the log of all the parameters, so we avoid rounding errors
-  vtkLabelVector* logPi = this->GetLogPi();
-  std::vector<vtkLabelVector*> logA = this->GetLogA();
-  std::vector<vtkLabelVector*> logB = this->GetLogB();
+  vtkSmartPointer< vtkLabelVector > logPi = this->GetLogPi();
+  std::vector< vtkSmartPointer< vtkLabelVector > > logA = this->GetLogA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > logB = this->GetLogB();
 
   // This must both calculate the current state and update pi and delta
   // Case there are no previous elements in the sequence
   if ( this->sequence.size() == 0 )
   {
-    this->currDelta = vtkLabelVector::New();
+    this->currDelta = vtkSmartPointer< vtkLabelVector >::New();
+    
     for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-      this->currDelta->Add( logPi->Get(j) + logB.at(j)->Get( this->LookupSymbol( element->GetSymbol() ) ) );
-	}
-	this->currDelta->SetLabel( "Delta" );
+	  {
+      this->currDelta->AddElement( logPi->GetElement( j ) + logB.at(j)->GetElement( this->LookupSymbol( element->GetSymbol() ) ) );
+	  }
+	  this->currDelta->SetLabel( "Delta" );
 
     this->currPsi = this->GetZeroPi();
-	this->currPsi->SetLabel( "Psi" );
+	  this->currPsi->SetLabel( "Psi" );
   }
 
   // Case there are previous elements in the sequence
   if ( this->sequence.size() != 0 )
   {
 
-	for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-
-	  int maxIndex = 0;
-	  double maxProb = this->currDelta->Get(0) + this->A.at(0)->Get(j);
-
-	  for ( int k = 0; k < this->GetNumStates(); k++ )
+	  for ( int j = 0; j < this->GetNumStates(); j++ )
 	  {
-        if ( this->currDelta->Get(k) + this->A.at(k)->Get(j) > maxProb ) // Note: A[k].get(j) == A[k][j]
-		{
-          maxProb = this->currDelta->Get(k) + A.at(k)->Get(j);
-		  maxIndex = k;
-		}
-	  }
 
-	  // Account for observation probability
-	  this->currDelta->Set( j, maxProb + logB[j]->Get( this->LookupSymbol( element->GetSymbol() ) ) ); 
+	    int maxIndex = 0;
+	    double maxProb = - std::numeric_limits< double >::max();
+
+	    for ( int k = 0; k < this->GetNumStates(); k++ )
+	    {
+        double currProb = currDelta->GetElement( k ) + A.at(k)->GetElement( j );
+        if ( currProb > maxProb ) // Note: A[k].get(j) == A[k][j]
+		    {
+          maxProb = currProb;
+		      maxIndex = k;
+		    }
+	    }
+
+	    // Account for observation probability
+	    this->currDelta->Set( j, maxProb + logB[j]->GetElement( this->LookupSymbol( element->GetSymbol() ) ) ); 
       this->currPsi->Set( j, maxIndex );
-	}
+	  }
 
   }
 
@@ -113,22 +96,14 @@ vtkMarkovRecord* vtkMarkovModelRT
 
   for ( int k = 0; k < this->GetNumStates(); k++ )
   {
-    if ( this->currDelta->Get( k ) > this->currDelta->Get( endState ) )
-	{
+    if ( this->currDelta->GetElement( k ) > this->currDelta->Get( endState ) )
+	  {
       endState = k;
-	}
+	  }
   }
 
-  // Delete stuff
-  logPi->Delete();
-  vtkDeleteVector( logA );
-  vtkDeleteVector( logB );
-
   // Subsitute the calculated state into the inputted MarkovRecord (since the state originally won't make sense anyway)
-  element->SetState( this->stateNames.at(endState) );
-
+  element->SetState( this->stateNames.at( endState ) );
   sequence.push_back( element );
-
-  return element;
 
 }

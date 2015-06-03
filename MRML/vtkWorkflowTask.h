@@ -28,27 +28,47 @@ public:
   // Standard MRML methods
   static vtkWorkflowTask* New();
 
-  vtkWorkflowTask* DeepCopy();
-
 protected:
 
   // Constructo/destructor
   vtkWorkflowTask();
   virtual ~vtkWorkflowTask();
 
+
 public:
+
+  // 
+  void Copy( vtkWorkflowTask* otherTask );
+
+  // Getters/setters for properties
+  vtkGetMacro( Name, std::string );
+  vtkSetMacro( Name, std::string );
+
+  vtkGetMacro( Instruction, std::string );
+  vtkSetMacro( Instruction, std::string );
+
+  vtkGetMacro( Next, std::string );
+  vtkSetMacro( Next, std::string );
+
+  vtkGetMacro( Prerequisite, std::string );
+  vtkSetMacro( Prerequisite, std::string );
+
+  vtkGetMacro( Recovery, std::string );
+  vtkSetMacro( Recovery, std::string );
+
+
+  // Read/write task to file
+  std::string ToXMLString( vtkIndent indent );
+  void FromXMLElement( vtkXMLDataElement* element );
+
+
+protected:
 
   std::string Name;
   std::string Instruction;
   std::string Next;
   std::string Prerequisite;
   std::string Recovery;
-
-
-public:
-
-  std::string ToXMLString();
-  void FromXMLElement( vtkXMLDataElement* element );
 
 };
 

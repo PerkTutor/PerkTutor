@@ -13,36 +13,40 @@ set(${KIT}_INCLUDE_DIRECTORIES
 # Sources
 
 set(${KIT}_SRCS
-  vtkMRMLWorkflowSegmentationNode.cxx
-  vtkMRMLWorkflowSegmentationNode.h
-  vtkLabelRecord.cxx
-  vtkLabelRecord.h
   vtkLabelVector.cxx
   vtkLabelVector.h
+  vtkLabelRecord.cxx
+  vtkLabelRecord.h
+  vtkMarkovVector.cxx
+  vtkMarkovVector.h
+  
+  vtkWorkflowTask.cxx
+  vtkWorkflowTask.h
+  
   vtkMarkovModel.cxx
   vtkMarkovModel.h
   vtkMarkovModelRT.cxx
   vtkMarkovModelRT.h
-  vtkMarkovRecord.cxx
-  vtkMarkovRecord.h
-  vtkRecordBuffer.cxx
-  vtkRecordBuffer.h
-  vtkRecordBufferRT.cxx
-  vtkRecordBufferRT.h
-  vtkTrackingRecord.cxx
-  vtkTrackingRecord.h
-  vtkWorkflowInput.cxx
-  vtkWorkflowInput.h
-  vtkWorkflowProcedure.cxx
-  vtkWorkflowProcedure.h
-  vtkWorkflowTask.cxx
-  vtkWorkflowTask.h
-  vtkWorkflowTool.cxx
-  vtkWorkflowTool.h
-  vtkWorkflowToolCollection.cxx
-  vtkWorkflowToolCollection.h
-  vtkWorkflowTraining.cxx
-  vtkWorkflowTraining.h
+  
+  vtkWorkflowLogRecordBuffer.cxx
+  vtkWorkflowLogRecordBuffer.h
+  vtkWorkflowLogRecordBufferRT.cxx
+  vtkWorkflowLogRecordBufferRT.h
+  
+  vtkMRMLWorkflowProcedureNode.cxx
+  vtkMRMLWorkflowProcedureNode.h
+  vtkMRMLWorkflowProcedureStorageNode.cxx
+  vtkMRMLWorkflowProcedureStorageNode.h
+  vtkMRMLWorkflowInputNode.cxx
+  vtkMRMLWorkflowInputNode.h
+  vtkMRMLWorkflowInputStorageNode.cxx
+  vtkMRMLWorkflowInputStorageNode.h
+  vtkMRMLWorkflowTrainingNode.cxx
+  vtkMRMLWorkflowTrainingNode.h
+  vtkMRMLWorkflowTrainingStorageNode.cxx
+  vtkMRMLWorkflowTrainingStorageNode.h
+  vtkMRMLWorkflowToolNode.cxx
+  vtkMRMLWorkflowToolNode.h
   )
 
 SET (${KIT}_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "" FORCE)

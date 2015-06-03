@@ -1,47 +1,45 @@
 
-#include "vtkMarkovRecord.h"
+#include "vtkMarkovVector.h"
 
-vtkStandardNewMacro( vtkMarkovRecord );
+vtkStandardNewMacro( vtkMarkovVector );
 
 
-vtkMarkovRecord
-::vtkMarkovRecord()
+vtkMarkovVector
+::vtkMarkovVector()
 {
   this->State = "";
   this->Symbol = "";
 }
 
 
-vtkMarkovRecord
-::~vtkMarkovRecord()
+vtkMarkovVector
+::~vtkMarkovVector()
 {
 }
 
 
-vtkMarkovRecord* vtkMarkovRecord
-::DeepCopy()
+void vtkMarkovVector
+::Copy( vtkMarkovVector* otherVector )
 {
-  vtkMarkovRecord* newMarkovRecord = vtkMarkovRecord::New();
-  newMarkovRecord->SetState( this->GetState() );
-  newMarkovRecord->SetSymbol( this->GetSymbol() );
-  return newMarkovRecord;
+  this->SetState( otherVector->GetState() );
+  this->SetSymbol( otherVector->GetSymbol() );
 }
 
 
-std::string vtkMarkovRecord
+std::string vtkMarkovVector
 ::GetState()
 {
   return this->State;
 }
 
 
-void vtkMarkovRecord
+void vtkMarkovVector
 ::SetState( std::string newState )
 {
   this->State = newState;
 }
 
-void vtkMarkovRecord
+void vtkMarkovVector
 ::SetState( int newState )
 {
   std::stringstream labelstring;
@@ -50,20 +48,20 @@ void vtkMarkovRecord
 }
 
 
-std::string vtkMarkovRecord
+std::string vtkMarkovVector
 ::GetSymbol()
 {
   return this->Symbol;
 }
 
 
-void vtkMarkovRecord
+void vtkMarkovVector
 ::SetSymbol( std::string newSymbol )
 {
   this->Symbol = newSymbol;
 }
 
-void vtkMarkovRecord
+void vtkMarkovVector
 ::SetSymbol( int newSymbol )
 {
   std::stringstream labelstring;
@@ -72,12 +70,12 @@ void vtkMarkovRecord
 }
 
 
-std::string vtkMarkovRecord
-::ToXMLString()
+std::string vtkMarkovVector
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
 
-  xmlstring << "  <log";
+  xmlstring << indent << "<MarkovVector";
   xmlstring << " State=\"" << this->GetState() << "\"";
   xmlstring << " Symbol=\"" << this->GetSymbol() << "\"";
   xmlstring << " />" << std::endl;
@@ -86,13 +84,13 @@ std::string vtkMarkovRecord
 }
 
 
-void vtkMarkovRecord
+void vtkMarkovVector
 ::FromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( strcmp( element->GetName(), "log" ) != 0 )
+  if ( strcmp( element->GetName(), "MarkovVector" ) != 0 )
   {
-    return;  // If it's not a "log" or is the wrong tool jump to the next.
+    return;  // If it's not a "MarkovVector" jump to the next.
   }
 
   this->SetState( std::string( element->GetAttribute( "State" ) ) );
