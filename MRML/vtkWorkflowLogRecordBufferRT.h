@@ -42,7 +42,7 @@ public:
   // Methods explicitly for workflow segmentation
   vtkLabelVector* DistancesRT( std::vector<vtkLabelVector*> labelVectors );
 
-  vtkLabelRecord* DerivativeRT( int order = 1 );
+  vtkLabelRecord* DifferentiateRT( int order = 1 );
 
   vtkLabelRecord* GaussianFilterRT( double width );
 

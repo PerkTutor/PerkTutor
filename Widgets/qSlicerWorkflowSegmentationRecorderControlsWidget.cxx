@@ -67,6 +67,7 @@ void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 qSlicerWorkflowSegmentationRecorderControlsWidget
 ::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
+  this->WorkflowSegmentationNode = NULL;
   this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
 }
 
@@ -76,14 +77,27 @@ qSlicerWorkflowSegmentationRecorderControlsWidget
 {
 }
 
+
+void qSlicerWorkflowSegmentationRecorderControlsWidget
+::setWorkflowSegmentationNode( vtkMRMLNode* wsNode )
+{
+  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
+
+  this->qvtkDisconnectAll();
+
+  this->WorkflowSegmentationNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( newWorkflowSegmentationNode );
+
+  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::Modified, this, SLOT( updateWidgetFromMRML() ) );
+
+  this->updateWidgetFromMRML();
+}
+
 void qSlicerWorkflowSegmentationRecorderControlsWidget
 ::onClearButtonClicked()
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
-  //this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
-  this->TransformRecorderLogic->ClearTransforms( this->TransformBufferNode );
-  this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
+  this->WorkflowSegmentationLogic->ResetAllToolBuffers( this->WorkflowSegmentationNode );
   
-  this->updateWidget();
+  this->updateWidgetFromMRML();
 }

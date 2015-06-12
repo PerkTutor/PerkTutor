@@ -287,6 +287,7 @@ vtkLabelVector* vtkWorkflowLogRecordBuffer
   int size = this->GetRecord( 0 )->GetVector()->Size();
   vtkSmartPointer< vtkLabelVector > meanVector = vtkSmartPointer< vtkLabelVector >::New();
   meanVector->Initialize( size, 0.0 );
+  meanVector->SetLabel( "Mean" );
 
   // For each time
   for ( int i = 0; i < this->GetNumRecords(); i++ )

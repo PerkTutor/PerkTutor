@@ -39,11 +39,8 @@
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
 #include "vtkMRMLWorkflowSegmentationNode.h"
-#include "vtkRecordBufferRT.h"
-#include "vtkMarkovModelRT.h"
-#include "vtkWorkflowToolCollection.h"
-#include "vtkWorkflowAlgorithm.h"
 
+// Transform Recorder includes
 #include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkMRMLTransformBufferNode.h"
 
@@ -51,8 +48,8 @@
 
 
 /// \ingroup Slicer_QtModules_WorkflowSegmentation
-class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT vtkSlicerWorkflowSegmentationLogic :
-  public vtkSlicerModuleLogic
+class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT 
+vtkSlicerWorkflowSegmentationLogic : public vtkSlicerModuleLogic
 {
 public:
   vtkTypeMacro(vtkSlicerWorkflowSegmentationLogic,vtkSlicerModuleLogic);
@@ -80,42 +77,17 @@ private:
 
   // These are methods specific to the Workflow Segmentation logic -------------------------------------------------------
 public:
+ 
+  void ResetAllToolBuffers( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, std::vector< std::string > trainingBufferIDs );
+ 
+  bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  bool GetAllToolsTrained( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  
+  std::vector< std::string > GetToolStatusString( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  std::vector< std::string >  GetInstructionString( vtkMRMLWorkflowSegmentationNode* workflowNode );
 
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
-
-  vtkMRMLWorkflowSegmentationNode* GetModuleNode();
-  void SetModuleNode( vtkMRMLWorkflowSegmentationNode* node );
-
-  void ImportWorkflowProcedure( std::string fileName );
-  void ImportWorkflowInput( std::string fileName );
-  void ImportWorkflowTraining( std::string fileName );
-  void SaveWorkflowTraining( std::string fileName );
-
-  void ResetWorkflowAlgorithms();
-  bool GetWorkflowAlgorithmsDefined();
-  bool GetWorkflowAlgorithmsInputted();
-  bool GetWorkflowAlgorithmsTrained();
-  bool Train();
-
-  void AddTrainingBuffer( std::string fileName );
-
-  void Update( vtkMRMLTransformBufferNode* bufferNode );
-
-  std::string GetToolInstructions( vtkMRMLTransformBufferNode* bufferNode );
-
-private:
-
-  vtkMRMLWorkflowSegmentationNode* ModuleNode;
-  int IndexToProcess;
-
-  vtkXMLDataParser* Parser;
-  vtkXMLDataElement* ParseXMLFile( std::string fileName );
-
-private:
-
-  std::vector<vtkWorkflowAlgorithm*> WorkflowAlgorithms;
-
-  vtkWorkflowAlgorithm* GetWorkflowAlgorithmByName( std::string name );
+protected:
 
 };
 

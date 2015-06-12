@@ -39,7 +39,7 @@ public:
   qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationRecorderControlsWidget();
 
-  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic;
+  virtual void setWorkflowSegmentationNode( vtkMRMLNode* wsNode );
 
 protected slots:
 
@@ -47,6 +47,9 @@ protected slots:
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate> d_ptr;
+  
+  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationNode;
+  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationLogic;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationRecorderControlsWidget);

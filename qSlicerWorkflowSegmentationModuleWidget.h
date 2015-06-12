@@ -34,24 +34,12 @@ protected:
   virtual void setup();
   virtual void setupEmbeddedWidgets();
 
-  virtual void enter();
-  virtual void exit();
 
 protected slots:
 
-  void onModuleNodeSelected();
- 
-  void onWorkflowProcedureButtonClicked();
-  void onWorkflowInputButtonClicked();
-  void onWorkflowTrainingButtonClicked();
-  void onWorkflowTrainingFilesButtonClicked();
-  void onTrainButtonClicked();
-
-  void setupInstructions();
-  void enableButtons();
-
-  void updateWidget();
-  void resetWidget();
+  void mrmlNodeChanged();
+  
+  void updateWidgetFromMRMLNode();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationModuleWidget);

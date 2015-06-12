@@ -48,8 +48,7 @@ public:
 
   // Conversion to/from transform buffer
   vtkMRMLTransformBufferNode* ToTransformBufferNode();
-  void FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode );
-  void FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode, std::vector<std::string> relevantMessages );
+  void FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode, std::string transformName, std::vector< std::string > relevantMessages );
 
   // Methods explicitly for workflow segmentation
   vtkWorkflowLogRecordBuffer* GetRange( int start, int end );
