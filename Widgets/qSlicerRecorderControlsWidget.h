@@ -49,9 +49,9 @@ protected slots:
 
   virtual void onTransformBufferActiveTransformsChanged();
 
-  void onStartButtonClicked();
-  void onStopButtonClicked();
-  void onClearButtonClicked();
+  virtual void onStartButtonClicked();
+  virtual void onStopButtonClicked();
+  virtual void onClearButtonClicked();
 
   void onCheckedTransformsChanged();
 

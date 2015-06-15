@@ -142,7 +142,7 @@ int vtkMRMLTransformBufferStorageNode
     return 0;
   }
 
-  output << bufferNode->ToXMLString();
+  output << bufferNode->ToXMLString( vtkIndent() );
 
   output.close();
 

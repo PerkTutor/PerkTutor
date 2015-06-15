@@ -112,6 +112,7 @@ public:
 
   std::vector< std::string > GetAllRecordedTransformNames();
 
+  int GetNumTransforms( std::string transformName );
   int GetNumTransforms();
   int GetNumMessages();
 
@@ -136,7 +137,7 @@ public:
 
   void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
 
-  std::string ToXMLString();
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
   // The events that the class should invole

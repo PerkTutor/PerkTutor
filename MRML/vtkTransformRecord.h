@@ -60,7 +60,7 @@ public:
   void SetDeviceName( std::string newDeviceName );
   std::string GetDeviceName();
 
-  std::string ToXMLString( int indent = 2 );
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
 

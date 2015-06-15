@@ -77,10 +77,10 @@ double vtkLogRecord
 
 
 std::string vtkLogRecord
-::ToXMLString( int indent )
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
-  xmlstring << std::string( indent, ' ' );
+  xmlstring << indent;
   xmlstring << "<log";
   xmlstring << " TimeStampSec=\"" << this->TimeStampSec << "\"";
   xmlstring << " TimeStampNSec=\"" << this->TimeStampNSec << "\"";

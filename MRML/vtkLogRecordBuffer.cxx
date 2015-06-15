@@ -33,6 +33,7 @@ void vtkLogRecordBuffer
   }
 
   // Copy all of the records
+  this->Clear();
   for ( int i = 0; i < otherBuffer->GetNumRecords(); i++ )
   {
     vtkSmartPointer< vtkLogRecord > newRecord = vtkSmartPointer< vtkLogRecord >::New();
@@ -247,13 +248,13 @@ int vtkLogRecordBuffer
 
 
 std::string vtkLogRecordBuffer
-::ToXMLString()
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
   
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
-    xmlstring << this->GetRecord(i)->ToXMLString();
+    xmlstring << this->GetRecord(i)->ToXMLString( indent.GetNextIndent() );
   }
 
   return xmlstring.str();

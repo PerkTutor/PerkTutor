@@ -58,7 +58,7 @@ public:
   void SetMessageString( std::string newMessageString );
   std::string GetMessageString();
 
-  std::string ToXMLString( int indent = 2 );
+  std::string ToXMLString( vtkIndent );
   void FromXMLElement( vtkXMLDataElement* element );
 
 

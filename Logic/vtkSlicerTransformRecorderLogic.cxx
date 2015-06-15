@@ -241,7 +241,7 @@ void vtkSlicerTransformRecorderLogic
     return;
   }
 
-  output << bufferNode->ToXMLString();
+  output << bufferNode->ToXMLString( vtkIndent() );
 
   output.close();
 

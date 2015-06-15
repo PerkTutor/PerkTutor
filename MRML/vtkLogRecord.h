@@ -62,7 +62,7 @@ public:
   void SetTime( double time );
   double GetTime();
 
-  virtual std::string ToXMLString( int indent = 2 );
+  virtual std::string ToXMLString( vtkIndent indent );
   virtual void FromXMLElement( vtkXMLDataElement* element );
 
 

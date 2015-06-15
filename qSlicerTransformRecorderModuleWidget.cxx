@@ -167,12 +167,12 @@ void qSlicerTransformRecorderModuleWidget
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumTransforms();;
+  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumTransforms();
   d->NumTransformsResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumMessages();;
+  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumMessages();
   d->NumMessagesResultLabel->setText( ss.str().c_str() );
    
 }

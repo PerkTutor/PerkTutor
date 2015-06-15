@@ -327,17 +327,28 @@ std::vector< std::string > vtkMRMLTransformBufferNode
 
 
 int vtkMRMLTransformBufferNode
+::GetNumTransforms( std::string transformName )
+{
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
+  {
+    return NULL;
+  }
+  
+  return this->TransformRecordBuffers[ transformName ]->GetNumRecords();
+}
+
+
+int vtkMRMLTransformBufferNode
 ::GetNumTransforms()
 {
-  // Add over all transform names
-  int totalTransforms = 0;
+  int numTransforms = 0;
   std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    totalTransforms += itr->second->GetNumRecords();
+    numTransforms += itr->second->GetNumRecords();
   }
-
-  return totalTransforms;
+  
+  return numTransforms;
 }
 
 
@@ -619,26 +630,26 @@ void vtkMRMLTransformBufferNode
 // Read/write XML files ------------------------------------------------------------------------
 
 std::string vtkMRMLTransformBufferNode
-::ToXMLString()
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
 
   vtkSmartPointer< vtkLogRecordBuffer > combinedTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
   this->GetCombinedTransformRecordBuffer( combinedTransformRecordBuffer ); // This will maintain complexity
   
-  xmlstring << "<TransformRecorderLog>" << std::endl;
+  xmlstring << indent << "<TransformRecorderLog>" << std::endl;
 
   for ( int i = 0; i < combinedTransformRecordBuffer->GetNumRecords(); i++ )
   {
-    xmlstring << combinedTransformRecordBuffer->GetRecord(i)->ToXMLString();
+    xmlstring << combinedTransformRecordBuffer->GetRecord(i)->ToXMLString( indent.GetNextIndent() );
   }
 
   for ( int i = 0; i < this->MessageRecordBuffer->GetNumRecords(); i++ )
   {
-    xmlstring << this->MessageRecordBuffer->GetRecord(i)->ToXMLString();
+    xmlstring << this->MessageRecordBuffer->GetRecord(i)->ToXMLString( indent.GetNextIndent() );
   }
 
-  xmlstring << "</TransformRecorderLog>" << std::endl;
+  xmlstring << indent << "</TransformRecorderLog>" << std::endl;
 
   return xmlstring.str();
 }

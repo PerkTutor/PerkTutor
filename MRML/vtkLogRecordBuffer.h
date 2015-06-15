@@ -80,7 +80,7 @@ public:
 
   void Clear();
 
-  std::string ToXMLString();
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
 
