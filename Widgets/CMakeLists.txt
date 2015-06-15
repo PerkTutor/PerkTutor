@@ -12,6 +12,10 @@ set(${KIT}_INCLUDE_DIRECTORIES
 set(${KIT}_SRCS
   qSlicerWorkflowSegmentationRecorderControlsWidget.cxx
   qSlicerWorkflowSegmentationRecorderControlsWidget.h
+  qSlicerWorkflowToolSummaryWidget.cxx
+  qSlicerWorkflowToolSummaryWidget.h
+  qSlicerWorkflowToolWidget.cxx
+  qSlicerWorkflowToolWidget.h
   )
   
 set(${KIT}_MOC_SRCS
