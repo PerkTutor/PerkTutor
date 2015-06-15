@@ -26,6 +26,8 @@
 #include "vtkMRMLStorageNode.h"
 #include "vtkStringArray.h"
 
+#include <vtkXMLDataParser.h>
+
 // TransformRecorder includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 

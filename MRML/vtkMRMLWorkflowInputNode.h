@@ -17,6 +17,8 @@
 #include "vtkMRMLStorableNode.h"
 #include "vtkMRMLStorageNode.h"
 
+#include "vtkMRMLWorkflowInputStorageNode.h"
+
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 

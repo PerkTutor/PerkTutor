@@ -133,7 +133,7 @@ int vtkMRMLWorkflowProcedureStorageNode
     return 0;
   }
 
-  output << workflowProcedureNode->ToXMLSring();
+  output << workflowProcedureNode->ToXMLString( vtkIndent() );
 
   output.close();
 

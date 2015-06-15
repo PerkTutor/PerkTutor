@@ -79,7 +79,7 @@ qSlicerWorkflowSegmentationRecorderControlsWidget
 
 
 void qSlicerWorkflowSegmentationRecorderControlsWidget
-::setWorkflowSegmentationNode( vtkMRMLNode* wsNode )
+::setWorkflowSegmentationNode( vtkMRMLNode* newWorkflowSegmentationNode )
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
@@ -87,9 +87,9 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
 
   this->WorkflowSegmentationNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( newWorkflowSegmentationNode );
 
-  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::Modified, this, SLOT( updateWidgetFromMRML() ) );
+  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRML() ) );
 
-  this->updateWidgetFromMRML();
+  this->updateWidget();
 }
 
 void qSlicerWorkflowSegmentationRecorderControlsWidget
@@ -99,5 +99,5 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
 
   this->WorkflowSegmentationLogic->ResetAllToolBuffers( this->WorkflowSegmentationNode );
   
-  this->updateWidgetFromMRML();
+  this->updateWidget();
 }

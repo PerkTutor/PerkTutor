@@ -17,9 +17,11 @@
 #include "vtkMRMLStorableNode.h"
 #include "vtkMRMLStorageNode.h"
 
+#include "vtkMRMLWorkflowTrainingStorageNode.h"
+
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkTrackingRecord.h"
+#include "vtkLabelVector.h"
 #include "vtkMarkovModelRT.h"
 
 // This class stores a vector of values and a string label
@@ -27,7 +29,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
 vtkMRMLWorkflowTrainingNode : public vtkMRMLStorableNode
 {
 public:
-  vtkTypeMacro( vtkMRMLWorkflowInputNode, vtkMRMLStorableNode );
+  vtkTypeMacro( vtkMRMLWorkflowTrainingNode, vtkMRMLStorableNode );
 
   // Standard MRML node methods  
   static vtkMRMLWorkflowTrainingNode* New();  
@@ -54,17 +56,17 @@ protected:
 public:
 
   // Getters/setters for properties
-  vtkGetMacro( PrinComps, std::vector< vtkLabelVector* > );
-  vtkSetMacro( PrinComps, std::vector< vtkLabelVector* > );
-  
-  vtkGetMacro( Centroids, std::vector< vtkLabelVector* > );
-  vtkSetMacro( Centroids, std::vector< vtkLabelVector* > );
-  
-  vtkGetMacro( Mean, vtkLabelVector* );
-  vtkSetMacro( Mean, vtkLabelVector* );
-  
-  vtkGetMacro( Markov, vtkMarkovModelRT* );
-  vtkSetMacro( Markov, vtkMarkovModelRT* );
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetPrinComps();
+  void SetPrinComps( std::vector< vtkSmartPointer< vtkLabelVector > > newPrinComps );
+
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetCentroids();
+  void SetCentroids( std::vector< vtkSmartPointer< vtkLabelVector > > newCentroids );
+
+  vtkLabelVector* GetMean();
+  void SetMean( vtkLabelVector* newMean );
+
+  vtkMarkovModelRT* GetMarkov();
+  void SetMarkov( vtkMarkovModelRT* newMarkov );
   
   // Read/Write from/to file
   std::string ToXMLString( vtkIndent indent );

@@ -151,7 +151,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   this->setupEmbeddedWidgets();
 
   // Module node selection
-  connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged() ) );
+  connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) );
 
   // Display
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
@@ -165,7 +165,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
 }
 
 
-void qSlicerPerkEvaluatorModuleWidget
+void qSlicerWorkflowSegmentationModuleWidget
 ::mrmlNodeChanged( vtkMRMLNode* wsNode )
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
@@ -176,11 +176,12 @@ void qSlicerPerkEvaluatorModuleWidget
     this->qvtkConnect( wsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRMLNode() ) );
   }
 
-  this->updateWidgetFromMRMLNode();
+  this->updateWidgetFromMRML();
 }
 
 
-void qSlicerWorkflowSegmentationModuleWidget::updateWidgetFromMRMLNode()
+void qSlicerWorkflowSegmentationModuleWidget
+::updateWidgetFromMRML()
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
 
@@ -191,6 +192,7 @@ void qSlicerWorkflowSegmentationModuleWidget::updateWidgetFromMRMLNode()
     return;
   }
   
+  d->RecorderControlsWidget->setWorkflowSegmentationNode( wsNode );
   d->ToolSummaryWidget->setWorkflowSegmentationNode( wsNode ); // TODO: Is this necessary
   // Everything else taken care of by the child widgets
 }

@@ -14,6 +14,7 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkSmartPointer.h"
 
 // VNL includes
 #include "vnl/vnl_matrix.h"
@@ -24,6 +25,8 @@
 #include "vtkLabelRecord.h"
 #include "vtkMarkovVector.h"
 #include "vtkLogRecordBuffer.h"
+
+#include "vtkMRMLTransformBufferNode.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -44,7 +47,9 @@ protected:
   
 public:
 
-  // Note: There is no copy function, use the superclass copy function
+  // Note: Need to modify several functions to use vtkLabelRecords, instead of just vtkLogRecords
+  void Copy( vtkWorkflowLogRecordBuffer* otherBuffer );
+
 
   // Conversion to/from transform buffer
   vtkMRMLTransformBufferNode* ToTransformBufferNode();
@@ -52,11 +57,12 @@ public:
 
   // Methods explicitly for workflow segmentation
   vtkWorkflowLogRecordBuffer* GetRange( int start, int end );
+  vtkWorkflowLogRecordBuffer* GetLabelledRange( std::vector< std::string > labels );
 
   vtkLabelVector* Mean();
 
-  std::vector< vtkLabelVector* > Distances( vtkWorkflowLogRecordBuffer* otherRecLog );
-  std::vector< vtkLabelVector* > Distances( std::vector<vtkLabelVector*> vectors );
+  std::vector< vtkSmartPointer< vtkLabelVector > > Distances( vtkWorkflowLogRecordBuffer* otherRecLog );
+  std::vector< vtkSmartPointer< vtkLabelVector > > Distances( std::vector< vtkSmartPointer< vtkLabelVector > > vectors );
   vtkLabelRecord* ClosestRecord( vtkLabelVector* vector );
 
   void Differentiate( int order = 1 );
@@ -69,18 +75,17 @@ public:
 
   void GaussianFilter( double width );
 
-  std::vector< vtkLabelVector* > LegendreTransformation( int order );
+  std::vector< vtkSmartPointer< vtkLabelVector > > LegendreTransformation( int order );
   void OrthogonalTransformation( int window, int order );
 
   vnl_matrix< double >* CovarianceMatrix();
-  std::vector< vtkLabelVector* > CalculatePCA( int numComp );
-  void TransformPCA( std::vector< vtkLabelVector* > prinComps, vtkLabelVector* mean );
+  std::vector< vtkSmartPointer< vtkLabelVector > > CalculatePCA( int numComp );
+  void TransformPCA( std::vector< vtkSmartPointer< vtkLabelVector > > prinComps, vtkLabelVector* mean );
 
-  std::vector< vtkLabelVector* > fwdkmeans( int numClusters );
-  void fwdkmeansTransform( std::vector< vtkLabelVector* > centroids );
+  std::vector< vtkSmartPointer< vtkLabelVector > > fwdkmeans( int numClusters );
+  void fwdkmeansTransform( std::vector< vtkSmartPointer< vtkLabelVector > > centroids );
 
-  void GetLabelledRange( std::vector< std::string > labels );
-  std::vector< vtkMarkovRecord* > ToMarkovVectors();
+  std::vector< vtkSmartPointer< vtkMarkovVector > > ToMarkovVectors();
   
   // Read/write to file
   std::string ToXMLString( vtkIndent indent );
@@ -88,15 +93,17 @@ public:
 
 protected:
 
+  static const double STDEV_CUTOFF;
+
   double LegendrePolynomial( double time, int order );	
 
-  vtkLabelVector* FindNextCentroid( std::vector<vtkLabelVector*> centroids );
-  bool MembershipChanged( std::vector<int> oldMembership, std::vector<int> newMembership );
-  bool HasEmptyClusters( std::vector<bool> emptyVector );
-  std::vector<bool> FindEmptyClusters( std::vector<vtkLabelVector*> centroids, std::vector<int> membership );
-  std::vector<int> ReassignMembership( std::vector<vtkLabelVector*> centroids );
-  std::vector<vtkLabelVector*> MoveEmptyClusters( std::vector<vtkLabelVector*> centroids, std::vector<bool> emptyVector );
-  std::vector<vtkLabelVector*> RecalculateCentroids( std::vector<int> membership, int numClusters );
+  vtkLabelVector* FindNextCentroid( std::vector< vtkSmartPointer< vtkLabelVector > > centroids );
+  bool MembershipChanged( std::vector< int > oldMembership, std::vector< int > newMembership );
+  bool HasEmptyClusters( std::vector< bool > emptyVector );
+  std::vector< bool > FindEmptyClusters( std::vector< vtkSmartPointer< vtkLabelVector > > centroids, std::vector< int > membership );
+  std::vector< int > ReassignMembership( std::vector< vtkSmartPointer< vtkLabelVector > > centroids );
+  std::vector< vtkSmartPointer< vtkLabelVector > > MoveEmptyClusters( std::vector< vtkSmartPointer< vtkLabelVector > > centroids, std::vector< bool > emptyVector );
+  std::vector< vtkSmartPointer< vtkLabelVector > > RecalculateCentroids( std::vector< int > membership, int numClusters );
 
 };  
 

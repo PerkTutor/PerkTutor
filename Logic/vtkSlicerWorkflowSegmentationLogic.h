@@ -84,8 +84,8 @@ public:
   bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );
   bool GetAllToolsTrained( vtkMRMLWorkflowSegmentationNode* workflowNode );
   
-  std::vector< std::string > GetToolStatusString( vtkMRMLWorkflowSegmentationNode* workflowNode );
-  std::vector< std::string >  GetInstructionString( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  std::vector< std::string > GetToolStatusStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  std::vector< std::string >  GetInstructionStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
 
 protected:
 

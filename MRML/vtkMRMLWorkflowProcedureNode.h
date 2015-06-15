@@ -14,6 +14,9 @@
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
 
+#include "vtkMRMLStorableNode.h"
+#include "vtkMRMLWorkflowProcedureStorageNode.h"
+
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 #include "vtkWorkflowTask.h"
@@ -23,7 +26,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
 vtkMRMLWorkflowProcedureNode : public vtkMRMLStorableNode
 {
 public:
-  vtkTypeMacro( vtkMRMLWorkflowInputNode, vtkMRMLStorableNode );
+  vtkTypeMacro( vtkMRMLWorkflowProcedureNode, vtkMRMLStorableNode );
 
   // Standard MRML node methods  
   static vtkMRMLWorkflowProcedureNode* New();  
@@ -58,8 +61,8 @@ public:
   bool IsTask( std::string name );
   
   // Getters/setters for properties
-  vtkGetMacro( Name, std::string );
-  vtkSetMacro( Name, std::string );
+  vtkGetMacro( ProcedureName, std::string );
+  vtkSetMacro( ProcedureName, std::string );
 
   std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
@@ -67,6 +70,8 @@ public:
 protected:
 
   std::map< std::string, vtkSmartPointer< vtkWorkflowTask > > Tasks;
+
+  std::string ProcedureName;
 
 };
 

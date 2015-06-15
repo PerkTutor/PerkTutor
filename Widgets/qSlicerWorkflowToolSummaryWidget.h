@@ -29,7 +29,7 @@
 #include "vtkMRMLWorkflowToolNode.h"
 
 // FooBar Widgets includes
-#include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
+#include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
 #include "ui_qSlicerWorkflowToolSummaryWidget.h"
 
 #include "PerkTutorCommon.h"
@@ -37,7 +37,7 @@
 class qSlicerWorkflowToolSummaryWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
-class Q_SLICER_MODULE_PERKEVALUATOR_WIDGETS_EXPORT 
+class Q_SLICER_MODULE_WORKFLOWSEGMENTATION_WIDGETS_EXPORT 
 qSlicerWorkflowToolSummaryWidget : public qSlicerWidget
 {
   Q_OBJECT

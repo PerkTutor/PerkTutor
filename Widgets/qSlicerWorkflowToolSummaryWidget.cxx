@@ -92,16 +92,16 @@ void qSlicerWorkflowToolSummaryWidget
 }
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerWorkflowToolSummaryWidget
 ::setWorkflowSegmentationNode( vtkMRMLNode* newWorkflowSegmentationNode )
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerWorkflowToolSummaryWidget);
 
   this->qvtkDisconnectAll();
 
   this->WorkflowSegmentationNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( newWorkflowSegmentationNode );
 
-  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::Modified, this, SLOT( updateWidgetFromMRML() ) );
+  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRML() ) );
 
   this->updateWidgetFromMRML();
 }
@@ -116,13 +116,13 @@ void qSlicerWorkflowToolSummaryWidget
   std::vector< std::string > selectedToolIDs;
   
   QList< vtkMRMLNode* > selectedTools = d->WorkflowToolsComboBox->checkedNodes();
-  QList< vtkMRMLNode* >::ierator itr;
+  QList< vtkMRMLNode* >::iterator itr;
   for ( itr = selectedTools.begin(); itr != selectedTools.end(); itr++ )
   {
-    selectedToolIDs.push_back( itr->GetID() );
+    selectedToolIDs.push_back( (*itr)->GetID() );
   }
   
-  this->WorkflowSegmentationNode->SetToolIDs( selectedToolsIDs );
+  this->WorkflowSegmentationNode->SetToolIDs( selectedToolIDs );
 
 }
 
@@ -130,13 +130,15 @@ void qSlicerWorkflowToolSummaryWidget
 void qSlicerWorkflowToolSummaryWidget
 ::onTrainButtonClicked()
 {
+  Q_D(qSlicerWorkflowToolSummaryWidget);
+
   std::vector< std::string > trainingBufferIDs;
   
   QList< vtkMRMLNode* > trainingBuffers = d->TrainingBufferComboBox->checkedNodes();
   QList< vtkMRMLNode* >::iterator itr;
   for ( itr = trainingBuffers.begin(); itr != trainingBuffers.end(); itr++ )
   {
-    trainingBufferIDs.push_back( itr->GetID() );
+    trainingBufferIDs.push_back( (*itr)->GetID() );
   }
 
   this->WorkflowSegmentationLogic->TrainAllTools( this->WorkflowSegmentationNode, trainingBufferIDs );
@@ -158,7 +160,7 @@ void qSlicerWorkflowToolSummaryWidget
     return;
   }
   
-  std::vector< std::string > toolStatusStrings = this->WorkflowSegmentationLogic->GetToolStatusString( this->WorkflowSegmentationNode );
+  std::vector< std::string > toolStatusStrings = this->WorkflowSegmentationLogic->GetToolStatusStrings( this->WorkflowSegmentationNode );
   
   QStringList WorkflowToolsTableHeaders;
   WorkflowToolsTableHeaders << "Tool";
@@ -171,7 +173,7 @@ void qSlicerWorkflowToolSummaryWidget
   for ( int i = 0; i < toolStatusStrings.size(); i++ )
   {
     QTableWidgetItem* statusItem = new QTableWidgetItem( QString::fromStdString( toolStatusStrings.at( i ) ) );
-    d->MetricsTable->setItem( i, 0, statusItem );
+    d->WorkflowToolsTable->setItem( i, 0, statusItem );
   }
 
 }

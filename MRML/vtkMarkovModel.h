@@ -8,6 +8,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <limits>
 
 // VTK includes
 #include "vtkObject.h"
@@ -55,15 +56,15 @@ public:
   int GetNumStates();
   int GetNumSymbols();
 
-  void SetA( std::vector< vtkLabelVector* > newA );
-  std::vector< vtkLabelVector* > GetA();
-  std::vector< vtkLabelVector* > GetZeroA();
-  std::vector< vtkLabelVector* > GetLogA();
+  void SetA( std::vector< vtkSmartPointer< vtkLabelVector > > newA );
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetZeroA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetLogA();
 
-  void SetB( std::vector< vtkLabelVector* > newB );
-  std::vector< vtkLabelVector* > GetB();
-  std::vector< vtkLabelVector* > GetZeroB();
-  std::vector< vtkLabelVector* > GetLogB();
+  void SetB( std::vector< vtkSmartPointer< vtkLabelVector > > newB );
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetB();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetZeroB();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetLogB();
 
   void SetPi( vtkLabelVector* newPi );
   vtkLabelVector* GetPi();
@@ -71,10 +72,10 @@ public:
   vtkLabelVector* GetLogPi();
 
   void InitializeEstimation();
-  void AddEstimationData( std::vector<vtkMarkovRecord*> sequence );
-  void AddPseudoData( vtkLabelVector* pseudoPi, std::vector<vtkLabelVector*> pseudoA, std::vector<vtkLabelVector*> pseudoB );
+  void AddEstimationData( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );
+  void AddPseudoData( vtkLabelVector* pseudoPi, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoA, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoB );
   void EstimateParameters();
-  void CalculateStates( std::vector< vtkMarkovRecord* > sequence );
+  void CalculateStates( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );
 
   std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );

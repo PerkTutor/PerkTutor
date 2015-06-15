@@ -90,14 +90,14 @@ vtkMRMLWorkflowSegmentationNode
 // Deal with references to tool nodes
 // ----------------------------------------------------------------------------
 
-void vtkMRMLTransformBufferNode
+void vtkMRMLWorkflowSegmentationNode
 ::AddToolID( std::string toolID )
 {
-  this->AddAndObserNodeReferenceID( TOOL_REFERENCE_ROLE, toolID.c_str() );
+  this->AddAndObserveNodeReferenceID( TOOL_REFERENCE_ROLE, toolID.c_str() );
 }
 
 
-void vtkMRMLTransformBufferNode
+void vtkMRMLWorkflowSegmentationNode
 ::RemoveToolID( std::string toolID )
 {
   // Check all referenced node IDs
@@ -112,7 +112,7 @@ void vtkMRMLTransformBufferNode
 }
 
 
-std::vector< std::string > vtkMRMLTransformBufferNode
+std::vector< std::string > vtkMRMLWorkflowSegmentationNode
 ::GetToolIDs()
 {
   std::vector< std::string > toolIDs;
@@ -127,7 +127,7 @@ std::vector< std::string > vtkMRMLTransformBufferNode
 }
   
 
-bool vtkMRMLTransformBufferNode
+bool vtkMRMLWorkflowSegmentationNode
 ::IsToolID( std::string toolID )
 {
   // Check all referenced node IDs
@@ -143,7 +143,7 @@ bool vtkMRMLTransformBufferNode
 }
 
 
-void vtkMRMLTransformBufferNode
+void vtkMRMLWorkflowSegmentationNode
 ::SetToolIDs( std::vector< std::string > toolIDs )
 {
   // Remove all of the active transform IDs

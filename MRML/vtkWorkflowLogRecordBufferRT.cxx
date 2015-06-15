@@ -16,11 +16,11 @@ vtkWorkflowLogRecordBufferRT
 
 
 vtkLabelVector* vtkWorkflowLogRecordBufferRT
-::DistancesRT( std::vector< vtkLabelVector* > vectors )
+::DistancesRT( std::vector< vtkSmartPointer< vtkLabelVector > > vectors )
 { 
   // Create a new order record
   vtkSmartPointer< vtkLabelVector > distVector = vtkSmartPointer< vtkLabelVector >::New();
-  distVector->Initialize( vectors.size(), 0.0 );
+  distVector->FillElements( vectors.size(), 0.0 );
   
   // Get the "current" record
   vtkLabelRecord* rtRecord = vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() );
@@ -60,20 +60,20 @@ vtkLabelVector* vtkWorkflowLogRecordBufferRT
 
 
 vtkLabelRecord* vtkWorkflowLogRecordBufferRT
-::DerivativeRT( int order )
+::DifferentiateRT( int order )
 {
   // To calculate a derivative of arbitrary order, we need arbitrarily many time stamps
   // Assume that order is constant
   if ( this->GetNumRecords() < order + 1 )
   {
-    return this->GetCurrentRecord();
+    return vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() );
   }
   
   // Just need the last order + 1 timestamps
   vtkSmartPointer< vtkWorkflowLogRecordBuffer > endBuffer = this->GetRange( this->GetNumRecords() - ( order + 1 ), this->GetNumRecords() - 1 );
   endBuffer->Differentiate( order );
   
-  return endBuffer->GetCurrentRecord();
+  return vtkLabelRecord::SafeDownCast( endBuffer->GetCurrentRecord() );
 }
 
 
@@ -83,10 +83,10 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
 {
   // Create a new record valuestor
   vtkSmartPointer< vtkLabelRecord > gaussRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  gaussRecord->GetVector()->Initialize( this->GetCurrentRecord()->Size(), 0.0 );
+  gaussRecord->GetVector()->FillElements( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->Size(), 0.0 );
 
   // Iterate over all dimensions
-  for ( int d = 0; d < this->GetRecordAt(0)->Size(); d++ )
+  for ( int d = 0; d < vtkLabelRecord::SafeDownCast( this->GetRecord( 0 ) )->GetVector()->Size(); d++ )
   {
     double weightSum = 0;
     double normSum = 0;
@@ -105,7 +105,7 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
       // Calculate the values of the Gaussian distribution at this time
 	    double gaussianWeight = exp( - normalizedDistance * normalizedDistance / 2 );
 	    // Add the product with the values to function sum
-      weightSum = weightSum + this->GetRecord( j )->GetElement( d ) * gaussianWeight;
+      weightSum = weightSum + vtkLabelRecord::SafeDownCast( this->GetRecord( j ) )->GetVector()->GetElement( d ) * gaussianWeight;
 	    // Add the values to normSum
 	    normSum = normSum + gaussianWeight;
 
@@ -118,7 +118,7 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
 
   // Add the new record vector to the record log
   gaussRecord->SetTime( this->GetCurrentRecord()->GetTime() );
-  gaussRecord->SetLabel( this->GetCurentRecord()->GetLabel() );
+  gaussRecord->GetVector()->SetLabel( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->GetLabel() );
 
   return gaussRecord;
 }
@@ -147,39 +147,39 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
   std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix = rangeBuffer->LegendreTransformation( order );
   
   vtkSmartPointer< vtkLabelRecord > currLegendreRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  currLegRecord->Initialize( this->GetCurrentRecord()->Size() * ( order + 1 ), 0.0 );
+  currLegendreRecord->GetVector()->FillElements( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->Size() * ( order + 1 ), 0.0 );
 
   // Calculate the Legendre coefficients: 2D -> 1D
   int count = 0;
   for ( int o = 0; o <= order; o++ )
   {
-    for ( int d = 0; d < this->GetRecord( i )->GetVector()->Size(); d++ )
+    for ( int d = 0; d < legendreCoefficientMatrix.at( o )->Size(); d++ )
     {
-      currLegendreRecord->SetElement( count, legendreCoefficientMatrix.at( o )->GetElement( d ) );
+      currLegendreRecord->GetVector()->SetElement( count, legendreCoefficientMatrix.at( o )->GetElement( d ) );
       count++;
     }
   }
 
   // New value record to add to the record log
   currLegendreRecord->SetTime( this->GetCurrentRecord()->GetTime() );
-  currLegendreRecord->SetLabel( this->GetCurrentRecord()->GetLabel() );
+  currLegendreRecord->GetVector()->SetLabel( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->GetLabel() );
 
   return currLegendreRecord;
 }
 
 
 vtkLabelRecord* vtkWorkflowLogRecordBufferRT
-::TransformPCART( std::vector< vtkLabelVector* > prinComps, vtkLabelVector* mean )
+::TransformPCART( std::vector< vtkSmartPointer< vtkLabelVector > > prinComps, vtkLabelVector* mean )
 {
 
   // Create a vtkLabelRecord* for the transformed record log
   vtkLabelRecord* currRecord = vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() );
   if ( currRecord == NULL )
   {
-    continue;
+    return NULL;
   }
   vtkSmartPointer< vtkLabelRecord > pcaTransformRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  pcaTransformRecord->GetVector()->Initialize( prinComps.size(), 0.0 );
+  pcaTransformRecord->GetVector()->FillElements( prinComps.size(), 0.0 );
     
   // Initialize the components of the transformed time record to be zero
 	for ( int o = 0; o < prinComps.size(); o++ )
@@ -187,7 +187,7 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
 	  // Iterate over all dimensions, and perform the transformation (i.e. vector multiplication)
     for ( int d = 0; d < currRecord->GetVector()->Size(); d++ )
 	  {
-      pcaTransRecord->Increment( o, ( currRecord->GetVector()->GetElement( d ) - meanVector->GetElement( d ) ) * prinComps.at(o)->GetElement( d ) );
+      pcaTransformRecord->GetVector()->IncrementElement( o, ( currRecord->GetVector()->GetElement( d ) - mean->GetElement( d ) ) * prinComps.at(o)->GetElement( d ) );
 	  }
 	}
 
@@ -197,7 +197,7 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
 
 
 vtkLabelRecord* vtkWorkflowLogRecordBufferRT
-::fwdkmeansTransformRT( std::vector< vtkLabelVector* > centroids )
+::fwdkmeansTransformRT( std::vector< vtkSmartPointer< vtkLabelVector > > centroids )
 {
   // Calculate closest cluster centroid to last
   // Find the record farthest from any centroid
@@ -208,17 +208,17 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
   // Minimum for each point
   for ( int c = 0; c < centroids.size(); c++ )
   {
-    if ( centDist->Get(c) < currMinDist )
+    if ( centDist->GetElement( c ) < currMinDist )
 	  {
-      currMinDist = centDist->Get(c);
+      currMinDist = centDist->GetElement( c );
 	    currMinCentroid = c;
 	  }
   }
 
   vtkSmartPointer< vtkLabelRecord > clusterRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  clusterRecord->Copy( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() );
+  clusterRecord->Copy( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() ) );
   std::vector< double > membership( 1, currMinCentroid );
-  clusterRecord->SetAllValues( membership );
+  clusterRecord->GetVector()->SetAllValues( membership );
 
   return clusterRecord;
 }
@@ -230,8 +230,8 @@ vtkMarkovVector* vtkWorkflowLogRecordBufferRT
   vtkSmartPointer< vtkMarkovVector > markovVector = vtkSmartPointer< vtkMarkovVector >::New();
 
   // We will assume that: label -> state, values[0] -> symbol
-  markovVector->SetState( this->GetCurrentRecord()->GetLabel() );
-  markovVector->SetSymbol( this->GetCurrentRecord()->GetVector()->GetElement( 0 ) );
+  markovVector->SetState( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->GetLabel() );
+  markovVector->SetSymbol( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->GetElement( 0 ) );
 
   return markovVector;
 }

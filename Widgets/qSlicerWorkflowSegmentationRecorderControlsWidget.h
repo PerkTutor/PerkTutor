@@ -49,7 +49,7 @@ protected:
   QScopedPointer<qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate> d_ptr;
   
   vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationNode;
-  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationLogic;
+  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationRecorderControlsWidget);

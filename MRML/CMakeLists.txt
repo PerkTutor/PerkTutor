@@ -47,6 +47,9 @@ set(${KIT}_SRCS
   vtkMRMLWorkflowTrainingStorageNode.h
   vtkMRMLWorkflowToolNode.cxx
   vtkMRMLWorkflowToolNode.h
+  
+  vtkMRMLWorkflowSegmentationNode.cxx
+  vtkMRMLWorkflowSegmentationNode.h
   )
 
 SET (${KIT}_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "" FORCE)

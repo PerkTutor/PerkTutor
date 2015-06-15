@@ -103,7 +103,7 @@ int vtkMRMLWorkflowInputStorageNode
     return 0;
   }
 
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkXMLDataParser::New();
+  vtkSmartPointer< vtkXMLDataParser > parser = vtkSmartPointer< vtkXMLDataParser >::New();
   parser->SetFileName( fullName.c_str() );
   parser->Parse();
 
@@ -133,7 +133,7 @@ int vtkMRMLWorkflowInputStorageNode
     return 0;
   }
 
-  output << workflowInputNode->ToXMLSring();
+  output << workflowInputNode->ToXMLString( vtkIndent() );
 
   output.close();
 

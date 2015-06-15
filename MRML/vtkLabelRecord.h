@@ -13,9 +13,12 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkSetGet.h"
+#include "vtkMath.h"
 
 // Perk Tutor includes
 #include "vtkLogRecord.h"
+#include "vtkTransformRecord.h"
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
@@ -31,8 +34,6 @@ public:
   // Standard MRML methods
   static vtkLabelRecord* New();
 
-  vtkLabelRecord* DeepCopy();
-
 protected:
 
   // Constructo/destructor
@@ -44,10 +45,16 @@ public:
   // Copy
   void Copy( vtkLabelRecord* otherRecord );
 
+  enum TrackingRecordType
+  {
+    QUATERNION_RECORD = 7,
+    MATRIX_RECORD = 16,
+  };
+
   // Get/set vector
-  vtkGetMacro( Vector, vtkLabelVector* );
-  vtkSetMacro( Vector, vtkLabelVector* );
-  
+  vtkLabelVector* GetVector();
+  void SetVector( vtkLabelVector* newVector );
+    
   // Convert to/from a transform record
   void ToTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type );
   void FromTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type );
@@ -55,11 +62,7 @@ public:
   std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
   
-  enum TrackingRecordType
-  {
-    QUATERNION_RECORD = 7,
-    MATRIX_RECORD = 16,
-  };
+
   
 protected:
 

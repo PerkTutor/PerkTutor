@@ -89,11 +89,11 @@ void qSlicerWorkflowToolWidget
   connect( d->WorkflowInputComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onWorkflowInputChanged( vtkMRMLNode* ) ) );
   connect( d->WorkflowTrainingComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onWorkflowTrainingChanged( vtkMRMLNode* ) ) );
 
-  this->updateWidget();  
+  this->updateWidgetFromMRML();  
 }
 
 
-vtkMRMLTableNode* qSlicerWorkflowToolWidget
+vtkMRMLWorkflowToolNode* qSlicerWorkflowToolWidget
 ::getWorkflowToolNode()
 {
   Q_D(qSlicerWorkflowToolWidget);
@@ -123,7 +123,7 @@ void qSlicerWorkflowToolWidget
 
   this->qvtkConnect( this->WorkflowToolNode, vtkCommand::ModifiedEvent, this, SLOT( onWorkflowToolNodeModified() ) );
 
-  this->updateWidget();
+  this->updateWidgetFromMRML();
 
   emit WorkflowToolNodeChanged( this->WorkflowToolNode );
 }
@@ -132,7 +132,7 @@ void qSlicerWorkflowToolWidget
 void qSlicerWorkflowToolWidget
 ::onWorkflowToolNodeModified()
 {
-  this->updateWidget();
+  this->updateWidgetFromMRML();
   emit WorkflowToolNodeModified(); // This should allows parent widgets to update themselves
 }
 
@@ -140,24 +140,36 @@ void qSlicerWorkflowToolWidget
 void qSlicerWorkflowToolWidget
 ::onWorkflowProcedureChanged( vtkMRMLNode* newWorkflowProcedureNode )
 {
+  if ( this->WorkflowToolNode == NULL )
+  {
+    return;
+  }
   this->WorkflowToolNode->SetWorkflowProcedureID( newWorkflowProcedureNode->GetID() );
-  this->updateWidget();
+  this->updateWidgetFromMRML();
 }
 
 
 void qSlicerWorkflowToolWidget
 ::onWorkflowInputChanged( vtkMRMLNode* newWorkflowInputNode )
 {
+  if ( this->WorkflowToolNode == NULL )
+  {
+    return;
+  }
   this->WorkflowToolNode->SetWorkflowInputID( newWorkflowInputNode->GetID() );
-  this->updateWidget();
+  this->updateWidgetFromMRML();
 }
 
 
 void qSlicerWorkflowToolWidget
 ::onWorkflowTrainingChanged( vtkMRMLNode* newWorkflowTrainingNode )
 {
+  if ( this->WorkflowToolNode == NULL )
+  {
+    return;
+  }
   this->WorkflowToolNode->SetWorkflowTrainingID( newWorkflowTrainingNode->GetID() );
-  this->updateWidget();
+  this->updateWidgetFromMRML();
 }
 
 
@@ -173,8 +185,7 @@ void qSlicerWorkflowToolWidget
     return;
   }
   
-  d->WorkflowProcedureComboxBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowProcedureNode() );
-  d->WorkflowInputComboxBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowInputNode() );
-  d->WorkflowTrainingComboxBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowTrainingNode() );
-
+  d->WorkflowProcedureComboBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowProcedureNode() );
+  d->WorkflowInputComboBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowInputNode() );
+  d->WorkflowTrainingComboBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowTrainingNode() );
 }

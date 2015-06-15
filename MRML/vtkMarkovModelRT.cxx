@@ -26,7 +26,7 @@ vtkMarkovModelRT
 }
 
 
-vtkMarkovModelRT* vtkMarkovModelRT
+void vtkMarkovModelRT
 ::Copy( vtkMarkovModelRT* otherMarkov )
 {
   this->vtkMarkovModel::Copy( otherMarkov );
@@ -85,8 +85,8 @@ void vtkMarkovModelRT
 	    }
 
 	    // Account for observation probability
-	    this->currDelta->Set( j, maxProb + logB[j]->GetElement( this->LookupSymbol( element->GetSymbol() ) ) ); 
-      this->currPsi->Set( j, maxIndex );
+	    this->currDelta->SetElement( j, maxProb + logB[j]->GetElement( this->LookupSymbol( element->GetSymbol() ) ) ); 
+      this->currPsi->SetElement( j, maxIndex );
 	  }
 
   }
@@ -96,14 +96,14 @@ void vtkMarkovModelRT
 
   for ( int k = 0; k < this->GetNumStates(); k++ )
   {
-    if ( this->currDelta->GetElement( k ) > this->currDelta->Get( endState ) )
+    if ( this->currDelta->GetElement( k ) > this->currDelta->GetElement( endState ) )
 	  {
       endState = k;
 	  }
   }
 
   // Subsitute the calculated state into the inputted MarkovRecord (since the state originally won't make sense anyway)
-  element->SetState( this->stateNames.at( endState ) );
+  element->SetState( this->StateNames.at( endState ) );
   sequence.push_back( element );
 
 }

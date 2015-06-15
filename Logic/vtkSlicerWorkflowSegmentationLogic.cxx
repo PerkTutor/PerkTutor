@@ -109,9 +109,8 @@ void vtkSlicerWorkflowSegmentationLogic
   }
   
   // Iterate over all tools
-  std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
-  
-  for ( i = 0; i < toolIDs.size(); i++ )
+  std::vector< std::string > toolIDs = workflowNode->GetToolIDs();  
+  for ( int i = 0; i < toolIDs.size(); i++ )
   {
     vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );
     if ( toolNode == NULL || ! toolNode->GetDefined() || ! toolNode->GetInputted() || ! toolNode->GetTrained() )
@@ -136,7 +135,7 @@ void vtkSlicerWorkflowSegmentationLogic
   // Iterate over all tools
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   
-  for ( i = 0; i < toolIDs.size(); i++ )
+  for ( int i = 0; i < toolIDs.size(); i++ )
   {
     vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );
     if ( toolNode == NULL || ! toolNode->GetDefined() || ! toolNode->GetInputted() || ! toolNode->GetTrained() )
@@ -146,13 +145,13 @@ void vtkSlicerWorkflowSegmentationLogic
     toolNode->GetWorkflowTrainingNode()->SetName( toolNode->GetWorkflowProcedureNode()->GetName() );
     
     // Grab only the relevant components of the transform buffers
-    std::vector< vtkWorkflowLogRecordBuffer* > trainingRecordBuffers;
+    std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingRecordBuffers;
     
-    for ( j = 0; j < trainingBufferIDs.size(); itr++ )
+    for ( int j = 0; j < trainingBufferIDs.size(); j++ )
     {
-      vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( trainingBufferIDs.at( j ) );
+      vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( trainingBufferIDs.at( j ) ) );
       vtkSmartPointer< vtkWorkflowLogRecordBuffer > recordBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New(); 
-      recordBuffer->FromTransformBuffer( transformBuffer, toolNode->GetWorkflowProcedureNode()->GetName(), toolNode->GetWorkflowProcedureNode()->GetAllTaskNames() );
+      recordBuffer->FromTransformBufferNode( transformBuffer, toolNode->GetWorkflowProcedureNode()->GetName(), toolNode->GetWorkflowProcedureNode()->GetAllTaskNames() );
       trainingRecordBuffers.push_back( recordBuffer );
     }
     
@@ -210,12 +209,13 @@ bool vtkSlicerWorkflowSegmentationLogic
 std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
 ::GetToolStatusStrings( vtkMRMLWorkflowSegmentationNode* workflowNode )
 {
+  std::vector< std::string > toolStatusStrings;
   if ( workflowNode == NULL )
   {
-    return "";
+    return toolStatusStrings;
   }
 
-  std::vector< std::string > toolStatusStrings;
+
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   for ( int i = 0; i < toolIDs.size(); i++ )
   {
@@ -257,12 +257,12 @@ std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
 std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
 ::GetInstructionStrings( vtkMRMLWorkflowSegmentationNode* workflowNode )
 {
+  std::vector< std::string > instructionStrings;
   if ( workflowNode == NULL )
   {
-    return "";
+    return instructionStrings;
   }
 
-  std::vector< std::string > instructionStrings;
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   for ( int i = 0; i < toolIDs.size(); i++ )
   {

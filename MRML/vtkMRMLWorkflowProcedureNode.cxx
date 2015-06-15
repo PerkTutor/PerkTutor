@@ -105,7 +105,7 @@ vtkWorkflowTask* vtkMRMLWorkflowProcedureNode
 
 
 std::vector<std::string> vtkMRMLWorkflowProcedureNode
-::GetTaskNames()
+::GetAllTaskNames()
 {
   std::vector< std::string > taskNameVector;
   std::map< std::string, vtkSmartPointer< vtkWorkflowTask > >::iterator itr;  
@@ -132,7 +132,7 @@ void vtkMRMLWorkflowProcedureNode
 bool vtkMRMLWorkflowProcedureNode
 ::IsTask( std::string name )
 {
-  return this->tasks.find( name ) != this->Tasks.end();
+  return this->Tasks.find( name ) != this->Tasks.end();
 }
 
 

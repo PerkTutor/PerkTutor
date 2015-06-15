@@ -133,7 +133,7 @@ int vtkMRMLWorkflowTrainingStorageNode
     return 0;
   }
 
-  output << workflowTrainingNode->ToXMLSring();
+  output << workflowTrainingNode->ToXMLString( vtkIndent() );
 
   output.close();
 

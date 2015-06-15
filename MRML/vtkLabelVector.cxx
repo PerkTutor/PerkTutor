@@ -52,7 +52,7 @@ void vtkLabelVector
 void vtkLabelVector
 ::IncrementElement( int index, double step )
 {
-  this->Set( index, this->Get( index ) + step );
+  this->SetElement( index, this->GetElement( index ) + step );
 }
 
 
@@ -96,7 +96,7 @@ void vtkLabelVector
 {
   for ( int i = 0; i < otherVector->Size(); i++ )
   {
-    this->AddElement( otherVector->GetElement( i );
+    this->AddElement( otherVector->GetElement( i ) );
   }
 }
 
@@ -180,7 +180,7 @@ void vtkLabelVector
 // Static helper functions -----------------------------------------------------------------------
 
 std::string vtkLabelVector
-::VectorsToXMLString( std::vector< vtkLabelVector* > vectors, std::string name, vtkIndent indent )
+::VectorsToXMLString( std::vector< vtkSmartPointer< vtkLabelVector > > vectors, std::string name, vtkIndent indent )
 {
   std::stringstream xmlstring;
 
@@ -198,24 +198,22 @@ std::string vtkLabelVector
 std::string vtkLabelVector
 ::VectorsToXMLString( vtkLabelVector* vector, std::string name, vtkIndent indent )
 {
-  std::vector< vtkLabelVector* > vectors;
+  std::vector< vtkSmartPointer< vtkLabelVector > > vectors;
   vectors.push_back( vector );
-  return vtkLabelVector::VectorsToXMLString( name, vectors );
+  return vtkLabelVector::VectorsToXMLString( vectors, name, indent );
 }
 
-std::vector< vtkLabelVector* > vtkLabelVector
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkLabelVector
 ::VectorsFromXMLElement( vtkXMLDataElement* element, std::string name )
 {
+  std::vector< vtkSmartPointer< vtkLabelVector > > vectors;
   if ( element == NULL || name.compare( element->GetAttribute( "Type" ) ) != 0 )
   {
     return vectors;
   }
   
-  // Initialize the vector of LabelRecords to improve speed
-  int numElements = element->GetNumberOfNestedElements();
-  std::vector< vtkLabelVector* > vectors( numElements, NULL );
-
-  for ( int i = 0; i < numElements; i++ )
+  // Add each element
+  for ( int i = 0; i < element->GetNumberOfNestedElements(); i++ )
   {
     vtkSmartPointer< vtkLabelVector > currentVector = vtkSmartPointer< vtkLabelVector >::New();
 

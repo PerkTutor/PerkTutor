@@ -64,14 +64,14 @@ void vtkMRMLWorkflowTrainingNode
   }
   
   this->PrinComps.clear();
-  for ( int i = 0; i < node->GetPrinComps().size() )
+  for ( int i = 0; i < node->GetPrinComps().size(); i++ )
   {
     vtkSmartPointer< vtkLabelVector > currPrinComp = vtkSmartPointer< vtkLabelVector >::New();
     currPrinComp->Copy( node->GetPrinComps().at( i ) );
     this->PrinComps.push_back( currPrinComp );
   }
   this->Centroids.clear();
-  for ( int i = 0; i < node->GetCentroids().size() )
+  for ( int i = 0; i < node->GetCentroids().size(); i++ )
   {
     vtkSmartPointer< vtkLabelVector > currCentroid = vtkSmartPointer< vtkLabelVector >::New();
     currCentroid->Copy( node->GetCentroids().at( i ) );
@@ -102,6 +102,61 @@ vtkMRMLWorkflowTrainingNode
 }
 
 
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMRMLWorkflowTrainingNode
+::GetPrinComps()
+{
+  return this->PrinComps;
+}
+
+
+void vtkMRMLWorkflowTrainingNode
+::SetPrinComps( std::vector< vtkSmartPointer< vtkLabelVector > > newPrinComps )
+{
+  this->PrinComps = newPrinComps;
+}
+
+
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMRMLWorkflowTrainingNode
+::GetCentroids()
+{
+  return this->Centroids;
+}
+
+
+void vtkMRMLWorkflowTrainingNode
+::SetCentroids( std::vector< vtkSmartPointer< vtkLabelVector > > newCentroids )
+{
+  this->Centroids = newCentroids;
+}
+
+vtkLabelVector* vtkMRMLWorkflowTrainingNode
+::GetMean()
+{
+  return this->Mean;
+}
+
+
+void vtkMRMLWorkflowTrainingNode
+::SetMean( vtkLabelVector* newMean )
+{
+  this->Mean = newMean;
+}
+
+
+vtkMarkovModelRT* vtkMRMLWorkflowTrainingNode
+::GetMarkov()
+{
+  return this->Markov;
+}
+
+
+void vtkMRMLWorkflowTrainingNode
+::SetMarkov( vtkMarkovModelRT* newMarkov )
+{
+  this->Markov = newMarkov;
+}
+
+
 std::string vtkMRMLWorkflowTrainingNode
 ::ToXMLString( vtkIndent indent )
 {
@@ -109,9 +164,9 @@ std::string vtkMRMLWorkflowTrainingNode
   
   xmlstring << indent << "<WorkflowTraining>" << std::endl;
     
-  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->PrinComps, "PrinComps", indent->GetNextIndent() );
-  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->Mean, "Mean", indent->GetNextIndent() );
-  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->Centroids, "Centroids", indent->GetNextIndent() );
+  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->PrinComps, "PrinComps", indent.GetNextIndent() );
+  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->Mean, "Mean", indent.GetNextIndent() );
+  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->Centroids, "Centroids", indent.GetNextIndent() );
   xmlstring << indent.GetNextIndent() << this->Markov->ToXMLString( indent.GetNextIndent() );
   
   xmlstring << indent << "</WorkflowTraining>" << std::endl;
@@ -148,11 +203,11 @@ void vtkMRMLWorkflowTrainingNode
     }
     if ( strcmp( elementType, "Centroids" ) == 0 )
     {
-	    this->Centroids = vtkLabelVector::VectorsFromXMLElement( noteElement, "PrinComps" );
+	    this->Centroids = vtkLabelVector::VectorsFromXMLElement( noteElement, "Centroids" );
     }
 	  if ( strcmp( elementType, "Mean" ) == 0 )
     {
-	    this->Mean = vtkLabelVector::VectorBufferFromXMLElement( noteElement ).at(0);
+	    this->Mean = vtkLabelVector::VectorsFromXMLElement( noteElement, "Mean" ).at(0);
     }
 	  if ( strcmp( elementType, "Markov" ) == 0 )
     {

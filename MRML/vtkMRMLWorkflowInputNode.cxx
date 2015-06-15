@@ -111,7 +111,7 @@ std::string vtkMRMLWorkflowInputNode
 {
   std::stringstream xmlstring;
 
-  xmlstring << indent << "<Parameter Type=\"FilterWidth\" Value=\"" << this->GetFilterWidth << "\" />" << std::endl;
+  xmlstring << indent << "<Parameter Type=\"FilterWidth\" Value=\"" << this->FilterWidth << "\" />" << std::endl;
   xmlstring << indent << "<Parameter Type=\"OrthogonalOrder\" Value=\"" << this->OrthogonalOrder << "\" />" << std::endl;
   xmlstring << indent << "<Parameter Type=\"OrthogonalWindow\" Value=\"" << this->OrthogonalWindow << "\" />" << std::endl;
   xmlstring << indent << "<Parameter Type=\"Derivative\" Value=\"" << this->Derivative << "\" />" << std::endl;

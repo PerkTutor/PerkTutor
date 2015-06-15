@@ -124,12 +124,5 @@ qSlicerAbstractModuleRepresentation * qSlicerWorkflowSegmentationModule::createW
 vtkMRMLAbstractLogic* qSlicerWorkflowSegmentationModule::createLogic()
 {
   vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::New();
-  qSlicerAbstractCoreModule* TransformRecorderModule = qSlicerCoreApplication::application()->moduleManager()->module("TransformRecorder");
-
-  if ( TransformRecorderModule )
-  {
-    WorkflowSegmentationLogic->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( TransformRecorderModule->logic() );
-  }
-
   return WorkflowSegmentationLogic;
 }

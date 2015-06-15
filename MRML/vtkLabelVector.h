@@ -13,6 +13,7 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkSmartPointer.h"
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
@@ -62,9 +63,9 @@ public:
   void FromXMLElement( vtkXMLDataElement* element );
   
   // Static helper methods
-  std::string VectorsToXMLString( std::vector< vtkLabelVector* > vectors, std::string name, vtkIndent indent );
-  std::string VectorsToXMLString( vtkLabelVector* vector, std::string name, vtkIndent indent );
-  std::vector< vtkLabelVector* > VectorsFromXMLElement( vtkXMLDataElement* element, std::string name ) // Note: This will create the labels vectors, whoever uses the function is responsible for deleting
+  static std::string VectorsToXMLString( std::vector< vtkSmartPointer< vtkLabelVector > > vectors, std::string name, vtkIndent indent );
+  static std::string VectorsToXMLString( vtkLabelVector* vector, std::string name, vtkIndent indent );
+  static std::vector< vtkSmartPointer< vtkLabelVector > > VectorsFromXMLElement( vtkXMLDataElement* element, std::string name ); // Note: This will create the labels vectors, whoever uses the function is responsible for deleting
   
 protected:
   

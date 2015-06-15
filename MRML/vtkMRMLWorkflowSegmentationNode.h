@@ -61,7 +61,7 @@ public:
   // Management of references to tools
   void AddToolID( std::string toolID );
   void RemoveToolID( std::string toolID );
-  std::vector< std::string > GeToolIDs();
+  std::vector< std::string > GetToolIDs();
   bool IsToolID( std::string toolID );
   void SetToolIDs( std::vector< std::string > toolIDs );
 

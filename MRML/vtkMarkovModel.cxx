@@ -162,20 +162,20 @@ int vtkMarkovModel
 
 
 void vtkMarkovModel
-::SetA( std::vector< vtkLabelVector* > newA )
+::SetA( std::vector< vtkSmartPointer< vtkLabelVector > > newA )
 {
   this->A.clear();
   this->A = newA;
 }
 
-std::vector< vtkLabelVector* > vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetA()
 {
   return this->A;
 }
 
 
-std::vector< vtkLabelVector* > vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetLogA()
 {
   std::vector< vtkSmartPointer< vtkLabelVector > > logA;
@@ -199,7 +199,7 @@ std::vector< vtkLabelVector* > vtkMarkovModel
 }
 
 
-std::vector< vtkLabelVector > vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetZeroA()
 {
   std::vector< vtkSmartPointer< vtkLabelVector > > zeroA;
@@ -224,20 +224,20 @@ std::vector< vtkLabelVector > vtkMarkovModel
 
 
 void vtkMarkovModel
-::SetB( std::vector< vtkLabelVector* > newB )
+::SetB( std::vector< vtkSmartPointer< vtkLabelVector > > newB )
 {
   this->B.clear();
   this->B = newB;
 }
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetB()
 {
   return this->B;
 }
 
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetLogB()
 {
   std::vector< vtkSmartPointer< vtkLabelVector > > logB;
@@ -261,7 +261,7 @@ std::vector<vtkLabelVector*> vtkMarkovModel
 }
 
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetZeroB()
 {
   std::vector< vtkSmartPointer< vtkLabelVector > > zeroB;
@@ -269,7 +269,7 @@ std::vector<vtkLabelVector*> vtkMarkovModel
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
 
-    vktSmartPointer< vtkLabelVector > currZeroB = vtkSmartPointer< vtkLabelVector >::New();
+    vtkSmartPointer< vtkLabelVector > currZeroB = vtkSmartPointer< vtkLabelVector >::New();
 
 	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
 	  {
@@ -398,7 +398,7 @@ void vtkMarkovModel
     if ( strcmp( childElement->GetName(), "States" ) == 0 )
 	  {
       this->StateNames.clear();
-      int size = atoi( childElement->GetAttribute( "Size" ) )
+      int size = atoi( childElement->GetAttribute( "Size" ) );
       
 	    std::stringstream instring( childElement->GetAttribute( "Values" ) );
 	    std::string value;
@@ -426,8 +426,7 @@ void vtkMarkovModel
 
 	  if ( strcmp( childElement->GetName(), "MarkovPi" ) == 0 )
 	  {
-      tempPi = vtkSmartPointer< vtkLabelVector >::New();
-      tempPi->FromXMLElement( childElement, "MarkovPi" );
+      tempPi = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovPi" ).at( 0 );
 	  }
 
 	  if ( strcmp( childElement->GetName(), "MarkovA" ) == 0 )
@@ -534,7 +533,7 @@ void vtkMarkovModel
 
 
 void vtkMarkovModel
-::AddEstimationData( std::vector< vtkMarkovVector* > sequence )
+::AddEstimationData( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence )
 {
   // Add the data from the current sequence
   for ( int i = 0; i < sequence.size(); i++ )
@@ -568,7 +567,7 @@ void vtkMarkovModel
 
 
 void vtkMarkovModel
-::AddPseudoData( vtkLabelVector* pseudoPi, std::vector< vtkLabelVector* > pseudoA, std::vector< vtkLabelVector* > pseudoB )
+::AddPseudoData( vtkLabelVector* pseudoPi, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoA, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoB )
 {
   // We can simply add the pseudo observations to the estimation counts
   // Note that the order of states should be the same
@@ -597,7 +596,7 @@ void vtkMarkovModel
 
 
 void vtkMarkovModel
-::CalculateStates( std::vector< vtkMarkovRecord* > sequence )
+::CalculateStates( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence )
 {
   // Take the log of all the parameters, so we avoid rounding errors
   vtkSmartPointer< vtkLabelVector > logPi = this->GetLogPi();
@@ -611,7 +610,7 @@ void vtkMarkovModel
 
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
-    currDelta->Add( logPi->GetElement(j) + logB.at(j)->GetElement( this->LookupSymbol( sequence.at( 0 )->GetSymbol() ) ) );
+    currDelta->AddElement( logPi->GetElement(j) + logB.at(j)->GetElement( this->LookupSymbol( sequence.at( 0 )->GetSymbol() ) ) );
   }
   delta.push_back( currDelta );
 
@@ -638,8 +637,8 @@ void vtkMarkovModel
 	    }
 
 	    // Account for observation probability
-	    currDelta->Add( maxProb + logB.at(j)->GetElement( this->LookupState( sequence.at(i)->GetSymbol() ) ) ); 
-      currPsi->Add( maxIndex );
+	    currDelta->AddElement( maxProb + logB.at(j)->GetElement( this->LookupState( sequence.at(i)->GetSymbol() ) ) ); 
+      currPsi->AddElement( maxIndex );
 
 	  }
 

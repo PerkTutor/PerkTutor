@@ -17,9 +17,10 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkMRMLWorkflowToolNode.h"
-#include "vtkWorkflowInput.h"
-#include "vtkWorkflowTraining.h"
+#include "vtkMRMLWorkflowProcedureNode.h"
+#include "vtkMRMLWorkflowInputNode.h"
+#include "vtkMRMLWorkflowTrainingNode.h"
+#include "vtkWorkflowLogRecordBufferRT.h"
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
@@ -49,8 +50,8 @@ protected:
 public:
 
   // Getters/setters
-  vtkGetMacro( Name, std::string );
-  vtkSetMacro( Name, std::string );
+  vtkGetMacro( ToolName, std::string );
+  vtkSetMacro( ToolName, std::string );
   
   bool GetDefined();
   bool GetInputted();
@@ -74,7 +75,7 @@ public:
   // Computation
   void ResetBuffers();
   
-  bool Train( std::vector< vtkWorkflowLogRecordBuffer > trainingBuffers );
+  bool Train( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
   
   void AddAndSegmentRecord( vtkLabelRecord* newRecord );
   
@@ -82,17 +83,16 @@ public:
 
 protected:
 
-  std::string Name;
-  bool Defined, Inputted, Trained;
+  std::string ToolName;
   
   // This will also hold the real-time buffers
-  vtkSmartPointer< vtkWorkflowLogRecordBufferRT > RawBuffer, FilterBuffer, DerivativeBuffer, OrthogoanlBuffer, PcaBuffer, CentroidBuffer;
+  vtkSmartPointer< vtkWorkflowLogRecordBufferRT > RawBuffer, FilterBuffer, DerivativeBuffer, OrthogonalBuffer, PcaBuffer, CentroidBuffer;
   vtkSmartPointer< vtkWorkflowTask > CurrentTask;
   
   // Internal helpers for computation
-  std::map< std::string, double > CalculateTaskProportions( std::vector< vtkWorkflowLogRecordBuffer > trainingBuffers );
-  std::map< std::string, double > EqualizeTaskProportions( std::vector< vtkWorkflowLogRecordBuffer > trainingBuffers );
-  std::map< std::string, int > CalculateTaskNumCentroids( std::vector< vtkWorkflowLogRecordBuffer > trainingBuffers );
+  std::map< std::string, double > CalculateTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
+  std::map< std::string, double > EqualizeTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
+  std::map< std::string, int > CalculateTaskNumCentroids( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
 };
 
 #endif

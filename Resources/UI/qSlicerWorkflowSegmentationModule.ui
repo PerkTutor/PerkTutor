@@ -149,7 +149,7 @@
     </spacer>
    </item>
    <item row="0" column="0">
-    <widget class="qMRMLNodeComboBox" name="ModuleComboBox">
+    <widget class="qMRMLNodeComboBox" name="WorkflowSegmentationNodeComboBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -189,7 +189,7 @@
   <connection>
    <sender>qSlicerWorkflowSegmentationModule</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>ModuleComboBox</receiver>
+   <receiver>WorkflowSegmentationNodeComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
    <hints>
     <hint type="sourcelabel">

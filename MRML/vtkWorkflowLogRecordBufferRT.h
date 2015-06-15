@@ -40,7 +40,7 @@ public:
   // Note: There is no copy function, use the superclass copy function  
 
   // Methods explicitly for workflow segmentation
-  vtkLabelVector* DistancesRT( std::vector<vtkLabelVector*> labelVectors );
+  vtkLabelVector* DistancesRT( std::vector< vtkSmartPointer< vtkLabelVector > > labelVectors );
 
   vtkLabelRecord* DifferentiateRT( int order = 1 );
 
@@ -48,9 +48,9 @@ public:
 
   vtkLabelRecord* OrthogonalTransformationRT( int window, int order );
 
-  vtkLabelRecord* TransformPCART( std::vector<vtkLabelVector*> prinComps, vtkLabelVector* mean );
+  vtkLabelRecord* TransformPCART( std::vector< vtkSmartPointer< vtkLabelVector > > prinComps, vtkLabelVector* mean );
 
-  vtkLabelRecord* fwdkmeansTransformRT( std::vector<vtkLabelVector*> centroids );
+  vtkLabelRecord* fwdkmeansTransformRT( std::vector< vtkSmartPointer< vtkLabelVector > > centroids );
 
   vtkMarkovVector* ToMarkovVectorRT();
 

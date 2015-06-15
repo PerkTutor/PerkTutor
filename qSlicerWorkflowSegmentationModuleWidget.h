@@ -10,6 +10,9 @@
 #include "qSlicerMessagesWidget.h"
 #include "qSlicerTransformBufferWidget.h"
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
+#include "qSlicerWorkflowToolSummaryWidget.h"
+#include "qSlicerWorkflowToolWidget.h"
+
 
 class qSlicerWorkflowSegmentationModuleWidgetPrivate;
 class vtkMRMLNode;
@@ -37,9 +40,9 @@ protected:
 
 protected slots:
 
-  void mrmlNodeChanged();
+  void mrmlNodeChanged( vtkMRMLNode* wsNode );
   
-  void updateWidgetFromMRMLNode();
+  void updateWidgetFromMRML();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationModuleWidget);
