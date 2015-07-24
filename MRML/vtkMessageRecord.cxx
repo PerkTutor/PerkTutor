@@ -20,15 +20,17 @@ vtkMessageRecord
 
 
 void vtkMessageRecord
-::Copy( vtkMessageRecord* otherRecord )
+::Copy( vtkLogRecord* otherRecord )
 {
-  if ( otherRecord == NULL )
+  this->vtkLogRecord::Copy( otherRecord );
+
+  vtkMessageRecord* messageRecord = vtkMessageRecord::SafeDownCast( otherRecord ); 
+  if ( messageRecord == NULL )
   {
     return;
   }
 
-  this->vtkLogRecord::Copy( otherRecord );
-  this->SetMessageString( otherRecord->GetMessageString() );
+  this->SetMessageString( messageRecord->GetMessageString() );
 }
 
 

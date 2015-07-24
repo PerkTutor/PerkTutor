@@ -36,8 +36,14 @@ void vtkLogRecordBuffer
   this->Clear();
   for ( int i = 0; i < otherBuffer->GetNumRecords(); i++ )
   {
-    vtkSmartPointer< vtkLogRecord > newRecord = vtkSmartPointer< vtkLogRecord >::New();
-    newRecord->Copy( otherBuffer->GetRecord( i ) );
+    // TODO: Is this a good solution, or should we template this class?
+    vtkSmartPointer< vtkLogRecord > otherRecord = otherBuffer->GetRecord( i );
+
+    // Force the new record to be an instance of the same type as the other record (which may be a subclass of vtkLogRecord)
+    vtkSmartPointer< vtkLogRecord > newRecord;
+    newRecord.TakeReference( otherRecord->New() );
+
+    newRecord->Copy( otherRecord );
     this->AddRecord( newRecord );
   }
 

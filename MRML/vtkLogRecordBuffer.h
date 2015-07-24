@@ -59,6 +59,7 @@ protected:
   
 public:
 
+  // If you wish to store a subclass of vtkLogRecord, then that subclass must override the vtkLogRecord::Copy function for vtkLogRecordBuffer::Copy to copy the full subclass
   void Copy( vtkLogRecordBuffer* otherBuffer );
 
   void Concatenate( vtkLogRecordBuffer* catBuffer );

@@ -53,7 +53,7 @@ protected:
   
 public:
 
-  void Copy( vtkMessageRecord* otherRecord );
+  void Copy( vtkLogRecord* otherRecord );
   
   void SetMessageString( std::string newMessageString );
   std::string GetMessageString();

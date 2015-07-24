@@ -21,16 +21,18 @@ vtkTransformRecord
 
 
 void vtkTransformRecord
-::Copy( vtkTransformRecord* otherRecord )
+::Copy( vtkLogRecord* otherRecord )
 {
-  if ( otherRecord == NULL )
+  this->vtkLogRecord::Copy( otherRecord );
+
+  vtkTransformRecord* transformRecord = vtkTransformRecord::SafeDownCast( otherRecord );
+  if ( transformRecord == NULL )
   {
     return;
   }
 
-  this->vtkLogRecord::Copy( otherRecord );
-  this->SetTransformString( otherRecord->GetTransformString() );
-  this->SetDeviceName( otherRecord->GetDeviceName() );
+  this->SetTransformString( transformRecord->GetTransformString() );
+  this->SetDeviceName( transformRecord->GetDeviceName() );
 }
 
 

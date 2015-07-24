@@ -79,6 +79,10 @@ void vtkMRMLTransformBufferNode
 {
   this->Superclass::Copy( anode );
   vtkMRMLTransformBufferNode* node = ( vtkMRMLTransformBufferNode* ) anode;
+  if ( node == NULL )
+  {
+    return;
+  }
 
   this->Clear();
 

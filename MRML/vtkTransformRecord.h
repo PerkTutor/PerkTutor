@@ -52,7 +52,7 @@ protected:
   
 public:
 
-  void Copy( vtkTransformRecord* otherRecord );
+  void Copy( vtkLogRecord* otherRecord );
   
   void SetTransformString( std::string newTransformString );
   std::string GetTransformString();

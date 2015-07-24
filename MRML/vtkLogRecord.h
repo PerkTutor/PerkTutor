@@ -51,7 +51,7 @@ protected:
   
 public:
 
-  void Copy( vtkLogRecord* otherRecord );
+  virtual void Copy( vtkLogRecord* otherRecord );
   
   void SetTimeStampSec( int newTimeStampSec );
   int GetTimeStampSec();
