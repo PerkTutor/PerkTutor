@@ -41,7 +41,7 @@ void vtkLogRecordBuffer
 
     // Force the new record to be an instance of the same type as the other record (which may be a subclass of vtkLogRecord)
     vtkSmartPointer< vtkLogRecord > newRecord;
-    newRecord.TakeReference( otherRecord->New() );
+    newRecord.TakeReference( otherRecord->NewInstance() );
 
     newRecord->Copy( otherRecord );
     this->AddRecord( newRecord );
