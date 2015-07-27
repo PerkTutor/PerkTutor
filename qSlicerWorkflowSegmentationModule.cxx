@@ -25,6 +25,14 @@
 // WorkflowSegmentation includes
 #include "qSlicerWorkflowSegmentationModule.h"
 #include "qSlicerWorkflowSegmentationModuleWidget.h"
+#include "qSlicerWorkflowProcedureReader.h"
+#include "qSlicerWorkflowInputReader.h"
+#include "qSlicerWorkflowTrainingReader.h"
+
+// Slicer includes
+#include "qSlicerNodeWriter.h"
+#include "qSlicerCoreIOManager.h"
+#include "qSlicerCoreApplication.h"
 
 //-----------------------------------------------------------------------------
 Q_EXPORT_PLUGIN2(qSlicerWorkflowSegmentationModule, qSlicerWorkflowSegmentationModule);
@@ -112,6 +120,18 @@ QIcon qSlicerWorkflowSegmentationModule::icon()const
 void qSlicerWorkflowSegmentationModule::setup()
 {
   this->Superclass::setup();
+
+  qSlicerCoreApplication* app = qSlicerCoreApplication::application();
+  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( this->logic() );
+  
+  // Register the IO
+  app->coreIOManager()->registerIO( new qSlicerWorkflowProcedureReader( WorkflowSegmentationLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Procedure", QString( "Workflow Procedure" ), QStringList() << "vtkMRMLWorkflowProcedureNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerWorkflowInputReader( WorkflowSegmentationLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Input", QString( "Workflow Input" ), QStringList() << "vtkMRMLWorkflowInputNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerWorkflowTrainingReader( WorkflowSegmentationLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Training", QString( "Workflow Training" ), QStringList() << "vtkMRMLWorkflowTrainingNode", this ) );
+
 }
 
 //-----------------------------------------------------------------------------

@@ -144,7 +144,14 @@ void qSlicerWorkflowToolWidget
   {
     return;
   }
-  this->WorkflowToolNode->SetWorkflowProcedureID( newWorkflowProcedureNode->GetID() );
+  if ( newWorkflowProcedureNode == NULL )
+  {
+    this->WorkflowToolNode->SetWorkflowProcedureID( "" );
+  }
+  else
+  {
+    this->WorkflowToolNode->SetWorkflowProcedureID( newWorkflowProcedureNode->GetID() );
+  }
   this->updateWidgetFromMRML();
 }
 
@@ -156,7 +163,14 @@ void qSlicerWorkflowToolWidget
   {
     return;
   }
-  this->WorkflowToolNode->SetWorkflowInputID( newWorkflowInputNode->GetID() );
+  if ( newWorkflowInputNode == NULL )
+  {
+    this->WorkflowToolNode->SetWorkflowInputID( "" );
+  }
+  else
+  {
+    this->WorkflowToolNode->SetWorkflowInputID( newWorkflowInputNode->GetID() );
+  }
   this->updateWidgetFromMRML();
 }
 
@@ -168,7 +182,14 @@ void qSlicerWorkflowToolWidget
   {
     return;
   }
-  this->WorkflowToolNode->SetWorkflowTrainingID( newWorkflowTrainingNode->GetID() );
+  if ( newWorkflowTrainingNode == NULL )
+  {
+    this->WorkflowToolNode->SetWorkflowTrainingID( "" );
+  }
+  else
+  {
+    this->WorkflowToolNode->SetWorkflowTrainingID( newWorkflowTrainingNode->GetID() );
+  }
   this->updateWidgetFromMRML();
 }
 

@@ -24,6 +24,7 @@ vtkWorkflowLogRecordBuffer
 }
 
 
+// TODO: Can we just use the base class' copy method?
 void vtkWorkflowLogRecordBuffer
 ::Copy( vtkWorkflowLogRecordBuffer* otherBuffer )
 {
@@ -46,10 +47,10 @@ void vtkWorkflowLogRecordBuffer
 
 // Conversion to/from transform buffers
 
-vtkMRMLTransformBufferNode* vtkWorkflowLogRecordBuffer
-::ToTransformBufferNode()
+void vtkWorkflowLogRecordBuffer
+::ToTransformBufferNode( vtkMRMLTransformBufferNode* transformBufferNode )
 {
-	vtkMRMLTransformBufferNode* transformBufferNode = vtkMRMLTransformBufferNode::New();
+  transformBufferNode->Clear();
 
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
@@ -88,8 +89,7 @@ vtkMRMLTransformBufferNode* vtkWorkflowLogRecordBuffer
 	    prevLabel = labelRecord->GetVector()->GetLabel();
 	  }
   }
-
-  return transformBufferNode;  
+ 
 }
 
 
@@ -150,7 +150,7 @@ void vtkWorkflowLogRecordBuffer
 
 	  for ( int j = 0; j < this->GetNumRecords(); j++ )
 	  {
-      vtkLabelRecord* labelRecord = vtkLabelRecord::SafeDownCast( this->GetRecord( i ) );
+      vtkLabelRecord* labelRecord = vtkLabelRecord::SafeDownCast( this->GetRecord( j ) );
       if ( labelRecord == NULL )
       {
         continue;
@@ -217,11 +217,10 @@ void vtkWorkflowLogRecordBuffer
 // Methods specific for workflow segmentation -------------------------------------------------------------
 
 // Note: This is inclusive (end points will appear in the result)
-vtkWorkflowLogRecordBuffer* vtkWorkflowLogRecordBuffer
-::GetRange( int start, int end )
+void vtkWorkflowLogRecordBuffer
+::GetRange( int start, int end, vtkWorkflowLogRecordBuffer* rangeRecordBuffer )
 {
-  vtkSmartPointer< vtkWorkflowLogRecordBuffer > rangeRecordBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-  
+  rangeRecordBuffer->Clear();
   // Iterate over all tracking records in the current procedure, and add to new
   for ( int i = start; i <= end; i++ )
   {
@@ -229,8 +228,6 @@ vtkWorkflowLogRecordBuffer* vtkWorkflowLogRecordBuffer
     currRecord->Copy( vtkLabelRecord::SafeDownCast( this->GetRecord( i ) ) );
     rangeRecordBuffer->AddRecord( currRecord );
   }
-
-  return rangeRecordBuffer;
 }
 
 
@@ -282,7 +279,7 @@ void vtkWorkflowLogRecordBuffer
       continue;
     }
     
-    vtkLabelRecord* otherRecord = vtkLabelRecord::SafeDownCast( this->GetRecord( i ) );
+    vtkLabelRecord* otherRecord = vtkLabelRecord::SafeDownCast( otherRecordBuffer->GetRecord( i ) );
     if ( otherRecord == NULL )
     {
       continue;
@@ -346,12 +343,12 @@ void vtkWorkflowLogRecordBuffer
 }
 
 
-vtkLabelVector* vtkWorkflowLogRecordBuffer
-::Mean()
+void vtkWorkflowLogRecordBuffer
+::Mean( vtkLabelVector* meanVector )
 {
   // The record log will only hold one record at the end
   int size = vtkLabelRecord::SafeDownCast( this->GetRecord( 0 ) )->GetVector()->Size();
-  vtkSmartPointer< vtkLabelVector > meanVector = vtkSmartPointer< vtkLabelVector >::New();
+
   meanVector->FillElements( size, 0.0 );
   meanVector->SetLabel( "Mean" );
 
@@ -371,7 +368,6 @@ vtkLabelVector* vtkWorkflowLogRecordBuffer
     meanVector->SetElement( d, meanVector->GetElement( d ) / this->GetNumRecords() );
   }
 
-  return meanVector;
 }
 
 
@@ -540,12 +536,11 @@ void vtkWorkflowLogRecordBuffer
 
 
 
-vtkLabelVector* vtkWorkflowLogRecordBuffer
-::Integrate()
+void vtkWorkflowLogRecordBuffer
+::Integrate( vtkLabelVector* intVector )
 {
   // The record log will only hold one record at the end
   int size = vtkLabelRecord::SafeDownCast( this->GetRecord( 0 ) )->GetVector()->Size();
-  vtkSmartPointer< vtkLabelVector > intVector = vtkSmartPointer< vtkLabelVector >::New();
   intVector->FillElements( size, 0.0 );
 
   // For each time
@@ -565,18 +560,16 @@ vtkLabelVector* vtkWorkflowLogRecordBuffer
 	  }
   }
 
-  return intVector;
 }
 
 
 std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
 ::LegendreTransformation( int order )
 {
+  std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix;
+
   // The time-shifted record buffer
   vtkSmartPointer< vtkWorkflowLogRecordBuffer > shiftBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-
-  // Create a copy of the record log for each degree of Legendre polynomial
-  std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix;
 
   // Calculate the time adjustment (need range -1 to 1)
   double startTime = this->GetRecord( 0 )->GetTime();
@@ -628,7 +621,8 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
     }
 
 	  // Integrate to get the Legendre coefficients for the particular order
-	  vtkSmartPointer< vtkLabelVector > legendreVector = unintegratedRecordBuffer->Integrate();
+    vtkSmartPointer< vtkLabelVector > legendreVector = vtkSmartPointer< vtkLabelVector >::New();
+    unintegratedRecordBuffer->Integrate( legendreVector );
 	  legendreVector->SetLabel( o );
 	  legendreCoefficientMatrix.push_back( legendreVector );
   }
@@ -777,8 +771,11 @@ void vtkWorkflowLogRecordBuffer
     currLegendreRecord->GetVector()->FillElements( currRecord->GetVector()->Size() * ( order + 1 ), 0.0 );
 
     // Calculate the record log to include
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > rangeBuffer = paddedBuffer->GetRange( i, i + window );
-	  std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix = rangeBuffer->LegendreTransformation( order );
+    vtkSmartPointer< vtkWorkflowLogRecordBuffer > rangeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
+    paddedBuffer->GetRange( i, i + window, rangeBuffer );
+	  
+    std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix;
+    legendreCoefficientMatrix = rangeBuffer->LegendreTransformation( order );
 
 	  // Calculate the Legendre coefficients: 2D -> 1D
 	  int count = 0;
@@ -813,7 +810,8 @@ vnl_matrix<double>* vtkWorkflowLogRecordBuffer
   covariance->fill( 0.0 );
 
   // Determine the mean, subtract the mean from each record
-  vtkSmartPointer< vtkLabelVector > meanVector = this->Mean();
+  vtkSmartPointer< vtkLabelVector > meanVector = vtkSmartPointer< vtkLabelVector >::New();
+  this->Mean( meanVector );
 
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
@@ -856,6 +854,8 @@ vnl_matrix<double>* vtkWorkflowLogRecordBuffer
 std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
 ::CalculatePCA( int numComp )
 {
+  std::vector< vtkSmartPointer< vtkLabelVector > > prinComps;
+
   // Calculate the covariance matrix
   vnl_matrix<double>* covariance = this->CovarianceMatrix();
 
@@ -864,9 +864,6 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
   vnl_vector<double> eigenvalues( covariance->rows(), 0.0 );
   vnl_symmetric_eigensystem_compute( *covariance, eigenvectors, eigenvalues );
   // Note: eigenvectors are ordered in increasing eigenvalue ( 0 = smallest, end = biggest )
-
-  // Grab only the most important eigenvectors
-  std::vector< vtkSmartPointer< vtkLabelVector > > prinComps;
 
   // Prevent more prinicipal components than original dimensions
   if ( numComp > eigenvectors.cols() )
@@ -943,13 +940,16 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
     if ( k == 0 )
 	  {
 	    // An order record for the current cluster
-      vtkSmartPointer< vtkLabelVector > currCentroid = this->Mean();
+      vtkSmartPointer< vtkLabelVector > currCentroid = vtkSmartPointer< vtkLabelVector >::New();
+      this->Mean( currCentroid );
 	    currCentroid->SetLabel( k );
 	    centroids.push_back( currCentroid );
 	    continue;
 	  }
 
-	  centroids.push_back( this->FindNextCentroid( centroids ) );
+    vtkSmartPointer< vtkLabelVector > nextCentroid = vtkSmartPointer< vtkLabelVector >::New();
+    this->FindNextCentroid( centroids, nextCentroid );
+	  centroids.push_back( nextCentroid );
 
 	  // Iterate until there are no more changes in membership and no clusters are empty
     bool change = true;
@@ -989,8 +989,8 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
 
 
 
-vtkLabelVector* vtkWorkflowLogRecordBuffer
-::FindNextCentroid( std::vector< vtkSmartPointer< vtkLabelVector > > centroids )
+void vtkWorkflowLogRecordBuffer
+::FindNextCentroid( std::vector< vtkSmartPointer< vtkLabelVector > > centroids, vtkLabelVector* nextCentroid )
 {
   // Find the record farthest from any centroid
   std::vector< vtkSmartPointer< vtkLabelVector > > centDist = this->Distances( centroids );
@@ -1019,10 +1019,8 @@ vtkLabelVector* vtkWorkflowLogRecordBuffer
   }
 
   // Create new centroid for candidate
-  vtkSmartPointer< vtkLabelVector > currCentroid = vtkSmartPointer< vtkLabelVector >::New();
-  currCentroid->SetAllValues( vtkLabelRecord::SafeDownCast( this->GetRecord( candidateRecord ) )->GetVector()->GetAllValues() );
-  currCentroid->SetLabel( centroids.size() );
-  return currCentroid;
+  nextCentroid->SetAllValues( vtkLabelRecord::SafeDownCast( this->GetRecord( candidateRecord ) )->GetVector()->GetAllValues() );
+  nextCentroid->SetLabel( centroids.size() );
 }
 
 
@@ -1086,7 +1084,9 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkWorkflowLogRecordBuffer
 	    continue;
 	  }
 
-	  centroids.at(c) = this->FindNextCentroid( centroids );
+    vtkSmartPointer< vtkLabelVector > nextCentroid = vtkSmartPointer< vtkLabelVector >::New();
+    this->FindNextCentroid( centroids, nextCentroid );
+	  centroids.at(c) = nextCentroid;
   }
 
   return centroids;
@@ -1190,10 +1190,10 @@ void vtkWorkflowLogRecordBuffer
 }
 
 
-vtkWorkflowLogRecordBuffer* vtkWorkflowLogRecordBuffer
-::GetLabelledRange( std::vector< std::string > labels )
+void vtkWorkflowLogRecordBuffer
+::GetLabelledRange( std::vector< std::string > labels, vtkWorkflowLogRecordBuffer* rangeRecordBuffer )
 {
-  vtkSmartPointer< vtkWorkflowLogRecordBuffer > rangeRecordBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
+  rangeRecordBuffer->Clear();
 
   for ( int i = 0; i < this->GetNumRecords(); i++ )
   {
@@ -1215,7 +1215,6 @@ vtkWorkflowLogRecordBuffer* vtkWorkflowLogRecordBuffer
     
   }
 
-  return rangeRecordBuffer;
 }
 
 

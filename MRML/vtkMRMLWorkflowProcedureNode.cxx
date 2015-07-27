@@ -62,6 +62,8 @@ void vtkMRMLWorkflowProcedureNode
   {
     return;
   }  
+
+  this->SetProcedureName( node->GetProcedureName() );
   
   this->Tasks.clear();
   std::map< std::string, vtkSmartPointer< vtkWorkflowTask > >::iterator itr;
@@ -141,12 +143,12 @@ std::string vtkMRMLWorkflowProcedureNode
 {
   std::stringstream xmlstring;
   
-  xmlstring << indent << "<WorkflowProcedure>" << std::endl;
+  xmlstring << indent << "<WorkflowProcedure ProcedureName=\"" << this->ProcedureName << "\" >" << std::endl;
     
   std::map< std::string, vtkSmartPointer< vtkWorkflowTask > >::iterator itr;  
   for( itr = this->Tasks.begin(); itr != this->Tasks.end(); itr++ )
   {
-    itr->second->ToXMLString( indent.GetNextIndent() );
+    xmlstring << itr->second->ToXMLString( indent.GetNextIndent() );
   }
   
   xmlstring << indent << "</WorkflowProcedure>" << std::endl;
@@ -162,6 +164,8 @@ void vtkMRMLWorkflowProcedureNode
   {
     return;
   }
+
+  this->SetProcedureName( element->GetAttribute( "ProcedureName" ) );
   
   int numElements = element->GetNumberOfNestedElements();
 

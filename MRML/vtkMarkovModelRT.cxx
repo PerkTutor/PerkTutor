@@ -44,9 +44,12 @@ void vtkMarkovModelRT
 {
 
   // Take the log of all the parameters, so we avoid rounding errors
-  vtkSmartPointer< vtkLabelVector > logPi = this->GetLogPi();
-  std::vector< vtkSmartPointer< vtkLabelVector > > logA = this->GetLogA();
-  std::vector< vtkSmartPointer< vtkLabelVector > > logB = this->GetLogB();
+  vtkSmartPointer< vtkLabelVector > logPi = vtkSmartPointer< vtkLabelVector >::New();
+  this->GetLogPi( logPi );
+  std::vector< vtkSmartPointer< vtkLabelVector > > logA;
+  logA = this->GetLogA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > logB;
+  logB = this->GetLogB();
 
   // This must both calculate the current state and update pi and delta
   // Case there are no previous elements in the sequence
@@ -60,7 +63,7 @@ void vtkMarkovModelRT
 	  }
 	  this->currDelta->SetLabel( "Delta" );
 
-    this->currPsi = this->GetZeroPi();
+    this->GetZeroPi( this->currPsi );
 	  this->currPsi->SetLabel( "Psi" );
   }
 

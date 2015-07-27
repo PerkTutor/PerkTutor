@@ -111,17 +111,19 @@ std::string vtkMRMLWorkflowInputNode
 {
   std::stringstream xmlstring;
 
-  xmlstring << indent << "<Parameter Type=\"FilterWidth\" Value=\"" << this->FilterWidth << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"OrthogonalOrder\" Value=\"" << this->OrthogonalOrder << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"OrthogonalWindow\" Value=\"" << this->OrthogonalWindow << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"Derivative\" Value=\"" << this->Derivative << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"NumCentroids\" Value=\"" << this->NumCentroids << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"NumPrinComps\" Value=\"" << this->NumPrinComps << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"MarkovPseudoScalePi\" Value=\"" << this->MarkovPseudoScalePi << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"MarkovPseudoScaleA\" Value=\"" << this->MarkovPseudoScaleA << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"MarkovPseudoScaleB\" Value=\"" << this->MarkovPseudoScaleB << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"CompletionTime\" Value=\"" << this->CompletionTime << "\" />" << std::endl;
-  xmlstring << indent << "<Parameter Type=\"Equalization\" Value=\"" << this->Equalization << "\" />" << std::endl;
+  xmlstring << indent << "<WorkflowInput>" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"FilterWidth\" Value=\"" << this->FilterWidth << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"OrthogonalOrder\" Value=\"" << this->OrthogonalOrder << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"OrthogonalWindow\" Value=\"" << this->OrthogonalWindow << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"Derivative\" Value=\"" << this->Derivative << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"NumCentroids\" Value=\"" << this->NumCentroids << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"NumPrinComps\" Value=\"" << this->NumPrinComps << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"MarkovPseudoScalePi\" Value=\"" << this->MarkovPseudoScalePi << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"MarkovPseudoScaleA\" Value=\"" << this->MarkovPseudoScaleA << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"MarkovPseudoScaleB\" Value=\"" << this->MarkovPseudoScaleB << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"CompletionTime\" Value=\"" << this->CompletionTime << "\" />" << std::endl;
+  xmlstring << indent.GetNextIndent() << "<Parameter Type=\"Equalization\" Value=\"" << this->Equalization << "\" />" << std::endl;
+  xmlstring << indent << "</WorkflowInput>" << std::endl;
 
   return xmlstring.str();
 }

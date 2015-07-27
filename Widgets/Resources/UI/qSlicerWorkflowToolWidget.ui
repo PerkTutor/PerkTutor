@@ -107,7 +107,7 @@
        </property>
        <property name="nodeTypes">
         <stringlist>
-         <string>vtkMRMLProcedureInputNode</string>
+         <string>vtkMRMLWorkflowInputNode</string>
         </stringlist>
        </property>
        <property name="noneEnabled">

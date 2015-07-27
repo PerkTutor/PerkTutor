@@ -77,6 +77,7 @@ void vtkMRMLWorkflowSegmentationNode::PrintSelf( ostream& os, vtkIndent indent )
 vtkMRMLWorkflowSegmentationNode
 ::vtkMRMLWorkflowSegmentationNode()
 {
+  this->AddNodeReferenceRole( TOOL_REFERENCE_ROLE );
 }
 
 

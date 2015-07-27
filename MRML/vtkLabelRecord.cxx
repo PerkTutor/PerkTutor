@@ -18,11 +18,17 @@ vtkLabelRecord
 
 
 void vtkLabelRecord
-::Copy( vtkLabelRecord* otherRecord )
+::Copy( vtkLogRecord* otherRecord )
 {
   this->vtkLogRecord::Copy( otherRecord );
+
+  vtkLabelRecord* labelRecord = vtkLabelRecord::SafeDownCast( otherRecord ); 
+  if ( labelRecord == NULL )
+  {
+    return;
+  }
   
-  this->GetVector()->Copy( otherRecord->GetVector() );
+  this->GetVector()->Copy( labelRecord->GetVector() );
 }
 
 

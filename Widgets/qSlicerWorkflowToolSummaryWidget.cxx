@@ -112,6 +112,11 @@ void qSlicerWorkflowToolSummaryWidget
 ::onToolSelectionsChanged()
 {
   Q_D(qSlicerWorkflowToolSummaryWidget);
+
+  if ( this->WorkflowSegmentationNode == NULL )
+  {
+    return;
+  }
   
   std::vector< std::string > selectedToolIDs;
   
@@ -131,6 +136,11 @@ void qSlicerWorkflowToolSummaryWidget
 ::onTrainButtonClicked()
 {
   Q_D(qSlicerWorkflowToolSummaryWidget);
+
+  if ( this->WorkflowSegmentationNode == NULL )
+  {
+    return;
+  }
 
   std::vector< std::string > trainingBufferIDs;
   

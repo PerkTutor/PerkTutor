@@ -164,10 +164,10 @@ std::string vtkMRMLWorkflowTrainingNode
   
   xmlstring << indent << "<WorkflowTraining>" << std::endl;
     
-  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->PrinComps, "PrinComps", indent.GetNextIndent() );
-  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->Mean, "Mean", indent.GetNextIndent() );
-  xmlstring << indent.GetNextIndent() << vtkLabelVector::VectorsToXMLString( this->Centroids, "Centroids", indent.GetNextIndent() );
-  xmlstring << indent.GetNextIndent() << this->Markov->ToXMLString( indent.GetNextIndent() );
+  xmlstring << vtkLabelVector::VectorsToXMLString( this->PrinComps, "PrinComps", indent.GetNextIndent() );
+  xmlstring << vtkLabelVector::VectorsToXMLString( this->Mean, "Mean", indent.GetNextIndent() );
+  xmlstring << vtkLabelVector::VectorsToXMLString( this->Centroids, "Centroids", indent.GetNextIndent() );
+  xmlstring << this->Markov->ToXMLString( indent.GetNextIndent() );
   
   xmlstring << indent << "</WorkflowTraining>" << std::endl;
   

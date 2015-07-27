@@ -15,9 +15,12 @@ vtkStandardNewMacro( vtkMarkovModel );
 vtkMarkovModel
 ::vtkMarkovModel()
 {
-  this->Pi = GetZeroPi();
-  this->A = GetZeroA();
-  this->B = GetZeroB();
+  this->Pi = vtkSmartPointer< vtkLabelVector >::New();
+  this->GetZeroPi( this->Pi );
+
+  // No need to pre-allocate for vector
+  this->A = this->GetZeroA();
+  this->B = this->GetZeroB();
 }
 
 
@@ -38,20 +41,16 @@ void vtkMarkovModel
   this->SetStates( otherMarkov->StateNames );
   this->SetSymbols( otherMarkov->SymbolNames );
   
-  this->A.clear();
-  this->B.clear();
-  for ( int i = 0; i < otherMarkov->GetNumStates(); i++ )
-  {
-    vtkSmartPointer< vtkLabelVector > currA = vtkSmartPointer< vtkLabelVector >::New();
-    currA->Copy( otherMarkov->GetA().at( i ) );
-    this->A.push_back( currA );
-    
-    vtkSmartPointer< vtkLabelVector > currB = vtkSmartPointer< vtkLabelVector >::New();
-    currB->Copy( otherMarkov->GetB().at( i ) );
-    this->B.push_back( currB );
-  }
+  vtkSmartPointer< vtkLabelVector > otherPi = vtkSmartPointer< vtkLabelVector >::New();
+  otherMarkov->GetPi( otherPi );
+  std::vector< vtkSmartPointer< vtkLabelVector > > otherA;
+  otherA = otherMarkov->GetA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > otherB;
+  otherB = otherMarkov->GetB();
 
-  this->Pi->Copy( otherMarkov->GetPi() );
+  this->Pi->Copy( otherPi );
+  this->SetA( otherA );
+  this->SetB( otherB );
 }
 
 
@@ -164,7 +163,6 @@ int vtkMarkovModel
 void vtkMarkovModel
 ::SetA( std::vector< vtkSmartPointer< vtkLabelVector > > newA )
 {
-  this->A.clear();
   this->A = newA;
 }
 
@@ -182,7 +180,6 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-
     vtkSmartPointer< vtkLabelVector > currLogA = vtkSmartPointer< vtkLabelVector >::New();
 
 	  for ( int j = 0; j < this->GetNumStates(); j++ )
@@ -206,7 +203,6 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-
     vtkSmartPointer< vtkLabelVector > currZeroA = vtkSmartPointer< vtkLabelVector >::New();
 
 	  for ( int j = 0; j < this->GetNumStates(); j++ )
@@ -226,9 +222,9 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 void vtkMarkovModel
 ::SetB( std::vector< vtkSmartPointer< vtkLabelVector > > newB )
 {
-  this->B.clear();
   this->B = newB;
 }
+
 
 std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetB()
@@ -244,7 +240,6 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-
     vtkSmartPointer< vtkLabelVector > currLogB = vtkSmartPointer< vtkLabelVector >::New();
 
 	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
@@ -268,7 +263,6 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-
     vtkSmartPointer< vtkLabelVector > currZeroB = vtkSmartPointer< vtkLabelVector >::New();
 
 	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
@@ -291,16 +285,17 @@ void vtkMarkovModel
   this->Pi = newPi;
 }
 
-vtkLabelVector* vtkMarkovModel
-::GetPi()
+
+void vtkMarkovModel
+::GetPi( vtkLabelVector* piPi )
 {
-  return this->Pi;
+  piPi->Copy( this->Pi );
 }
 
-vtkLabelVector* vtkMarkovModel
-::GetLogPi()
+
+void vtkMarkovModel
+::GetLogPi( vtkLabelVector* logPi )
 {
-  vtkSmartPointer< vtkLabelVector > logPi = vtkSmartPointer< vtkLabelVector >::New();
 
   // Note: Pi must already exist
   for ( int j = 0; j < this->GetNumStates(); j++ )
@@ -309,14 +304,13 @@ vtkLabelVector* vtkMarkovModel
   }
 
   logPi->SetLabel( "Pi" );
-  return logPi;
+
 }
 
 
-vtkLabelVector* vtkMarkovModel
-::GetZeroPi()
+void vtkMarkovModel
+::GetZeroPi( vtkLabelVector* zeroPi )
 {
-  vtkSmartPointer< vtkLabelVector > zeroPi = vtkSmartPointer< vtkLabelVector >::New();
 
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
@@ -324,7 +318,7 @@ vtkLabelVector* vtkMarkovModel
   }
 
   zeroPi->SetLabel( "Pi" );
-  return zeroPi;
+
 }
 
 
@@ -424,17 +418,17 @@ void vtkMarkovModel
 	    }
 	  }
 
-	  if ( strcmp( childElement->GetName(), "MarkovPi" ) == 0 )
+    if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovPi" ) == 0 )
 	  {
       tempPi = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovPi" ).at( 0 );
 	  }
 
-	  if ( strcmp( childElement->GetName(), "MarkovA" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovA" ) == 0 )
 	  {
       tempA = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovA" );
 	  }
 
-	  if ( strcmp( childElement->GetName(), "MarkovB" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovB" ) == 0 )
 	  {
       tempB = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovB" );
 	  }
@@ -526,9 +520,9 @@ void vtkMarkovModel
   // Doesn't make sense to have both values and values in training
   // Assume that the states and symbols have already been set
 
-  this->SetPi( this->GetZeroPi() );
-  this->SetA( this->GetZeroA() );
-  this->SetB( this->GetZeroB() );
+  this->GetZeroPi( this->Pi );
+  this->A = this->GetZeroA();
+  this->B = this->GetZeroB();
 }
 
 
@@ -599,9 +593,12 @@ void vtkMarkovModel
 ::CalculateStates( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence )
 {
   // Take the log of all the parameters, so we avoid rounding errors
-  vtkSmartPointer< vtkLabelVector > logPi = this->GetLogPi();
-  std::vector< vtkSmartPointer< vtkLabelVector > > logA = this->GetLogA();
-  std::vector< vtkSmartPointer< vtkLabelVector > > logB = this->GetLogB();
+  vtkSmartPointer< vtkLabelVector > logPi = vtkSmartPointer< vtkLabelVector >::New();
+  this->GetLogPi( logPi );
+  std::vector< vtkSmartPointer< vtkLabelVector > > logA;
+  logA = this->GetLogA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > logB;
+  logB = this->GetLogB();
 
   // Initialize delta and psi using the initial state distributions
   std::vector< vtkSmartPointer< vtkLabelVector > > delta, psi;
@@ -614,7 +611,7 @@ void vtkMarkovModel
   }
   delta.push_back( currDelta );
 
-  currPsi = this->GetZeroPi();
+  this->GetZeroPi( currPsi );
   psi.push_back( currPsi );
 
   // Already calculated for i = 0 (initially)

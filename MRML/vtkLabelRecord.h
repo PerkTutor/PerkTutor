@@ -43,7 +43,7 @@ protected:
 public:
 
   // Copy
-  void Copy( vtkLabelRecord* otherRecord );
+  virtual void Copy( vtkLogRecord* otherRecord );
 
   enum TrackingRecordType
   {

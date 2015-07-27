@@ -70,7 +70,8 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
   }
   
   // Just need the last order + 1 timestamps
-  vtkSmartPointer< vtkWorkflowLogRecordBuffer > endBuffer = this->GetRange( this->GetNumRecords() - ( order + 1 ), this->GetNumRecords() - 1 );
+  vtkSmartPointer< vtkWorkflowLogRecordBuffer > endBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
+  this->GetRange( this->GetNumRecords() - ( order + 1 ), this->GetNumRecords() - 1, endBuffer );
   endBuffer->Differentiate( order );
   
   return vtkLabelRecord::SafeDownCast( endBuffer->GetCurrentRecord() );
@@ -129,22 +130,23 @@ vtkLabelRecord* vtkWorkflowLogRecordBufferRT
 ::OrthogonalTransformationRT( int window, int order )
 {
   // Pad the recordlog with values at the beginning only if necessary
-  vtkSmartPointer< vtkWorkflowLogRecordBuffer > rangeBuffer;
+  vtkSmartPointer< vtkWorkflowLogRecordBuffer > rangeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
   
   if ( this->GetNumRecords() <= window )
   {
     vtkSmartPointer< vtkWorkflowLogRecordBuffer > paddedBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
     paddedBuffer->Copy( this );
     paddedBuffer->PadStart( window );
-    rangeBuffer = paddedBuffer->GetRange( paddedBuffer->GetNumRecords() - ( window + 1 ), paddedBuffer->GetNumRecords() - 1 );
+    paddedBuffer->GetRange( paddedBuffer->GetNumRecords() - ( window + 1 ), paddedBuffer->GetNumRecords() - 1, rangeBuffer );
   }
   else
   {
-    rangeBuffer = this->GetRange( this->GetNumRecords() - ( window + 1 ), this->GetNumRecords() - 1 );
+    this->GetRange( this->GetNumRecords() - ( window + 1 ), this->GetNumRecords() - 1, rangeBuffer );
   }
 
   // Create a new matrix to which the Legendre coefficients will be assigned
-  std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix = rangeBuffer->LegendreTransformation( order );
+  std::vector< vtkSmartPointer< vtkLabelVector > > legendreCoefficientMatrix;
+  legendreCoefficientMatrix = rangeBuffer->LegendreTransformation( order );
   
   vtkSmartPointer< vtkLabelRecord > currLegendreRecord = vtkSmartPointer< vtkLabelRecord >::New();
   currLegendreRecord->GetVector()->FillElements( vtkLabelRecord::SafeDownCast( this->GetCurrentRecord() )->GetVector()->Size() * ( order + 1 ), 0.0 );

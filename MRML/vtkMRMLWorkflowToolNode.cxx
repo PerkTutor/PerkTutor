@@ -51,7 +51,7 @@ void vtkMRMLWorkflowToolNode
   
   vtkIndent indent(nIndent);
   
-  of << indent << "Name=\"" << this->Name << "\"";
+  of << indent << "ToolName=\"" << this->ToolName << "\"";
 }
 
 
@@ -69,7 +69,7 @@ void vtkMRMLWorkflowToolNode
     attName  = *(atts++);
     attValue = *(atts++);
  
-    if ( ! strcmp( attName, "Name" ) )
+    if ( ! strcmp( attName, "ToolName" ) )
     {
       this->ToolName = std::string( attValue );
     }
@@ -97,8 +97,12 @@ void vtkMRMLWorkflowToolNode
 vtkMRMLWorkflowToolNode
 ::vtkMRMLWorkflowToolNode()
 {
-  this->Name = "";
+  this->ToolName = "";
   this->ResetBuffers();
+
+  this->AddNodeReferenceRole( WORKFLOW_PROCEDURE_REFERENCE_ROLE );
+  this->AddNodeReferenceRole( WORKFLOW_INPUT_REFERENCE_ROLE );
+  this->AddNodeReferenceRole( WORKFLOW_TRAINING_REFERENCE_ROLE );
 }
 
 
@@ -111,14 +115,14 @@ vtkMRMLWorkflowToolNode
 void vtkMRMLWorkflowToolNode
 ::ResetBuffers()
 {
-  this->RawBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->FilterBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->DerivativeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->OrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->PcaBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->CentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  //this->RawBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  //this->FilterBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  //this->DerivativeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  //this->OrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  //this->PcaBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  //this->CentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
   
-  this->CurrentTask = vtkSmartPointer< vtkWorkflowTask >::New();
+  //this->CurrentTask = vtkSmartPointer< vtkWorkflowTask >::New();
 }
 
 
@@ -179,6 +183,16 @@ void vtkMRMLWorkflowToolNode
 ::SetWorkflowProcedureID( std::string newWorkflowProcedureID )
 {
   this->SetAndObserveNodeReferenceID( WORKFLOW_PROCEDURE_REFERENCE_ROLE, newWorkflowProcedureID.c_str() );
+
+  // Also, set the name of this tool
+  if ( this->GetWorkflowProcedureNode() != NULL )
+  {
+    this->SetToolName( this->GetWorkflowProcedureNode()->GetProcedureName() );
+  }
+  else
+  {
+    this->SetToolName( "" );
+  }
 }
 
 
@@ -307,8 +321,13 @@ bool vtkMRMLWorkflowToolNode
   }
 
   // Calculate PCA transform
-  this->GetWorkflowTrainingNode()->SetMean( concatenatedOrthogonalBuffer->Mean() );
-  this->GetWorkflowTrainingNode()->SetPrinComps( concatenatedOrthogonalBuffer->CalculatePCA( this->GetWorkflowInputNode()->GetNumPrinComps() ) );
+  vtkSmartPointer< vtkLabelVector > meanVector = vtkSmartPointer< vtkLabelVector >::New();
+  concatenatedOrthogonalBuffer->Mean( meanVector );
+  this->GetWorkflowTrainingNode()->SetMean( meanVector );
+
+  std::vector< vtkSmartPointer< vtkLabelVector > > prinComps;
+  prinComps = concatenatedOrthogonalBuffer->CalculatePCA( this->GetWorkflowInputNode()->GetNumPrinComps() );
+  this->GetWorkflowTrainingNode()->SetPrinComps( prinComps );
 
   // Apply PCA transformation
   std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > pcaBuffers;
@@ -328,11 +347,15 @@ bool vtkMRMLWorkflowToolNode
   for ( int i = 0; i < taskNames.size(); i++ )
   {
     std::vector< std::string > currTask;
-    currTask.push_back( taskNames.at( i ) );    
-    taskwiseBuffers[ taskNames.at( i ) ] = concatenatedPCABuffer->GetLabelledRange( currTask );
+    currTask.push_back( taskNames.at( i ) );
+
+    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currTaskwiseBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
+    concatenatedPCABuffer->GetLabelledRange( currTask, currTaskwiseBuffer );
+    taskwiseBuffers[ taskNames.at( i ) ] = currTaskwiseBuffer;
   }
 
   // Calculate and add the centroids from each task
+  std::vector< vtkSmartPointer< vtkLabelVector > > allCentroids;
   std::map< std::string, vtkSmartPointer< vtkWorkflowLogRecordBuffer > >::iterator itrBuffer;
   for ( itrBuffer = taskwiseBuffers.begin(); itrBuffer != taskwiseBuffers.end(); itrBuffer++ )
   {
@@ -342,9 +365,10 @@ bool vtkMRMLWorkflowToolNode
 	  {
       // Make the centroid numbering continuous over all centroids
       currTaskCentroids.at( j )->SetLabel( atoi( currTaskCentroids.at( j )->GetLabel().c_str() ) + cumulativeCentroids[ itrBuffer->first ] );
-      this->GetWorkflowTrainingNode()->GetCentroids().push_back( currTaskCentroids.at( j ) );
+      allCentroids.push_back( currTaskCentroids.at( j ) );
 	  }    
   }
+  this->GetWorkflowTrainingNode()->SetCentroids( allCentroids );
 
   // Calculate the sequence of centroids for each procedure
   std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > centroidBuffers;
@@ -353,7 +377,7 @@ bool vtkMRMLWorkflowToolNode
     vtkSmartPointer< vtkWorkflowLogRecordBuffer > currCentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
     currCentroidBuffer->Copy( pcaBuffers.at( i ) );
     currCentroidBuffer->fwdkmeansTransform( this->GetWorkflowTrainingNode()->GetCentroids() );
-    pcaBuffers.push_back( currCentroidBuffer );
+    centroidBuffers.push_back( currCentroidBuffer );
   }
 
   // Assume that all the estimation matrices are associated with the pseudo scales
@@ -552,7 +576,7 @@ std::map< std::string, int > vtkMRMLWorkflowToolNode
 	  taskRawCentroids[ priority ] = ceil( taskRawCentroids[ priority ] );
 
     sumCentroids = 0;
-    for ( itrDouble = taskProportions.begin(); itrDouble != taskProportions.end(); itrDouble++ )
+    for ( itrDouble = taskRawCentroids.begin(); itrDouble != taskRawCentroids.end(); itrDouble++ )
     {
       sumCentroids += floor( itrDouble->second );
 	  }    

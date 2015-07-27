@@ -52,21 +52,21 @@ public:
 
 
   // Conversion to/from transform buffer
-  vtkMRMLTransformBufferNode* ToTransformBufferNode();
+  void ToTransformBufferNode( vtkMRMLTransformBufferNode* transformBufferNode );
   void FromTransformBufferNode( vtkMRMLTransformBufferNode* newTransformBufferNode, std::string transformName, std::vector< std::string > relevantMessages );
 
   // Methods explicitly for workflow segmentation
-  vtkWorkflowLogRecordBuffer* GetRange( int start, int end );
-  vtkWorkflowLogRecordBuffer* GetLabelledRange( std::vector< std::string > labels );
+  void GetRange( int start, int end, vtkWorkflowLogRecordBuffer* rangeRecordBuffer );
+  void GetLabelledRange( std::vector< std::string > labels, vtkWorkflowLogRecordBuffer* rangeRecordBuffer );
 
-  vtkLabelVector* Mean();
+  void Mean( vtkLabelVector* meanVector );
 
   std::vector< vtkSmartPointer< vtkLabelVector > > Distances( vtkWorkflowLogRecordBuffer* otherRecLog );
   std::vector< vtkSmartPointer< vtkLabelVector > > Distances( std::vector< vtkSmartPointer< vtkLabelVector > > vectors );
   vtkLabelRecord* ClosestRecord( vtkLabelVector* vector );
 
   void Differentiate( int order = 1 );
-  vtkLabelVector* Integrate();
+  void Integrate( vtkLabelVector* intVector );
   
   void PadStart( int window );
   void Concatenate( vtkWorkflowLogRecordBuffer* otherRecLog );
@@ -97,7 +97,7 @@ protected:
 
   double LegendrePolynomial( double time, int order );	
 
-  vtkLabelVector* FindNextCentroid( std::vector< vtkSmartPointer< vtkLabelVector > > centroids );
+  void FindNextCentroid( std::vector< vtkSmartPointer< vtkLabelVector > > centroids, vtkLabelVector* nextCentroid );
   bool MembershipChanged( std::vector< int > oldMembership, std::vector< int > newMembership );
   bool HasEmptyClusters( std::vector< bool > emptyVector );
   std::vector< bool > FindEmptyClusters( std::vector< vtkSmartPointer< vtkLabelVector > > centroids, std::vector< int > membership );

@@ -218,11 +218,6 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkLabelVector
     vtkSmartPointer< vtkLabelVector > currentVector = vtkSmartPointer< vtkLabelVector >::New();
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), name.c_str() ) != 0 )
-    {
-      continue;  // If it's not a "Parameter", jump to the next.
-    }
-
 	  currentVector->FromString( std::string( noteElement->GetAttribute( "Values" ) ), atoi( noteElement->GetAttribute( "Size" ) ) );
 	  currentVector->SetLabel( std::string( noteElement->GetAttribute( "Label" ) ) );
 
@@ -231,3 +226,19 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkLabelVector
 
   return vectors;
 }
+
+//
+//void vtkLabelVector
+//::CopyVector( std::vector< vtkSmartPointer< vtkLabelVector > > from, std::vector< vtkSmartPointer< vtkLabelVector > > to )
+//{
+//  to.clear();
+//
+//  // Deep copy every element of the vector
+//  for ( int i = 0; i < from.size(); i++ )
+//  {
+//    vtkSmartPointer< vtkLabelVector > currVector = vtkSmartPointer< vtkLabelVector >::New();
+//    currVector->Copy( from.at( i ) );
+//    to.push_back( currVector );
+//  }
+//
+//}

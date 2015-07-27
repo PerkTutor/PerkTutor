@@ -67,9 +67,9 @@ public:
   std::vector< vtkSmartPointer< vtkLabelVector > > GetLogB();
 
   void SetPi( vtkLabelVector* newPi );
-  vtkLabelVector* GetPi();
-  vtkLabelVector* GetZeroPi();
-  vtkLabelVector* GetLogPi();
+  void GetPi( vtkLabelVector* piPi );
+  void GetZeroPi( vtkLabelVector* zeroPi );
+  void GetLogPi( vtkLabelVector* logPi );
 
   void InitializeEstimation();
   void AddEstimationData( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );

@@ -66,6 +66,8 @@ public:
   static std::string VectorsToXMLString( std::vector< vtkSmartPointer< vtkLabelVector > > vectors, std::string name, vtkIndent indent );
   static std::string VectorsToXMLString( vtkLabelVector* vector, std::string name, vtkIndent indent );
   static std::vector< vtkSmartPointer< vtkLabelVector > > VectorsFromXMLElement( vtkXMLDataElement* element, std::string name ); // Note: This will create the labels vectors, whoever uses the function is responsible for deleting
+
+  //static void CopyVector( std::vector< vtkSmartPointer< vtkLabelVector > > from, std::vector< vtkSmartPointer< vtkLabelVector > > to );
   
 protected:
   

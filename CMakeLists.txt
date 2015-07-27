@@ -45,11 +45,20 @@ set(MODULE_SRCS
   qSlicer${MODULE_NAME}Module.h
   qSlicer${MODULE_NAME}ModuleWidget.cxx
   qSlicer${MODULE_NAME}ModuleWidget.h
+  qSlicerWorkflowProcedureReader.cxx
+  qSlicerWorkflowProcedureReader.h
+  qSlicerWorkflowInputReader.cxx
+  qSlicerWorkflowInputReader.h
+  qSlicerWorkflowTrainingReader.cxx
+  qSlicerWorkflowTrainingReader.h
   )
 
 set(MODULE_MOC_SRCS
   qSlicer${MODULE_NAME}Module.h
   qSlicer${MODULE_NAME}ModuleWidget.h
+  qSlicerWorkflowProcedureReader.h
+  qSlicerWorkflowInputReader.h
+  qSlicerWorkflowTrainingReader.h
   )
 
 set(MODULE_UI_SRCS

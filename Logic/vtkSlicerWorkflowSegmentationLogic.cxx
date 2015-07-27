@@ -32,25 +32,29 @@
 vtkStandardNewMacro(vtkSlicerWorkflowSegmentationLogic);
 
 //----------------------------------------------------------------------------
-vtkSlicerWorkflowSegmentationLogic::vtkSlicerWorkflowSegmentationLogic()
+vtkSlicerWorkflowSegmentationLogic
+::vtkSlicerWorkflowSegmentationLogic()
 {
 }
 
 //----------------------------------------------------------------------------
-vtkSlicerWorkflowSegmentationLogic::~vtkSlicerWorkflowSegmentationLogic()
+vtkSlicerWorkflowSegmentationLogic
+::~vtkSlicerWorkflowSegmentationLogic()
 {
 }
 
 
 
-void vtkSlicerWorkflowSegmentationLogic::PrintSelf(ostream& os, vtkIndent indent)
+void vtkSlicerWorkflowSegmentationLogic
+::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }
 
 
 
-void vtkSlicerWorkflowSegmentationLogic::InitializeEventListeners()
+void vtkSlicerWorkflowSegmentationLogic
+::InitializeEventListeners()
 {
   vtkNew<vtkIntArray> events;
   events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
@@ -61,23 +65,52 @@ void vtkSlicerWorkflowSegmentationLogic::InitializeEventListeners()
 
 
 
-void vtkSlicerWorkflowSegmentationLogic::RegisterNodes()
+void vtkSlicerWorkflowSegmentationLogic
+::RegisterNodes()
 {
-  //assert(this->GetMRMLScene() != 0);
-  
+  //assert(this->GetMRMLScene() != 0);  
   if( ! this->GetMRMLScene() )
   {
     return;
   }
-  vtkMRMLWorkflowSegmentationNode* pNode = vtkMRMLWorkflowSegmentationNode::New();
-  this->GetMRMLScene()->RegisterNodeClass( pNode );
-  pNode->Delete(); 
+
+  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wsNode );
+  wsNode->Delete();
+
+  vtkMRMLWorkflowProcedureNode* wpNode = vtkMRMLWorkflowProcedureNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wpNode );
+  wpNode->Delete();
   
+  vtkMRMLWorkflowProcedureStorageNode* wpsNode = vtkMRMLWorkflowProcedureStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wpsNode );
+  wpsNode->Delete();
+
+  vtkMRMLWorkflowInputNode* wiNode = vtkMRMLWorkflowInputNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wiNode );
+  wiNode->Delete();
+  
+  vtkMRMLWorkflowInputStorageNode* wisNode = vtkMRMLWorkflowInputStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wisNode );
+  wisNode->Delete();
+
+  vtkMRMLWorkflowTrainingNode* wtNode = vtkMRMLWorkflowTrainingNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wtNode );
+  wtNode->Delete();
+  
+  vtkMRMLWorkflowTrainingStorageNode* wtsNode = vtkMRMLWorkflowTrainingStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( wtsNode );
+  wtsNode->Delete();
+
+  vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( toolNode );
+  toolNode->Delete();  
 }
 
 
 
-void vtkSlicerWorkflowSegmentationLogic::UpdateFromMRMLScene()
+void vtkSlicerWorkflowSegmentationLogic
+::UpdateFromMRMLScene()
 {
   assert(this->GetMRMLScene() != 0);
 }
@@ -142,7 +175,7 @@ void vtkSlicerWorkflowSegmentationLogic
     {
       continue;
     }
-    toolNode->GetWorkflowTrainingNode()->SetName( toolNode->GetWorkflowProcedureNode()->GetName() );
+    //toolNode->GetWorkflowTrainingNode()->SetName( toolNode->GetWorkflowProcedureNode()->GetName() );
     
     // Grab only the relevant components of the transform buffers
     std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingRecordBuffers;
@@ -151,7 +184,7 @@ void vtkSlicerWorkflowSegmentationLogic
     {
       vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( trainingBufferIDs.at( j ) ) );
       vtkSmartPointer< vtkWorkflowLogRecordBuffer > recordBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New(); 
-      recordBuffer->FromTransformBufferNode( transformBuffer, toolNode->GetWorkflowProcedureNode()->GetName(), toolNode->GetWorkflowProcedureNode()->GetAllTaskNames() );
+      recordBuffer->FromTransformBufferNode( transformBuffer, toolNode->GetWorkflowProcedureNode()->GetProcedureName(), toolNode->GetWorkflowProcedureNode()->GetAllTaskNames() );
       trainingRecordBuffers.push_back( recordBuffer );
     }
     
@@ -226,7 +259,7 @@ std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
     }
 
     std::stringstream toolStatus;
-    toolStatus << toolNode->GetName() << ": ";
+    toolStatus << toolNode->GetName() << " (" << toolNode->GetToolName() << "): ";
     
     if ( toolNode->GetInputted() )
     {
