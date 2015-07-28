@@ -42,9 +42,11 @@ public:
   qSlicerMessagesWidget(QWidget *parent=0);
   virtual ~qSlicerMessagesWidget();
 
-protected slots:
+public slots:
 
   virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
+
+protected slots:
 
   virtual void onAddMessageButtonClicked();
   virtual void onRemoveMessageButtonClicked();

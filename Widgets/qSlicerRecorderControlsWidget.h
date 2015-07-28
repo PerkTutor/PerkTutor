@@ -43,9 +43,11 @@ public:
   qSlicerRecorderControlsWidget(QWidget *parent=0);
   virtual ~qSlicerRecorderControlsWidget();
 
-protected slots:
+public slots:
 
   virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
+
+protected slots:
 
   virtual void onTransformBufferActiveTransformsChanged();
 

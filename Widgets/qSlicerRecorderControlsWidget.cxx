@@ -167,7 +167,12 @@ void qSlicerRecorderControlsWidget
 void qSlicerRecorderControlsWidget
 ::onStartButtonClicked()
 {
-  Q_D(qSlicerRecorderControlsWidget);  
+  Q_D(qSlicerRecorderControlsWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
   
   // The observed transforms should be dealt with in the TransformRecorder logic
   this->TransformBufferNode->StartRecording();
@@ -182,6 +187,11 @@ void qSlicerRecorderControlsWidget
 {
   Q_D(qSlicerRecorderControlsWidget);  
 
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
+
   this->TransformBufferNode->StopRecording();
   d->StatusResultLabel->setText( "Waiting" );
   
@@ -193,6 +203,11 @@ void qSlicerRecorderControlsWidget
 ::onClearButtonClicked()
 {
   Q_D(qSlicerRecorderControlsWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
 
   this->TransformRecorderLogic->ClearTransforms( this->TransformBufferNode );
   
