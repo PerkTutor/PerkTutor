@@ -159,8 +159,9 @@ void qSlicerWorkflowToolSummaryWidget
 ::updateWidgetFromMRML()
 {
   Q_D(qSlicerWorkflowToolSummaryWidget);
+
   
-  // Set up the table
+  // Clear the table
   d->WorkflowToolsTable->clear();
   d->WorkflowToolsTable->setRowCount( 0 );
   d->WorkflowToolsTable->setColumnCount( 0 );
@@ -169,7 +170,22 @@ void qSlicerWorkflowToolSummaryWidget
   {
     return;
   }
+
+  // Set up the combo box
+  disconnect( d->WorkflowToolsComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onToolSelectionsChanged() ) );
+
+  d->WorkflowToolsComboBox->setMRMLScene( NULL );
+  d->WorkflowToolsComboBox->setMRMLScene( this->mrmlScene() );
+
+  std::vector< std::string > toolIDs = this->WorkflowSegmentationNode->GetToolIDs();
+  for ( int i = 0; i < toolIDs.size(); i++ )
+  {
+    d->WorkflowToolsComboBox->setCheckState( this->mrmlScene()->GetNodeByID( toolIDs.at( i ) ), Qt::Checked );
+  }
+
+  connect( d->WorkflowToolsComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onToolSelectionsChanged() ) );
   
+  // Set up the table
   std::vector< std::string > toolStatusStrings = this->WorkflowSegmentationLogic->GetToolStatusStrings( this->WorkflowSegmentationNode );
   
   QStringList WorkflowToolsTableHeaders;

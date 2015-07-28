@@ -58,12 +58,34 @@ protected:
   
 public:
 
+  std::string GetNodeReferenceIDString( std::string referenceRole );
+
+  // Reference to selected transform buffer
+  vtkMRMLTransformBufferNode* GetTransformBufferNode();
+  std::string GetTransformBufferID();
+  void SetTransformBufferID( std::string newTransformBufferID );
+
+  bool GetRealTimeProcessing();
+  void SetRealTimeProcessing( bool newRealTimeProcessing );
+
   // Management of references to tools
   void AddToolID( std::string toolID );
   void RemoveToolID( std::string toolID );
   std::vector< std::string > GetToolIDs();
   bool IsToolID( std::string toolID );
   void SetToolIDs( std::vector< std::string > toolIDs );
+
+  // Propagate the modified event from any of the tools
+  virtual void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
+  enum
+  {
+    TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
+    RealTimeProcessingStartedEvent,
+  };
+
+protected:
+
+  bool RealTimeProcessing;
 
 };  
 

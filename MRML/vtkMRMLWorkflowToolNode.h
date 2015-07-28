@@ -70,6 +70,9 @@ public:
   vtkMRMLWorkflowTrainingNode* GetWorkflowTrainingNode();
   std::string GetWorkflowTrainingID();
   void SetWorkflowTrainingID( std::string newWorkflowTrainingID );
+
+  vtkWorkflowTask* GetCurrentTask();
+  void SetCurrentTask( vtkWorkflowTask* newCurrentTask );
   
   
   // Computation
@@ -79,7 +82,12 @@ public:
   
   void AddAndSegmentRecord( vtkLabelRecord* newRecord );
   
-  vtkWorkflowTask* GetCurrentTask();
+
+  // Events
+  enum
+  {
+    CurrentTaskChangedEvent = vtkCommand::UserEvent + 1,
+  };
 
 protected:
 
@@ -88,6 +96,8 @@ protected:
   // This will also hold the real-time buffers
   vtkSmartPointer< vtkWorkflowLogRecordBufferRT > RawBuffer, FilterBuffer, DerivativeBuffer, OrthogonalBuffer, PcaBuffer, CentroidBuffer;
   vtkSmartPointer< vtkWorkflowTask > CurrentTask;
+
+  bool CurrentTaskNew;
   
   // Internal helpers for computation
   std::map< std::string, double > CalculateTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );

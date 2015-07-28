@@ -87,17 +87,39 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
 
   this->WorkflowSegmentationNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( newWorkflowSegmentationNode );
 
-  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRML() ) );
+  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
 
-void qSlicerWorkflowSegmentationRecorderControlsWidget
-::onClearButtonClicked()
-{
-  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
-  this->WorkflowSegmentationLogic->ResetAllToolBuffers( this->WorkflowSegmentationNode );
-  
-  this->updateWidget();
+void qSlicerWorkflowSegmentationRecorderControlsWidget
+::onStartButtonClicked()
+{
+  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
+
+  this->qSlicerRecorderControlsWidget::onStartButtonClicked();
+
+  if ( this->WorkflowSegmentationNode == NULL )
+  {
+    return;
+  }
+
+  this->WorkflowSegmentationNode->SetRealTimeProcessing( true );  
+}
+
+
+void qSlicerWorkflowSegmentationRecorderControlsWidget
+::onStopButtonClicked()
+{
+  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
+
+  this->qSlicerRecorderControlsWidget::onStopButtonClicked();
+
+  if ( this->WorkflowSegmentationNode == NULL )
+  {
+    return;
+  }
+
+  this->WorkflowSegmentationNode->SetRealTimeProcessing( false );  
 }

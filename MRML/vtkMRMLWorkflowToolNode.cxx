@@ -97,6 +97,7 @@ void vtkMRMLWorkflowToolNode
 vtkMRMLWorkflowToolNode
 ::vtkMRMLWorkflowToolNode()
 {
+  this->CurrentTaskNew = false;
   this->ToolName = "";
   this->ResetBuffers();
 
@@ -115,14 +116,14 @@ vtkMRMLWorkflowToolNode
 void vtkMRMLWorkflowToolNode
 ::ResetBuffers()
 {
-  //this->RawBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  //this->FilterBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  //this->DerivativeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  //this->OrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  //this->PcaBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  //this->CentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->RawBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->FilterBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->DerivativeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->OrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->PcaBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->CentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
   
-  //this->CurrentTask = vtkSmartPointer< vtkWorkflowTask >::New();
+  this->CurrentTask = vtkSmartPointer< vtkWorkflowTask >::New();
 }
 
 
@@ -428,36 +429,47 @@ void vtkMRMLWorkflowToolNode
   this->RawBuffer->AddRecord( newRecord );
 
   // Apply Gaussian filtering to each previous records
-  this->FilterBuffer->AddRecord( this->RawBuffer->GaussianFilterRT( this->GetWorkflowInputNode()->GetFilterWidth() ) );
+  vtkSmartPointer< vtkLabelRecord > gaussRecord = vtkSmartPointer< vtkLabelRecord >::New();
+  this->RawBuffer->GaussianFilterRT( this->GetWorkflowInputNode()->GetFilterWidth(), gaussRecord );
+  this->FilterBuffer->AddRecord( gaussRecord );
   
   // Concatenate with derivative (velocity, acceleration, etc...)
   vtkSmartPointer< vtkLabelRecord > derivativeRecord = vtkSmartPointer< vtkLabelRecord >::New();
   derivativeRecord->Copy( vtkLabelRecord::SafeDownCast( this->FilterBuffer->GetCurrentRecord() ) );
   for ( int d = 1; d <= this->GetWorkflowInputNode()->GetDerivative(); d++ )
   {
-    vtkSmartPointer< vtkLabelRecord > currDerivativeRecord = this->FilterBuffer->DifferentiateRT( d );
+    vtkSmartPointer< vtkLabelRecord > currDerivativeRecord = vtkSmartPointer< vtkLabelRecord >::New();
+    this->FilterBuffer->DifferentiateRT( d, currDerivativeRecord );
     derivativeRecord->GetVector()->Concatenate( currDerivativeRecord->GetVector() );
   }
   this->DerivativeBuffer->AddRecord( derivativeRecord );
 
   // Apply orthogonal transformation
-  this->OrthogonalBuffer->AddRecord( this->DerivativeBuffer->OrthogonalTransformationRT( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder() ) );
+  vtkSmartPointer< vtkLabelRecord > orthogonalRecord = vtkSmartPointer< vtkLabelRecord >::New();
+  this->DerivativeBuffer->OrthogonalTransformationRT( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder(), orthogonalRecord );
+  this->OrthogonalBuffer->AddRecord( orthogonalRecord );
 
   // Apply PCA transformation
-  this->PcaBuffer->AddRecord( this->OrthogonalBuffer->TransformPCART( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean() ) );
+  vtkSmartPointer< vtkLabelRecord > pcaTransformRecord = vtkSmartPointer< vtkLabelRecord >::New();
+  this->OrthogonalBuffer->TransformPCART( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean(), pcaTransformRecord );
+  this->PcaBuffer->AddRecord( pcaTransformRecord );
 
   // Apply centroid transformation
-  this->CentroidBuffer->AddRecord( this->PcaBuffer->fwdkmeansTransformRT( this->GetWorkflowTrainingNode()->GetCentroids() ) );
+  vtkSmartPointer< vtkLabelRecord > fwdkmeansRecord = vtkSmartPointer< vtkLabelRecord >::New();
+  this->PcaBuffer->fwdkmeansTransformRT( this->GetWorkflowTrainingNode()->GetCentroids(), fwdkmeansRecord );
+  this->CentroidBuffer->AddRecord( fwdkmeansRecord );
 
   // Use Markov Model calculate states to come up with the current most likely state...
-  vtkSmartPointer< vtkMarkovVector > markovVectorRT = this->CentroidBuffer->ToMarkovVectorRT();
-  this->GetWorkflowTrainingNode()->GetMarkov()->CalculateStateRT( markovVectorRT );
+  vtkSmartPointer< vtkMarkovVector > markovVector = vtkSmartPointer< vtkMarkovVector >::New();
+  this->CentroidBuffer->ToMarkovVectorRT( markovVector );
+  this->GetWorkflowTrainingNode()->GetMarkov()->CalculateStateRT( markovVector );
 
   // Now, we will keep a recording of the workflow segmentation in RawBuffer - add the label
-  vtkSmartPointer< vtkLabelRecord > currLabelRecord = vtkLabelRecord::SafeDownCast( this->RawBuffer->GetCurrentRecord() );
-  currLabelRecord->GetVector()->SetLabel( markovVectorRT->GetState() );
+  vtkLabelRecord* currLabelRecord = vtkLabelRecord::SafeDownCast( this->RawBuffer->GetCurrentRecord() );
+  currLabelRecord->GetVector()->SetLabel( markovVector->GetState() );
 
-  this->CurrentTask = this->GetWorkflowProcedureNode()->GetTask( markovVectorRT->GetState() );
+
+  this->SetCurrentTask( this->GetWorkflowProcedureNode()->GetTask( markovVector->GetState() ) );
 }
 
 
@@ -467,6 +479,19 @@ vtkWorkflowTask* vtkMRMLWorkflowToolNode
   return this->CurrentTask;
 }
 
+
+void vtkMRMLWorkflowToolNode
+::SetCurrentTask( vtkWorkflowTask* newCurrentTask )
+{
+  if ( newCurrentTask == this->CurrentTask )
+  {
+    return;
+  }
+
+  this->CurrentTask = newCurrentTask;
+  this->Modified();
+  this->InvokeEvent( CurrentTaskChangedEvent );
+}
 
 
 // Helpers for computation

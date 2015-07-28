@@ -153,6 +153,9 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   // Module node selection
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) );
 
+  // Transform buffer
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
+
   // Display
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
@@ -166,6 +169,28 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
 
 
 void qSlicerWorkflowSegmentationModuleWidget
+::onTransformBufferChanged( vtkMRMLNode* newTransformBuffer )
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+
+  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( d->WorkflowSegmentationNodeComboBox->currentNode() );
+  if ( wsNode == NULL )
+  {
+    return;
+  }
+
+  if ( newTransformBuffer == NULL )
+  {
+    wsNode->SetTransformBufferID( "" );
+    return;
+  }
+
+  wsNode->SetTransformBufferID( newTransformBuffer->GetID() );
+  // The Workflow Segmentation node automatically call the "updateWidgetFromMRML" function to deal with the widget
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
 ::mrmlNodeChanged( vtkMRMLNode* wsNode )
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
@@ -173,7 +198,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   this->qvtkDisconnectAll(); // Remove connections to previous node
   if ( wsNode != NULL )
   {
-    this->qvtkConnect( wsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRMLNode() ) );
+    this->qvtkConnect( wsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRML() ) );
   }
 
   this->updateWidgetFromMRML();
@@ -192,6 +217,10 @@ void qSlicerWorkflowSegmentationModuleWidget
     return;
   }
   
+  d->TransformBufferWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+  d->RecorderControlsWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+  d->MessagesWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+
   d->RecorderControlsWidget->setWorkflowSegmentationNode( wsNode );
   d->ToolSummaryWidget->setWorkflowSegmentationNode( wsNode ); // TODO: Is this necessary
   // Everything else taken care of by the child widgets

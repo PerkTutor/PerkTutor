@@ -40,6 +40,7 @@ protected:
 
 protected slots:
 
+  void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
   void mrmlNodeChanged( vtkMRMLNode* wsNode );
   
   void updateWidgetFromMRML();

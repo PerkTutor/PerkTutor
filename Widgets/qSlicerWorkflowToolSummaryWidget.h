@@ -46,6 +46,8 @@ public:
   qSlicerWorkflowToolSummaryWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowToolSummaryWidget();
   
+public slots:
+
   virtual void setWorkflowSegmentationNode( vtkMRMLNode* newWorkflowSegmentationNode );
 
 protected slots:

@@ -54,13 +54,13 @@ void vtkSlicerWorkflowSegmentationLogic
 
 
 void vtkSlicerWorkflowSegmentationLogic
-::InitializeEventListeners()
+::SetMRMLSceneInternal( vtkMRMLScene* newScene )
 {
   vtkNew<vtkIntArray> events;
   events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
   events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
   events->InsertNextValue(vtkMRMLScene::EndBatchProcessEvent);
-  this->SetAndObserveMRMLSceneEventsInternal(this->GetMRMLScene(), events.GetPointer());
+  this->SetAndObserveMRMLSceneEventsInternal(newScene, events.GetPointer());
 }
 
 
@@ -131,6 +131,29 @@ void vtkSlicerWorkflowSegmentationLogic
 
 
 // Workflow Segmentation methods---------------------------------------------------------------------------
+
+
+vtkMRMLWorkflowToolNode* vtkSlicerWorkflowSegmentationLogic
+::GetToolByName( vtkMRMLWorkflowSegmentationNode* workflowNode, std::string toolName )
+{
+  if ( workflowNode == NULL )
+  {
+    return NULL;
+  }
+  
+  // Iterate over all tools
+  std::vector< std::string > toolIDs = workflowNode->GetToolIDs();  
+  for ( int i = 0; i < toolIDs.size(); i++ )
+  {
+    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );
+    if ( toolNode != NULL && toolNode->GetToolName().compare( toolName ) == 0 )
+    {
+      return toolNode;
+    }
+  }
+  
+  return NULL;
+}
 
 
 void vtkSlicerWorkflowSegmentationLogic
@@ -324,3 +347,77 @@ std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
 
 
 
+// Node update methods ----------------------------------------------------------
+
+void vtkSlicerWorkflowSegmentationLogic
+::SetupRealTimeProcessing( vtkMRMLWorkflowSegmentationNode* wsNode )
+{
+  // Check conditions
+  if ( wsNode == NULL )
+  {
+    return;
+  }
+
+  // Use the python metrics calculator module
+  this->ResetAllToolBuffers( wsNode );
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData )
+{
+  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( caller );
+
+  // The caller must be a vtkMRMLPerkEvaluatorNode
+
+  // Setup the real-time processing
+  if ( wsNode != NULL && event == vtkMRMLWorkflowSegmentationNode::RealTimeProcessingStartedEvent )
+  {
+    this->SetupRealTimeProcessing( wsNode );
+  }
+
+  // Handle an event in the real-time processing
+  if ( wsNode != NULL && wsNode->GetRealTimeProcessing() && event == vtkMRMLWorkflowSegmentationNode::TransformRealTimeAddedEvent )
+  {
+    // The transform name
+    std::string* transformName = reinterpret_cast< std::string* >( callData );
+    // Convert to a vtkLabelRecord
+    vtkSmartPointer< vtkLabelRecord > record = vtkSmartPointer< vtkLabelRecord >::New();
+    record->FromTransformRecord( wsNode->GetTransformBufferNode()->GetCurrentTransform( *transformName ), vtkLabelRecord::QUATERNION_RECORD );
+    // Get the workflow tool node
+    vtkMRMLWorkflowToolNode* toolNode = this->GetToolByName( wsNode, *transformName );
+    if ( toolNode != NULL )
+    {
+      // Get the original task
+      vtkWorkflowTask* originalTask = toolNode->GetCurrentTask();
+      toolNode->AddAndSegmentRecord( record );
+      
+      if ( toolNode->GetCurrentTask() != NULL && toolNode->GetCurrentTask() != originalTask )
+      {
+        vtkSlicerTransformRecorderLogic* trLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "TransformRecorder" ) );
+        trLogic->AddMessage( wsNode->GetTransformBufferNode(), toolNode->GetCurrentTask()->GetName(), record->GetTime() );
+      }
+
+    }
+
+  }
+
+}
+
+
+void vtkSlicerWorkflowSegmentationLogic
+::ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData )
+{
+  vtkMRMLScene* callerNode = vtkMRMLScene::SafeDownCast( caller );
+
+  // If the added node was a perk evaluator node then observe it
+  vtkMRMLNode* addedNode = reinterpret_cast< vtkMRMLNode* >( callData );
+  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( addedNode );
+  if ( event == vtkMRMLScene::NodeAddedEvent && wsNode != NULL )
+  {
+    // Observe if a real-time transform event is added
+    wsNode->AddObserver( vtkMRMLWorkflowSegmentationNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+    wsNode->AddObserver( vtkMRMLWorkflowSegmentationNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+  }
+
+}

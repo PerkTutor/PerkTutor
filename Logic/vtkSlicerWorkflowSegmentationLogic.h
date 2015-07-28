@@ -53,17 +53,15 @@ vtkSlicerWorkflowSegmentationLogic : public vtkSlicerModuleLogic
 {
 public:
   vtkTypeMacro(vtkSlicerWorkflowSegmentationLogic,vtkSlicerModuleLogic);
-
-  static vtkSlicerWorkflowSegmentationLogic *New();
-  
+  static vtkSlicerWorkflowSegmentationLogic *New();  
   void PrintSelf(ostream& os, vtkIndent indent);
-  void InitializeEventListeners();
 
 protected:
   vtkSlicerWorkflowSegmentationLogic();
   virtual ~vtkSlicerWorkflowSegmentationLogic();
 
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
+  virtual void SetMRMLSceneInternal( vtkMRMLScene* newScene );
   virtual void RegisterNodes();
   virtual void UpdateFromMRMLScene();
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
@@ -77,6 +75,8 @@ private:
 
   // These are methods specific to the Workflow Segmentation logic -------------------------------------------------------
 public:
+
+  vtkMRMLWorkflowToolNode* GetToolByName( vtkMRMLWorkflowSegmentationNode* workflowNode, std::string toolName );
  
   void ResetAllToolBuffers( vtkMRMLWorkflowSegmentationNode* workflowNode );
   void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, std::vector< std::string > trainingBufferIDs );
@@ -86,6 +86,11 @@ public:
   
   std::vector< std::string > GetToolStatusStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
   std::vector< std::string >  GetInstructionStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
+
+  void SetupRealTimeProcessing( vtkMRMLWorkflowSegmentationNode* wsNode );
+
+  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
+  void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );
 
 protected:
 
