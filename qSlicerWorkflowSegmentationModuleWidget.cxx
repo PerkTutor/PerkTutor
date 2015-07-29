@@ -60,6 +60,7 @@ public:
   qSlicerMessagesWidget* MessagesWidget;
   qSlicerWorkflowToolWidget* ToolWidget;
   qSlicerWorkflowToolSummaryWidget* ToolSummaryWidget;
+  std::vector< qSlicerWorkflowGuideDisplayWidget* > WorkflowDisplayWidgets;
 };
 
 //-----------------------------------------------------------------------------
@@ -164,6 +165,11 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   // Advanced
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->ToolSummaryWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
   
+  // Workflows
+  this->createWorkflowDisplaysForExistingNodes();
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( onNodeAdded( vtkObject*, vtkObject* ) ) );
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( onNodeRemoved( vtkObject*, vtkObject* ) ) );
+
   this->updateWidgetFromMRML();
 }
 
@@ -200,8 +206,73 @@ void qSlicerWorkflowSegmentationModuleWidget
   {
     this->qvtkConnect( wsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRML() ) );
   }
+  // Reconnect to scene
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( onNodeAdded( vtkObject*, vtkObject* ) ) );
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( onNodeRemoved( vtkObject*, vtkObject* ) ) );
 
   this->updateWidgetFromMRML();
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onNodeAdded( vtkObject* caller, vtkObject* node )
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  // Check if it is a workflow tool node
+  vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( node );
+  if ( toolNode == NULL )
+  {
+    return;
+  }
+
+  qSlicerWorkflowGuideDisplayWidget* currentWidget = new qSlicerWorkflowGuideDisplayWidget( d->WorkflowsCollapsibleButton );  
+  d->WorkflowsCollapsibleButton->layout()->addWidget( currentWidget );
+
+  currentWidget->setWorkflowToolNode( toolNode );
+
+  d->WorkflowDisplayWidgets.push_back( currentWidget );
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onNodeRemoved( vtkObject* caller, vtkObject* node )
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  // Check if it is a workflow tool node
+  vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( node );
+  if ( toolNode == NULL )
+  {
+    return;
+  }
+
+  // Iterate through all widgets and find the right one to remove
+  for ( int i = 0; i < d->WorkflowDisplayWidgets.size(); i++ )
+  {
+    if ( d->WorkflowDisplayWidgets.at( i )->getWorkflowToolNode() == toolNode )
+    {
+      d->WorkflowsCollapsibleButton->layout()->removeWidget( d->WorkflowDisplayWidgets.at( i ) );
+      delete d->WorkflowDisplayWidgets.at( i );
+      d->WorkflowDisplayWidgets.erase( d->WorkflowDisplayWidgets.begin() + i );
+    }
+  }
+
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::createWorkflowDisplaysForExistingNodes()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  // Grab all of the tool nodes
+  vtkSmartPointer< vtkCollection > toolNodes = vtkSmartPointer< vtkCollection >::Take( d->logic()->GetMRMLScene()->GetNodesByClass( "vtkMRMLWorkflowToolNode" ) );
+
+  for ( int i = 0; i < toolNodes->GetNumberOfItems(); i++ )
+  {
+    this->onNodeAdded( d->logic()->GetMRMLScene(), toolNodes->GetItemAsObject( i ) );
+  }
 }
 
 

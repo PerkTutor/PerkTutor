@@ -12,6 +12,7 @@
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
 #include "qSlicerWorkflowToolSummaryWidget.h"
 #include "qSlicerWorkflowToolWidget.h"
+#include "qSlicerWorkflowGuideDisplayWidget.h"
 
 
 class qSlicerWorkflowSegmentationModuleWidgetPrivate;
@@ -42,6 +43,10 @@ protected slots:
 
   void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
   void mrmlNodeChanged( vtkMRMLNode* wsNode );
+
+  void onNodeAdded( vtkObject* caller, vtkObject* node );
+  void onNodeRemoved( vtkObject* caller, vtkObject* node );
+  void createWorkflowDisplaysForExistingNodes();
   
   void updateWidgetFromMRML();
 

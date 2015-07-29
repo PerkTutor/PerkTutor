@@ -346,6 +346,68 @@ std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
 }
 
 
+std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
+::GetOrderedWorkflowTaskStrings( vtkMRMLWorkflowToolNode* toolNode )
+{
+  std::vector< std::string > taskStrings;
+  if ( toolNode == NULL || toolNode->GetWorkflowProcedureNode() == NULL )
+  {
+    return taskStrings;
+  }
+
+  // TODO: This is a trick to get the list in an intelligible order
+  // Need better SPMs to make this correct
+
+  std::vector< std::string > taskNames = toolNode->GetWorkflowProcedureNode()->GetAllTaskNames();
+
+  // Find a task whose prerequisite is itself
+  for ( int i = 0; i < taskNames.size(); i++ )
+  {
+    vtkWorkflowTask* checkTask = toolNode->GetWorkflowProcedureNode()->GetTask( taskNames.at( i ) );
+    if ( checkTask == NULL )
+    {
+      continue;
+    }
+    vtkWorkflowTask* prereqTask = toolNode->GetWorkflowProcedureNode()->GetTask( checkTask->GetPrerequisite() );
+    if ( checkTask == prereqTask )
+    {
+      taskStrings.push_back( checkTask->GetName() );
+    }
+  }
+
+  if ( taskStrings.size() == 0 )
+  {
+    return taskStrings;
+  }
+
+  // Now, find a task whose prerequisite is the most recently added task
+  bool taskAdded = true;
+  while ( taskAdded )
+  {
+    taskAdded = false;
+
+    for ( int i = 0; i < taskNames.size(); i++ )
+    {
+      vtkWorkflowTask* checkTask = toolNode->GetWorkflowProcedureNode()->GetTask( taskNames.at( i ) );
+      if ( checkTask == NULL )
+      {
+        continue;
+      }
+      vtkWorkflowTask* prereqTask = toolNode->GetWorkflowProcedureNode()->GetTask( checkTask->GetPrerequisite() );
+      vtkWorkflowTask* addedTask = toolNode->GetWorkflowProcedureNode()->GetTask( taskStrings.at( taskStrings.size() - 1 ) );
+      if ( prereqTask == addedTask )
+      {
+        taskStrings.push_back( checkTask->GetName() );
+        taskAdded = true;
+      }
+    }
+
+  }
+
+  return taskStrings;
+}
+
+
 
 // Node update methods ----------------------------------------------------------
 
@@ -368,7 +430,7 @@ void vtkSlicerWorkflowSegmentationLogic
 {
   vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( caller );
 
-  // The caller must be a vtkMRMLPerkEvaluatorNode
+  // The caller must be a vtkMRMLWorkflowSegmentationNode
 
   // Setup the real-time processing
   if ( wsNode != NULL && event == vtkMRMLWorkflowSegmentationNode::RealTimeProcessingStartedEvent )

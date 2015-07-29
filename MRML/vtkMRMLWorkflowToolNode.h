@@ -83,6 +83,10 @@ public:
   void AddAndSegmentRecord( vtkLabelRecord* newRecord );
   
 
+  // Propagate the modified event from any of the tools
+  virtual void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
+
+
   // Events
   enum
   {

@@ -101,9 +101,11 @@ vtkMRMLWorkflowToolNode
   this->ToolName = "";
   this->ResetBuffers();
 
-  this->AddNodeReferenceRole( WORKFLOW_PROCEDURE_REFERENCE_ROLE );
-  this->AddNodeReferenceRole( WORKFLOW_INPUT_REFERENCE_ROLE );
-  this->AddNodeReferenceRole( WORKFLOW_TRAINING_REFERENCE_ROLE );
+  vtkNew< vtkIntArray > events;
+  events->InsertNextValue( vtkCommand::ModifiedEvent );
+  this->AddNodeReferenceRole( WORKFLOW_PROCEDURE_REFERENCE_ROLE, NULL, events.GetPointer() );
+  this->AddNodeReferenceRole( WORKFLOW_INPUT_REFERENCE_ROLE, NULL, events.GetPointer() );
+  this->AddNodeReferenceRole( WORKFLOW_TRAINING_REFERENCE_ROLE, NULL, events.GetPointer() );
 }
 
 
@@ -616,4 +618,19 @@ std::map< std::string, int > vtkMRMLWorkflowToolNode
   } 
 
   return taskCentroids;
+}
+
+
+// MRML node events processing
+// ----------------------------------------------------------------------------
+
+void vtkMRMLWorkflowToolNode
+::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
+{
+  // Propagate modified events
+  if ( event == vtkCommand::ModifiedEvent )
+  {
+    this->Modified();
+  }
+
 }

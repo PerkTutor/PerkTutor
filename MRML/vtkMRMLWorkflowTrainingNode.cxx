@@ -62,6 +62,8 @@ void vtkMRMLWorkflowTrainingNode
   {
     return;
   }
+
+  int startModifyState = this->StartModify();
   
   this->PrinComps.clear();
   for ( int i = 0; i < node->GetPrinComps().size(); i++ )
@@ -80,6 +82,8 @@ void vtkMRMLWorkflowTrainingNode
   
   this->Mean->Copy( node->GetMean() );
   this->Markov->Copy( node->GetMarkov() );
+
+  this->EndModify( startModifyState );
 }
 
 
@@ -113,6 +117,7 @@ void vtkMRMLWorkflowTrainingNode
 ::SetPrinComps( std::vector< vtkSmartPointer< vtkLabelVector > > newPrinComps )
 {
   this->PrinComps = newPrinComps;
+  this->Modified();
 }
 
 
@@ -127,6 +132,7 @@ void vtkMRMLWorkflowTrainingNode
 ::SetCentroids( std::vector< vtkSmartPointer< vtkLabelVector > > newCentroids )
 {
   this->Centroids = newCentroids;
+  this->Modified();
 }
 
 vtkLabelVector* vtkMRMLWorkflowTrainingNode
@@ -140,6 +146,7 @@ void vtkMRMLWorkflowTrainingNode
 ::SetMean( vtkLabelVector* newMean )
 {
   this->Mean = newMean;
+  this->Modified();
 }
 
 
@@ -154,6 +161,7 @@ void vtkMRMLWorkflowTrainingNode
 ::SetMarkov( vtkMarkovModelRT* newMarkov )
 {
   this->Markov = newMarkov;
+  this->Modified();
 }
 
 
@@ -186,6 +194,8 @@ void vtkMRMLWorkflowTrainingNode
   
   int numElements = element->GetNumberOfNestedElements();
 
+  int startModifyState = this->StartModify();
+
   for ( int i = 0; i < numElements; i++ )
   {
 
@@ -199,15 +209,15 @@ void vtkMRMLWorkflowTrainingNode
 
 	  if ( strcmp( elementType, "PrinComps" ) == 0 )
     {
-	    this->PrinComps = vtkLabelVector::VectorsFromXMLElement( noteElement, "PrinComps" );
+	    this->SetPrinComps( vtkLabelVector::VectorsFromXMLElement( noteElement, "PrinComps" ) );
     }
     if ( strcmp( elementType, "Centroids" ) == 0 )
     {
-	    this->Centroids = vtkLabelVector::VectorsFromXMLElement( noteElement, "Centroids" );
+	    this->SetCentroids( vtkLabelVector::VectorsFromXMLElement( noteElement, "Centroids" ) );
     }
 	  if ( strcmp( elementType, "Mean" ) == 0 )
     {
-	    this->Mean = vtkLabelVector::VectorsFromXMLElement( noteElement, "Mean" ).at(0);
+	    this->SetMean( vtkLabelVector::VectorsFromXMLElement( noteElement, "Mean" ).at(0) );
     }
 	  if ( strcmp( elementType, "Markov" ) == 0 )
     {
@@ -215,5 +225,7 @@ void vtkMRMLWorkflowTrainingNode
 	  }
 
   }
+
+  this->EndModify( startModifyState );
 
 }

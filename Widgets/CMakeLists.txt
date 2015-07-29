@@ -16,22 +16,27 @@ set(${KIT}_SRCS
   qSlicerWorkflowToolSummaryWidget.h
   qSlicerWorkflowToolWidget.cxx
   qSlicerWorkflowToolWidget.h
+  qSlicerWorkflowGuideDisplayWidget.cxx
+  qSlicerWorkflowGuideDisplayWidget.h
   )
   
 set(${KIT}_MOC_SRCS
   qSlicerWorkflowSegmentationRecorderControlsWidget.h
   qSlicerWorkflowToolSummaryWidget.h
   qSlicerWorkflowToolWidget.h
+  qSlicerWorkflowGuideDisplayWidget.h
   )
 
 set(${KIT}_UI_SRCS
   Resources/UI/qSlicerWorkflowToolSummaryWidget.ui
   Resources/UI/qSlicerWorkflowToolWidget.ui
+  Resources/UI/qSlicerWorkflowGuideDisplayWidget.ui
   )
   
 set(${KIT}_RESOURCES
   Resources/UI/qSlicerWorkflowToolSummaryWidget.ui
   Resources/UI/qSlicerWorkflowToolWidget.ui
+  Resources/UI/qSlicerWorkflowGuideDisplayWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES

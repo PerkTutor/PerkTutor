@@ -61,7 +61,9 @@ void vtkMRMLWorkflowProcedureNode
   if ( node == NULL )
   {
     return;
-  }  
+  }
+
+  int startModifyState = this->StartModify();
 
   this->SetProcedureName( node->GetProcedureName() );
   
@@ -74,6 +76,7 @@ void vtkMRMLWorkflowProcedureNode
     this->AddTask( currTask );
   }
 
+  this->EndModify( startModifyState );
 }
 
 
@@ -128,6 +131,7 @@ void vtkMRMLWorkflowProcedureNode
   }
   
   this->Tasks[ newTask->GetName() ] = newTask;
+  this->Modified();
 }
 
 
@@ -169,6 +173,8 @@ void vtkMRMLWorkflowProcedureNode
   
   int numElements = element->GetNumberOfNestedElements();
 
+  int startModifyState = this->StartModify();
+
   for ( int i = 0; i < numElements; i++ )
   {
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
@@ -179,4 +185,5 @@ void vtkMRMLWorkflowProcedureNode
 	  this->AddTask( newTask );
   }
 
+  this->EndModify( startModifyState );
 }

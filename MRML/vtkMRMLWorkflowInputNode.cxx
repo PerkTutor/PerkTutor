@@ -62,6 +62,8 @@ void vtkMRMLWorkflowInputNode
   {
     return;
   }
+
+  int startModifyState = this->StartModify();
   
   this->SetFilterWidth( node->GetFilterWidth() );
   this->SetOrthogonalOrder( node->GetOrthogonalOrder() );
@@ -74,6 +76,8 @@ void vtkMRMLWorkflowInputNode
   this->SetMarkovPseudoScaleB( node->GetMarkovPseudoScaleB() );
   this->SetCompletionTime( node->GetCompletionTime() );
   this->SetEqualization( node->GetEqualization() );
+
+  this->EndModify( startModifyState );
 }
 
 
@@ -139,6 +143,8 @@ void vtkMRMLWorkflowInputNode
   
   int numElements = element->GetNumberOfNestedElements();
 
+  int startModifyState = this->StartModify();
+
   for ( int i = 0; i < numElements; i++ )
   {
 
@@ -156,49 +162,50 @@ void vtkMRMLWorkflowInputNode
 
 	  if ( strcmp( elementType, "Derivative" ) == 0 )
     {
-	    this->Derivative = value;
+	    this->SetDerivative( value );
     }
 	  if ( strcmp( elementType, "FilterWidth" ) == 0 )
     {
-	    this->FilterWidth = value;
+	    this->SetFilterWidth( value );
     }
 	  if ( strcmp( elementType, "OrthogonalOrder" ) == 0 )
     {
-	    this->OrthogonalOrder = value;
+	    this->SetOrthogonalOrder( value );
     }
 	  if ( strcmp( elementType, "OrthogonalWindow" ) == 0 )
     {
-	    this->OrthogonalWindow = value;
+	    this->SetOrthogonalWindow( value );
     }
 	  if ( strcmp( elementType, "NumPrinComps" ) == 0 )
     {
-	    this->NumPrinComps = value;
+	    this->SetNumPrinComps( value );
     }
     if ( strcmp( elementType, "NumCentroids" ) == 0 )
     {
-	    this->NumCentroids = value;
+	    this->SetNumCentroids( value );
     }
 	  if ( strcmp( elementType, "MarkovPseudoScalePi" ) == 0 )
     {
-	    this->MarkovPseudoScalePi = value;
+	    this->SetMarkovPseudoScalePi( value );
     }
 	  if ( strcmp( elementType, "MarkovPseudoScaleA" ) == 0 )
     {
-	    this->MarkovPseudoScaleA = value;
+	    this->SetMarkovPseudoScaleA( value );
     }
 	  if ( strcmp( elementType, "MarkovPseudoScaleB" ) == 0 )
     {
-	    this->MarkovPseudoScaleB = value;
+	    this->SetMarkovPseudoScaleB( value );
     }
 	  if ( strcmp( elementType, "CompletionTime" ) == 0 )
     {
-	    this->CompletionTime = value;
+	    this->SetCompletionTime( value );
     }
     if ( strcmp( elementType, "Equalization" ) == 0 )
     {
-	    this->Equalization = value;
+	    this->SetEqualization( value );
     }
 
   }
 
+  this->EndModify( startModifyState );
 }
