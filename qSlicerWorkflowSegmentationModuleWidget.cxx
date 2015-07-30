@@ -163,6 +163,7 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   
   // Advanced
+  connect( d->RefreshButton, SIGNAL( clicked() ), this, SLOT( createWorkflowDisplaysForExistingNodes() ) );
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->ToolSummaryWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
   
   // Workflows
@@ -271,6 +272,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 
   for ( int i = 0; i < toolNodes->GetNumberOfItems(); i++ )
   {
+    this->onNodeRemoved( d->logic()->GetMRMLScene(), toolNodes->GetItemAsObject( i ) );
     this->onNodeAdded( d->logic()->GetMRMLScene(), toolNodes->GetItemAsObject( i ) );
   }
 }

@@ -185,6 +185,7 @@ void qSlicerWorkflowGuideDisplayWidget
     if ( checkTask == this->WorkflowToolNode->GetCurrentTask() )
     {
       taskFont.setBold( true );
+      d->WorkflowDisplayTable->selectRow( i );
     }
 
     taskItem->setFont( taskFont );
