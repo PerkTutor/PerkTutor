@@ -147,19 +147,17 @@ void qSlicerRecorderControlsWidget
     return;
   }
     
-  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)  
+  // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)
+  std::vector< std::string > activeTransformIDs;
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
     if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked  )
     {
-      this->TransformBufferNode->AddActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() );
-    }
-    else
-    {
-      this->TransformBufferNode->RemoveActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() );
+      activeTransformIDs.push_back( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() );
     }
   }
 
+  this->TransformBufferNode->SetActiveTransformIDs( activeTransformIDs );
 }
 
 
