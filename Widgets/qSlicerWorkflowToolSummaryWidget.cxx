@@ -174,11 +174,12 @@ void qSlicerWorkflowToolSummaryWidget
   // Set up the combo box
   disconnect( d->WorkflowToolsComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onToolSelectionsChanged() ) );
 
-  d->WorkflowToolsComboBox->setMRMLScene( NULL );
-  d->WorkflowToolsComboBox->setMRMLScene( this->mrmlScene() );
-
   std::vector< std::string > toolIDs = this->WorkflowSegmentationNode->GetToolIDs();
-  for ( int i = 0; i < toolIDs.size(); i++ )
+  for ( int i = 0; i < d->WorkflowToolsComboBox->nodeCount(); i++ ) // Uncheck all nodes
+  {
+    d->WorkflowToolsComboBox->setCheckState( d->WorkflowToolsComboBox->nodeFromIndex( i ), Qt::Unchecked );
+  }
+  for ( int i = 0; i < toolIDs.size(); i++ ) // Check only the correct ones
   {
     d->WorkflowToolsComboBox->setCheckState( this->mrmlScene()->GetNodeByID( toolIDs.at( i ) ), Qt::Checked );
   }
