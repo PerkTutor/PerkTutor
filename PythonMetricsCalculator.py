@@ -1,6 +1,7 @@
 import os, imp, glob, sys
 import unittest
 from __main__ import vtk, qt, ctk, slicer
+import PythonMetrics
 
 #
 # Python Metrics Calculator
@@ -242,8 +243,7 @@ class PythonMetricsCalculatorLogic:
     
   def GetFreshMetrics( self ):
     # Import every metrics we can find
-    import PythonMetrics
-    coreMetrics = PythonMetrics.PerkTutorCoreMetrics[:]
+    coreMetrics = PythonMetrics.GetFreshCoreMetrics()
     userMetrics = self.GetAllUserMetrics()
     
     return ( coreMetrics + userMetrics )
@@ -252,7 +252,7 @@ class PythonMetricsCalculatorLogic:
   def InitializeNewTransformMetric( self, newTransformName ):
     # Get a fresh set of metrics
     newTransformMetrics = self.GetFreshMetrics()    
-    newTransformMetrics = self.FilterMetricsByAnatomyRole( self.allMetrics, self.GetAllSpecifiedAnatomyRoles() )
+    newTransformMetrics = self.FilterMetricsByAnatomyRole( newTransformMetrics, self.GetAllSpecifiedAnatomyRoles() )
     newTransformMetrics = self.AddMetricAnatomyNodes( newTransformMetrics )
   
     # Add each required metric for the new transform    
@@ -392,21 +392,6 @@ class PythonMetricsCalculatorLogic:
       
     self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
     self.OutputAllTransformMetricsToMetricsTable()
-
-    
-  def UpdateSelfAndChildMetrics( self, transformName, absTime ):
-    # Get the recorded transform node
-    updatedTransformNode = self.mrmlScene.GetFirstNodeByName( transformName )
-    
-    # Get all transforms in the scene
-    transformCollection = vtk.vtkCollection()
-    self.peLogic.GetSceneVisibleTransformNodes( transformCollection )
-    
-    # Update all metrics associated with children of the recorded transform
-    for i in range( transformCollection.GetNumberOfItems() ):
-      currentTransformNode = transformCollection.GetItemAsObject( i )
-      if ( self.peLogic.IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
-        self.UpdateTransformMetrics( currentTransformNode, absTime, True )
 
         
   def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
