@@ -147,7 +147,7 @@ void qSlicerMetricsTableWidget
 
 
 void qSlicerMetricsTableWidget
-::OnClipboardButtonClicked()
+::onClipboardButtonClicked()
 {
   Q_D( qSlicerMetricsTableWidget );
 

@@ -58,7 +58,7 @@ protected slots:
   virtual void onMetricsTableNodeChanged( vtkMRMLNode* newMetricsTableNode );
   void onMetricsTableNodeModified();
   
-  void OnClipboardButtonClicked();
+  void onClipboardButtonClicked();
 
   void updateWidget();
 
