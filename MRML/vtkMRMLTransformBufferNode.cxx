@@ -470,6 +470,7 @@ void vtkMRMLTransformBufferNode
   
   // Create a map storing the indices of which record needs to be added for each transform
   std::map< std::string, int > indexMap;
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
     indexMap[ itr->first ] = 0;
