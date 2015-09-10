@@ -462,13 +462,66 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::GetCombinedTransformRecordBuffer( vtkLogRecordBuffer* combinedTransformRecordBuffer )
 {
-  // TODO: Improve the complexity (currently it is O( nlogn ), but with a merge type method, we can make it O( n )).
-  // Iterate over all transform record buffers
-  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  // Skip if there are no transforms
+  if ( this->TransformRecordBuffers.size() == 0 )
+  {
+    return;
+  }
+  
+  // Create a map storing the indices of which record needs to be added for each transform
+  std::map< std::string, int > indexMap;
   for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    combinedTransformRecordBuffer->Concatenate( itr->second );
-  }  
+    indexMap[ itr->first ] = 0;
+  }
+
+  // Loop through, and add the smallest
+  bool allBuffersTraversed;
+  do
+  {
+    // Find the smallest time
+    std::string firstRecordTransformName;
+    double firstRecordTime = std::numeric_limits< double >::max();
+    vtkLogRecord* firstRecord = NULL;
+    
+    for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
+    {
+      // Skip if we have already reached the end of the current buffer
+      if ( indexMap[ itr->first ] == itr->second->GetNumRecords() )
+      {
+        continue;
+      }
+
+      vtkLogRecord* currentRecord = itr->second->GetRecord( indexMap[ itr->first ] );
+      double currentRecordTime = currentRecord->GetTime();
+
+      if ( currentRecordTime < firstRecordTime )
+      {
+        firstRecord = currentRecord;
+        firstRecordTime = currentRecordTime;
+        firstRecordTransformName = itr->first;
+      }
+    }
+
+    // Merge the smallest into the buffer
+    combinedTransformRecordBuffer->AddRecord( firstRecord );
+
+    // Increment the counter
+    indexMap[ firstRecordTransformName ]++;
+
+    // Check if we have reached the end of any buffer
+    allBuffersTraversed = true;
+    for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
+    {
+      if ( indexMap[ itr->first ] < itr->second->GetNumRecords() )
+      {
+        allBuffersTraversed = false;
+      }
+    }
+
+  }
+  while( ! allBuffersTraversed );
+
 }
 
 
@@ -638,6 +691,9 @@ std::string vtkMRMLTransformBufferNode
 {
   std::stringstream xmlstring;
 
+  // TODO: For profiling
+  double startTime = this->GetCurrentTimestamp();
+
   vtkSmartPointer< vtkLogRecordBuffer > combinedTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
   this->GetCombinedTransformRecordBuffer( combinedTransformRecordBuffer ); // This will maintain complexity
   
@@ -655,6 +711,10 @@ std::string vtkMRMLTransformBufferNode
 
   xmlstring << indent << "</TransformRecorderLog>" << std::endl;
 
+  // TODO: For profiling
+  double totalTime = this->GetCurrentTimestamp() - startTime;
+  vtkWarningMacro( << "Writing time: " << totalTime );
+
   return xmlstring.str();
 }
 
@@ -666,6 +726,9 @@ void vtkMRMLTransformBufferNode
   {
     return;
   }
+
+  // TODO: For profiling
+  double startTime = this->GetCurrentTimestamp();
 
   int numElements = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
   
@@ -696,5 +759,8 @@ void vtkMRMLTransformBufferNode
    
   }
 
+  // TODO: For profiling
+  double totalTime = this->GetCurrentTimestamp() - startTime;
+  vtkWarningMacro( << "Reading time: " << totalTime );
   // Status updates are taken care of in the add functions
 }
