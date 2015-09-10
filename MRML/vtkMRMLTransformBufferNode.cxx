@@ -692,9 +692,6 @@ std::string vtkMRMLTransformBufferNode
 {
   std::stringstream xmlstring;
 
-  // TODO: For profiling
-  double startTime = this->GetCurrentTimestamp();
-
   vtkSmartPointer< vtkLogRecordBuffer > combinedTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
   this->GetCombinedTransformRecordBuffer( combinedTransformRecordBuffer ); // This will maintain complexity
   
@@ -712,10 +709,6 @@ std::string vtkMRMLTransformBufferNode
 
   xmlstring << indent << "</TransformRecorderLog>" << std::endl;
 
-  // TODO: For profiling
-  double totalTime = this->GetCurrentTimestamp() - startTime;
-  vtkWarningMacro( << "Writing time: " << totalTime );
-
   return xmlstring.str();
 }
 
@@ -727,9 +720,6 @@ void vtkMRMLTransformBufferNode
   {
     return;
   }
-
-  // TODO: For profiling
-  double startTime = this->GetCurrentTimestamp();
 
   int numElements = rootElement->GetNumberOfNestedElements();  // Number of saved records (including transforms and messages).
   
@@ -760,8 +750,5 @@ void vtkMRMLTransformBufferNode
    
   }
 
-  // TODO: For profiling
-  double totalTime = this->GetCurrentTimestamp() - startTime;
-  vtkWarningMacro( << "Reading time: " << totalTime );
   // Status updates are taken care of in the add functions
 }
