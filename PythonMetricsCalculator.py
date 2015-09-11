@@ -407,7 +407,7 @@ class PythonMetricsCalculatorLogic:
       currentTransformNode = transformCollection.GetItemAsObject( i )
       if ( self.peLogic.IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
         self.UpdateTransformMetrics( currentTransformNode, absTime, True )
--
+
         
   def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
   
