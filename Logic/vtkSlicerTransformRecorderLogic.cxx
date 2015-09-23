@@ -33,6 +33,13 @@
 #include <cassert>
 
 
+// For getting the module logic
+#include "qSlicerApplication.h"
+#include "qSlicerModuleManager.h"
+#include "qSlicerAbstractCoreModule.h"
+
+
+
 // Helper Methods ------------------------------------------------------------
 
 void Trim(std::string &str)
@@ -53,13 +60,11 @@ vtkStandardNewMacro(vtkSlicerTransformRecorderLogic);
 //----------------------------------------------------------------------------
 vtkSlicerTransformRecorderLogic::vtkSlicerTransformRecorderLogic()
 {
-  this->Clock0 = clock();
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerTransformRecorderLogic::~vtkSlicerTransformRecorderLogic()
 {
-  this->RecordingBuffers.clear(); // The objects themselves will be deleted elsewhere
 }
 
 
@@ -115,149 +120,10 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
-::ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData )
-{
-  vtkMRMLTransformNode* callerNode = vtkMRMLTransformNode::SafeDownCast( caller );
-
-  // For all buffers, iterate through all observed transforms and check if the name corresponds to the modified event
-  for ( int i = 0; i < this->RecordingBuffers.size(); i++ )
-  {
-    std::vector<std::string> activeTransforms = this->RecordingBuffers.at(i)->GetActiveTransforms();
-    for ( int j = 0; j < activeTransforms.size(); j++ )
-    {
-      if ( activeTransforms.at(j).compare( callerNode->GetName() ) == 0 )
-      {
-        this->AddTransform( this->RecordingBuffers.at(i), callerNode );
-      }
-    }
-  }
-
-
-}
-
-
-double vtkSlicerTransformRecorderLogic
-::GetCurrentTimestamp()
-{
-  clock_t clock1 = clock();  
-  return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
-}
-
-
-void vtkSlicerTransformRecorderLogic
 ::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
   assert(this->GetMRMLScene() != 0);
 }
-
-
-void vtkSlicerTransformRecorderLogic
-::AddObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node )
-{
-  if ( bufferNode == NULL )
-  {
-    return;
-  }
-
-  // Make sure the node is observed
-  vtkMRMLTransformNode* transformNode = vtkMRMLTransformNode::SafeDownCast( node );
-  node->AddObserver( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
-  bufferNode->AddActiveTransform( node->GetName() );
-}
-
-
-
-void vtkSlicerTransformRecorderLogic
-::RemoveObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node )
-{
-  if ( bufferNode == NULL )
-  {
-    return;
-  }
-
-  // Unobserve the node
-  vtkMRMLTransformNode* transformNode = vtkMRMLTransformNode::SafeDownCast( node );
-  node->RemoveObservers( vtkMRMLTransformNode::TransformModifiedEvent, (vtkCommand*) this->GetMRMLNodesCallbackCommand() );
-  bufferNode->RemoveActiveTransform( node->GetName() );
-}
-
-
-
-bool vtkSlicerTransformRecorderLogic
-::IsObservedTransformNode( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLNode* node )
-{
-  if ( bufferNode == NULL )
-  {
-    return false;
-  }
-
-  std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
-
-  for ( int i = 0; i < activeTransforms.size(); i++ )
-  {
-    if ( activeTransforms.at(i).compare( node->GetName() ) == 0 )
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
-
-void vtkSlicerTransformRecorderLogic
-::SetRecording( vtkMRMLTransformBufferNode* bufferNode, bool isRecording )
-{
-  if ( bufferNode == NULL )
-  {
-    return;
-  }
-
-  for ( int i = 0; i < this->RecordingBuffers.size(); i++ )
-  {
-    if ( bufferNode == this->RecordingBuffers.at(i) && ! isRecording )
-    {
-      this->RecordingBuffers.erase( this->RecordingBuffers.begin() + i ); // Erase all instances of buffer in list
-      i--;
-      continue;
-    }
-    if ( bufferNode == this->RecordingBuffers.at(i) && isRecording )
-    {
-      bufferNode->Modified(); // If the recoding is start, then the node has been modified
-      return; // If we found that this buffer node is in the list already, then do nothing
-    }
-  }
-
-  // Finally if the buffer was not found and we want to add
-  if ( isRecording )
-  {
-    this->RecordingBuffers.push_back( bufferNode );
-  }
-
-}
-
-
-
-bool vtkSlicerTransformRecorderLogic
-::GetRecording( vtkMRMLTransformBufferNode* bufferNode )
-{
-  if ( bufferNode == NULL )
-  {
-    return false;
-  }
-
-  for ( int i = 0; i < this->RecordingBuffers.size(); i++ )
-  {
-    if ( bufferNode == this->RecordingBuffers.at(i) )
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 
 
 void vtkSlicerTransformRecorderLogic
@@ -271,17 +137,17 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
-::AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string messageName, double time )
+::AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string messageString, double time )
 {
   if ( bufferNode == NULL )
   {
     return;
   }
 
-  vtkMessageRecord* newMessage = vtkMessageRecord::New();
-  newMessage->SetName( messageName );
-  newMessage->SetTime( time );
-  bufferNode->AddMessage( newMessage );
+  vtkSmartPointer< vtkMessageRecord > newMessageRecord = vtkSmartPointer< vtkMessageRecord >::New();
+  newMessageRecord->SetMessageString( messageString );
+  newMessageRecord->SetTime( time );
+  bufferNode->AddMessage( newMessageRecord );
 }
 
 
@@ -290,7 +156,7 @@ void vtkSlicerTransformRecorderLogic
 {
   if ( bufferNode != NULL )
   {
-	bufferNode->RemoveMessageAt( index );
+	  bufferNode->RemoveMessage( index );
   }
 }
 
@@ -306,72 +172,46 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
-::AddTransform( vtkMRMLTransformBufferNode* bufferNode, vtkMRMLTransformNode* transformNode )
+::ObserveAllRecordedTransforms( vtkMRMLTransformBufferNode* bufferNode )
 {
+  // First add all of the recorded transforms to the scene
+  this->AddAllRecordedTransformsToScene( bufferNode );
 
-  // Get the transform matrix from the node
-  vtkMRMLLinearTransformNode* linearTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNode );
-  vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-
-#ifdef TRANSFORM_NODE_MATRIX_COPY_REQUIRED
-  linearTransformNode->GetMatrixTransformToParent( transformMatrix );
-#else
-  transformMatrix->DeepCopy( linearTransformNode->GetMatrixTransformToParent() );
-#endif
-  
-  // Record the transform into a string  
-  std::stringstream matrixsstring;
-  for ( int row = 0; row < 4; ++ row )
-  {
-    for ( int col = 0; col < 4; ++ col )
+  // Now, observe all of them
+  std::vector< std::string > recordedTransforms = bufferNode->GetAllRecordedTransformNames();
+  for ( int i = 0; i < recordedTransforms.size(); i++ )
+  {	
+    vtkSmartPointer< vtkMRMLLinearTransformNode > transformNode;
+    transformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( recordedTransforms.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
+    if ( transformNode != NULL ) // We just added them all to the scene, so they should all be non-null
     {
-      matrixsstring << transformMatrix->GetElement( row, col ) << " ";
+      bufferNode->AddActiveTransformID( transformNode->GetID() );
     }
   }
- 
-  
-  // Look for the most recent value of this transform
-  // If the value hasn't changed, we don't record
-  for ( int i = bufferNode->GetNumTransforms() - 1; i >= 0; i-- )
-  {
-    if ( bufferNode->GetTransformAt(i)->GetDeviceName().compare( transformNode->GetName() ) == 0 )
-	{
-      if ( bufferNode->GetTransformAt(i)->GetTransform().compare( matrixsstring.str() ) == 0 )
-	  {
-        return; // If it is a duplicate then exit, we have nothing to record
-	  }
-      break;
-	}
-  }
-
-
-  vtkTransformRecord* transformRecord = vtkTransformRecord::New();
-  transformRecord->SetTransform( matrixsstring.str() );
-  transformRecord->SetDeviceName( transformNode->GetName() );
-  transformRecord->SetTime( this->GetCurrentTimestamp() );
-  bufferNode->AddTransform( transformRecord );
 
 }
 
 
 void vtkSlicerTransformRecorderLogic
-::AddTransformsToScene( vtkMRMLTransformBufferNode* bufferNode )
+::AddAllRecordedTransformsToScene( vtkMRMLTransformBufferNode* bufferNode )
 {
-  // Add the active transform nodes to the scene
-  std::vector<std::string> activeTransforms = bufferNode->GetActiveTransforms();
-  for ( int i = 0; i < activeTransforms.size(); i++ )
+  // This adds all the recorded transforms to the scene
+  // Note: The active transforms should already be in the scene anyway
+
+  std::vector< std::string > recordedTransforms = bufferNode->GetAllRecordedTransformNames();
+  for ( int i = 0; i < recordedTransforms.size(); i++ )
   {	
     vtkSmartPointer< vtkMRMLLinearTransformNode > transformNode;
-    transformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( activeTransforms.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
+    transformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( recordedTransforms.at(i).c_str(), "vtkMRMLLinearTransformNode" ) );
     if ( transformNode == NULL )
     {
       transformNode.TakeReference( vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) ) );
-      transformNode->SetName( activeTransforms.at(i).c_str() );
+      transformNode->SetName( recordedTransforms.at(i).c_str() );
       transformNode->SetScene( this->GetMRMLScene() );
 	    this->GetMRMLScene()->AddNode( transformNode );
     }
-
   }
+
 }
 
 
@@ -408,7 +248,7 @@ void vtkSlicerTransformRecorderLogic
     return;
   }
 
-  output << bufferNode->ToXMLString();
+  output << bufferNode->ToXMLString( vtkIndent() );
 
   output.close();
 
@@ -496,7 +336,7 @@ void vtkSlicerTransformRecorderLogic
 
       // Create the transform record
       vtkTransformRecord* transformRecord =  vtkTransformRecord::New();
-      transformRecord->SetTransform( value );
+      transformRecord->SetTransformMatrix( value );
       transformRecord->SetDeviceName( transformName );
       transformRecord->SetTime( frameNumber );
 
@@ -562,4 +402,18 @@ void vtkSlicerTransformRecorderLogic
   FrameNumberToTimestamp.clear();
   FrameNumberToTransformRecords.clear();
   FrameNumberToStatuses.clear();
+}
+
+
+
+// Module logic -------------------------------------------------
+vtkMRMLAbstractLogic* vtkSlicerTransformRecorderLogic
+::GetSlicerModuleLogic( std::string moduleName )
+{
+  qSlicerAbstractCoreModule* Module = qSlicerApplication::application()->moduleManager()->module( moduleName.c_str() );
+  if ( Module != NULL )
+  {
+    return Module->logic();
+  }
+  return NULL;
 }

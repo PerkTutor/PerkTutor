@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <cmath>
+#include <limits>
 
 // VTK includes
 #include "vtkCommand.h"
@@ -35,6 +36,11 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataParser.h"
+#include "vtkNew.h"
+#include "vtkIntArray.h"
+
+// MRML Includes
+#include "vtkMRMLLinearTransformNode.h"
 
 
 // TransformRecorder includes
@@ -44,7 +50,10 @@
 #include "vtkMRMLTransformBufferStorageNode.h"
 #include "vtkTransformRecord.h"
 #include "vtkMessageRecord.h"
+#include "vtkLogRecord.h"
+#include "vtkLogRecordBuffer.h"
 
+//#include "vtkSlicerTransformRecorderLogic.h"
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
@@ -83,21 +92,26 @@ public:
   void AddTransform( vtkTransformRecord* newTransform );
   void AddMessage( vtkMessageRecord* newMessage );
 
-  void RemoveTransformAt( int index );
-  void RemoveMessageAt( int index );
+  void RemoveTransform( int index, std::string transformName );
   void RemoveTransformsByName( std::string name );
+  
+  void RemoveMessage( int index );
   void RemoveMessagesByName( std::string name );
 
-  vtkTransformRecord* GetTransformAt( int index );
-  vtkTransformRecord* GetCurrentTransform();
-  vtkTransformRecord* GetTransformByName( std::string name );
-  vtkMessageRecord* GetMessageAt( int index );
-  vtkMessageRecord* GetCurrentMessage();
-  vtkMessageRecord* GetMessageByName( std::string name );
+  vtkTransformRecord* GetTransformAtIndex( int index, std::string transformName );
+  vtkTransformRecord* GetCurrentTransform( std::string transformName );
 
-  vtkTransformRecord* GetTransformAtTime( double time );
+  vtkMessageRecord* GetMessageAtIndex( int index );
+  vtkMessageRecord* GetCurrentMessage();
+
+  vtkTransformRecord* GetTransformAtTime( double time, std::string transformName );
   vtkMessageRecord* GetMessageAtTime( double time );
 
+  vtkLogRecordBuffer* GetTransformRecordBuffer( std::string transformName );
+
+  std::vector< std::string > GetAllRecordedTransformNames();
+
+  int GetNumTransforms( std::string transformName );
   int GetNumTransforms();
   int GetNumMessages();
 
@@ -109,24 +123,24 @@ public:
   void ClearTransforms();
   void ClearMessages();
 
-  void AddActiveTransform( std::string name );
-  void RemoveActiveTransform( std::string name );
-  std::vector<std::string> GetActiveTransforms();
-  void SetActiveTransforms( std::vector<std::string> names );
-  void SetActiveTransformsFromBuffer();
+  void AddActiveTransformID( std::string transformID );
+  void RemoveActiveTransformID( std::string transformID );
+  std::vector< std::string > GetActiveTransformIDs();
+  bool IsActiveTransformID( std::string transformID );
+  void SetActiveTransformIDs( std::vector< std::string > transformIDs );
 
-  std::vector<vtkMRMLTransformBufferNode*> SplitBufferByName();
-  vtkMRMLTransformBufferNode* GetBufferByName( std::string name );
+  void StartRecording();
+  void StopRecording();
+  bool GetRecording();
+  double GetCurrentTimestamp();
 
-  std::string ToXMLString();
+  void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
+
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
-  // Keep track of what has been updated
-  unsigned long TransformsStatus;
-  unsigned long MessagesStatus;
-  unsigned long ActiveTransformsStatus;
-
   // The events that the class should invole
+  typedef std::pair< std::string, int > TransformEventDataType;
   enum
   {
     TransformAddedEvent = vtkCommand::UserEvent + 1,
@@ -138,17 +152,15 @@ public:
   };
 
 
-private:
+protected:
 
-  int GetPriorTransformIndex( double time );
-  int GetClosestTransformIndex( double time );
-  int GetPriorMessageIndex( double time );
-  int GetClosestMessageIndex( double time );
+  void GetCombinedTransformRecordBuffer( vtkLogRecordBuffer* combinedTransformRecordBuffer );
   
-  std::vector<vtkTransformRecord*> transforms;
-  std::vector<vtkMessageRecord*> messages;
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > > TransformRecordBuffers;
+  vtkSmartPointer< vtkLogRecordBuffer > MessageRecordBuffer;
 
-  std::vector<std::string> activeTransforms;
+  bool RecordingState;
+  double Clock0;
 
 };  
 

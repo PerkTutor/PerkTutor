@@ -27,17 +27,20 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkMatrix4x4.h"
 
 // TransformRecorder includes
+#include "vtkLogRecord.h"
+
 #include "vtkSlicerTransformRecorderModuleMRMLExport.h"
 
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
-vtkTransformRecord : public vtkObject
+vtkTransformRecord : public vtkLogRecord
 {
 public:
-  vtkTypeMacro( vtkTransformRecord, vtkObject );
+  vtkTypeMacro( vtkTransformRecord, vtkLogRecord );
 
   // Standard MRML node methods  
   static vtkTransformRecord *New();  
@@ -50,33 +53,27 @@ protected:
   
 public:
 
-  vtkTransformRecord* DeepCopy();
+  void Copy( vtkLogRecord* otherRecord );
   
-  void SetTransform( std::string newTransform );
-  std::string GetTransform();
+  void SetTransformMatrix( vtkMatrix4x4* newMatrix4x4 );
+  void SetTransformMatrix( double* newMatrixDouble );
+  void SetTransformMatrix( std::string newMatrixString );
+  
+  void GetTransformMatrix( vtkMatrix4x4* matrix4x4 );
+  void GetTransformMatrix( double* matrixDouble );
+  std::string GetTransformMatrix();
 
   void SetDeviceName( std::string newDeviceName );
   std::string GetDeviceName();
 
-  void SetTimeStampSec( int newTimeStampSec );
-  int GetTimeStampSec();
-
-  void SetTimeStampNSec( int newTimeStampNSec );
-  int GetTimeStampNSec();
-
-  void SetTime( double time );
-  double GetTime();
-
-  std::string ToXMLString( int indent = 2 );
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
 
-private:
+protected:
   
   std::string DeviceName;
-  std::string Transform;
-  long int TimeStampSec; 
-  int TimeStampNSec;
+  std::string TransformMatrix; // Store as string for read/write efficiency
   
 };  
 

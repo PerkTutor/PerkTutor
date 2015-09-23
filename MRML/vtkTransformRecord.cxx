@@ -7,48 +7,108 @@ vtkStandardNewMacro( vtkTransformRecord );
 vtkTransformRecord
 ::vtkTransformRecord()
 {
-  this->Transform = "";
+  this->TransformMatrix = "";
   this->DeviceName = "";
-  this->TimeStampSec = 0;
-  this->TimeStampNSec = 0;
 }
 
 
 vtkTransformRecord
 ::~vtkTransformRecord()
 {
-  this->Transform = "";
+  this->TransformMatrix = "";
   this->DeviceName = "";
-  this->TimeStampSec = 0;
-  this->TimeStampNSec = 0;
 }
-
-
-
-vtkTransformRecord* vtkTransformRecord
-::DeepCopy()
-{
-  vtkTransformRecord* copy = vtkTransformRecord::New();
-  copy->SetTransform( this->Transform );
-  copy->SetDeviceName( this->DeviceName );
-  copy->SetTimeStampSec( this->TimeStampSec );
-  copy->SetTimeStampNSec( this->TimeStampNSec );
-  return copy;
-}
-
 
 
 void vtkTransformRecord
-::SetTransform( std::string newTransform )
+::Copy( vtkLogRecord* otherRecord )
 {
-  this->Transform = newTransform;
+  this->vtkLogRecord::Copy( otherRecord );
+
+  vtkTransformRecord* transformRecord = vtkTransformRecord::SafeDownCast( otherRecord );
+  if ( transformRecord == NULL )
+  {
+    return;
+  }
+
+  this->SetTransformMatrix( transformRecord->GetTransformMatrix() );
+  this->SetDeviceName( transformRecord->GetDeviceName() );
+}
+
+
+void vtkTransformRecord
+::SetTransformMatrix( vtkMatrix4x4* newMatrix4x4 )
+{
+  std::stringstream ss;
+
+  for ( int i = 0; i < 4; i++ )
+  {
+    for ( int j = 0; j < 4; j++ )
+    {
+      ss << newMatrix4x4->GetElement( i, j ) << " ";
+    }
+  }
+
+  this->TransformMatrix = ss.str();
+}
+
+
+void vtkTransformRecord
+::SetTransformMatrix( double* newMatrixDouble )
+{
+  std::stringstream ss;
+
+  for ( int i = 0; i < 16; i++ )
+  {
+    ss << newMatrixDouble[ i ] << " ";
+  }
+
+  this->TransformMatrix = ss.str();
+}
+
+
+void vtkTransformRecord
+::SetTransformMatrix( std::string newMatrixString )
+{
+  this->TransformMatrix = newMatrixString;
+}
+
+
+void vtkTransformRecord
+::GetTransformMatrix( vtkMatrix4x4* matrix4x4 )
+{
+  std::stringstream ss( this->TransformMatrix );
+
+  double value;
+
+  for ( int i = 0; i < 4; i++ )
+  {
+    for ( int j = 0; j < 4; j++ )
+    {
+      ss >> value;
+      matrix4x4->SetElement( i, j, value );
+    }
+  }
+  
+}
+
+
+void vtkTransformRecord
+::GetTransformMatrix( double* matrixDouble )
+{
+  std::stringstream ss( this->TransformMatrix );
+
+  for ( int i = 0; i < 16; i++ )
+  {
+    ss >> matrixDouble[ i ];
+  }
 }
 
 
 std::string vtkTransformRecord
-::GetTransform()
+::GetTransformMatrix()
 {
-  return this->Transform;
+  return this->TransformMatrix;
 }
 
 
@@ -66,60 +126,17 @@ std::string vtkTransformRecord
 }
 
 
-void vtkTransformRecord
-::SetTimeStampSec( int newTimeStampSec )
-{
-  this->TimeStampSec = newTimeStampSec;
-}
-
-
-int vtkTransformRecord
-::GetTimeStampSec()
-{
-  return this->TimeStampSec;
-}
-
-
-void vtkTransformRecord
-::SetTimeStampNSec( int newTimeStampNSec )
-{
-  this->TimeStampNSec = newTimeStampNSec;
-}
-
-
-int vtkTransformRecord
-::GetTimeStampNSec()
-{
-  return this->TimeStampNSec;
-}
-
-
-void vtkTransformRecord
-::SetTime( double newTime )
-{
-  this->TimeStampSec = floor( newTime );
-  this->TimeStampNSec = 1.0e+9 * ( newTime - floor( newTime ) ); 
-}
-
-
-double vtkTransformRecord
-::GetTime()
-{
-  return ( this->TimeStampSec + 1.0e-9 * this->TimeStampNSec );
-}
-
-
 std::string vtkTransformRecord
-::ToXMLString( int indent )
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
-  xmlstring << std::string( indent, ' ' );
+  xmlstring << indent;
   xmlstring << "<log";
   xmlstring << " TimeStampSec=\"" << this->TimeStampSec << "\"";
   xmlstring << " TimeStampNSec=\"" << this->TimeStampNSec << "\"";
   xmlstring << " type=\"transform\"";
   xmlstring << " DeviceName=\"" << this->DeviceName << "\"";
-  xmlstring << " transform=\"" << this->Transform << "\"";
+  xmlstring << " transform=\"" << this->TransformMatrix << "\"";
   xmlstring << " />" << std::endl;
   return xmlstring.str();
 }
@@ -133,7 +150,7 @@ void vtkTransformRecord
     return;
   }
 
-  this->Transform = element->GetAttribute( "transform" );
+  this->TransformMatrix = element->GetAttribute( "transform" );
   this->DeviceName = element->GetAttribute( "DeviceName" );
   this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
   this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );

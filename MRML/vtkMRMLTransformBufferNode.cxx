@@ -3,6 +3,12 @@
 #include "vtkMRMLTransformBufferNode.h"
 
 
+
+// Constants ------------------------------------------------------------------
+static const char* ACTIVE_TRANSFORM_REFERENCE_ROLE = "ActiveTransform";
+
+
+
 // Standard MRML Node Methods ------------------------------------------------------------
 
 vtkMRMLTransformBufferNode* vtkMRMLTransformBufferNode
@@ -44,21 +50,14 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::WriteXML( ostream& of, int nIndent )
 {
-  Superclass::WriteXML(of, nIndent);
-
-  vtkIndent indent(nIndent);
-  
-  for ( int i = 0; i < this->activeTransforms.size(); i++ )
-  {
-    of << indent << " ActiveTransform" << i << "=\"" << this->activeTransforms.at(i) << "\"";
-  }
+  this->Superclass::WriteXML(of, nIndent);
 }
 
 
 void vtkMRMLTransformBufferNode
 ::ReadXMLAttributes( const char** atts )
 {
-  Superclass::ReadXMLAttributes(atts);
+  this->Superclass::ReadXMLAttributes(atts);
 
   // Read all MRML node attributes from two arrays of names and values
   const char* attName;
@@ -68,40 +67,42 @@ void vtkMRMLTransformBufferNode
   {
     attName  = *(atts++);
     attValue = *(atts++);
- 
-	if ( std::string( attName ).find( "ActiveTransform" ) != std::string::npos )
-    {
-	  this->activeTransforms.push_back( std::string( attValue ) );
-    }
+
+    // do something...
   }
 
-  this->ActiveTransformsStatus++;
 }
 
 
 void vtkMRMLTransformBufferNode
-::Copy( vtkMRMLNode *anode )
+::Copy( vtkMRMLNode* anode )
 {
-  Superclass::Copy( anode );
-  vtkMRMLTransformBufferNode *node = ( vtkMRMLTransformBufferNode* ) anode;
+  this->Superclass::Copy( anode );
+  vtkMRMLTransformBufferNode* node = ( vtkMRMLTransformBufferNode* ) anode;
+  if ( node == NULL )
+  {
+    return;
+  }
 
   this->Clear();
 
-  for ( int i = 0; i < node->GetNumTransforms(); i++ )
+  // Transform buffers
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  for( itr = node->TransformRecordBuffers.begin(); itr != node->TransformRecordBuffers.end(); itr++ )
   {
-    this->AddTransform( node->GetTransformAt(i)->DeepCopy() );
+    vtkSmartPointer< vtkLogRecordBuffer > newTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+    newTransformRecordBuffer->Copy( itr->second );
+    std::string newTransformRecordBufferName = vtkTransformRecord::SafeDownCast( newTransformRecordBuffer->GetCurrentRecord() )->GetDeviceName(); // TODO: Make more robust
+    this->TransformRecordBuffers[ newTransformRecordBufferName ] = newTransformRecordBuffer;
   }
 
-  for ( int i = 0; i < node->GetNumMessages(); i++ )
-  {
-    this->AddMessage( node->GetMessageAt(i)->DeepCopy() );
-  }
+  // Message buffer
+  vtkSmartPointer< vtkLogRecordBuffer > newMessageRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+  newMessageRecordBuffer->Copy( node->MessageRecordBuffer );
+  this->MessageRecordBuffer = newMessageRecordBuffer;
 
-  for ( int i = 0; i < node->GetActiveTransforms().size(); i++ )
-  {
-    this->AddActiveTransform( node->GetActiveTransforms().at(i) );
-  }
-
+  // Recording state
+  this->RecordingState = node->RecordingState;
 }
 
 
@@ -112,10 +113,12 @@ vtkMRMLTransformBufferNode
 ::vtkMRMLTransformBufferNode()
 {
   // No need to initialize the vectors
-  // Initialize the statuses for updating
-  this->TransformsStatus = 0;
-  this->MessagesStatus = 0;
-  this->ActiveTransformsStatus = 0;
+  this->MessageRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+
+  this->AddNodeReferenceRole( ACTIVE_TRANSFORM_REFERENCE_ROLE );
+
+  this->RecordingState = false;
+  this->Clock0 = clock();
 }
 
 
@@ -133,97 +136,73 @@ vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::Concatenate( vtkMRMLTransformBufferNode* catBuffer )
 {
+  // Note: Does not affect the active transforms or recording state
+
   // If you want things to be deep copied, just deep copy the buffer
-  for ( int i = 0; i < catBuffer->GetNumTransforms(); i++ )
+  vtkSmartPointer< vtkLogRecordBuffer > otherCombinedTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+  catBuffer->GetCombinedTransformRecordBuffer( otherCombinedTransformRecordBuffer ); // This will maintain complexity
+  for ( int i = 0; i < otherCombinedTransformRecordBuffer->GetNumRecords(); i++ )
   {
-    this->AddTransform( catBuffer->GetTransformAt( i ) );
+    this->AddTransform( vtkTransformRecord::SafeDownCast( otherCombinedTransformRecordBuffer->GetRecord( i ) ) );
   }
+
   for ( int i = 0; i < catBuffer->GetNumMessages(); i++ )
   {
-    this->AddMessage( catBuffer->GetMessageAt( i ) );
+    this->AddMessage( catBuffer->GetMessageAtIndex( i ) );
   }
+
 }
 
 
 void vtkMRMLTransformBufferNode
 ::AddTransform( vtkTransformRecord* newTransform )
 {
-  // Ensure that we put it into sorted order (usually it will go at the end)
-  int insertLocation = 0;
-  if ( this->GetNumTransforms() < 1 )
+  // If the relevant transform record buffer does not exist, then create it
+  if ( this->TransformRecordBuffers.find( newTransform->GetDeviceName() ) == this->TransformRecordBuffers.end() )
   {
-    this->transforms.push_back( newTransform );
-    this->Modified();
-    this->InvokeEvent( this->TransformAddedEvent, &( insertLocation = 0 ) );
-	  return;
-  }
-  if ( newTransform->GetTime() >= this->GetCurrentTransform()->GetTime() )
-  {
-    this->transforms.push_back( newTransform );
-    this->Modified();
-    this->InvokeEvent( this->TransformAddedEvent, &( insertLocation = this->GetNumTransforms() - 1 ) );
-	  return;
-  }
-  if ( newTransform->GetTime() <= this->GetTransformAt(0)->GetTime() )
-  {
-    this->transforms.insert( transforms.begin() + 0, newTransform );
-    this->Modified();
-    this->InvokeEvent( this->TransformAddedEvent, &( insertLocation = 0 ) );
-	  return;
+    vtkSmartPointer< vtkLogRecordBuffer > newTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+    this->TransformRecordBuffers[ newTransform->GetDeviceName() ] = newTransformRecordBuffer;
   }
 
-  // Use the binary search
-  insertLocation = this->GetPriorTransformIndex( newTransform->GetTime() ) + 1;
-  this->transforms.insert( this->transforms.begin() + insertLocation, newTransform );
+  // Add to the appropriate transform record buffer
+  int insertLocation = this->TransformRecordBuffers[ newTransform->GetDeviceName() ]->AddRecord( newTransform );
+
+  TransformEventDataType transformAddedData;
+  transformAddedData.first = newTransform->GetDeviceName();
+  transformAddedData.second = insertLocation;
+
+  // Invoke appropriate events
   this->Modified();
-  this->InvokeEvent( this->TransformAddedEvent, &insertLocation );
+  this->InvokeEvent( this->TransformAddedEvent, &transformAddedData );
 }
 
 
 void vtkMRMLTransformBufferNode
 ::AddMessage( vtkMessageRecord* newMessage )
 {
-  // Ensure that we put it into sorted order (usually it will go at the end)
-  int insertLocation = 0;
-  if ( this->GetNumMessages() < 1 )
-  {
-    this->messages.push_back( newMessage );
-    this->Modified();
-    this->InvokeEvent( this->MessageAddedEvent, &( insertLocation = 0 ) );
-	  return;
-  }
-  if ( newMessage->GetTime() >= this->GetCurrentMessage()->GetTime() )
-  {
-    this->messages.push_back( newMessage );
-    this->Modified();
-    this->InvokeEvent( this->MessageAddedEvent, &( insertLocation = this->GetNumMessages() - 1 ) );
-	  return;
-  }
-  if ( newMessage->GetTime() <= this->GetMessageAt(0)->GetTime() )
-  {
-    this->messages.insert( messages.begin() + 0, newMessage );
-    this->Modified();    
-    this->InvokeEvent( this->MessageAddedEvent, &( insertLocation = 0 ) );
-	  return;
-  }
+  // Add to the message record buffer
+  int insertLocation = this->MessageRecordBuffer->AddRecord( newMessage );
 
-  // Use the binary search
-  insertLocation = this->GetPriorMessageIndex( newMessage->GetTime() ) + 1;
-  this->messages.insert( this->messages.begin() + insertLocation, newMessage );
+  // Invoke appropriate events
   this->Modified();
   this->InvokeEvent( this->MessageAddedEvent, &insertLocation );
 }
 
 
 void vtkMRMLTransformBufferNode
-::RemoveTransformAt( int index )
+::RemoveTransform( int index, std::string transformName )
 {
-  if ( index >= 0 && index < this->GetNumTransforms() )
+  // If there is no such transform record buffer, then do nothing
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
   {
-    this->GetTransformAt(index)->Delete();
-    this->transforms.erase( transforms.begin() + index );
+    return;
+  }
+
+  // Only invoke events if the remove was successful
+  if ( this->TransformRecordBuffers[ transformName ]->RemoveRecord( index ) )
+  {
     this->Modified();
-    this->InvokeEvent( this->TransformRemovedEvent, &index );
+    this->InvokeEvent( this->TransformRemovedEvent );
   }
 }
 
@@ -231,29 +210,26 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::RemoveTransformsByName( std::string name )
 {
-  for ( int i = 0; i < this->transforms.size(); i++ )
+  // If there is no such transform record buffer, then do nothing
+  if ( this->TransformRecordBuffers.find( name ) == this->TransformRecordBuffers.end() )
   {
-    if ( this->GetTransformAt(i)->GetDeviceName().compare( name ) == 0 )
-	  {
-	    this->GetTransformAt(i)->Delete();
-	    this->transforms.erase( transforms.begin() + i );
-	    i--;
-	  }
+    return;
   }
+
+  this->TransformRecordBuffers.erase( name );
   this->Modified();
   this->InvokeEvent( this->TransformRemovedEvent );
 }
 
 
 void vtkMRMLTransformBufferNode
-::RemoveMessageAt( int index )
+::RemoveMessage( int index )
 {
-  if ( index >= 0 && index < this->GetNumMessages() )
+  // Only invoke events if the remove was successful
+  if ( this->MessageRecordBuffer->RemoveRecord( index ) )
   {
-    this->GetMessageAt(index)->Delete();
-    this->messages.erase( messages.begin() + index );
     this->Modified();
-    this->InvokeEvent( this->MessageRemovedEvent, &index );
+    this->InvokeEvent( this->MessageRemovedEvent );
   }
 }
 
@@ -261,131 +237,129 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::RemoveMessagesByName( std::string name )
 {
-  for ( int i = 0; i < this->messages.size(); i++ )
+  for ( int i = 0; i < this->MessageRecordBuffer->GetNumRecords(); i++ )
   {
-    if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
+    if ( this->GetMessageAtIndex(i)->GetMessageString().compare( name ) == 0 )
 	  {
-      this->GetMessageAt(i)->Delete();
-	    this->messages.erase( messages.begin() + i );
+      this->RemoveMessage( i );
 	    i--;
 	  }
   }
+
   this->Modified();
   this->InvokeEvent( this->MessageRemovedEvent );
 }
 
 
 vtkTransformRecord* vtkMRMLTransformBufferNode
-::GetTransformAt( int index )
+::GetTransformAtIndex( int index, std::string transformName )
 {
-  return this->transforms.at( index );
-}
-
-
-vtkTransformRecord* vtkMRMLTransformBufferNode
-::GetCurrentTransform()
-{
-  return this->transforms.at( this->GetNumTransforms() - 1 );
-}
-
-
-vtkTransformRecord* vtkMRMLTransformBufferNode
-::GetTransformByName( std::string name )
-{
-  for ( int i = 0; i < this->transforms.size(); i++ )
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
   {
-    if ( this->GetTransformAt(i)->GetDeviceName().compare( name ) == 0 )
-	{
-	  return this->GetTransformAt(i);
-	}
+    return NULL;
   }
-  return NULL;
+
+  return vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformName ]->GetRecord( index ) );
+}
+
+
+vtkTransformRecord* vtkMRMLTransformBufferNode
+::GetCurrentTransform( std::string transformName )
+{
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
+  {
+    return NULL;
+  }
+
+  return vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformName ]->GetCurrentRecord() );
 }
 
 
 vtkMessageRecord* vtkMRMLTransformBufferNode
-::GetMessageAt( int index )
+::GetMessageAtIndex( int index )
 {
-  return this->messages.at( index );
+  return vtkMessageRecord::SafeDownCast( this->MessageRecordBuffer->GetRecord( index ) );
 }
 
 
 vtkMessageRecord* vtkMRMLTransformBufferNode
 ::GetCurrentMessage()
 {
-  return this->messages.at( this->GetNumMessages() - 1 );
-}
-
-
-vtkMessageRecord* vtkMRMLTransformBufferNode
-::GetMessageByName( std::string name )
-{
-  for ( int i = 0; i < this->messages.size(); i++ )
-  {
-    if ( this->GetMessageAt(i)->GetName().compare( name ) == 0 )
-	{
-	  return this->GetMessageAt(i);
-	}
-  }
-  return NULL;
+  return vtkMessageRecord::SafeDownCast( this->MessageRecordBuffer->GetCurrentRecord() );
 }
 
 
 vtkTransformRecord* vtkMRMLTransformBufferNode
-::GetTransformAtTime( double time )
+::GetTransformAtTime( double time, std::string transformName )
 {
-  if ( this->GetNumTransforms() == 0 )
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
   {
     return NULL;
   }
-  if ( time <= this->GetTransformAt(0)->GetTime() )
-  {
-    return this->GetTransformAt( 0 );
-  }
-  if ( time >= this->GetCurrentTransform()->GetTime() )
-  {
-    return this->GetCurrentTransform();
-  }
 
-  // Binary search since the records are sorted
-  return this->GetTransformAt( this->GetClosestTransformIndex( time ) );
-
+  return vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformName ]->GetRecordAtTime( time ) );
 }
 
 
 vtkMessageRecord* vtkMRMLTransformBufferNode
 ::GetMessageAtTime( double time )
 {
-  if ( this->GetNumMessages() == 0 )
+  return vtkMessageRecord::SafeDownCast( this->MessageRecordBuffer->GetRecordAtTime( time ) );
+}
+
+
+vtkLogRecordBuffer* vtkMRMLTransformBufferNode
+::GetTransformRecordBuffer( std::string transformName )
+{
+  return this->TransformRecordBuffers[ transformName ];
+}
+
+
+std::vector< std::string > vtkMRMLTransformBufferNode
+::GetAllRecordedTransformNames()
+{
+  std::vector< std::string > recordedTransforms;
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
+  {
+    recordedTransforms.push_back( itr->first );
+  }
+
+  return recordedTransforms;
+}
+
+
+
+int vtkMRMLTransformBufferNode
+::GetNumTransforms( std::string transformName )
+{
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
   {
     return NULL;
   }
-  if ( time <= this->GetMessageAt(0)->GetTime() )
-  {
-    return this->GetMessageAt( 0 );
-  }
-  if ( time >= this->GetCurrentMessage()->GetTime() )
-  {
-    return this->GetCurrentMessage();
-  }
-
-  // Binary search since the records are sorted
-  return this->GetMessageAt( this->GetClosestMessageIndex( time ) );
-
+  
+  return this->TransformRecordBuffers[ transformName ]->GetNumRecords();
 }
 
 
 int vtkMRMLTransformBufferNode
 ::GetNumTransforms()
 {
-  return this->transforms.size();
+  int numTransforms = 0;
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
+  {
+    numTransforms += itr->second->GetNumRecords();
+  }
+  
+  return numTransforms;
 }
 
 
 int vtkMRMLTransformBufferNode
 ::GetNumMessages()
 {
-  return this->messages.size();
+  return this->MessageRecordBuffer->GetNumRecords();
 }
 
 
@@ -393,17 +367,28 @@ int vtkMRMLTransformBufferNode
 double vtkMRMLTransformBufferNode
 ::GetMaximumTime()
 {
-  if ( this->GetNumTransforms() > 0 )
+  // Max over all transform names
+  double maxTime = - std::numeric_limits< double >::max();
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    return this->GetCurrentTransform()->GetTime();
+    if ( itr->second->GetNumRecords() > 0 && itr->second->GetMaximumTime() > maxTime )
+    {
+      maxTime = itr->second->GetMaximumTime();
+    }
   }
 
-  if ( this->GetNumMessages() > 0 )
+  if ( this->MessageRecordBuffer->GetNumRecords() > 0 && this->MessageRecordBuffer->GetMaximumTime() > maxTime )
   {
-    return this->GetCurrentMessage()->GetTime();
+    maxTime = this->MessageRecordBuffer->GetMaximumTime();
   }
 
-  return 0.0;
+  if ( maxTime == - std::numeric_limits< double >::max() )
+  {
+    maxTime = 0.0; // Safety in case the transform buffer is completely empty
+  }
+
+  return maxTime;
 }
 
 
@@ -411,17 +396,28 @@ double vtkMRMLTransformBufferNode
 double vtkMRMLTransformBufferNode
 ::GetMinimumTime()
 {
-  if ( this->GetNumTransforms() > 0 )
+  // Min over all transform names
+  double minTime = std::numeric_limits< double >::max();
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    return this->GetTransformAt(0)->GetTime();
+    if ( itr->second->GetNumRecords() > 0 && itr->second->GetMinimumTime() < minTime )
+    {
+      minTime = itr->second->GetMinimumTime();
+    }
   }
 
-  if ( this->GetNumMessages() > 0 )
+  if ( this->MessageRecordBuffer->GetNumRecords() > 0 && this->MessageRecordBuffer->GetMinimumTime() < minTime )
   {
-    return this->GetMessageAt(0)->GetTime();
+    minTime = this->MessageRecordBuffer->GetMinimumTime();
   }
 
-  return 0.0;
+  if ( minTime == std::numeric_limits< double >::max() )
+  {
+    minTime = 0.0; // Safety in case the transform buffer is completely empty
+  }
+
+  return minTime;
 }
 
 
@@ -443,12 +439,9 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::ClearTransforms()
 {
-  // Need to explicitly call the VTK delete function on each of these VTK objects
-  for ( int i = 0; i < this->GetNumTransforms(); i++ )
-  {
-    this->GetTransformAt(i)->Delete();
-  }
-  this->transforms.clear();
+  // No need to explicitly call the VTK delete function on each of these VTK objects (since we use smart pointers)
+  this->TransformRecordBuffers.clear(); // Everything else will be automatically taken care of by smart pointers
+
   this->Modified();
   this->InvokeEvent( this->TransformRemovedEvent );
 }
@@ -457,300 +450,262 @@ void vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::ClearMessages()
 {
-  // Need to explicitly call the VTK delete function on each of these VTK objects
-  for ( int i = 0; i < this->GetNumMessages(); i++ )
-  {
-    this->GetMessageAt(i)->Delete();
-  }
-  this->messages.clear();
+  // Do not delete the buffer, just clear it
+  this->MessageRecordBuffer->Clear();
+
   this->Modified();
   this->InvokeEvent( this->MessageRemovedEvent );
 }
 
 
-// Implement binary searches to find transforms and/or messages at a particular time
-int vtkMRMLTransformBufferNode
-::GetPriorTransformIndex( double time )
+// Combine all of the transform record buffers into one big record buffer with all transforms in it
+void vtkMRMLTransformBufferNode
+::GetCombinedTransformRecordBuffer( vtkLogRecordBuffer* combinedTransformRecordBuffer )
 {
-  int lowerBound = 0;
-  int upperBound = this->GetNumTransforms() - 1;
-
-  if ( time < this->GetTransformAt( lowerBound )->GetTime() )
+  // Skip if there are no transforms
+  if ( this->TransformRecordBuffers.size() == 0 )
   {
-    return lowerBound;
+    return;
   }
-  if ( time > this->GetTransformAt( upperBound )->GetTime() )
+  
+  // Create a map storing the indices of which record needs to be added for each transform
+  std::map< std::string, int > indexMap;
+  std::map< std::string, vtkSmartPointer< vtkLogRecordBuffer > >::iterator itr;
+  for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
   {
-    return upperBound;
-  }
-
-  while ( upperBound - lowerBound > 1 )
-  {
-    // Note that if middle is equal to either lowerBound or upperBound then upperBound - lowerBound <= 1
-    int middle = int( ( lowerBound + upperBound ) / 2 );
-    double middleTime = this->GetTransformAt( middle )->GetTime();
-
-    if ( time == middleTime )
-    {
-      return middle;
-    }
-
-    if ( time > middleTime )
-    {
-      lowerBound = middle;
-    }
-
-    if ( time < middleTime )
-    {
-      upperBound = middle;
-    }
-
+    indexMap[ itr->first ] = 0;
   }
 
-  // Since we're returning the prior index, always return the lower bound
-  return lowerBound;
+  // Loop through, and add the smallest
+  bool allBuffersTraversed;
+  do
+  {
+    // Find the smallest time
+    std::string firstRecordTransformName;
+    double firstRecordTime = std::numeric_limits< double >::max();
+    vtkLogRecord* firstRecord = NULL;
+    
+    for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
+    {
+      // Skip if we have already reached the end of the current buffer
+      if ( indexMap[ itr->first ] == itr->second->GetNumRecords() )
+      {
+        continue;
+      }
+
+      vtkLogRecord* currentRecord = itr->second->GetRecord( indexMap[ itr->first ] );
+      double currentRecordTime = currentRecord->GetTime();
+
+      if ( currentRecordTime < firstRecordTime )
+      {
+        firstRecord = currentRecord;
+        firstRecordTime = currentRecordTime;
+        firstRecordTransformName = itr->first;
+      }
+    }
+
+    // Merge the smallest into the buffer
+    combinedTransformRecordBuffer->AddRecord( firstRecord );
+
+    // Increment the counter
+    indexMap[ firstRecordTransformName ]++;
+
+    // Check if we have reached the end of any buffer
+    allBuffersTraversed = true;
+    for( itr = this->TransformRecordBuffers.begin(); itr != this->TransformRecordBuffers.end(); itr++ )
+    {
+      if ( indexMap[ itr->first ] < itr->second->GetNumRecords() )
+      {
+        allBuffersTraversed = false;
+      }
+    }
+
+  }
+  while( ! allBuffersTraversed );
+
 }
 
 
-int vtkMRMLTransformBufferNode
-::GetClosestTransformIndex( double time )
-{
-  int lowerIndex = this->GetPriorTransformIndex( time );
-  int upperIndex = lowerIndex + 1;
-
-  if ( upperIndex >= this->GetNumTransforms() || std::abs ( time - this->GetTransformAt( lowerIndex )->GetTime() ) < std::abs ( time - this->GetTransformAt( upperIndex )->GetTime() ) )
-  {
-    return lowerIndex;
-  }
-  else
-  {
-    return upperIndex;
-  }
-}
 
 
-// Implement binary searches to find transforms and/or messages at a particular time
-int vtkMRMLTransformBufferNode
-::GetPriorMessageIndex( double time )
-{
-  int lowerBound = 0;
-  int upperBound = this->GetNumMessages() - 1;
 
-  if ( time < this->GetMessageAt( lowerBound )->GetTime() )
-  {
-    return lowerBound;
-  }
-  if ( time > this->GetMessageAt( upperBound )->GetTime() )
-  {
-    return upperBound;
-  }
-
-  while ( upperBound - lowerBound > 1 )
-  {
-    // Note that if middle is equal to either lowerBound or upperBound then upperBound - lowerBound <= 1
-    int middle = int( ( lowerBound + upperBound ) / 2 );
-    double middleTime = this->GetMessageAt( middle )->GetTime();
-
-    if ( time == middleTime )
-    {
-      return middle;
-    }
-
-    if ( time > middleTime )
-    {
-      lowerBound = middle;
-    }
-
-    if ( time < middleTime )
-    {
-      upperBound = middle;
-    }
-
-  }
-
-  // Since we're returning the prior index, always return the lower bound
-  return lowerBound;
-}
-
-
-int vtkMRMLTransformBufferNode
-::GetClosestMessageIndex( double time )
-{
-  int lowerIndex = this->GetPriorMessageIndex( time );
-  int upperIndex = lowerIndex + 1;
-
-  if ( upperIndex >= this->GetNumMessages() || abs ( time - this->GetMessageAt( lowerIndex )->GetTime() ) < abs ( time - this->GetMessageAt( upperIndex )->GetTime() ) )
-  {
-    return lowerIndex;
-  }
-  else
-  {
-    return upperIndex;
-  }
-}
-
-
+// Active transforms -------------------------------------------------------------------------
 
 void vtkMRMLTransformBufferNode
-::AddActiveTransform( std::string name )
+::AddActiveTransformID( std::string transformID )
 {
-  // Do not add if the name is already in the list
-  for ( int i = 0; i < this->activeTransforms.size(); i++ )
-  {
-    if ( this->activeTransforms.at(i).compare( name ) == 0 )
-	  {
-      return;
-	  }
-  }
+  vtkNew< vtkIntArray > events;
+  events->InsertNextValue( vtkMRMLLinearTransformNode::TransformModifiedEvent );
+  this->AddAndObserveNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, transformID.c_str(), events.GetPointer() );
 
-  this->activeTransforms.push_back( name );
-  this->Modified();
   this->InvokeEvent( this->ActiveTransformAddedEvent );
 }
 
 
 void vtkMRMLTransformBufferNode
-::RemoveActiveTransform( std::string name )
+::RemoveActiveTransformID( std::string transformID )
 {
-  for ( int i = 0; i < this->activeTransforms.size(); i++ )
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( ACTIVE_TRANSFORM_REFERENCE_ROLE ); i++ )
   {
-    if ( this->activeTransforms.at(i).compare( name ) == 0 )
-	  {
-	    this->activeTransforms.erase( this->activeTransforms.begin() + i );
-	    i--;
-      this->Modified();
+    if ( transformID.compare( this->GetNthNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      this->RemoveNthNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, i );
       this->InvokeEvent( this->ActiveTransformRemovedEvent );
+	    i--;      
 	  }
   }
-
 }
 
 
-std::vector<std::string> vtkMRMLTransformBufferNode
-::GetActiveTransforms()
+std::vector< std::string > vtkMRMLTransformBufferNode
+::GetActiveTransformIDs()
 {
-  return this->activeTransforms;
+  std::vector< std::string > transformIDs;
+
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( ACTIVE_TRANSFORM_REFERENCE_ROLE ); i++ )
+  {
+    transformIDs.push_back( this->GetNthNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, i ) );
+  }
+
+  return transformIDs;
 }
   
 
-void vtkMRMLTransformBufferNode
-::SetActiveTransforms( std::vector<std::string> names )
+bool vtkMRMLTransformBufferNode
+::IsActiveTransformID( std::string transformID )
 {
-  this->activeTransforms.clear();
-  this->activeTransforms = names;
-  this->Modified();
-  this->InvokeEvent( this->ActiveTransformRemovedEvent );
-}
-
-
-void vtkMRMLTransformBufferNode
-::SetActiveTransformsFromBuffer()
-{
-  this->activeTransforms.clear();
-
-  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( ACTIVE_TRANSFORM_REFERENCE_ROLE ); i++ )
   {
-    bool activeTransformExists = false;
-
-    for ( int j = 0; j < this->activeTransforms.size(); j++ )
+    if ( transformID.compare( this->GetNthNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, i ) ) == 0 )
     {
-      if ( this->activeTransforms.at(j).compare( this->GetTransformAt(i)->GetDeviceName() ) == 0 )
-      {
-        activeTransformExists = true;
-      }
-    }
-
-    // If we didn't find a mathcing active transform then add one
-    if ( ! activeTransformExists )
-    {
-      this->AddActiveTransform( this->GetTransformAt(i)->GetDeviceName() ); // Takes care of modified events
+      return true;
     }
   }
 
+  return false;
 }
 
 
-// We store many transforms of many different devices here possibly
-// This method will return an array of buffers that each only refer to one tool
-std::vector<vtkMRMLTransformBufferNode*> vtkMRMLTransformBufferNode
-::SplitBufferByName()
+void vtkMRMLTransformBufferNode
+::SetActiveTransformIDs( std::vector< std::string > transformIDs )
 {
-  std::vector<vtkMRMLTransformBufferNode*> deviceBuffers;
-
-  // Separate the transforms by their device name
-  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  // Remove all of the active transform IDs
+  while( this->GetNumberOfNodeReferences( ACTIVE_TRANSFORM_REFERENCE_ROLE ) > 0 )
   {
-    bool deviceExists = false;
-    for ( int j = 0; j < deviceBuffers.size(); j++ )
-	  {
-	    // Observe that a device buffer only exists if it has a transform, thus, the current transform is always available
-      if ( deviceBuffers.at(j)->GetCurrentTransform()->GetDeviceName().compare( this->GetTransformAt(i)->GetDeviceName() ) == 0 )
-	    {
-        deviceBuffers.at(j)->AddTransform( this->GetTransformAt(i)->DeepCopy() );
-		    deviceExists = true;
-	    }
-	  }
-
-	  if ( ! deviceExists )
-	  {
-	    vtkMRMLTransformBufferNode* newDeviceBuffer = vtkMRMLTransformBufferNode::New();
-	    newDeviceBuffer->AddTransform( this->GetTransformAt(i)->DeepCopy() );
-	    deviceBuffers.push_back( newDeviceBuffer );
-	  }
-
+    this->RemoveNthNodeReferenceID( ACTIVE_TRANSFORM_REFERENCE_ROLE, 0 );
   }
 
-  // Add the messages to all of the device buffers
-  for ( int i = 0; i < this->GetNumMessages(); i++ )
+  // Add all of the specified IDs
+  for ( int i = 0; i < transformIDs.size(); i++ )
   {
-    for ( int j = 0; j < deviceBuffers.size(); j++ )
-	  {
-      deviceBuffers.at(j)->AddMessage( this->GetMessageAt(i)->DeepCopy() );
-	  }
+    this->AddActiveTransformID( transformIDs.at( i ) );
   }
-
-  return deviceBuffers;  
 }
 
 
-// This method makes a buffer out of everything with the specified device name
-vtkMRMLTransformBufferNode* vtkMRMLTransformBufferNode
-::GetBufferByName( std::string name )
+
+// Recording ---------------------------------------------------------------------------------
+
+void vtkMRMLTransformBufferNode
+::StartRecording()
 {
-  std::vector<vtkMRMLTransformBufferNode*> deviceBuffers = this->SplitBufferByName();
-
-  vtkMRMLTransformBufferNode* outputBuffer = NULL;
-  for ( int j = 0; j < deviceBuffers.size(); j++ )
-  {
-    if ( deviceBuffers.at(j)->GetCurrentTransform()->GetDeviceName().compare( name ) == 0 )
-	  {
-	    outputBuffer->Copy( deviceBuffers.at(j) );
-	  }
-  }
-
-  deviceBuffers.clear();
-  return outputBuffer;
+  this->RecordingState = true;
 }
 
+
+void vtkMRMLTransformBufferNode
+::StopRecording()
+{
+  this->RecordingState = false;
+}
+
+
+bool vtkMRMLTransformBufferNode
+::GetRecording()
+{
+  return this->RecordingState;
+}
+
+
+double vtkMRMLTransformBufferNode
+::GetCurrentTimestamp()
+{
+  clock_t clock1 = clock();  
+  return double( clock1 - this->Clock0 ) / CLOCKS_PER_SEC;
+}
+
+
+
+// MRML node event processing -----------------------------------------------------------------
+
+void vtkMRMLTransformBufferNode
+::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
+{
+  // Do nothing if the node is not recording
+  if ( ! this->RecordingState )
+  {
+    return;
+  }
+
+  // The caller will be the node that was modified
+  vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( caller );
+  if ( transformNode == NULL )
+  {
+    return;
+  }
+
+  vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
+  transformNode->GetMatrixTransformToParent( transformMatrix );
+
+  // Create a record with the transform matrix
+  vtkSmartPointer< vtkTransformRecord > newTransformRecord = vtkSmartPointer< vtkTransformRecord >::New();
+  newTransformRecord->SetTransformMatrix( transformMatrix );
+  newTransformRecord->SetDeviceName( transformNode->GetName() );
+  newTransformRecord->SetTime( this->GetCurrentTimestamp() ); 
+  
+  // Look for the most recent value of this transform
+  if ( this->TransformRecordBuffers.find( transformNode->GetName() ) != this->TransformRecordBuffers.end() )
+  {
+    // If the value hasn't changed, we don't record
+    // Find the relevant record buffer, and make sure it is not a duplicate
+    vtkTransformRecord* testDuplicateRecord = vtkTransformRecord::SafeDownCast( this->TransformRecordBuffers[ transformNode->GetName() ]->GetCurrentRecord() );
+    if ( testDuplicateRecord->GetTransformMatrix().compare( newTransformRecord->GetTransformMatrix() ) == 0 )
+    {
+      return; // If it is a duplicate then exit, we have nothing to record  
+    }
+  }
+  
+  // Add transform only if it is not a duplicate
+  this->AddTransform( newTransformRecord );
+}
+
+
+// Read/write XML files ------------------------------------------------------------------------
 
 std::string vtkMRMLTransformBufferNode
-::ToXMLString()
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
+
+  vtkSmartPointer< vtkLogRecordBuffer > combinedTransformRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
+  this->GetCombinedTransformRecordBuffer( combinedTransformRecordBuffer ); // This will maintain complexity
   
-  xmlstring << "<TransformRecorderLog>" << std::endl;
+  xmlstring << indent << "<TransformRecorderLog>" << std::endl;
 
-  for ( int i = 0; i < this->GetNumTransforms(); i++ )
+  for ( int i = 0; i < combinedTransformRecordBuffer->GetNumRecords(); i++ )
   {
-    xmlstring << this->GetTransformAt(i)->ToXMLString();
+    xmlstring << combinedTransformRecordBuffer->GetRecord(i)->ToXMLString( indent.GetNextIndent() );
   }
 
-  for ( int i = 0; i < this->GetNumMessages(); i++ )
+  for ( int i = 0; i < this->MessageRecordBuffer->GetNumRecords(); i++ )
   {
-    xmlstring << this->GetMessageAt(i)->ToXMLString();
+    xmlstring << this->MessageRecordBuffer->GetRecord(i)->ToXMLString( indent.GetNextIndent() );
   }
 
-  xmlstring << "</TransformRecorderLog>" << std::endl;
+  xmlstring << indent << "</TransformRecorderLog>" << std::endl;
 
   return xmlstring.str();
 }
@@ -777,7 +732,7 @@ void vtkMRMLTransformBufferNode
 
 	  if ( strcmp( element->GetAttribute( "type" ), "transform" ) == 0 )
     {
-		  vtkTransformRecord* newTransform = vtkTransformRecord::New();
+		  vtkSmartPointer< vtkTransformRecord > newTransform = vtkSmartPointer< vtkTransformRecord >::New();
 		  newTransform->FromXMLElement( element );
 		  this->AddTransform( newTransform );
 		  continue;
@@ -785,7 +740,7 @@ void vtkMRMLTransformBufferNode
 
     if ( strcmp( element->GetAttribute( "type" ), "message" ) == 0 )
     {
-		  vtkMessageRecord* newMessage = vtkMessageRecord::New();
+		  vtkSmartPointer< vtkMessageRecord > newMessage = vtkSmartPointer< vtkMessageRecord >::New();
 		  newMessage->FromXMLElement( element );
 		  this->AddMessage( newMessage );
 		  continue;

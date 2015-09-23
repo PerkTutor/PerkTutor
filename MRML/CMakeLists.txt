@@ -10,16 +10,9 @@ set(module_mrml_name "${PROJECT_NAME}")
 # The header '${module_mrml_name}Export.h' will be automatically configured.
 set(module_mrml_export_directive "VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT")
 
-# Debug
-#MESSAGE( STATUS "TransformRecorder ====================================" )
-#MESSAGE( STATUS "Included: ${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF" )
-
-
 
 # Additional directories to include
 set(module_mrml_include_directories
-  ${Slicer_Base_INCLUDE_DIRS}
-  #${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF/MRML
   )
 
 # Source files
@@ -28,6 +21,10 @@ set(module_mrml_SRCS
   vtkMRMLTransformBufferNode.h
   vtkMRMLTransformBufferStorageNode.cxx
   vtkMRMLTransformBufferStorageNode.h
+  vtkLogRecordBuffer.cxx
+  vtkLogRecordBuffer.h
+  vtkLogRecord.h
+  vtkLogRecord.cxx
   vtkTransformRecord.cxx
   vtkTransformRecord.h
   vtkMessageRecord.cxx
@@ -39,8 +36,6 @@ set(module_mrml_target_libraries
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
-  #vtkSlicerOpenIGTLinkIFModuleMRML
-  vtkSlicerAnnotationsModuleMRML 
   )
 
 SlicerMacroBuildModuleMRML(

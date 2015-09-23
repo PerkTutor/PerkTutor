@@ -24,7 +24,8 @@
 // Qt includes
 #include "qSlicerWidget.h"
 
-#include "qSlicerTransformBufferWidgetHelper.h"
+#include "vtkSlicerModuleLogic.h"
+#include "vtkMRMLTransformBufferNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 // FooBar Widgets includes
@@ -43,27 +44,30 @@ public:
   qSlicerTransformBufferWidget(QWidget *parent=0);
   virtual ~qSlicerTransformBufferWidget();
 
-  qSlicerTransformBufferWidgetHelper* BufferHelper;
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
+  virtual vtkMRMLTransformBufferNode* getTransformBufferNode();
 
 protected slots:
 
   void onImportButtonClicked();
   void onExportButtonClicked();
 
-  virtual void onTransformBufferNodeChanged( vtkMRMLNode* );
+  virtual void onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
   void onTransformBufferNodeModified();
 
   void updateWidget();
 
 signals:
 
-  void transformBufferNodeChanged( vtkMRMLTransformBufferNode* );
+  void transformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
   void transformBufferNodeModified();
 
 protected:
 
   QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
+
+  vtkMRMLTransformBufferNode* TransformBufferNode;
+  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
 
   virtual void setup();
 

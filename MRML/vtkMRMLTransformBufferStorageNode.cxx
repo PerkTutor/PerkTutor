@@ -111,7 +111,7 @@ int vtkMRMLTransformBufferStorageNode
   parser->Parse();
 
   bufferNode->FromXMLElement( parser->GetRootElement() );
-  bufferNode->SetActiveTransformsFromBuffer();
+  //bufferNode->SetActiveTransformsFromBuffer();
 
   // The buffer name should already be specified
   // The scene should already be populated with the desired transforms
@@ -142,7 +142,7 @@ int vtkMRMLTransformBufferStorageNode
     return 0;
   }
 
-  output << bufferNode->ToXMLString();
+  output << bufferNode->ToXMLString( vtkIndent() );
 
   output.close();
 
