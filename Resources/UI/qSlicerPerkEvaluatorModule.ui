@@ -15,6 +15,24 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="qMRMLNodeComboBox" name="PerkEvaluatorNodeComboBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="nodeTypes">
+      <stringlist>
+       <string>vtkMRMLPerkEvaluatorNode</string>
+      </stringlist>
+     </property>
+     <property name="renameEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QToolBox" name="ModuleToolBoxWidget">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -34,7 +52,7 @@
         <x>0</x>
         <y>0</y>
         <width>606</width>
-        <height>797</height>
+        <height>771</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -318,32 +336,14 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>328</width>
-        <height>323</height>
+        <width>606</width>
+        <height>771</height>
        </rect>
       </property>
       <attribute name="label">
        <string>Analysis</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_9">
-       <item>
-        <widget class="qMRMLNodeComboBox" name="PerkEvaluatorNodeComboBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="nodeTypes">
-          <stringlist>
-           <string>vtkMRMLPerkEvaluatorNode</string>
-          </stringlist>
-         </property>
-         <property name="renameEnabled">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QGroupBox" name="MeasurementParametersGroupBox">
          <property name="sizePolicy">
@@ -581,32 +581,137 @@
               </property>
              </widget>
             </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="ctkCollapsibleGroupBox" name="BatchProcessingGroupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>Batch Processing</string>
+         </property>
+         <property name="collapsed">
+          <bool>true</bool>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
-             <widget class="QPushButton" name="ClipboardButton">
+             <widget class="QLabel" name="BatchPerkEvaluatorNodeLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="text">
-               <string/>
+               <string>Perk Evaluator Nodes:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="qMRMLCheckableNodeComboBox" name="BatchPerkEvaluatorNodeComboBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="nodeTypes">
+               <stringlist>
+                <string>vtkMRMLPerkEvaluatorNode</string>
+               </stringlist>
               </property>
              </widget>
             </item>
            </layout>
           </item>
-          <item row="1" column="0">
-           <widget class="QTableWidget" name="MetricsTable">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
+          <item>
+           <widget class="QPushButton" name="BatchPerkEvaluatorNodeButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Batch Process (Perk Evaluator Nodes)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="BatchTransformBufferLabel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Transform Buffers:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="qMRMLCheckableNodeComboBox" name="BatchTransformBufferComboBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="nodeTypes">
+               <stringlist>
+                <string>vtkMRMLTransformBufferNode</string>
+               </stringlist>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="BatchTransformBufferButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Batch Process (Transform Buffers)</string>
             </property>
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="ctkCollapsibleGroupBox" name="RealTimeProcessingGroupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>Real-Time Processing</string>
+         </property>
+         <property name="collapsed">
+          <bool>true</bool>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_11"/>
         </widget>
        </item>
        <item>
@@ -629,8 +734,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>176</width>
-        <height>117</height>
+        <width>606</width>
+        <height>771</height>
        </rect>
       </property>
       <attribute name="label">
@@ -923,6 +1028,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>qMRMLCheckableNodeComboBox</class>
+   <extends>qMRMLNodeComboBox</extends>
+   <header>qMRMLCheckableNodeComboBox.h</header>
+  </customwidget>
+  <customwidget>
    <class>qMRMLNodeComboBox</class>
    <extends>QWidget</extends>
    <header>qMRMLNodeComboBox.h</header>
@@ -992,6 +1102,38 @@
     <hint type="destinationlabel">
      <x>311</x>
      <y>142</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerPerkEvaluatorModule</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>BatchPerkEvaluatorNodeComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>311</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>454</x>
+     <y>561</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerPerkEvaluatorModule</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>BatchTransformBufferComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>311</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>454</x>
+     <y>602</y>
     </hint>
    </hints>
   </connection>

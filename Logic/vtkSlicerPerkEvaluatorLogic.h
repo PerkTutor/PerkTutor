@@ -25,16 +25,11 @@
 
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
+#include "vtkDoubleArray.h"
 
 #include "vtkSlicerPerkEvaluatorModuleLogicExport.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
-
-struct ToolTrajectory
-{
-  vtkMRMLTransformBufferNode* Buffer;
-  vtkMRMLLinearTransformNode* Node;
-};
 
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -64,49 +59,41 @@ protected:
 
 public:
 
-  // THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
+  // TODO: THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
   vtkMRMLTableNode* AddTable(const char* fileName, const char* name = 0);
   
-  void UpdateToolTrajectories( vtkMRMLTransformBufferNode* bufferNode );
-  vtkMRMLTransformBufferNode* GetSelfAndParentTransformBuffer( vtkMRMLLinearTransformNode* transform );
+  bool IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child );
 
-  std::vector< std::string > GetAllBufferToolNames();
+  void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
+  void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
 
   std::vector< std::string > GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode );
   std::vector< std::string > GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode );
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
   void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes );
-  
-  double GetTotalTime() const;
-  double GetMinTime() const;
-  double GetMaxTime() const;
 
-  double GetPlaybackTime() const;
-  void SetPlaybackTime( double time );
+  void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
 
-  typedef std::pair<std::string,double> MetricType;  
-  vtkMRMLTableNode* GetMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  double GetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
+  void SetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double time );
+  double GetMaximumRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
 
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;  
+  void ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+
+  void SetupRealTimeProcessing( vtkMRMLPerkEvaluatorNode* peNode );
+
+  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
+  void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );
+
   
 private:
 
   vtkSlicerPerkEvaluatorLogic(const vtkSlicerPerkEvaluatorLogic&); // Not implemented
   void operator=(const vtkSlicerPerkEvaluatorLogic&);               // Not implemented
 
-private:
-  
-  void ClearData();
 
-  std::vector< ToolTrajectory > ToolTrajectories;
-  vtkMRMLTableNode* MetricsNode;
-
-  void FindOrCreateMetricsNode( vtkMRMLTransformBufferNode* bufferNode );
-
-  double PlaybackTime;
 };
 
-const double NEEDLE_LENGTH = 300; // Assume 300mm
 
 #endif

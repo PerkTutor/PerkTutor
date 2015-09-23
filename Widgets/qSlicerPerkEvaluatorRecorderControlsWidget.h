@@ -18,41 +18,43 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerPerkEvaluatorTransformBufferWidget_h
-#define __qSlicerPerkEvaluatorTransformBufferWidget_h
+#ifndef __qSlicerPerkEvaluatorRecorderControlsWidget_h
+#define __qSlicerPerkEvaluatorRecorderControlsWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
-
-// FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
-#include "qSlicerTransformBufferWidget.h"
+#include "qSlicerRecorderControlsWidget.h"
 
-class qSlicerPerkEvaluatorTransformBufferWidgetPrivate;
+class qSlicerPerkEvaluatorRecorderControlsWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_PERKEVALUATOR_WIDGETS_EXPORT 
-qSlicerPerkEvaluatorTransformBufferWidget : public qSlicerTransformBufferWidget
+qSlicerPerkEvaluatorRecorderControlsWidget : public qSlicerRecorderControlsWidget
 {
   Q_OBJECT
 public:
-  qSlicerPerkEvaluatorTransformBufferWidget(QWidget *parent=0);
-  virtual ~qSlicerPerkEvaluatorTransformBufferWidget();
-
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+  qSlicerPerkEvaluatorRecorderControlsWidget(QWidget *parent=0);
+  virtual ~qSlicerPerkEvaluatorRecorderControlsWidget();
 
 protected slots:
 
-  void onTransformBufferNodeChanged( vtkMRMLNode* );
+  virtual void setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode );
+
+  void onStartButtonClicked();
+  void onStopButtonClicked();
 
 protected:
-  QScopedPointer<qSlicerPerkEvaluatorTransformBufferWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerPerkEvaluatorRecorderControlsWidgetPrivate> d_ptr;
 
+  vtkMRMLPerkEvaluatorNode* PerkEvaluatorNode;
+  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+  
 private:
-  Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorTransformBufferWidget);
-  Q_DISABLE_COPY(qSlicerPerkEvaluatorTransformBufferWidget);
+  Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorRecorderControlsWidget);
+  Q_DISABLE_COPY(qSlicerPerkEvaluatorRecorderControlsWidget);
 
 };
 

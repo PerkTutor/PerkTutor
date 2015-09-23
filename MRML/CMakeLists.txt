@@ -13,7 +13,6 @@ set(module_mrml_export_directive "VTK_SLICER_PERKEVALUATOR_MODULE_MRML_EXPORT")
 
 # Additional directories to include
 set(module_mrml_include_directories
-  ${Slicer_Base_INCLUDE_DIRS}
   )
 
 # Source files
@@ -33,6 +32,7 @@ set(module_mrml_target_libraries
   ${MRML_LIBRARIES}
   SlicerBaseLogic
   vtkIOInfovis
+  vtkSlicerTransformRecorderModuleLogic
   vtkSlicerTransformRecorderModuleMRML
   )
 

@@ -5,10 +5,13 @@
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
-#include "qSlicerPerkEvaluatorTransformBufferWidget.h"
+#include "qSlicerTransformBufferWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
+#include "qSlicerMetricsTableWidget.h"
+#include "qSlicerPerkEvaluatorRecorderControlsWidget.h"
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
 #include "qSlicerPerkEvaluatorAnatomyRolesWidget.h"
+
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
 class qSlicerPerkEvaluatorModuleWidgetPrivate;
@@ -39,7 +42,9 @@ public slots:
   void OnTimeout();
 
   void OnAnalyzeClicked();
-  void OnClipboardClicked();
+
+  void OnBatchPerkEvaluatorNodeClicked();
+  void OnBatchTransformBufferClicked();
 
   void OnMarkBeginChanged();
   void OnMarkBeginClicked();
@@ -54,11 +59,9 @@ public slots:
   void onNeedleTransformChanged( vtkMRMLNode* node );
   void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
-  void updateWidget();
-  void resetWidget();
-  void clearWidget();
-
-  void mrmlNodeChanged( vtkMRMLNode* );
+  void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
+  void onMetricsTableChanged( vtkMRMLNode* newMetricsTable );
+  void mrmlNodeChanged( vtkMRMLNode* peNode );
   void updateWidgetFromMRMLNode();
 
 protected:
@@ -69,7 +72,9 @@ protected:
   virtual void enter();
 
   QTimer* PlaybackTimer;
+  // TODO: Should these be moved to the PerkEvaluator node? Should these be changeable by the user?
   double PlaybackTimerIntervalSec;
+  double FrameStepSec;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);

@@ -40,14 +40,10 @@
 // PerkEvaluator includes
 #include "vtkSlicerPerkEvaluatorModuleMRMLExport.h"
 
-// Includes from Transform Recorder
-#include "vtkMRMLTransformBufferNode.h"
 
-struct TransformTrajectory
-{
-  vtkMRMLTransformBufferNode* Buffer;
-  vtkMRMLLinearTransformNode* Node;
-};
+// Includes from other modules
+#include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLTableNode.h"
 
 
 class VTK_SLICER_PERKEVALUATOR_MODULE_MRML_EXPORT
@@ -84,7 +80,7 @@ public:
   bool GetAutoUpdateTransformRoles();
   void SetAutoUpdateTransformRoles( bool update );
 
-  // Analysis start/end times
+  // Analysis start/end times (note: these are relative times)
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
   
@@ -101,6 +97,13 @@ public:
   // Metrics directory
   std::string GetMetricsDirectory();
   void SetMetricsDirectory( std::string newMetricsDirectory );
+
+  // Playback time
+  double GetPlaybackTime();
+  void SetPlaybackTime( double newPlaybackTime, bool analysis = false );
+
+  bool GetRealTimeProcessing();
+  void SetRealTimeProcessing( bool newRealTimeProcessing );
   
 
   // Getters/setters associated with roles
@@ -111,12 +114,30 @@ public:
   std::string GetAnatomyNodeName( std::string anatomyRole );
   std::string GetFirstAnatomyRole( std::string anatomyNodeName );
   void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
-  
-  
 
 
+  // Reference to transform buffer and to metrics node
+  std::string GetNodeReferenceIDString( std::string referenceRole );
+
+  vtkMRMLTransformBufferNode* GetTransformBufferNode();
+  std::string GetTransformBufferID();
+  void SetTransformBufferID( std::string newTransformBufferID );
+
+  vtkMRMLTableNode* GetMetricsTableNode();
+  std::string GetMetricsTableID();
+  void SetMetricsTableID( std::string newMetricsTableID );
+
+  // Pass along transform buffer events
+  void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
+  enum
+  {
+    TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
+    RealTimeProcessingStartedEvent,
+  };
   
-private:
+
+  
+protected:
 
 /* To store:
 TransformRoleMap
@@ -125,6 +146,7 @@ MarkEnd
 MarkBegin
 NeedleOrientation
 MetricsDirectory
+PlaybackTime
 */
 
   bool AutoUpdateMeasurementRange;
@@ -136,6 +158,10 @@ MetricsDirectory
   NeedleOrientationEnum NeedleOrientation;
   
   std::string MetricsDirectory;
+
+  double PlaybackTime;
+
+  bool RealTimeProcessing;
 
   std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
   std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names
