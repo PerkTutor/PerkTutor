@@ -377,10 +377,8 @@ void vtkSlicerPerkEvaluatorLogic
       continue;
     }
 
-    std::string matrixString = currentRecord->GetTransformString();
-
     vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-    PerkTutorCommon::MatrixStringTo4x4( matrixString, transformMatrix );
+    currentRecord->GetTransformMatrix( transformMatrix );
     linearTransformNode->SetMatrixTransformToParent( transformMatrix );
   }
 

@@ -21,8 +21,6 @@
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
 
-#include "qSlicerTransformBufferWidget.h" // TODO: Remove when GetSlicerModuleLogic made into helper function
-
 #include <QtGui>
 
 
@@ -68,7 +66,7 @@ qSlicerPerkEvaluatorMessagesWidget
 ::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
 {
   this->PerkEvaluatorNode = NULL;
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
 

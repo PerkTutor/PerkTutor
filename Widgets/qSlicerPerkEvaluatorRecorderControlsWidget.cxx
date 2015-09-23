@@ -66,7 +66,7 @@ qSlicerPerkEvaluatorRecorderControlsWidget
 ::qSlicerPerkEvaluatorRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorRecorderControlsWidgetPrivate(*this) )
 {
   this->PerkEvaluatorNode = NULL;
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
 

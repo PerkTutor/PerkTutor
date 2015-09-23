@@ -35,8 +35,6 @@
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 #include "ui_qSlicerMetricsTableWidget.h"
 
-#include "PerkTutorCommon.h"
-
 class qSlicerMetricsTableWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
