@@ -10,16 +10,9 @@ set(module_mrml_name "${PROJECT_NAME}")
 # The header '${module_mrml_name}Export.h' will be automatically configured.
 set(module_mrml_export_directive "VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT")
 
-# Debug
-#MESSAGE( STATUS "TransformRecorder ====================================" )
-#MESSAGE( STATUS "Included: ${Slicer_BINARY_DIR}/Modules/Loadable/OpenIGTLinkIF" )
-
-
 
 # Additional directories to include
 set(module_mrml_include_directories
-  ${PerkTutorCommon_SOURCE_DIR}
-  ${PerkTutorCommon_BINARY_DIR}
   )
 
 # Source files
@@ -43,7 +36,6 @@ set(module_mrml_target_libraries
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
-  PerkTutorCommon
   )
 
 SlicerMacroBuildModuleMRML(

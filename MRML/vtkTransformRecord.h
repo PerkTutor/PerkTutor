@@ -27,6 +27,7 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkMatrix4x4.h"
 
 // TransformRecorder includes
 #include "vtkLogRecord.h"
@@ -54,8 +55,13 @@ public:
 
   void Copy( vtkLogRecord* otherRecord );
   
-  void SetTransformString( std::string newTransformString );
-  std::string GetTransformString();
+  void SetTransformMatrix( vtkMatrix4x4* newMatrix4x4 );
+  void SetTransformMatrix( double* newMatrixDouble );
+  void SetTransformMatrix( std::string newMatrixString );
+  
+  void GetTransformMatrix( vtkMatrix4x4* matrix4x4 );
+  void GetTransformMatrix( double* matrixDouble );
+  std::string GetTransformMatrix();
 
   void SetDeviceName( std::string newDeviceName );
   std::string GetDeviceName();
@@ -67,7 +73,7 @@ public:
 protected:
   
   std::string DeviceName;
-  std::string TransformString; // To be consistent with "MessageString" in vtkMessageRecord
+  std::string TransformMatrix; // Store as string for read/write efficiency
   
 };  
 

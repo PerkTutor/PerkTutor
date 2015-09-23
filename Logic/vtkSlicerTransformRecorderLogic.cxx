@@ -33,6 +33,13 @@
 #include <cassert>
 
 
+// For getting the module logic
+#include "qSlicerApplication.h"
+#include "qSlicerModuleManager.h"
+#include "qSlicerAbstractCoreModule.h"
+
+
+
 // Helper Methods ------------------------------------------------------------
 
 void Trim(std::string &str)
@@ -329,7 +336,7 @@ void vtkSlicerTransformRecorderLogic
 
       // Create the transform record
       vtkTransformRecord* transformRecord =  vtkTransformRecord::New();
-      transformRecord->SetTransformString( value );
+      transformRecord->SetTransformMatrix( value );
       transformRecord->SetDeviceName( transformName );
       transformRecord->SetTime( frameNumber );
 
@@ -395,4 +402,18 @@ void vtkSlicerTransformRecorderLogic
   FrameNumberToTimestamp.clear();
   FrameNumberToTransformRecords.clear();
   FrameNumberToStatuses.clear();
+}
+
+
+
+// Module logic -------------------------------------------------
+vtkMRMLAbstractLogic* vtkSlicerTransformRecorderLogic
+::GetSlicerModuleLogic( std::string moduleName )
+{
+  qSlicerAbstractCoreModule* Module = qSlicerApplication::application()->moduleManager()->module( moduleName.c_str() );
+  if ( Module != NULL )
+  {
+    return Module->logic();
+  }
+  return NULL;
 }

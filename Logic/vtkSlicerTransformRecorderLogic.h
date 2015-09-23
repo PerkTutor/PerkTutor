@@ -34,8 +34,6 @@
 #include "vtkSmartPointer.h"
 
 // MRML includes
-// class vtkMRMLIGTLConnectorNode;
-class vtkMRMLViewNode;
 #include "vtkMRMLTransformBufferNode.h"
 // STD includes
 #include <cstdlib>
@@ -83,6 +81,9 @@ public:
   void ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
 
   void ImportFromMHAFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
+
+  // Grab module logic
+  static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );
   
 private:
 

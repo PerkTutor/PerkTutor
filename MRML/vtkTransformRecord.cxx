@@ -7,7 +7,7 @@ vtkStandardNewMacro( vtkTransformRecord );
 vtkTransformRecord
 ::vtkTransformRecord()
 {
-  this->TransformString = "";
+  this->TransformMatrix = "";
   this->DeviceName = "";
 }
 
@@ -15,7 +15,7 @@ vtkTransformRecord
 vtkTransformRecord
 ::~vtkTransformRecord()
 {
-  this->TransformString = "";
+  this->TransformMatrix = "";
   this->DeviceName = "";
 }
 
@@ -31,23 +31,84 @@ void vtkTransformRecord
     return;
   }
 
-  this->SetTransformString( transformRecord->GetTransformString() );
+  this->SetTransformMatrix( transformRecord->GetTransformMatrix() );
   this->SetDeviceName( transformRecord->GetDeviceName() );
 }
 
 
+void vtkTransformRecord
+::SetTransformMatrix( vtkMatrix4x4* newMatrix4x4 )
+{
+  std::stringstream ss;
+
+  for ( int i = 0; i < 4; i++ )
+  {
+    for ( int j = 0; j < 4; j++ )
+    {
+      ss << newMatrix4x4->GetElement( i, j ) << " ";
+    }
+  }
+
+  this->TransformMatrix = ss.str();
+}
+
 
 void vtkTransformRecord
-::SetTransformString( std::string newTransformString )
+::SetTransformMatrix( double* newMatrixDouble )
 {
-  this->TransformString = newTransformString;
+  std::stringstream ss;
+
+  for ( int i = 0; i < 16; i++ )
+  {
+    ss << newMatrixDouble[ i ] << " ";
+  }
+
+  this->TransformMatrix = ss.str();
+}
+
+
+void vtkTransformRecord
+::SetTransformMatrix( std::string newMatrixString )
+{
+  this->TransformMatrix = newMatrixString;
+}
+
+
+void vtkTransformRecord
+::GetTransformMatrix( vtkMatrix4x4* matrix4x4 )
+{
+  std::stringstream ss( this->TransformMatrix );
+
+  double value;
+
+  for ( int i = 0; i < 4; i++ )
+  {
+    for ( int j = 0; j < 4; j++ )
+    {
+      ss >> value;
+      matrix4x4->SetElement( i, j, value );
+    }
+  }
+  
+}
+
+
+void vtkTransformRecord
+::GetTransformMatrix( double* matrixDouble )
+{
+  std::stringstream ss( this->TransformMatrix );
+
+  for ( int i = 0; i < 16; i++ )
+  {
+    ss >> matrixDouble[ i ];
+  }
 }
 
 
 std::string vtkTransformRecord
-::GetTransformString()
+::GetTransformMatrix()
 {
-  return this->TransformString;
+  return this->TransformMatrix;
 }
 
 
@@ -75,7 +136,7 @@ std::string vtkTransformRecord
   xmlstring << " TimeStampNSec=\"" << this->TimeStampNSec << "\"";
   xmlstring << " type=\"transform\"";
   xmlstring << " DeviceName=\"" << this->DeviceName << "\"";
-  xmlstring << " transform=\"" << this->TransformString << "\"";
+  xmlstring << " transform=\"" << this->TransformMatrix << "\"";
   xmlstring << " />" << std::endl;
   return xmlstring.str();
 }
@@ -89,7 +150,7 @@ void vtkTransformRecord
     return;
   }
 
-  this->TransformString = element->GetAttribute( "transform" );
+  this->TransformMatrix = element->GetAttribute( "transform" );
   this->DeviceName = element->GetAttribute( "DeviceName" );
   this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
   this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );

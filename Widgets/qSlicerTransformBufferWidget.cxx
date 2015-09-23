@@ -66,7 +66,7 @@ qSlicerTransformBufferWidget
 ::qSlicerTransformBufferWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTransformBufferWidgetPrivate(*this) )
 {
   this->TransformBufferNode = NULL;
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "TransformRecorder" ) );
+  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
 

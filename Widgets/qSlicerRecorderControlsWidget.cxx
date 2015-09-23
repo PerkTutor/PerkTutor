@@ -23,8 +23,6 @@
 
 #include <QtGui>
 
-#include "qSlicerTransformBufferWidget.h" // TODO: Remove when GetSlicerModuleLogic made into helper function
-
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerRecorderControlsWidgetPrivate
@@ -67,7 +65,7 @@ qSlicerRecorderControlsWidget
 ::qSlicerRecorderControlsWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerRecorderControlsWidgetPrivate(*this) )
 {
   this->TransformBufferNode = NULL;
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "TransformRecorder" ) );
+  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
 

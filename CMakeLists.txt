@@ -30,8 +30,6 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_BINARY_DIR}/MRML
-  ${PerkTutorCommon_SOURCE_DIR}
-  ${PerkTutorCommon_BINARY_DIR}
   )
 
 # Source files
@@ -64,7 +62,6 @@ set(MODULE_TARGET_LIBRARIES
   ${MRML_LIBRARIES}
   ${QT_LIBRARIES}
   qSlicerBaseQTCore
-  PerkTutorCommon
   )
 
 # Resources
