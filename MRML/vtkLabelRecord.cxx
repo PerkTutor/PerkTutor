@@ -7,7 +7,7 @@ vtkStandardNewMacro( vtkLabelRecord );
 vtkLabelRecord
 ::vtkLabelRecord()
 {
-  this->Time = 0;
+  this->Vector = vtkSmartPointer< vtkLabelVector >::New();
 }
 
 
@@ -17,63 +17,114 @@ vtkLabelRecord
 }
 
 
-vtkLabelRecord* vtkLabelRecord
-::DeepCopy()
+void vtkLabelRecord
+::Copy( vtkLogRecord* otherRecord )
 {
-  vtkLabelRecord* newLabelRecord = vtkLabelRecord::New();
-  newLabelRecord->SetValues( this->GetValues() ); // Observe that this does a deep copy
-  newLabelRecord->SetLabel( this->GetLabel() );
-  newLabelRecord->SetTime( this->GetTime() );
-  return newLabelRecord;
+  this->vtkLogRecord::Copy( otherRecord );
+
+  vtkLabelRecord* labelRecord = vtkLabelRecord::SafeDownCast( otherRecord ); 
+  if ( labelRecord == NULL )
+  {
+    return;
+  }
+  
+  this->GetVector()->Copy( labelRecord->GetVector() );
 }
 
 
-double vtkLabelRecord
-::GetTime()
+vtkLabelVector* vtkLabelRecord
+::GetVector()
 {
-  return this->Time;
+  return this->Vector;
 }
 
-
-int vtkLabelRecord
-::GetSec()
+void vtkLabelRecord
+::SetVector( vtkLabelVector* newVector )
 {
-  return floor( this->Time );
-}
-
-
-int vtkLabelRecord
-::GetNSec()
-{
-  return floor( 1.0e9 * ( this->Time - floor( this->Time ) ) );
+  this->Vector = newVector;
 }
 
 
 void vtkLabelRecord
-::SetTime( double newTime )
+::ToTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type )
 {
-  this->Time = newTime;
+  std::stringstream matrixString;
+  if ( type == QUATERNION_RECORD && this->GetVector()->Size() == QUATERNION_RECORD ) // If it is in quaternion format
+  {
+    double quaternion[ 4 ];
+    quaternion[ 0 ] = this->GetVector()->GetElement( 3 );
+    quaternion[ 1 ] = this->GetVector()->GetElement( 4 );
+    quaternion[ 2 ] = this->GetVector()->GetElement( 5 );
+    quaternion[ 3 ] = this->GetVector()->GetElement( 6 );
+    
+    double matrix[ 3 ][ 3 ];
+    vtkMath::QuaternionToMatrix3x3( quaternion, matrix );
+    
+    matrixString << matrix[ 0 ][ 0 ] << matrix[ 0 ][ 1 ] << matrix[ 0 ][ 2 ] << this->GetVector()->GetElement( 0 );
+    matrixString << matrix[ 1 ][ 0 ] << matrix[ 1 ][ 1 ] << matrix[ 1 ][ 2 ] << this->GetVector()->GetElement( 1 );
+    matrixString << matrix[ 2 ][ 0 ] << matrix[ 2 ][ 1 ] << matrix[ 2 ][ 2 ] << this->GetVector()->GetElement( 2 );
+    matrixString << 0 << 0 << 0 << 1;
+  }
+  else if ( type == MATRIX_RECORD && this->GetVector()->Size() == MATRIX_RECORD ) // If it is in matrix format
+  {
+    matrixString << this->GetVector()->ToString();
+  }
+  else
+  {
+    return;
+  }
+  
+  transformRecord->SetTime( this->GetTime() );
+  transformRecord->SetDeviceName( this->GetVector()->GetLabel() );
+  transformRecord->SetTransformMatrix( matrixString.str() );
 }
 
 
 void vtkLabelRecord
-::SetTime( int newSec, int newNSec )
+::FromTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type )
 {
-  this->Time = newSec + 1.0e-9 * newNSec;
+  std::stringstream matrixString( transformRecord->GetTransformMatrix() );
+  std::stringstream trackingString;
+  if ( type == QUATERNION_RECORD ) // If it is in quaternion format
+  {
+    double translation[ 3 ];
+    double matrix[ 3 ][ 3 ];
+    matrixString >> matrix[ 0 ][ 0 ]; matrixString >> matrix[ 0 ][ 1 ]; matrixString >> matrix[ 0 ][ 2 ]; matrixString >> translation[ 0 ];
+    matrixString >> matrix[ 1 ][ 0 ]; matrixString >> matrix[ 1 ][ 1 ]; matrixString >> matrix[ 1 ][ 2 ]; matrixString >> translation[ 1 ];
+    matrixString >> matrix[ 2 ][ 0 ]; matrixString >> matrix[ 2 ][ 1 ]; matrixString >> matrix[ 2 ][ 2 ]; matrixString >> translation[ 2 ];
+    
+    double quaternion[ 4 ];
+    vtkMath::Matrix3x3ToQuaternion( matrix, quaternion );
+    
+    trackingString << translation[ 0 ] << translation[ 1 ] << translation[ 2 ];
+    trackingString << quaternion[ 0 ] << quaternion[ 1 ] << quaternion[ 2 ] << quaternion[ 3 ];
+  }
+  else if ( type == MATRIX_RECORD ) // If it is in matrix format
+  {
+    trackingString << transformRecord->GetTransformMatrix();
+  }
+  else
+  {
+    return;
+  }
+  
+  this->SetTime( transformRecord->GetTime() );
+  this->GetVector()->SetLabel( transformRecord->GetDeviceName() );
+  this->GetVector()->FromString( trackingString.str(), type );
 }
 
 
 std::string vtkLabelRecord
-::ToXMLString( std::string name )
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
 
-  xmlstring << "      <" << name;
-  xmlstring << " TimeStampSec=\"" << this->GetSec() << "\"";
-  xmlstring << " TimeStampNSec=\"" << this->GetNSec() << "\"";
-  xmlstring << " Label=\"" << this->GetLabel() << "\"";
-  xmlstring << " Size=\"" << this->Size() << "\"";
-  xmlstring << " Values=\"" << this->ToString() << "\"";
+  xmlstring << indent << "<Record";
+  xmlstring << " TimeStampSec=\"" << this->GetTimeStampSec() << "\"";
+  xmlstring << " TimeStampNSec=\"" << this->GetTimeStampNSec() << "\"";
+  xmlstring << " Label=\"" << this->GetVector()->GetLabel() << "\"";
+  xmlstring << " Size=\"" << this->GetVector()->Size() << "\"";
+  xmlstring << " Values=\"" << this->GetVector()->ToString() << "\"";
   xmlstring << " />" << std::endl;
 
   return xmlstring.str();
@@ -81,15 +132,15 @@ std::string vtkLabelRecord
 
 
 void vtkLabelRecord
-::FromXMLElement( vtkXMLDataElement* element, std::string name )
+::FromXMLElement( vtkXMLDataElement* element )
 {
-
-  if ( strcmp( element->GetName(), name.c_str() ) != 0 )
+  if ( element == NULL || strcmp( element->GetName(), "Record" ) != 0 )
   {
-    return;  // If it's not a "log" or is the wrong tool jump to the next.
+    return;  // If it's not a "record" jump to the next.
   }
 
-  this->FromString( std::string( element->GetAttribute( "Values" ) ), atoi( element->GetAttribute( "Size" ) ) );
-  this->SetTime( atoi( element->GetAttribute( "TimeStampSec" ) ), atoi( element->GetAttribute( "TimeStampNSec" ) ) );
-  this->SetLabel( std::string( element->GetAttribute( "Label" ) ) );
+  this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
+  this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
+  this->GetVector()->FromString( std::string( element->GetAttribute( "Values" ) ), atoi( element->GetAttribute( "Size" ) ) );
+  this->GetVector()->SetLabel( std::string( element->GetAttribute( "Label" ) ) );
 }

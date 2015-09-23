@@ -15,41 +15,42 @@ vtkStandardNewMacro( vtkMarkovModel );
 vtkMarkovModel
 ::vtkMarkovModel()
 {
-  pi = GetZeroPi();
-  A = GetZeroA();
-  B = GetZeroB();
+  this->Pi = vtkSmartPointer< vtkLabelVector >::New();
+  this->GetZeroPi( this->Pi );
+
+  // No need to pre-allocate for vector
+  this->A = this->GetZeroA();
+  this->B = this->GetZeroB();
 }
 
 
 vtkMarkovModel
 ::~vtkMarkovModel()
 {
-  vtkDeleteVector( this->A );
-  vtkDeleteVector( this->B );
-  vtkDelete( pi );
+  this->A.clear();
+  this->B.clear();
 
-  this->stateNames.clear();
-  this->symbolNames.clear();
+  this->StateNames.clear();
+  this->SymbolNames.clear();
 }
 
 
-vtkMarkovModel* vtkMarkovModel
-::DeepCopy()
+void vtkMarkovModel
+::Copy( vtkMarkovModel* otherMarkov )
 {
-  vtkMarkovModel* newMarkovModel = vtkMarkovModel::New();
+  this->SetStates( otherMarkov->StateNames );
+  this->SetSymbols( otherMarkov->SymbolNames );
+  
+  vtkSmartPointer< vtkLabelVector > otherPi = vtkSmartPointer< vtkLabelVector >::New();
+  otherMarkov->GetPi( otherPi );
+  std::vector< vtkSmartPointer< vtkLabelVector > > otherA;
+  otherA = otherMarkov->GetA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > otherB;
+  otherB = otherMarkov->GetB();
 
-  for ( int i = 0; i < this->GetNumStates(); i++ )
-  {
-    newMarkovModel->A.push_back( this->GetA().at(i)->DeepCopy() );
-	newMarkovModel->B.push_back( this->GetB().at(i)->DeepCopy() );
-  }
-
-  newMarkovModel->pi = vtkDeleteAssign( newMarkovModel->pi, this->pi->DeepCopy() );
-
-  newMarkovModel->SetStates( this->stateNames );
-  newMarkovModel->SetSymbols( this->symbolNames );
-
-  return newMarkovModel;
+  this->Pi->Copy( otherPi );
+  this->SetA( otherA );
+  this->SetB( otherB );
 }
 
 
@@ -58,54 +59,56 @@ vtkMarkovModel* vtkMarkovModel
 int vtkMarkovModel
 ::GetNumStates()
 {
-  return this->stateNames.size();
+  return this->StateNames.size();
 }
 
 
 int vtkMarkovModel
 ::GetNumSymbols()
 {
-  return this->symbolNames.size();
+  return this->SymbolNames.size();
 }
 
 
 void vtkMarkovModel
-::SetStates( std::vector<std::string> newStateNames )
+::SetStates( std::vector< std::string > newStateNames )
 {
-  this->stateNames = newStateNames;
+  this->StateNames = newStateNames;
 }
 
 
 void vtkMarkovModel
 ::SetStates( int newStates )
 {
-  std::vector<std::string> stateNameVector;
+  // Assume that we newStates is the number of states we want
+  std::vector< std::string > stateNameVector;
   for ( int i = 0; i < newStates; i++ )
   {
     std::stringstream statestring;
-	statestring << i;
-	stateNameVector.push_back( statestring.str() );
+	  statestring << i;
+	  stateNameVector.push_back( statestring.str() );
   }
   this->SetStates( stateNameVector );
 }
 
 
 void vtkMarkovModel
-::SetSymbols( std::vector<std::string> newSymbolNames )
+::SetSymbols( std::vector< std::string > newSymbolNames )
 {
-  this->symbolNames = newSymbolNames;
+  this->SymbolNames = newSymbolNames;
 }
 
 
 void vtkMarkovModel
 ::SetSymbols( int newSymbols )
 {
-  std::vector<std::string> symbolNameVector;
+  // Assume that we newSymbols is the number of symbols we want
+  std::vector< std::string > symbolNameVector;
   for ( int i = 0; i < newSymbols; i++ )
   {
     std::stringstream symbolstring;
-	symbolstring << i;
-	symbolNameVector.push_back( symbolstring.str() );
+	  symbolstring << i;
+	  symbolNameVector.push_back( symbolstring.str() );
   }
   this->SetSymbols( symbolNameVector );
 }
@@ -114,14 +117,14 @@ void vtkMarkovModel
 void vtkMarkovModel
 ::AddState( std::string newStateName )
 {
-  this->stateNames.push_back( newStateName );
+  this->StateNames.push_back( newStateName );
 }
 
 
 void vtkMarkovModel
 ::AddSymbol( std::string newSymbolName )
 {
-  this->symbolNames.push_back( newSymbolName );
+  this->SymbolNames.push_back( newSymbolName );
 }
 
 
@@ -130,10 +133,10 @@ int vtkMarkovModel
 {
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-    if ( newStateName.compare( this->stateNames.at(i) ) == 0 )
-	{
+    if ( newStateName.compare( this->StateNames.at(i) ) == 0 )
+	  {
       return i;
-	}
+	  }
   }
   return -1;
 }
@@ -144,10 +147,10 @@ int vtkMarkovModel
 {
   for ( int i = 0; i < this->GetNumSymbols(); i++ )
   {
-    if ( newSymbolName.compare( this->symbolNames.at(i) ) == 0 )
-	{
+    if ( newSymbolName.compare( this->SymbolNames.at(i) ) == 0 )
+	  {
       return i;
-	}
+	  }
   }
   return -1;
 }
@@ -158,61 +161,58 @@ int vtkMarkovModel
 
 
 void vtkMarkovModel
-::SetA( std::vector<vtkLabelVector*> newA )
+::SetA( std::vector< vtkSmartPointer< vtkLabelVector > > newA )
 {
-  vtkDeleteVector( this->A );
   this->A = newA;
 }
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetA()
 {
   return this->A;
 }
 
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetLogA()
 {
-  std::vector<vtkLabelVector*> logA;
+  std::vector< vtkSmartPointer< vtkLabelVector > > logA;
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
+    vtkSmartPointer< vtkLabelVector > currLogA = vtkSmartPointer< vtkLabelVector >::New();
 
-    vtkLabelVector* currA = vtkLabelVector::New();
+	  for ( int j = 0; j < this->GetNumStates(); j++ )
+	  {
+      currLogA->AddElement( log( this->A.at(i)->GetElement( j ) ) );
+	  }
 
-	for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-      currA->Add( log( this->A.at(i)->Get(j) ) );
-	}
-
-	// A must already exist
-	currA->SetLabel( this->stateNames.at(i) );
-	logA.push_back( currA );
+	  // A must already exist
+	  currLogA->SetLabel( this->StateNames.at(i) );
+	  logA.push_back( currLogA );
   }
 
   return logA;
 }
 
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetZeroA()
 {
-  std::vector<vtkLabelVector*> zeroA;
+  std::vector< vtkSmartPointer< vtkLabelVector > > zeroA;
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
+    vtkSmartPointer< vtkLabelVector > currZeroA = vtkSmartPointer< vtkLabelVector >::New();
 
-    vtkLabelVector* currA = vtkLabelVector::New();
+	  for ( int j = 0; j < this->GetNumStates(); j++ )
+	  {
+      currZeroA->AddElement( 0.0 );
+	  }
 
-	for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-      currA->Add( 0.0 );
-	}
-
-	//Note that A doesn't necessarily already exist
-	currA->SetLabel( this->stateNames.at(i) );
-	zeroA.push_back( currA );
+	  // Note that A doesn't necessarily already exist
+	  currZeroA->SetLabel( this->StateNames.at(i) );
+	  zeroA.push_back( currZeroA );
   }
 
   return zeroA;
@@ -220,61 +220,59 @@ std::vector<vtkLabelVector*> vtkMarkovModel
 
 
 void vtkMarkovModel
-::SetB( std::vector<vtkLabelVector*> newB )
+::SetB( std::vector< vtkSmartPointer< vtkLabelVector > > newB )
 {
-  vtkDeleteVector( this->B );
   this->B = newB;
 }
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetB()
 {
   return this->B;
 }
 
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetLogB()
 {
-  std::vector<vtkLabelVector*> logB;
+  std::vector< vtkSmartPointer< vtkLabelVector > > logB;
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
+    vtkSmartPointer< vtkLabelVector > currLogB = vtkSmartPointer< vtkLabelVector >::New();
 
-    vtkLabelVector* currB = vtkLabelVector::New();
+	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
+	  {
+      currLogB->AddElement( log( this->B.at(i)->GetElement( j ) ) );
+	  }
 
-	for ( int j = 0; j < this->GetNumSymbols(); j++ )
-	{
-      currB->Add( log( this->B.at(i)->Get(j) ) );
-	}
-
-	// B must already exist
-    currB->SetLabel( this->stateNames.at(i) );
-	logB.push_back( currB );
+	  // B must already exist
+    currLogB->SetLabel( this->StateNames.at(i) );
+	  logB.push_back( currLogB );
   }
 
   return logB;
 }
 
 
-std::vector<vtkLabelVector*> vtkMarkovModel
+std::vector< vtkSmartPointer< vtkLabelVector > > vtkMarkovModel
 ::GetZeroB()
 {
-  std::vector<vtkLabelVector*> zeroB;
+  std::vector< vtkSmartPointer< vtkLabelVector > > zeroB;
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
+    vtkSmartPointer< vtkLabelVector > currZeroB = vtkSmartPointer< vtkLabelVector >::New();
 
-    vtkLabelVector* currB = vtkLabelVector::New();
+	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
+	  {
+      currZeroB->AddElement( 0.0 );
+	  }
 
-	for ( int j = 0; j < this->GetNumSymbols(); j++ )
-	{
-      currB->Add( 0.0 );
-	}
-
-	// Note that B doesn't necessarily alread exist
-    currB->SetLabel( this->stateNames.at(i) );
-	zeroB.push_back( currB );
+	  // Note that B doesn't necessarily alread exist
+    currZeroB->SetLabel( this->StateNames.at(i) );
+	  zeroB.push_back( currZeroB );
   }
 
   return zeroB;
@@ -284,43 +282,43 @@ std::vector<vtkLabelVector*> vtkMarkovModel
 void vtkMarkovModel
 ::SetPi( vtkLabelVector* newPi )
 {
-  this->pi->Delete();
-  this->pi = newPi;
+  this->Pi = newPi;
 }
 
-vtkLabelVector* vtkMarkovModel
-::GetPi()
+
+void vtkMarkovModel
+::GetPi( vtkLabelVector* piPi )
 {
-  return this->pi;
+  piPi->Copy( this->Pi );
 }
 
-vtkLabelVector* vtkMarkovModel
-::GetLogPi()
-{
-  vtkLabelVector* logPi = vtkLabelVector::New();
 
+void vtkMarkovModel
+::GetLogPi( vtkLabelVector* logPi )
+{
+
+  // Note: Pi must already exist
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
-    logPi->Add( log( this->pi->Get(j) ) );
+    logPi->AddElement( log( this->Pi->GetElement( j ) ) );
   }
 
   logPi->SetLabel( "Pi" );
-  return logPi;
+
 }
 
 
-vtkLabelVector* vtkMarkovModel
-::GetZeroPi()
+void vtkMarkovModel
+::GetZeroPi( vtkLabelVector* zeroPi )
 {
-  vtkLabelVector* zeroPi = vtkLabelVector::New();
 
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
-    zeroPi->Add( 0.0 );
+    zeroPi->AddElement( 0.0 );
   }
 
   zeroPi->SetLabel( "Pi" );
-  return zeroPi;
+
 }
 
 
@@ -328,44 +326,43 @@ vtkLabelVector* vtkMarkovModel
 // File input and output ----------------------------------------------------
 
 std::string vtkMarkovModel
-::ToXMLString()
+::ToXMLString( vtkIndent indent )
 {
 
   std::stringstream xmlstring;
 
-  xmlstring << "    <Parameter Type=\"Markov\" >" << std::endl;
+  xmlstring << indent << "<MarkovModel Type=\"Markov\" >" << std::endl;
 
-  xmlstring << "      <States";
+  // State names
+  xmlstring << indent.GetNextIndent() << "<States";
   xmlstring << " Size=\"" << this->GetNumStates() << "\"";
   xmlstring << " Values=\"";
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
-    xmlstring << this->stateNames.at(i) << " ";
+    xmlstring << this->StateNames.at(i) << " ";
   }
   xmlstring << "\" />" << std::endl;
 
-  xmlstring << "      <Symbols";
+  // Symbol names
+  xmlstring << indent.GetNextIndent() << "<Symbols";
   xmlstring << " Size=\"" << this->GetNumSymbols() << "\"";
   xmlstring << " Values=\"";
   for ( int i = 0; i < this->GetNumSymbols(); i++ )
   {
-    xmlstring << this->symbolNames.at(i) << " ";
+    xmlstring << this->SymbolNames.at(i) << " ";
   }
   xmlstring << "\" />" << std::endl;
 
-  xmlstring << this->pi->ToXMLString( "MarkovPi" );
+  // Pi
+  xmlstring << vtkLabelVector::VectorsToXMLString( this->Pi, "MarkovPi", indent.GetNextIndent() );
 
-  for ( int i = 0; i < this->GetNumStates(); i++ )
-  {
-    xmlstring << this->A.at(i)->ToXMLString( "MarkovA" );
-  }
+  // A
+  xmlstring << vtkLabelVector::VectorsToXMLString( this->A, "MarkovA", indent.GetNextIndent() );
 
-  for ( int i = 0; i < this->GetNumStates(); i++ )
-  {
-    xmlstring << this->B.at(i)->ToXMLString( "MarkovB" );
-  }
-
-  xmlstring << "    </Parameter>" << std::endl;
+  // B
+  xmlstring << vtkLabelVector::VectorsToXMLString( this->B, "MarkovB", indent.GetNextIndent() );
+  
+  xmlstring << indent << "</MarkovModel>" << std::endl;
 
   return xmlstring.str();
 }
@@ -375,65 +372,66 @@ void vtkMarkovModel
 ::FromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( strcmp( element->GetName(), "Parameter" ) != 0 || strcmp( element->GetAttribute( "Type" ), "Markov" ) != 0 )
+  if ( strcmp( element->GetName(), "MarkovModel" ) != 0 || strcmp( element->GetAttribute( "Type" ), "Markov" ) != 0 )
   {
-    return;  // If it's not a "log" or is the wrong tool jump to the next.
+    return;  // If it's not a "MarkovModel"
   }
 
   int numElements = element->GetNumberOfNestedElements();
 
   // Set up temporary parameters so that we can push to them
-  vtkLabelVector* tempPi;
-  std::vector<vtkLabelVector*> tempA;
-  std::vector<vtkLabelVector*> tempB;
+  vtkSmartPointer< vtkLabelVector > tempPi;
+  std::vector< vtkSmartPointer< vtkLabelVector > > tempA;
+  std::vector< vtkSmartPointer< vtkLabelVector > > tempB;
 
   for ( int i = 0; i < numElements; i++ )
   {
     vtkXMLDataElement* childElement = element->GetNestedElement( i );
 
-	// Observe that we cannot use the vtkLabelVector methods since they have integers not strings
+	  // Observe that we cannot use the vtkLabelVector methods since they have integers not strings
     if ( strcmp( childElement->GetName(), "States" ) == 0 )
-	{
-	  std::stringstream instring( childElement->GetAttribute( "Values" ) );
-	  std::string value;
-      for ( int j = 0; j < atoi( childElement->GetAttribute( "Size" ) ); j++ )
 	  {
+      this->StateNames.clear();
+      int size = atoi( childElement->GetAttribute( "Size" ) );
+      
+	    std::stringstream instring( childElement->GetAttribute( "Values" ) );
+	    std::string value;
+      for ( int j = 0; j < size; j++ )
+	    {
         instring >> value;
-		this->stateNames.push_back( value );
+		    this->StateNames.push_back( value );
+	    }
+      
 	  }
-	}
 
-	if ( strcmp( childElement->GetName(), "Symbols" ) == 0 )
-	{
-	  std::stringstream instring( childElement->GetAttribute( "Values" ) );
-	  std::string value;
-      for ( int j = 0; j < atoi( childElement->GetAttribute( "Size" ) ); j++ )
+	  if ( strcmp( childElement->GetName(), "Symbols" ) == 0 )
 	  {
+      this->SymbolNames.clear();
+      int size = atoi( childElement->GetAttribute( "Size" ) );
+    
+	    std::stringstream instring( childElement->GetAttribute( "Values" ) );
+	    std::string value;
+      for ( int j = 0; j < size; j++ )
+	    {
         instring >> value;
-		this->symbolNames.push_back( value );
+		    this->SymbolNames.push_back( value );
+	    }
 	  }
-	}
 
-	if ( strcmp( childElement->GetName(), "MarkovPi" ) == 0 )
-	{
-      vtkLabelVector* currPi = vtkLabelVector::New();
-      currPi->FromXMLElement( childElement, "MarkovPi" );
-	  tempPi = currPi;
-	}
+    if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovPi" ) == 0 )
+	  {
+      tempPi = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovPi" ).at( 0 );
+	  }
 
-	if ( strcmp( childElement->GetName(), "MarkovA" ) == 0 )
-	{
-      vtkLabelVector* currA = vtkLabelVector::New();
-      currA->FromXMLElement( childElement, "MarkovA" );
-	  tempA.push_back( currA );
-	}
+	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovA" ) == 0 )
+	  {
+      tempA = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovA" );
+	  }
 
-	if ( strcmp( childElement->GetName(), "MarkovB" ) == 0 )
-	{
-      vtkLabelVector* currB = vtkLabelVector::New();
-      currB->FromXMLElement( childElement, "MarkovB" );
-	  tempB.push_back( currB );
-	}
+	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovB" ) == 0 )
+	  {
+      tempB = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovB" );
+	  }
 
   }
 
@@ -445,49 +443,51 @@ void vtkMarkovModel
 
 
 
+
+// All columns in the A and B matrices must sum to one
 void vtkMarkovModel
 ::NormalizeParameters()
 {
   
-  vtkLabelVector* tempPi = vtkLabelVector::New();
-  std::vector<vtkLabelVector*> tempA;
-  std::vector<vtkLabelVector*> tempB;
+  vtkSmartPointer< vtkLabelVector > tempPi = vtkSmartPointer< vtkLabelVector >::New();
+  std::vector< vtkSmartPointer< vtkLabelVector > > tempA;
+  std::vector< vtkSmartPointer< vtkLabelVector > > tempB;
 
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {
 
-    vtkLabelVector* currA = vtkLabelVector::New();
-	vtkLabelVector* currB = vtkLabelVector::New();
-	double sumA = 0;
-	double sumB = 0;
+    vtkSmartPointer< vtkLabelVector > currA = vtkSmartPointer< vtkLabelVector >::New();
+	  vtkSmartPointer< vtkLabelVector > currB = vtkSmartPointer< vtkLabelVector >::New();
+	  double sumA = 0;
+	  double sumB = 0;
 	
-	// Number of symbols and number of states may be different sizes
-	for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-      sumA += this->A.at(i)->Get(j);
-	}
+	  // Number of symbols and number of states may be different sizes
+	  for ( int j = 0; j < this->GetNumStates(); j++ )
+	  {
+      sumA += this->A.at(i)->GetElement( j );
+	  }
 
-	for ( int j = 0; j < this->GetNumSymbols(); j++ )
-	{
-      sumB += this->B.at(i)->Get(j);
-	}
+	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
+	  {
+      sumB += this->B.at(i)->GetElement( j );
+	  }
 
-	// Divide by the sum to normalize
-	for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-      currA->Add( this->A.at(i)->Get(j) / sumA );
-	}
+	  // Divide by the sum to normalize
+	  for ( int j = 0; j < this->GetNumStates(); j++ )
+	  {
+      currA->AddElement( this->A.at(i)->GetElement( j ) / sumA );
+	  }
 
-	for ( int j = 0; j < this->GetNumSymbols(); j++ )
-	{
-      currB->Add( this->B.at(i)->Get(j) / sumB );
-	}
+	  for ( int j = 0; j < this->GetNumSymbols(); j++ )
+	  {
+      currB->AddElement( this->B.at(i)->GetElement( j ) / sumB );
+	  }
 
     currA->SetLabel( this->A.at(i)->GetLabel() );    
-	currB->SetLabel( this->B.at(i)->GetLabel() );
+	  currB->SetLabel( this->B.at(i)->GetLabel() );
 
-	tempA.push_back( currA );
-	tempB.push_back( currB );
+	  tempA.push_back( currA );
+	  tempB.push_back( currB );
 
   }
 
@@ -495,16 +495,16 @@ void vtkMarkovModel
 
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
-    sumPi += this->pi->Get(j);
+    sumPi += this->Pi->GetElement( j );
   }
 
   // Divide by sum to normalize
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
-    tempPi->Add( this->pi->Get(j) / sumPi );
+    tempPi->AddElement( this->Pi->GetElement( j ) / sumPi );
   }
 
-  tempPi->SetLabel( this->pi->GetLabel() );
+  tempPi->SetLabel( this->Pi->GetLabel() );
 
   this->SetPi( tempPi );
   this->SetA( tempA );
@@ -520,63 +520,63 @@ void vtkMarkovModel
   // Doesn't make sense to have both values and values in training
   // Assume that the states and symbols have already been set
 
-  this->SetPi( this->GetZeroPi() );
-  this->SetA( this->GetZeroA() );
-  this->SetB( this->GetZeroB() );
+  this->GetZeroPi( this->Pi );
+  this->A = this->GetZeroA();
+  this->B = this->GetZeroB();
 }
 
 
 void vtkMarkovModel
-::AddEstimationData( std::vector<vtkMarkovRecord*> sequence )
+::AddEstimationData( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence )
 {
   // Add the data from the current sequence
   for ( int i = 0; i < sequence.size(); i++ )
   {
     int currState = this->LookupState( sequence.at(i)->GetState() );
-	int currSymbol =  this->LookupSymbol( sequence.at(i)->GetSymbol() );
+	  int currSymbol =  this->LookupSymbol( sequence.at(i)->GetSymbol() );
 
-	if ( currState < 0 || currSymbol < 0 )
-	{
+	  if ( currState < 0 || currSymbol < 0 )
+	  {
       continue;
-	}
+	  }
 
     if ( i == 0 )
     {
-      this->pi->Crement( currState );
+      this->Pi->IncrementElement( currState );
     }
-	else
+	  else
     {
-	  // Ensure that a previous state exists
-	  int prevState = this->LookupState( sequence.at(i-1)->GetState() );
-	  if ( prevState >= 0 )
-	  {
-        this->A.at( prevState )->Crement( currState );
-	  }
+	    // Ensure that a previous state exists
+	    int prevState = this->LookupState( sequence.at( i - 1 )->GetState() );
+	    if ( prevState >= 0 )
+	    {
+        this->A.at( prevState )->IncrementElement( currState );
+	    }
     }
 
-    this->B.at( currState )->Crement( currSymbol );
+    this->B.at( currState )->IncrementElement( currSymbol );
   }
 
 }
 
 
 void vtkMarkovModel
-::AddPseudoData( vtkLabelVector* pseudoPi, std::vector<vtkLabelVector*> pseudoA, std::vector<vtkLabelVector*> pseudoB )
+::AddPseudoData( vtkLabelVector* pseudoPi, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoA, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoB )
 {
   // We can simply add the pseudo observations to the estimation counts
   // Note that the order of states should be the same
   for ( int i = 0; i < this->GetNumStates(); i++ )
   {   
-    this->pi->Crement( i, pseudoPi->Get(i) );
+    this->Pi->IncrementElement( i, pseudoPi->GetElement( i ) );
 
     for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-      this->A.at(i)->Crement( j, pseudoA.at(i)->Get(j) );
-	}
+	  {
+      this->A.at(i)->IncrementElement( j, pseudoA.at(i)->GetElement( j ) );
+	  }
     for ( int j = 0; j < this->GetNumSymbols(); j++ )
-	{
-      this->B.at(i)->Crement( j, pseudoB.at(i)->Get(j) );
-	}
+	  {
+      this->B.at(i)->IncrementElement( j, pseudoB.at(i)->GetElement( j ) );
+	  }
   }
 }
 
@@ -589,54 +589,58 @@ void vtkMarkovModel
 }
 
 
-std::vector<vtkMarkovRecord*> vtkMarkovModel
-::CalculateStates( std::vector<vtkMarkovRecord*> sequence )
+void vtkMarkovModel
+::CalculateStates( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence )
 {
   // Take the log of all the parameters, so we avoid rounding errors
-  vtkLabelVector* logPi = this->GetLogPi();
-  std::vector<vtkLabelVector*> logA = this->GetLogA();
-  std::vector<vtkLabelVector*> logB = this->GetLogB();
+  vtkSmartPointer< vtkLabelVector > logPi = vtkSmartPointer< vtkLabelVector >::New();
+  this->GetLogPi( logPi );
+  std::vector< vtkSmartPointer< vtkLabelVector > > logA;
+  logA = this->GetLogA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > logB;
+  logB = this->GetLogB();
 
   // Initialize delta and psi using the initial state distributions
-  std::vector<vtkLabelVector*> delta, psi;
-  vtkLabelVector* currDelta = vtkLabelVector::New();
-  vtkLabelVector* currPsi = vtkLabelVector::New();
+  std::vector< vtkSmartPointer< vtkLabelVector > > delta, psi;
+  vtkSmartPointer< vtkLabelVector > currDelta = vtkSmartPointer< vtkLabelVector >::New();
+  vtkSmartPointer< vtkLabelVector > currPsi = vtkSmartPointer< vtkLabelVector >::New();
 
   for ( int j = 0; j < this->GetNumStates(); j++ )
   {
-    currDelta->Add( logPi->Get(j) + logB.at(j)->Get( this->LookupSymbol( sequence.at(0)->GetSymbol() ) ) );
+    currDelta->AddElement( logPi->GetElement(j) + logB.at(j)->GetElement( this->LookupSymbol( sequence.at( 0 )->GetSymbol() ) ) );
   }
   delta.push_back( currDelta );
 
-  currPsi = this->GetZeroPi();
+  this->GetZeroPi( currPsi );
   psi.push_back( currPsi );
 
   // Already calculated for i = 0 (initially)
   for ( int i = 1; i < sequence.size(); i++ )
   {
     for ( int j = 0; j < this->GetNumStates(); j++ )
-	{
-
-	  int maxIndex = 0;
-	  double maxProb = delta.at(i-1)->Get(0) + this->A.at(0)->Get(j);
-
-	  for ( int k = 0; k < this->GetNumStates(); k++ )
 	  {
-        if ( delta.at(i-1)->Get(k) + A.at(k)->Get(j) > maxProb ) // Note: A[k].get(j) == A[k][j]
-		{
-          maxProb = delta.at(i-1)->Get(k) + A.at(k)->Get(j);
-		  maxIndex = k;
-		}
+
+	    int maxIndex = 0;
+	    double maxProb = - std::numeric_limits< double >::max();
+
+	    for ( int k = 0; k < this->GetNumStates(); k++ )
+	    {
+        double currProb = delta.at( i - 1 )->GetElement( k ) + A.at(k)->GetElement( j );
+        if ( currProb > maxProb ) // Note: A[k].get(j) == A[k][j]
+		    {
+          maxProb = currProb;
+		      maxIndex = k;
+		    }
+	    }
+
+	    // Account for observation probability
+	    currDelta->AddElement( maxProb + logB.at(j)->GetElement( this->LookupState( sequence.at(i)->GetSymbol() ) ) ); 
+      currPsi->AddElement( maxIndex );
+
 	  }
 
-	  // Account for observation probability
-	  currDelta->Add( maxProb + logB.at(j)->Get( this->LookupState( sequence.at(i)->GetSymbol() ) ) ); 
-      currPsi->Add( maxIndex );
-
-	}
-
-	delta.push_back( currDelta );
-	psi.push_back( currPsi );
+	  delta.push_back( currDelta );
+	  psi.push_back( currPsi );
 
   }
 
@@ -644,25 +648,19 @@ std::vector<vtkMarkovRecord*> vtkMarkovModel
   int endState = 0;
   for ( int k = 0; k < this->GetNumStates(); k++ )
   {
-    if ( delta.at(sequence.size()-1)->Get(k) > delta.at(sequence.size() - 1)->Get(endState) )
-	{
+    if ( delta.at( sequence.size() - 1 )->GetElement( k ) > delta.at( sequence.size() - 1 )->GetElement( endState ) )
+	  {
       endState = k;
-	}
+	  }
   }
-  sequence.at(sequence.size()-1)->SetState( this->stateNames.at(endState) );
+  sequence.at( sequence.size() - 1 )->SetState( this->StateNames.at( endState ) );
 
   // Calculate prior states from previous states
   for ( int i = sequence.size() - 2; i <= 0; i-- )
   {
-    int currState = psi.at(i+1)->Get( this->LookupState( sequence.at(i+1)->GetState() ) );
-    sequence.at(i)->SetState( this->stateNames.at( currState ) );
+    int currState = psi.at( i + 1 )->GetElement( this->LookupState( sequence.at( i + 1 )->GetState() ) );
+    sequence.at(i)->SetState( this->StateNames.at( currState ) );
   }
 
-  // Delete stuff
-  logPi->Delete();
-  vtkDeleteVector( logA );
-  vtkDeleteVector( logB );
-
-  return sequence;
-
+  // The states are set in the original vector of markov vectors
 }

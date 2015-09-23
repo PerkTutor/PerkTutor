@@ -65,7 +65,8 @@ void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 qSlicerWorkflowSegmentationRecorderControlsWidget
 ::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
-  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( qSlicerTransformBufferWidgetHelper::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
+  this->WorkflowSegmentationNode = NULL;
+  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
 }
 
 
@@ -74,14 +75,49 @@ qSlicerWorkflowSegmentationRecorderControlsWidget
 {
 }
 
+
 void qSlicerWorkflowSegmentationRecorderControlsWidget
-::onClearButtonClicked()
+::setWorkflowSegmentationNode( vtkMRMLNode* newWorkflowSegmentationNode )
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);  
 
-  //this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
-  this->TransformRecorderLogic->ClearTransforms( this->BufferHelper->GetTransformBufferNode() );
-  this->WorkflowSegmentationLogic->ResetWorkflowAlgorithms();
-  
+  this->qvtkDisconnectAll();
+
+  this->WorkflowSegmentationNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( newWorkflowSegmentationNode );
+
+  this->qvtkConnect( this->WorkflowSegmentationNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+
   this->updateWidget();
+}
+
+
+void qSlicerWorkflowSegmentationRecorderControlsWidget
+::onStartButtonClicked()
+{
+  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
+
+  this->qSlicerRecorderControlsWidget::onStartButtonClicked();
+
+  if ( this->WorkflowSegmentationNode == NULL )
+  {
+    return;
+  }
+
+  this->WorkflowSegmentationNode->SetRealTimeProcessing( true );  
+}
+
+
+void qSlicerWorkflowSegmentationRecorderControlsWidget
+::onStopButtonClicked()
+{
+  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
+
+  this->qSlicerRecorderControlsWidget::onStopButtonClicked();
+
+  if ( this->WorkflowSegmentationNode == NULL )
+  {
+    return;
+  }
+
+  this->WorkflowSegmentationNode->SetRealTimeProcessing( false );  
 }

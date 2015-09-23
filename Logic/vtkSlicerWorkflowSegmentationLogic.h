@@ -30,43 +30,43 @@
 #include <vector>
 #include <cmath>
 
+// Slicer includes
+#include "vtkSlicerModuleLogic.h"
+
 // VTK includes
 #include "vtkObject.h"
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
 
+#include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLWorkflowSegmentationNode.h"
+
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
-#include "vtkMRMLWorkflowSegmentationNode.h"
-#include "vtkRecordBufferRT.h"
-#include "vtkMarkovModelRT.h"
-#include "vtkWorkflowToolCollection.h"
-#include "vtkWorkflowAlgorithm.h"
 
+// Transform Recorder includes
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
+
 
 
 
 
 /// \ingroup Slicer_QtModules_WorkflowSegmentation
-class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT vtkSlicerWorkflowSegmentationLogic :
-  public vtkSlicerModuleLogic
+class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_LOGIC_EXPORT 
+vtkSlicerWorkflowSegmentationLogic : public vtkSlicerModuleLogic
 {
 public:
   vtkTypeMacro(vtkSlicerWorkflowSegmentationLogic,vtkSlicerModuleLogic);
-
-  static vtkSlicerWorkflowSegmentationLogic *New();
-  
+  static vtkSlicerWorkflowSegmentationLogic *New();  
   void PrintSelf(ostream& os, vtkIndent indent);
-  void InitializeEventListeners();
 
 protected:
   vtkSlicerWorkflowSegmentationLogic();
   virtual ~vtkSlicerWorkflowSegmentationLogic();
 
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
+  virtual void SetMRMLSceneInternal( vtkMRMLScene* newScene );
   virtual void RegisterNodes();
   virtual void UpdateFromMRMLScene();
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
@@ -81,41 +81,24 @@ private:
   // These are methods specific to the Workflow Segmentation logic -------------------------------------------------------
 public:
 
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  vtkMRMLWorkflowToolNode* GetToolByName( vtkMRMLWorkflowSegmentationNode* workflowNode, std::string toolName );
+ 
+  void ResetAllToolBuffers( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, std::vector< std::string > trainingBufferIDs );
+ 
+  bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  bool GetAllToolsTrained( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  
+  std::vector< std::string > GetToolStatusStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  std::vector< std::string > GetInstructionStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  std::vector< std::string > GetOrderedWorkflowTaskStrings( vtkMRMLWorkflowToolNode* toolNode );
 
-  vtkMRMLWorkflowSegmentationNode* GetModuleNode();
-  void SetModuleNode( vtkMRMLWorkflowSegmentationNode* node );
+  void SetupRealTimeProcessing( vtkMRMLWorkflowSegmentationNode* wsNode );
 
-  void ImportWorkflowProcedure( std::string fileName );
-  void ImportWorkflowInput( std::string fileName );
-  void ImportWorkflowTraining( std::string fileName );
-  void SaveWorkflowTraining( std::string fileName );
+  void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
+  void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );
 
-  void ResetWorkflowAlgorithms();
-  bool GetWorkflowAlgorithmsDefined();
-  bool GetWorkflowAlgorithmsInputted();
-  bool GetWorkflowAlgorithmsTrained();
-  bool Train();
-
-  void AddTrainingBuffer( std::string fileName );
-
-  void Update( vtkMRMLTransformBufferNode* bufferNode );
-
-  std::string GetToolInstructions( vtkMRMLTransformBufferNode* bufferNode );
-
-private:
-
-  vtkMRMLWorkflowSegmentationNode* ModuleNode;
-  int IndexToProcess;
-
-  vtkXMLDataParser* Parser;
-  vtkXMLDataElement* ParseXMLFile( std::string fileName );
-
-private:
-
-  std::vector<vtkWorkflowAlgorithm*> WorkflowAlgorithms;
-
-  vtkWorkflowAlgorithm* GetWorkflowAlgorithmByName( std::string name );
+protected:
 
 };
 

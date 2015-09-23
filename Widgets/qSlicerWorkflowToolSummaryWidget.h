@@ -18,45 +18,57 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerWorkflowSegmentationRecorderControlsWidget_h
-#define __qSlicerWorkflowSegmentationRecorderControlsWidget_h
+#ifndef __qSlicerWorkflowToolSummaryWidget_h
+#define __qSlicerWorkflowToolSummaryWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
-#include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
 
 #include "vtkSlicerWorkflowSegmentationLogic.h"
-#include "qSlicerRecorderControlsWidget.h"
+#include "vtkSlicerModuleLogic.h"
+#include "vtkMRMLWorkflowToolNode.h"
 
-class qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate;
+// FooBar Widgets includes
+#include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
+#include "ui_qSlicerWorkflowToolSummaryWidget.h"
+
+class qSlicerWorkflowToolSummaryWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_WORKFLOWSEGMENTATION_WIDGETS_EXPORT 
-qSlicerWorkflowSegmentationRecorderControlsWidget : public qSlicerRecorderControlsWidget
+qSlicerWorkflowToolSummaryWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget *parent=0);
-  virtual ~qSlicerWorkflowSegmentationRecorderControlsWidget();
-
+  typedef qSlicerWidget Superclass;
+  qSlicerWorkflowToolSummaryWidget(QWidget *parent=0);
+  virtual ~qSlicerWorkflowToolSummaryWidget();
+  
 public slots:
 
-  virtual void setWorkflowSegmentationNode( vtkMRMLNode* wsNode );
+  virtual void setWorkflowSegmentationNode( vtkMRMLNode* newWorkflowSegmentationNode );
 
 protected slots:
 
-  void onStartButtonClicked();
-  void onStopButtonClicked();
+  virtual void onToolSelectionsChanged();
+  
+  void onTrainButtonClicked();
+
+  void updateWidgetFromMRML();
+
 
 protected:
-  QScopedPointer<qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate> d_ptr;
-  
-  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationNode;
+
+  QScopedPointer<qSlicerWorkflowToolSummaryWidgetPrivate> d_ptr;
+
   vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic;
+  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationNode;
+
+  virtual void setup();
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationRecorderControlsWidget);
-  Q_DISABLE_COPY(qSlicerWorkflowSegmentationRecorderControlsWidget);
+  Q_DECLARE_PRIVATE(qSlicerWorkflowToolSummaryWidget);
+  Q_DISABLE_COPY(qSlicerWorkflowToolSummaryWidget);
 
 };
 

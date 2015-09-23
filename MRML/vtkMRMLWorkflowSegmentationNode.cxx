@@ -2,43 +2,10 @@
 // WorkflowSegmentation MRML includes
 #include "vtkMRMLWorkflowSegmentationNode.h"
 
+// Constants ------------------------------------------------------------------
+static const char* TOOL_REFERENCE_ROLE = "Tool";
+static const char* TRANSFORM_BUFFER_REFERENCE_ROLE = "TransformBuffer";
 
-// MACROS ---------------------------------------------------------------------
-
-#define DELETE_IF_NOT_NULL(x) \
-  if ( x != NULL ) \
-    { \
-    x->Delete(); \
-    x = NULL; \
-    }
-
-#define WRITE_STRING_XML(x) \
-  if ( this->x != NULL ) \
-  { \
-    of << indent << " "#x"=\"" << this->x << "\"\n"; \
-  }
-
-#define READ_AND_SET_STRING_XML(x) \
-    if ( !strcmp( attName, #x ) ) \
-      { \
-      this->SetAndObserve##x( NULL ); \
-      this->Set##x( attValue ); \
-      }
-
-
-
-
-// Helper functions.
-// ----------------------------------------------------------------------------
-
-bool
-StringToBool( std::string str )
-{
-  bool var;
-  std::stringstream ss( str );
-  ss >> var;
-  return var;
-}
 
 // Constructors and Destructors
 // ----------------------------------------------------------------------------
@@ -55,35 +22,6 @@ vtkMRMLWorkflowSegmentationNode* vtkMRMLWorkflowSegmentationNode
   // If the factory was unable to create the object, then create it here.
   return new vtkMRMLWorkflowSegmentationNode;
 }
-
-
-
-vtkMRMLWorkflowSegmentationNode
-::vtkMRMLWorkflowSegmentationNode()
-{
-  this->HideFromEditorsOff();
-  this->SetSaveWithScene( true );
-  // this->SetModifiedSinceRead( true );
-
-  this->WorkflowProcedureFileName = "";
-  this->WorkflowInputFileName = "";
-  this->WorkflowTrainingFileName = "";
-
-  this->ToolCollection = vtkWorkflowToolCollection::New();
-  this->ToolCompletion = vtkWorkflowToolCollection::New();
-  this->Parser = vtkXMLDataParser::New();
-}
-
-
-
-vtkMRMLWorkflowSegmentationNode
-::~vtkMRMLWorkflowSegmentationNode()
-{
-  vtkDelete( this->ToolCompletion );
-  vtkDelete( this->ToolCollection );
-  vtkDelete( this->Parser );
-}
-
 
 
 vtkMRMLNode* vtkMRMLWorkflowSegmentationNode
@@ -107,50 +45,14 @@ vtkMRMLNode* vtkMRMLWorkflowSegmentationNode
 
 void vtkMRMLWorkflowSegmentationNode::WriteXML( ostream& of, int nIndent )
 {
-
-  Superclass::WriteXML(of, nIndent);
-
-  vtkIndent indent(nIndent);
-  
-  of << indent << " WorkflowProcedureFileName=\"" << this->WorkflowProcedureFileName << "\"";
-  of << indent << " WorkflowInputFileName=\"" << this->WorkflowInputFileName << "\"";
-  of << indent << " WorkflowTrainingFileName=\"" << this->WorkflowTrainingFileName << "\"";
-
+  this->Superclass::WriteXML(of, nIndent);
 }
 
 
 
 void vtkMRMLWorkflowSegmentationNode::ReadXMLAttributes( const char** atts )
 {
-  Superclass::ReadXMLAttributes(atts);
-
-  // Read all MRML node attributes from two arrays of names and values
-  const char* attName;
-  const char* attValue;
-
-  while (*atts != NULL)
-  {
-    attName  = *(atts++);
-    attValue = *(atts++);
-    
-	if ( ! strcmp( attName, "WorkflowProcedureFileName" ) )
-    {
-      this->WorkflowProcedureFileName = std::string( attValue );
-    }
-	if ( ! strcmp( attName, "WorkflowInputFileName" ) )
-    {
-      this->WorkflowInputFileName = std::string( attValue );
-    }
-	if ( ! strcmp( attName, "WorkflowTrainingFileName" ) )
-    {
-      this->WorkflowTrainingFileName = std::string( attValue );
-    }
-
-  }
-
-  // Now, read from file if the files are specified
-  this->ImportAllWorkflowData();
-
+  this->Superclass::ReadXMLAttributes(atts);
 }
 
 
@@ -160,16 +62,7 @@ void vtkMRMLWorkflowSegmentationNode::ReadXMLAttributes( const char** atts )
 
 void vtkMRMLWorkflowSegmentationNode::Copy( vtkMRMLNode *anode )
 {  
-  Superclass::Copy( anode );
-  vtkMRMLWorkflowSegmentationNode *node = ( vtkMRMLWorkflowSegmentationNode* ) anode;
-  
-  // Note: It seems that the WriteXML function copies the node then writes the copied node to file
-  // So, anything we want in the MRML file we must copy here (I don't think we need to copy other things)
-  this->SetWorkflowProcedureFileName( node->GetWorkflowProcedureFileName() );
-  this->SetWorkflowInputFileName( node->GetWorkflowInputFileName() );
-  this->SetWorkflowTrainingFileName( node->GetWorkflowTrainingFileName() );
-  this->ImportAllWorkflowData();
-
+  this->Superclass::Copy( anode );
 }
 
 
@@ -177,206 +70,201 @@ void vtkMRMLWorkflowSegmentationNode::Copy( vtkMRMLNode *anode )
 void vtkMRMLWorkflowSegmentationNode::PrintSelf( ostream& os, vtkIndent indent )
 {
   vtkMRMLNode::PrintSelf(os,indent);
-  os << indent << "WorkflowProcedureFileName: " << this->WorkflowProcedureFileName << "\n";
-  os << indent << "WorkflowInputFileName: " << this->WorkflowInputFileName << "\n";
-  os << indent << "WorkflowTrainingFileName: " << this->WorkflowTrainingFileName << "\n";
+}
+
+
+// Constructor/destructor
+// ----------------------------------------------------------------------------
+vtkMRMLWorkflowSegmentationNode
+::vtkMRMLWorkflowSegmentationNode()
+{
+  this->AddNodeReferenceRole( TOOL_REFERENCE_ROLE );
 }
 
 
 
+vtkMRMLWorkflowSegmentationNode
+::~vtkMRMLWorkflowSegmentationNode()
+{
+}
 
-// File I/O: Saving and loading
+
+std::string vtkMRMLWorkflowSegmentationNode
+::GetNodeReferenceIDString( std::string referenceRole )
+{
+  const char* refID = this->GetNodeReferenceID( referenceRole.c_str() );
+  std::string refIDString;
+
+  if ( refID == NULL )
+  {
+    refIDString = "";
+  }
+  else
+  {
+    refIDString = refID;
+  }
+
+  return refIDString;
+}
+
+
+// Transform buffer node
+// ----------------------------------------------------------------------------
+
+vtkMRMLTransformBufferNode* vtkMRMLWorkflowSegmentationNode
+::GetTransformBufferNode()
+{
+  return vtkMRMLTransformBufferNode::SafeDownCast( this->GetNodeReference( TRANSFORM_BUFFER_REFERENCE_ROLE ) );
+}
+
+
+std::string vtkMRMLWorkflowSegmentationNode
+::GetTransformBufferID()
+{
+  return this->GetNodeReferenceIDString( TRANSFORM_BUFFER_REFERENCE_ROLE );
+}
+
+
+void vtkMRMLWorkflowSegmentationNode
+::SetTransformBufferID( std::string newTransformBufferID )
+{
+  vtkNew< vtkIntArray > events;
+  events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
+  this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
+  // TODO: Reset all tools
+}
+
+
+bool vtkMRMLWorkflowSegmentationNode
+::GetRealTimeProcessing()
+{
+  return this->RealTimeProcessing;
+}
+
+
+void vtkMRMLWorkflowSegmentationNode
+::SetRealTimeProcessing( bool newRealTimeProcessing )
+{
+  if ( newRealTimeProcessing != this->RealTimeProcessing )
+  {
+    this->RealTimeProcessing = newRealTimeProcessing;
+    this->Modified();
+    if ( newRealTimeProcessing )
+    {
+      this->InvokeEvent( RealTimeProcessingStartedEvent );
+    }
+  }
+}
+
+
+
+// Deal with references to tool nodes
 // ----------------------------------------------------------------------------
 
 void vtkMRMLWorkflowSegmentationNode
-::SaveWorkflowTraining( std::string newWorkflowTrainingFileName )
+::AddToolID( std::string toolID )
 {
-  if ( newWorkflowTrainingFileName.compare( "" ) != 0 )
-  {
-    this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
-  }
-
-  std::ofstream output( this->WorkflowTrainingFileName.c_str() );  
-  if ( ! output.is_open() )
-  {
-    vtkErrorMacro( "Record file could not be opened!" );
-    return;
-  }
-
-  vtkWorkflowToolCollection* mergedTools = vtkWorkflowToolCollection::New();
-  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
-  {
-    mergedTools->AddTool( this->ToolCollection->GetToolAt(i)->DeepCopy() );
-  }
-  for ( int i = 0; i < this->ToolCompletion->GetNumTools(); i++ )
-  {
-    mergedTools->AddTool( this->ToolCompletion->GetToolAt(i)->DeepCopy() );
-  }
-  output << mergedTools->TrainingToXMLString();
-  mergedTools->Delete();
-
-  output.close();  
+  this->AddAndObserveNodeReferenceID( TOOL_REFERENCE_ROLE, toolID.c_str() );
 }
 
 
 void vtkMRMLWorkflowSegmentationNode
-::ImportWorkflowProcedure( std::string newWorkflowProcedureFileName )
+::RemoveToolID( std::string toolID )
 {
-  if ( newWorkflowProcedureFileName.compare( "" ) != 0 )
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( TOOL_REFERENCE_ROLE ); i++ )
   {
-    this->WorkflowProcedureFileName = newWorkflowProcedureFileName;
+    if ( toolID.compare( this->GetNthNodeReferenceID( TOOL_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      this->RemoveNthNodeReferenceID( TOOL_REFERENCE_ROLE, i );
+	    i--;      
+	  }
   }
-
-  // Create a parser to parse the XML data from the procedure definition
-  vtkXMLDataElement* element1 = this->ParseXMLFile( this->WorkflowProcedureFileName );
-  this->ToolCollection->ProcedureFromXMLElement( element1 );
-  vtkXMLDataElement* element2 = this->ParseXMLFile( this->WorkflowProcedureFileName );
-  this->ToolCompletion->ProcedureFromXMLElement( element2 );
-
-  // Change the names of the procedures and tasks associated with completion
-  for ( int i = 0; i < this->ToolCompletion->GetNumTools(); i++ )
-  {
-    vtkWorkflowTool* currentTool = this->ToolCompletion->GetToolAt(i);
-    currentTool->Name += "_Completion";
-    int numTasks = currentTool->Procedure->GetNumTasks();
-
-	for ( int j = 0; j < numTasks; j++ )
-	{
-	  vtkWorkflowTask* completionTask = currentTool->Procedure->GetTaskAt(j)->DeepCopy();
-	  completionTask->Name = completionTask->Name + "_Completion";
-	  currentTool->Procedure->AddTask( completionTask );
-	}
-  }
-
 }
 
 
-void
-vtkMRMLWorkflowSegmentationNode
-::ImportWorkflowInput( std::string newWorkflowInputFileName )
+std::vector< std::string > vtkMRMLWorkflowSegmentationNode
+::GetToolIDs()
 {
-  if ( newWorkflowInputFileName.compare( "" ) != 0 )
-  {
-    this->WorkflowInputFileName = newWorkflowInputFileName;
-  }
-  if ( ! this->ToolCollection->GetDefined() )
-  {
-    return;
-  }
+  std::vector< std::string > toolIDs;
 
-  // Create a parser to parse the XML data from the input parameters
-  vtkXMLDataElement* element = this->ParseXMLFile( this->WorkflowInputFileName );
-  this->ToolCollection->InputFromXMLElement( element );
-
-  // The tool collections are constructed so that they have the same order
-  for ( int i = 0; i < this->ToolCollection->GetNumTools(); i++ )
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( TOOL_REFERENCE_ROLE ); i++ )
   {
-    vtkWorkflowTool* currentCompletionTool = this->GetCompletionTool( this->ToolCollection->GetToolAt(i) );
-    currentCompletionTool->Input = this->ToolCollection->GetToolAt(i)->Input->DeepCopy();
-	currentCompletionTool->Inputted = true;
+    toolIDs.push_back( this->GetNthNodeReferenceID( TOOL_REFERENCE_ROLE, i ) );
   }
 
+  return toolIDs;
 }
+  
 
-
-void
-vtkMRMLWorkflowSegmentationNode
-::ImportWorkflowTraining( std::string newWorkflowTrainingFileName )
+bool vtkMRMLWorkflowSegmentationNode
+::IsToolID( std::string toolID )
 {
-  if ( newWorkflowTrainingFileName.compare( "" ) != 0 )
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( TOOL_REFERENCE_ROLE ); i++ )
   {
-    this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
-  }
-  if ( ! this->ToolCollection->GetInputted() )
-  {
-    return;
+    if ( toolID.compare( this->GetNthNodeReferenceID( TOOL_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      return true;
+    }
   }
 
-  // Create a parser to parse the XML data from the training parameters
-  vtkXMLDataElement* element1 = this->ParseXMLFile( this->WorkflowTrainingFileName );
-  this->ToolCollection->TrainingFromXMLElement( element1 );
-  vtkXMLDataElement* element2 = this->ParseXMLFile( this->WorkflowTrainingFileName );
-  this->ToolCompletion->TrainingFromXMLElement( element2 );
+  return false;
 }
 
 
 void vtkMRMLWorkflowSegmentationNode
-::ImportAllWorkflowData()
+::SetToolIDs( std::vector< std::string > toolIDs )
 {
-  // Checks already exist to make sure input has procedure and training has input
-  this->ImportWorkflowProcedure();
-  this->ImportWorkflowInput();
-  this->ImportWorkflowTraining();
-}
+  int modifyState = this->StartModify();
 
-
-vtkWorkflowTool* vtkMRMLWorkflowSegmentationNode
-::GetCompletionTool( vtkWorkflowTool* tool )
-{
-  for ( int i = 0; i < this->ToolCompletion->GetNumTools(); i++ )
+  // Remove all of the active transform IDs
+  while( this->GetNumberOfNodeReferences( TOOL_REFERENCE_ROLE ) > 0 )
   {
-    if ( this->ToolCompletion->GetToolAt(i)->Name.compare( tool->Name + "_Completion" ) == 0 )
-	{
-      return this->ToolCompletion->GetToolAt(i);
-	}
+    this->RemoveNthNodeReferenceID( TOOL_REFERENCE_ROLE, 0 );
   }
 
-  return NULL;
+  // Add all of the specified IDs
+  for ( int i = 0; i < toolIDs.size(); i++ )
+  {
+    this->AddToolID( toolIDs.at( i ) );
+  }
+
+  this->EndModify( modifyState );
 }
 
 
 
-// File I/O: Getters and setters
+// MRML node events processing
 // ----------------------------------------------------------------------------
 
-
-std::string vtkMRMLWorkflowSegmentationNode
-::GetWorkflowProcedureFileName()
-{
-  return this->WorkflowProcedureFileName;
-}
-
-
 void vtkMRMLWorkflowSegmentationNode
-::SetWorkflowProcedureFileName( std::string newWorkflowTrainingFileName )
+::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
 {
-  this->WorkflowProcedureFileName = newWorkflowTrainingFileName;
-}
+  // Propagate modified events
+  if ( event == vtkCommand::ModifiedEvent )
+  {
+    this->Modified();
+  }
 
+  // Do nothing if there is not real-time processing
+  if ( ! this->RealTimeProcessing )
+  {
+    return;
+  }
 
-std::string vtkMRMLWorkflowSegmentationNode
-::GetWorkflowInputFileName()
-{
-  return this->WorkflowInputFileName;
-}
+  // The caller will be the node that was modified
+  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( caller );
+  if ( transformBuffer == NULL || event != vtkMRMLTransformBufferNode::TransformAddedEvent )
+  {
+    return;
+  }
 
+  vtkMRMLTransformBufferNode::TransformEventDataType* eventData = reinterpret_cast< vtkMRMLTransformBufferNode::TransformEventDataType* >( callData );
+  if ( transformBuffer->GetTransformRecordBuffer( eventData->first )->GetNumRecords() == eventData->second + 1 )
+  {
+    this->InvokeEvent( TransformRealTimeAddedEvent, &eventData->first );
+  }
 
-void vtkMRMLWorkflowSegmentationNode
-::SetWorkflowInputFileName( std::string newWorkflowProcedureFileName )
-{
-  this->WorkflowInputFileName = newWorkflowProcedureFileName;
-}
-
-
-std::string vtkMRMLWorkflowSegmentationNode
-::GetWorkflowTrainingFileName()
-{
-  return this->WorkflowTrainingFileName;
-}
-
-
-void vtkMRMLWorkflowSegmentationNode
-::SetWorkflowTrainingFileName( std::string newWorkflowTrainingFileName )
-{
-  this->WorkflowTrainingFileName = newWorkflowTrainingFileName;
-}
-
-
-vtkXMLDataElement* vtkMRMLWorkflowSegmentationNode
-::ParseXMLFile( std::string fileName )
-{
-  // Parse the file here, not in the widget
-  this->Parser->SetFileName( fileName.c_str() );
-  this->Parser->Parse();
-  return Parser->GetRootElement();
 }

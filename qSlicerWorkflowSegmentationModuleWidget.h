@@ -10,6 +10,10 @@
 #include "qSlicerMessagesWidget.h"
 #include "qSlicerTransformBufferWidget.h"
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
+#include "qSlicerWorkflowToolSummaryWidget.h"
+#include "qSlicerWorkflowToolWidget.h"
+#include "qSlicerWorkflowGuideDisplayWidget.h"
+
 
 class qSlicerWorkflowSegmentationModuleWidgetPrivate;
 class vtkMRMLNode;
@@ -34,30 +38,22 @@ protected:
   virtual void setup();
   virtual void setupEmbeddedWidgets();
 
-  virtual void enter();
-  virtual void exit();
 
 protected slots:
 
-  void onModuleNodeSelected();
- 
-  void onWorkflowProcedureButtonClicked();
-  void onWorkflowInputButtonClicked();
-  void onWorkflowTrainingButtonClicked();
-  void onWorkflowTrainingFilesButtonClicked();
-  void onTrainButtonClicked();
+  void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
+  void mrmlNodeChanged( vtkMRMLNode* wsNode );
 
-  void setupInstructions();
-  void enableButtons();
-
-  void updateWidget();
-  void resetWidget();
+  void onNodeAdded( vtkObject* caller, vtkObject* node );
+  void onNodeRemoved( vtkObject* caller, vtkObject* node );
+  void createWorkflowDisplaysForExistingNodes();
+  
+  void updateWidgetFromMRML();
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationModuleWidget);
   Q_DISABLE_COPY(qSlicerWorkflowSegmentationModuleWidget);
 
-  QLabel* InstructionLabel;
 };
 
 #endif

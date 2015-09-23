@@ -58,6 +58,9 @@ public:
   qSlicerTransformBufferWidget* TransformBufferWidget;
   qSlicerWorkflowSegmentationRecorderControlsWidget* RecorderControlsWidget;
   qSlicerMessagesWidget* MessagesWidget;
+  qSlicerWorkflowToolWidget* ToolWidget;
+  qSlicerWorkflowToolSummaryWidget* ToolSummaryWidget;
+  std::vector< qSlicerWorkflowGuideDisplayWidget* > WorkflowDisplayWidgets;
 };
 
 //-----------------------------------------------------------------------------
@@ -110,6 +113,7 @@ void qSlicerWorkflowSegmentationModuleWidget
   d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
   d->TransformBufferWidget->setMRMLScene( NULL );
   d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  d->TransformBufferWidget->setTransformBufferNode( NULL ); // Do not automatically select a node on entering the widget
 
   d->RecorderControlsWidget = new qSlicerWorkflowSegmentationRecorderControlsWidget();
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
@@ -120,11 +124,20 @@ void qSlicerWorkflowSegmentationModuleWidget
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
   d->MessagesWidget->setMRMLScene( NULL );
   d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  
+  d->ToolWidget = new qSlicerWorkflowToolWidget();
+  d->ToolEditorGroupBox->layout()->addWidget( d->ToolWidget );
+  d->ToolWidget->setMRMLScene( NULL );
+  d->ToolWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  
+  d->ToolSummaryWidget = new qSlicerWorkflowToolSummaryWidget();
+  d->ToolSummaryGroupBox->layout()->addWidget( d->ToolSummaryWidget );
+  d->ToolSummaryWidget->setMRMLScene( NULL );
+  d->ToolSummaryWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->RecorderControlsWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), d->MessagesWidget->BufferHelper, SLOT( SetTransformBufferNode( vtkMRMLTransformBufferNode* ) ) );
+
 
 }
 
@@ -139,297 +152,149 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   this->setupEmbeddedWidgets();
 
   // Module node selection
-  connect( d->ModuleComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onModuleNodeSelected() ) );
+  connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) );
 
-  // Import parameters and files
-  connect( d->WorkflowProcedureButton, SIGNAL(clicked()), this, SLOT( onWorkflowProcedureButtonClicked() ) );
-  connect( d->WorkflowInputButton, SIGNAL(clicked()), this, SLOT( onWorkflowInputButtonClicked() ) );
-  connect( d->WorkflowTrainingButton, SIGNAL(clicked()), this, SLOT( onWorkflowTrainingButtonClicked() ) );
-  connect( d->WorkflowTrainingFilesButton, SIGNAL(clicked()), this, SLOT( onWorkflowTrainingFilesButtonClicked() ) );
+  // Transform buffer
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
 
-  // Train algorithm
-  connect( d->TrainButton, SIGNAL(clicked()), this, SLOT( onTrainButtonClicked() ) );
-
-  // Setup the display of instructions
-  this->setupInstructions();
-
-  // If the transform buffer node is changed, reset everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLTransformBufferNode* ) ), this, SLOT( resetWidget() ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
-
-  this->updateWidget();
-}
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget::enter()
-{
-  this->Superclass::enter();
-  this->InstructionLabel->show();
-  this->updateWidget();
-}
-
-
-void qSlicerWorkflowSegmentationModuleWidget::exit()
-{
-  this->InstructionLabel->hide();
-  this->Superclass::exit();
-}
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget::onModuleNodeSelected()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
- 
-  vtkMRMLNode* currentNode = d->ModuleComboBox->currentNode();
-  std::cout << "Current node pointer: " << currentNode << std::endl;
+  // Display
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
+  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   
-  vtkMRMLWorkflowSegmentationNode* WSNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( currentNode );
-
-  d->logic()->SetModuleNode( WSNode );
-
-  if ( WSNode != NULL )
-  {
-    d->logic()->ResetWorkflowAlgorithms();
-  }
-
-  this->updateWidget();
-}
-
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget
-::onWorkflowProcedureButtonClicked()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  // Advanced
+  connect( d->RefreshButton, SIGNAL( clicked() ), this, SLOT( createWorkflowDisplaysForExistingNodes() ) );
+  connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->ToolSummaryWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
   
-  QString fileName = QFileDialog::getOpenFileName( this, tr("Open procedure definition"), "", tr("XML Files (*.xml)") );
-  
-  if ( fileName.isEmpty() == false )
-  {
-    d->logic()->ImportWorkflowProcedure( fileName.toStdString() );
-  }
-  
-  this->updateWidget();
-}
+  // Workflows
+  this->createWorkflowDisplaysForExistingNodes();
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( onNodeAdded( vtkObject*, vtkObject* ) ) );
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( onNodeRemoved( vtkObject*, vtkObject* ) ) );
 
-
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget
-::onWorkflowInputButtonClicked()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-  
-  QString fileName = QFileDialog::getOpenFileName( this, tr("Open input parameters"), "", tr("XML Files (*.xml)") );
-  
-  if ( fileName.isEmpty() == false )
-  {
-    d->logic()->ImportWorkflowInput( fileName.toStdString() );
-  }
-  
-  this->updateWidget();
-}
-
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget
-::onWorkflowTrainingButtonClicked()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-  
-  QString fileName = QFileDialog::getOpenFileName( this, tr("Open training parameters"), "", tr("XML Files (*.xml)") );
-  
-  if ( fileName.isEmpty() == false )
-  {
-	  d->logic()->ImportWorkflowTraining( fileName.toStdString() );
-    d->logic()->ResetWorkflowAlgorithms();
-  }
-  
-  this->updateWidget();
-}
-
-
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget
-::onWorkflowTrainingFilesButtonClicked()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-  
-  QStringList files = QFileDialog::getOpenFileNames( this, tr("Open training files"), "", "XML Files (*.xml)" );
-
-  if ( ! files.isEmpty() )
-  {
-    QProgressDialog dialog;
-    dialog.setModal( true );
-    dialog.setLabelText( "Please wait while reading XML files..." );
-    dialog.show();
-    dialog.setValue( 10 );
-
-    // Add the buffers from each of the files to the workflow algorithms.
-	  d->logic()->ResetWorkflowAlgorithms();
-    for( int i = 0; i < files.size(); i++ )
-    {    
-      d->logic()->AddTrainingBuffer( files.at(i).toStdString() );
-    }
-
-    dialog.close();
-  }
-  
-  this->updateWidget();
+  this->updateWidgetFromMRML();
 }
 
 
 void qSlicerWorkflowSegmentationModuleWidget
-::onTrainButtonClicked()
+::onTransformBufferChanged( vtkMRMLNode* newTransformBuffer )
 {
   Q_D( qSlicerWorkflowSegmentationModuleWidget );
 
-  QString fileName = QFileDialog::getSaveFileName( this, tr("Save training"), "", tr("XML Files (*.xml)") );
-
-  // TODO: Make this time estimate accurate
-  QProgressDialog dialog;
-  dialog.setModal( true );
-  dialog.setLabelText( "Please wait while training algorithm... Expected Time: 10 mins" );
-  dialog.show();
-  dialog.setValue( 30 );
-  
-  d->logic()->Train();
-
-  dialog.close();
-
-  if ( fileName.isEmpty() == false )
-  {
-	  d->logic()->SaveWorkflowTraining( fileName.toStdString() );
-  }
-  d->logic()->ResetWorkflowAlgorithms();
-
-  this->updateWidget();
-}
-
-
-
-void qSlicerWorkflowSegmentationModuleWidget::setupInstructions()
-{
-  // Add the real time instructions to the 3D viewer widget
-  qSlicerApplication::application()->layoutManager()->threeDWidget( 0 );
-  this->InstructionLabel = new QLabel( "" );
-  this->InstructionLabel->setAlignment( Qt::AlignCenter );
-  this->InstructionLabel->setStyleSheet("QLabel { background-color : white; color : black; font-size : 24px }"); // TODO: Follow style guide
-  qSlicerApplication::application()->layoutManager()->threeDWidget( 0 )->layout()->addWidget( this->InstructionLabel );
-}
-
-
-void qSlicerWorkflowSegmentationModuleWidget::enableButtons()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-
-  // Disabling node selector widgets if there is no module node to reference input nodes.    
-  if ( d->logic()->GetModuleNode() == NULL )
-  {
-	  d->WorkflowProcedureButton->setEnabled( false );
-	  d->WorkflowInputButton->setEnabled( false );
-	  d->WorkflowTrainingButton->setEnabled( false );
-
-	  d->WorkflowTrainingFilesButton->setEnabled( false );
-	  d->TrainButton->setEnabled( false );
-
-    d->ToolsAvailableTableWidget->setRowCount( 0 );
-    d->ToolsAvailableTableWidget->setColumnCount( 1 );
-
-	  return;
-  }
-  else
-  {
-	  d->WorkflowProcedureButton->setEnabled( true );
-  }
-  
-  // If the algorithms are procedure defined
-  if ( ! d->logic()->GetWorkflowAlgorithmsDefined() )
-  {    
-    d->WorkflowInputButton->setEnabled( false );
-  }
-  else
-  {
-    d->WorkflowInputButton->setEnabled( true );
-  }
-
-  // If the algorithms are parameters inputted
-  if ( ! d->logic()->GetWorkflowAlgorithmsInputted() )
-  {
-    d->WorkflowTrainingButton->setEnabled( false );
-	  d->WorkflowTrainingFilesButton->setEnabled( false );
-	  d->TrainButton->setEnabled( false );
-  }
-  else
-  {
-    d->WorkflowTrainingButton->setEnabled( true );
-	  d->WorkflowTrainingFilesButton->setEnabled( true );
-	  d->TrainButton->setEnabled( true );
-  }
-
-}
-
-
-void qSlicerWorkflowSegmentationModuleWidget::resetWidget()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-  
-  d->logic()->ResetWorkflowAlgorithms();
-}
-
-
-void qSlicerWorkflowSegmentationModuleWidget::updateWidget()
-{
-  Q_D( qSlicerWorkflowSegmentationModuleWidget );
-
-  // All the other things are taken care of by the TransformRecord logic/widgets
-  this->enableButtons();
-
-  if ( d->logic() == NULL || d->logic()->GetModuleNode() == NULL )
+  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( d->WorkflowSegmentationNodeComboBox->currentNode() );
+  if ( wsNode == NULL )
   {
     return;
   }
 
-  // This updates the tasks
-  d->logic()->Update( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() );
-
-  this->InstructionLabel->setText( d->logic()->GetToolInstructions( d->TransformBufferWidget->BufferHelper->GetTransformBufferNode() ).c_str() );
-
-  d->ToolsAvailableTableWidget->setRowCount( 0 );
-  d->ToolsAvailableTableWidget->setColumnCount( 1 );
-  d->ToolsAvailableTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
-
-  d->ToolsAvailableTableWidget->setRowCount( d->logic()->GetModuleNode()->ToolCollection->GetNumTools() );
-
-  for ( int i = 0; i < d->logic()->GetModuleNode()->ToolCollection->GetNumTools(); i++ )
+  if ( newTransformBuffer == NULL )
   {
-    vtkWorkflowTool* currentTool = d->logic()->GetModuleNode()->ToolCollection->GetToolAt(i);
-    vtkWorkflowTool* completionTool = d->logic()->GetModuleNode()->GetCompletionTool( currentTool );
-    std::string currentString = "";
-
-    currentString += currentTool->Name + " (";
-	  if ( ! currentTool->Inputted )
-	  {
-      currentString += "Not ";
-	  }
-    currentString += "Inputted, ";
-	  if ( ! currentTool->Trained )
-	  {
-      currentString += "Not ";
-	  }
-	  currentString += "Trained)";
-
-	  QTableWidgetItem* toolWidget = new QTableWidgetItem( QString::fromStdString( currentString ) );
-	  d->ToolsAvailableTableWidget->setItem( i, 0, toolWidget );
+    wsNode->SetTransformBufferID( "" );
+    return;
   }
 
-  d->ToolsAvailableTableWidget->horizontalHeader()->hide();
-  d->ToolsAvailableTableWidget->resizeRowsToContents();
+  wsNode->SetTransformBufferID( newTransformBuffer->GetID() );
+  // The Workflow Segmentation node automatically call the "updateWidgetFromMRML" function to deal with the widget
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::mrmlNodeChanged( vtkMRMLNode* wsNode )
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  this->qvtkDisconnectAll(); // Remove connections to previous node
+  if ( wsNode != NULL )
+  {
+    this->qvtkConnect( wsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidgetFromMRML() ) );
+  }
+  // Reconnect to scene
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( onNodeAdded( vtkObject*, vtkObject* ) ) );
+  this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( onNodeRemoved( vtkObject*, vtkObject* ) ) );
+
+  this->updateWidgetFromMRML();
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onNodeAdded( vtkObject* caller, vtkObject* node )
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  // Check if it is a workflow tool node
+  vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( node );
+  if ( toolNode == NULL )
+  {
+    return;
+  }
+
+  qSlicerWorkflowGuideDisplayWidget* currentWidget = new qSlicerWorkflowGuideDisplayWidget( d->WorkflowsCollapsibleButton );  
+  d->WorkflowsCollapsibleButton->layout()->addWidget( currentWidget );
+
+  currentWidget->setWorkflowToolNode( toolNode );
+
+  d->WorkflowDisplayWidgets.push_back( currentWidget );
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::onNodeRemoved( vtkObject* caller, vtkObject* node )
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  // Check if it is a workflow tool node
+  vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( node );
+  if ( toolNode == NULL )
+  {
+    return;
+  }
+
+  // Iterate through all widgets and find the right one to remove
+  for ( int i = 0; i < d->WorkflowDisplayWidgets.size(); i++ )
+  {
+    if ( d->WorkflowDisplayWidgets.at( i )->getWorkflowToolNode() == toolNode )
+    {
+      d->WorkflowsCollapsibleButton->layout()->removeWidget( d->WorkflowDisplayWidgets.at( i ) );
+      delete d->WorkflowDisplayWidgets.at( i );
+      d->WorkflowDisplayWidgets.erase( d->WorkflowDisplayWidgets.begin() + i );
+    }
+  }
+
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::createWorkflowDisplaysForExistingNodes()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+  
+  // Grab all of the tool nodes
+  vtkSmartPointer< vtkCollection > toolNodes = vtkSmartPointer< vtkCollection >::Take( d->logic()->GetMRMLScene()->GetNodesByClass( "vtkMRMLWorkflowToolNode" ) );
+
+  for ( int i = 0; i < toolNodes->GetNumberOfItems(); i++ )
+  {
+    this->onNodeRemoved( d->logic()->GetMRMLScene(), toolNodes->GetItemAsObject( i ) );
+    this->onNodeAdded( d->logic()->GetMRMLScene(), toolNodes->GetItemAsObject( i ) );
+  }
+}
+
+
+void qSlicerWorkflowSegmentationModuleWidget
+::updateWidgetFromMRML()
+{
+  Q_D( qSlicerWorkflowSegmentationModuleWidget );
+
+  // Grab the MRML node
+  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::SafeDownCast( d->WorkflowSegmentationNodeComboBox->currentNode() );
+  if ( wsNode == NULL )
+  {
+    return;
+  }
+  
+  d->TransformBufferWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+  d->RecorderControlsWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+  d->MessagesWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+
+  d->RecorderControlsWidget->setWorkflowSegmentationNode( wsNode );
+  d->ToolSummaryWidget->setWorkflowSegmentationNode( wsNode ); // TODO: Is this necessary
+  // Everything else taken care of by the child widgets
 }

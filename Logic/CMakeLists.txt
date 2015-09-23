@@ -5,22 +5,25 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_LOGIC_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-	${Slicer_Base_INCLUDE_DIRS}
+  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   )
 
 set(${KIT}_SRCS
   vtkSlicer${MODULE_NAME}Logic.cxx
   vtkSlicer${MODULE_NAME}Logic.h
-  vtkWorkflowAlgorithm.cxx
-  vtkWorkflowAlgorithm.h
   )
 
 set(${KIT}_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
-  SlicerBaseLogic 
-  vtkSlicerWorkflowSegmentationModuleMRML
-  vtkSlicerTransformRecorderModuleLogic
+  SlicerBaseLogic
+  qSlicerBaseQTCore
+  vtkSlicerTransformRecorderModuleMRML
+  vtkSlicerTransformRecorderModuleLogic  
+  vtkSlicerWorkflowSegmentationModuleMRML  
   )
 
 #-----------------------------------------------------------------------------

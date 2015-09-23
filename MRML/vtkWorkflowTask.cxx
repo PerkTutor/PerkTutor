@@ -26,25 +26,28 @@ vtkWorkflowTask
 }
 
 
-vtkWorkflowTask* vtkWorkflowTask
-::DeepCopy()
+void vtkWorkflowTask
+::Copy( vtkWorkflowTask* otherTask )
 {
-  vtkWorkflowTask* newWorkflowTask = vtkWorkflowTask::New();
-  newWorkflowTask->Name = this->Name;
-  newWorkflowTask->Instruction = this->Instruction;
-  newWorkflowTask->Next = this->Next;
-  newWorkflowTask->Prerequisite = this->Prerequisite;
-  newWorkflowTask->Recovery = this->Recovery;
-  return newWorkflowTask;
+  if ( otherTask == NULL )
+  {
+    return;
+  }
+
+  this->SetName( otherTask->GetName() );
+  this->SetInstruction( otherTask->GetInstruction() );
+  this->SetNext( otherTask->GetNext() );
+  this->SetPrerequisite( otherTask->GetPrerequisite() );
+  this->SetRecovery( otherTask->GetRecovery() );
 }
 
 
 std::string vtkWorkflowTask
-::ToXMLString()
+::ToXMLString( vtkIndent indent )
 {
   std::stringstream xmlstring;
 
-  xmlstring << "<Task";
+  xmlstring << indent << "<Task";
   xmlstring << " Name=\"" << this->Name << "\"";
   xmlstring << " Instruction=\"" << this->Instruction << "\"";
   xmlstring << " Next=\"" << this->Next << "\"";
@@ -62,7 +65,7 @@ void vtkWorkflowTask
 
   if ( strcmp( element->GetName(), "Task" ) != 0 )
   {
-    return;  // If it's not a "log" or is the wrong tool jump to the next.
+    return;  // If it's not a "Task" or is the wrong tool jump to the next.
   }
 
   this->Name = std::string( element->GetAttribute( "Name" ) );

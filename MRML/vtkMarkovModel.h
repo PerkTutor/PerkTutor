@@ -8,6 +8,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <limits>
 
 // VTK includes
 #include "vtkObject.h"
@@ -17,8 +18,8 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkTrackingRecord.h"
-#include "vtkMarkovRecord.h"
+#include "vtkLabelRecord.h"
+#include "vtkMarkovVector.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -30,8 +31,6 @@ public:
   // Standard MRML methods
   static vtkMarkovModel* New();
 
-  vtkMarkovModel* DeepCopy();
-
 protected:
 
   // Constructo/destructor
@@ -40,9 +39,12 @@ protected:
 
 public:
 
+  //
+  void Copy( vtkMarkovModel* otherMarkov );
+
   void SetStates( std::vector<std::string> newStateNames );
   void SetStates( int newStates );
-  void SetSymbols( std::vector<std::string> newSymbolsNames );
+  void SetSymbols( std::vector<std::string> newSymbolNames );
   void SetSymbols( int newSymbols );
 
   void AddState( std::string newStateName );
@@ -54,28 +56,28 @@ public:
   int GetNumStates();
   int GetNumSymbols();
 
-  void SetA( std::vector<vtkLabelVector*> newA );
-  std::vector<vtkLabelVector*> GetA();
-  std::vector<vtkLabelVector*> GetZeroA();
-  std::vector<vtkLabelVector*> GetLogA();
+  void SetA( std::vector< vtkSmartPointer< vtkLabelVector > > newA );
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetZeroA();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetLogA();
 
-  void SetB( std::vector<vtkLabelVector*> newB );
-  std::vector<vtkLabelVector*> GetB();
-  std::vector<vtkLabelVector*> GetZeroB();
-  std::vector<vtkLabelVector*> GetLogB();
+  void SetB( std::vector< vtkSmartPointer< vtkLabelVector > > newB );
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetB();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetZeroB();
+  std::vector< vtkSmartPointer< vtkLabelVector > > GetLogB();
 
   void SetPi( vtkLabelVector* newPi );
-  vtkLabelVector* GetPi();
-  vtkLabelVector* GetZeroPi();
-  vtkLabelVector* GetLogPi();
+  void GetPi( vtkLabelVector* piPi );
+  void GetZeroPi( vtkLabelVector* zeroPi );
+  void GetLogPi( vtkLabelVector* logPi );
 
   void InitializeEstimation();
-  void AddEstimationData( std::vector<vtkMarkovRecord*> sequence );
-  void AddPseudoData( vtkLabelVector* pseudoPi, std::vector<vtkLabelVector*> pseudoA, std::vector<vtkLabelVector*> pseudoB );
+  void AddEstimationData( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );
+  void AddPseudoData( vtkLabelVector* pseudoPi, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoA, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoB );
   void EstimateParameters();
-  std::vector<vtkMarkovRecord*> CalculateStates( std::vector<vtkMarkovRecord*> sequence );
+  void CalculateStates( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );
 
-  std::string ToXMLString();
+  std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
 private:
@@ -85,12 +87,12 @@ private:
 
 protected:
 
-  std::vector<vtkLabelVector*> A; // State transition matrix
-  std::vector<vtkLabelVector*> B; // Observation matrix
-  vtkLabelVector* pi;	// Initial state vector
+  std::vector< vtkSmartPointer< vtkLabelVector > > A; // State transition matrix
+  std::vector< vtkSmartPointer< vtkLabelVector > > B; // Observation matrix
+  vtkSmartPointer< vtkLabelVector > Pi;	// Initial state vector
 
-  std::vector<std::string> stateNames;
-  std::vector<std::string> symbolNames;
+  std::vector< std::string > StateNames;
+  std::vector< std::string > SymbolNames;
 
 };
 

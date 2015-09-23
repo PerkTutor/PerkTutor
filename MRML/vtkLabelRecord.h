@@ -13,6 +13,12 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkSetGet.h"
+#include "vtkMath.h"
+
+// Perk Tutor includes
+#include "vtkLogRecord.h"
+#include "vtkTransformRecord.h"
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
@@ -20,7 +26,7 @@
 
 // A label record is a label vector plus a time attribute
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
-vtkLabelRecord : public vtkLabelVector
+vtkLabelRecord : public vtkLogRecord
 {
 public:
   vtkTypeMacro( vtkLabelRecord, vtkObject );
@@ -28,28 +34,39 @@ public:
   // Standard MRML methods
   static vtkLabelRecord* New();
 
-  vtkLabelRecord* DeepCopy();
-
 protected:
 
   // Constructo/destructor
   vtkLabelRecord();
   virtual ~vtkLabelRecord();
 
-private:
-
-  double Time;
-
 public:
 
-  double GetTime();
-  int GetSec();
-  int GetNSec();
-  void SetTime( double newTime );
-  void SetTime( int newSec, int newNSec );
+  // Copy
+  virtual void Copy( vtkLogRecord* otherRecord );
 
-  std::string ToXMLString( std::string name );
-  void FromXMLElement( vtkXMLDataElement* element, std::string name );
+  enum TrackingRecordType
+  {
+    QUATERNION_RECORD = 7,
+    MATRIX_RECORD = 16,
+  };
+
+  // Get/set vector
+  vtkLabelVector* GetVector();
+  void SetVector( vtkLabelVector* newVector );
+    
+  // Convert to/from a transform record
+  void ToTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type );
+  void FromTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type );
+
+  std::string ToXMLString( vtkIndent indent );
+  void FromXMLElement( vtkXMLDataElement* element );
+  
+
+  
+protected:
+
+  vtkSmartPointer< vtkLabelVector > Vector; 
 
 };
 
