@@ -5,8 +5,12 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "Q_SLICER_MODULE_${MODULE_NAME_UPPER}_WIDGETS_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${PerkTutorCommon_SOURCE_DIR}
-  ${PerkTutorCommon_BINARY_DIR}
+  ${qSlicerTransformRecorderModuleWidgets_SOURCE_DIR}
+  ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   )
 
 set(${KIT}_SRCS
@@ -41,7 +45,7 @@ set(${KIT}_RESOURCES
 
 set(${KIT}_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
-  PerkTutorCommon
+  vtkSlicerTransformRecorderModuleLogic 
   qSlicerTransformRecorderModuleWidgets
   )
 

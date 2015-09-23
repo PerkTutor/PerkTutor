@@ -76,14 +76,14 @@ void vtkLabelRecord
   
   transformRecord->SetTime( this->GetTime() );
   transformRecord->SetDeviceName( this->GetVector()->GetLabel() );
-  transformRecord->SetTransformString( matrixString.str() );
+  transformRecord->SetTransformMatrix( matrixString.str() );
 }
 
 
 void vtkLabelRecord
 ::FromTransformRecord( vtkTransformRecord* transformRecord, TrackingRecordType type )
 {
-  std::stringstream matrixString( transformRecord->GetTransformString() );
+  std::stringstream matrixString( transformRecord->GetTransformMatrix() );
   std::stringstream trackingString;
   if ( type == QUATERNION_RECORD ) // If it is in quaternion format
   {
@@ -101,7 +101,7 @@ void vtkLabelRecord
   }
   else if ( type == MATRIX_RECORD ) // If it is in matrix format
   {
-    trackingString << transformRecord->GetTransformString();
+    trackingString << transformRecord->GetTransformMatrix();
   }
   else
   {

@@ -31,8 +31,6 @@
 #include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
 #include "ui_qSlicerWorkflowGuideDisplayWidget.h"
 
-#include "PerkTutorCommon.h"
-
 class qSlicerWorkflowGuideDisplayWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels

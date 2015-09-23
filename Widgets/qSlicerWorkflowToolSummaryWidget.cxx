@@ -66,7 +66,7 @@ qSlicerWorkflowToolSummaryWidget
 ::qSlicerWorkflowToolSummaryWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerWorkflowToolSummaryWidgetPrivate(*this) )
 {
   this->WorkflowSegmentationNode = NULL;
-  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
+  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
   this->setup();
 }
 

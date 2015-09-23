@@ -30,19 +30,24 @@
 #include <vector>
 #include <cmath>
 
+// Slicer includes
+#include "vtkSlicerModuleLogic.h"
+
 // VTK includes
 #include "vtkObject.h"
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
 
+#include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLWorkflowSegmentationNode.h"
+
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleLogicExport.h"
-#include "vtkMRMLWorkflowSegmentationNode.h"
 
 // Transform Recorder includes
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
+
 
 
 

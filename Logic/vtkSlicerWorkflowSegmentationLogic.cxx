@@ -456,7 +456,7 @@ void vtkSlicerWorkflowSegmentationLogic
       
       if ( toolNode->GetCurrentTask() != NULL && toolNode->GetCurrentTask() != originalTask )
       {
-        vtkSlicerTransformRecorderLogic* trLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( PerkTutorCommon::GetSlicerModuleLogic( "TransformRecorder" ) );
+        vtkSlicerTransformRecorderLogic* trLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) ); // TODO: Can we just create an instance of the logic?
         trLogic->AddMessage( wsNode->GetTransformBufferNode(), toolNode->GetCurrentTask()->GetName(), record->GetTime() );
       }
 

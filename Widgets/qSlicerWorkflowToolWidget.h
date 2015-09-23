@@ -26,13 +26,11 @@
 
 #include "vtkSlicerModuleLogic.h"
 #include "vtkMRMLWorkflowToolNode.h"
-#include "vtkSlicerPerkEvaluatorLogic.h"
 
 // FooBar Widgets includes
 #include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
 #include "ui_qSlicerWorkflowToolWidget.h"
 
-#include "PerkTutorCommon.h"
 
 class qSlicerWorkflowToolWidgetPrivate;
 

@@ -5,9 +5,11 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_MRML_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${PerkTutorCommon_SOURCE_DIR}
-  ${PerkTutorCommon_BINARY_DIR}
-  )
+  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
+  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
+   )
 
 # --------------------------------------------------------------------------
 # Sources
@@ -61,7 +63,6 @@ set(${KIT}_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
-  PerkTutorCommon
   vtkSlicerTransformRecorderModuleMRML
   )
 
