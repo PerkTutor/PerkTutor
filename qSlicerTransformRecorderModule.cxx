@@ -116,7 +116,7 @@ void qSlicerTransformRecorderModule::setup()
   
   // Register the IO
   app->coreIOManager()->registerIO( new qSlicerTransformRecorderIO( TransformRecorderLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "TransformRecorder", QString( "TransformBuffer" ), QStringList() << "vtkMRMLTransformBufferNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "TransformRecorder", QString( "TransformBuffer" ), QStringList() << "vtkMRMLTransformBufferNode", true, this ) );
   
 }
 
