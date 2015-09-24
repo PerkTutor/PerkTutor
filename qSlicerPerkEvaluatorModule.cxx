@@ -116,7 +116,7 @@ void qSlicerPerkEvaluatorModule::setup()
   // Register the IO
   // TODO: Remove when Tables integrated into Slicer core
   app->coreIOManager()->registerIO( new qSlicerTablesReader( PerkEvaluatorLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "PerkEvaluator", QString( "Table" ), QStringList() << "vtkMRMLTableNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "PerkEvaluator", QString( "Table" ), QStringList() << "vtkMRMLTableNode", true, this ) );
   
 }
 
