@@ -126,11 +126,11 @@ void qSlicerWorkflowSegmentationModule::setup()
   
   // Register the IO
   app->coreIOManager()->registerIO( new qSlicerWorkflowProcedureReader( WorkflowSegmentationLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Procedure", QString( "Workflow Procedure" ), QStringList() << "vtkMRMLWorkflowProcedureNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Procedure", QString( "Workflow Procedure" ), QStringList() << "vtkMRMLWorkflowProcedureNode", true, this ) );
   app->coreIOManager()->registerIO( new qSlicerWorkflowInputReader( WorkflowSegmentationLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Input", QString( "Workflow Input" ), QStringList() << "vtkMRMLWorkflowInputNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Input", QString( "Workflow Input" ), QStringList() << "vtkMRMLWorkflowInputNode", true, this ) );
   app->coreIOManager()->registerIO( new qSlicerWorkflowTrainingReader( WorkflowSegmentationLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Training", QString( "Workflow Training" ), QStringList() << "vtkMRMLWorkflowTrainingNode", this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Workflow Training", QString( "Workflow Training" ), QStringList() << "vtkMRMLWorkflowTrainingNode", true, this ) );
 
 }
 
