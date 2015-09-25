@@ -45,8 +45,7 @@ public slots:
 
 protected slots:
 
-  void onStartButtonClicked();
-  void onStopButtonClicked();
+  void onStartStopButtonClicked( bool state );
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate> d_ptr;

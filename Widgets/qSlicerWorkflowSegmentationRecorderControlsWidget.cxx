@@ -92,32 +92,16 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
 
 
 void qSlicerWorkflowSegmentationRecorderControlsWidget
-::onStartButtonClicked()
+::onStartStopButtonClicked( bool state )
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
 
-  this->qSlicerRecorderControlsWidget::onStartButtonClicked();
+  this->qSlicerRecorderControlsWidget::onStartStopButtonClicked( state );
 
   if ( this->WorkflowSegmentationNode == NULL )
   {
     return;
   }
 
-  this->WorkflowSegmentationNode->SetRealTimeProcessing( true );  
-}
-
-
-void qSlicerWorkflowSegmentationRecorderControlsWidget
-::onStopButtonClicked()
-{
-  Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
-
-  this->qSlicerRecorderControlsWidget::onStopButtonClicked();
-
-  if ( this->WorkflowSegmentationNode == NULL )
-  {
-    return;
-  }
-
-  this->WorkflowSegmentationNode->SetRealTimeProcessing( false );  
+  this->WorkflowSegmentationNode->SetRealTimeProcessing( state );
 }
