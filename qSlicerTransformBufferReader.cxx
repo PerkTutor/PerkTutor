@@ -113,5 +113,8 @@ bool qSlicerTransformBufferReader::load(const IOProperties& properties)
 
   d->TransformRecorderLogic->ObserveAllRecordedTransforms( importBufferNode ); // Automatically adds all transforms to the scene
 
+  // Indicate that the node was successfully loaded
+  this->setLoadedNodes( QStringList( QString( importBufferNode->GetID() ) ) );
+
   return true; // TODO: Check to see read was successful first
 }

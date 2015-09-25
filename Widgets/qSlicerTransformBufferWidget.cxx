@@ -21,6 +21,8 @@
 // FooBar Widgets includes
 #include "qSlicerTransformBufferWidget.h"
 
+#include "qSlicerIOManager.h"
+
 #include <QtGui>
 
 
@@ -139,37 +141,21 @@ void qSlicerTransformBufferWidget
 void qSlicerTransformBufferWidget
 ::onImportButtonClicked()
 {
-  Q_D(qSlicerTransformBufferWidget);  
-  
-  QString filename = QFileDialog::getOpenFileName( this, tr("Open record"), "", tr("XML Files (*.xml)") );
-  
-  if ( filename.isEmpty() == false )
+  Q_D(qSlicerTransformBufferWidget);
+
+  // Use the generic Slicer dialog  
+  vtkSmartPointer< vtkCollection > loadedNodes = vtkSmartPointer< vtkCollection >::New();
+  qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
+  ioManager->openDialog( QString( "Transform Buffer" ), qSlicerFileDialog::Read, qSlicerIO::IOProperties(), loadedNodes );
+
+  // Set one of the loaded nodes to be selected in the combo box
+  if ( loadedNodes->GetNumberOfItems() > 0 )
   {
-    QProgressDialog dialog;
-    dialog.setModal( true );
-    dialog.setLabelText( "Please wait while reading XML file..." );
-    dialog.show();
-
-    // We should create a new buffer node if there isn't one already selected
-    vtkSmartPointer< vtkMRMLTransformBufferNode > importBufferNode = this->TransformBufferNode;
-    if ( importBufferNode == NULL )
-    {
-      importBufferNode.TakeReference( vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) ) );
-      importBufferNode->SetScene( this->mrmlScene() );
-      this->mrmlScene()->AddNode( importBufferNode );
-    }
-    
-    dialog.setValue( 10 );
-    this->TransformRecorderLogic->ImportFromXMLFile( importBufferNode, filename.toStdString() );
-
-    // Triggers the buffer node changed signal
-    d->BufferNodeComboBox->setCurrentNode( NULL );
-    d->BufferNodeComboBox->setCurrentNode( importBufferNode );
-
-    dialog.close();
+	  d->BufferNodeComboBox->setCurrentNode( vtkMRMLNode::SafeDownCast( loadedNodes->GetItemAsObject( 0 ) ) );
   }
-  
+
   this->updateWidget();
+  emit transformBufferNodeChanged( this->TransformBufferNode );
 }
 
 
@@ -178,12 +164,17 @@ void qSlicerTransformBufferWidget
 {
   Q_D(qSlicerTransformBufferWidget);  
 
-  QString filename = QFileDialog::getSaveFileName( this, tr("Save buffer"), "", tr("XML Files (*.xml)") );
-  
-  if ( ! filename.isEmpty() )
+  if ( this->TransformBufferNode == NULL )
   {
-    this->TransformRecorderLogic->ExportToFile( this->TransformBufferNode, filename.toStdString() );
+    return;
   }
+
+  // Use the generic Slicer dialog
+  qSlicerIO::IOProperties fileParameters;
+  fileParameters[ "nodeID" ] = this->TransformBufferNode->GetID();
+  
+  qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
+  ioManager->openDialog( QString( "Transform Buffer" ), qSlicerFileDialog::Write, fileParameters );
 
   // No need to update the buffer - it is not changed
   this->updateWidget();
