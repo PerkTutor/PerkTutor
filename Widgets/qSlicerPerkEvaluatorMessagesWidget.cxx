@@ -108,6 +108,19 @@ void qSlicerPerkEvaluatorMessagesWidget
 
 
 void qSlicerPerkEvaluatorMessagesWidget
+::onAddBlankMessageClicked()
+{
+  Q_D(qSlicerPerkEvaluatorMessagesWidget);  
+
+  // Record the timestamp
+  double time = this->PerkEvaluatorNode->GetPlaybackTime();
+  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, "", time );
+  
+  this->updateWidget();  // Force this update widget
+}
+
+
+void qSlicerPerkEvaluatorMessagesWidget
 ::onMessageDoubleClicked( int row, int column )
 {
   Q_D(qSlicerPerkEvaluatorMessagesWidget);  

@@ -44,6 +44,8 @@ protected slots:
   virtual void setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode );
 
   void onAddMessageButtonClicked();
+  void onAddBlankMessageClicked();
+
   void onMessageDoubleClicked( int row, int column );
 
 protected:
