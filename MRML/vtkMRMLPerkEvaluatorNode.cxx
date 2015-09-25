@@ -511,6 +511,7 @@ void vtkMRMLPerkEvaluatorNode
 {
   vtkNew< vtkIntArray > events;
   events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
+  events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
   this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
 
   // Auto-update as necessary
@@ -571,23 +572,32 @@ void vtkMRMLPerkEvaluatorNode
 {
   // TODO: Are regular modified events automatically propogated?
 
-  // Do nothing if there is not real-time processing
-  if ( ! this->RealTimeProcessing )
-  {
-    return;
-  }
-
   // The caller will be the node that was modified
   vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( caller );
-  if ( transformBuffer == NULL || event != vtkMRMLTransformBufferNode::TransformAddedEvent )
+  if ( transformBuffer == NULL )
   {
     return;
   }
 
-  vtkMRMLTransformBufferNode::TransformEventDataType* eventData = reinterpret_cast< vtkMRMLTransformBufferNode::TransformEventDataType* >( callData );
-  if ( transformBuffer->GetTransformRecordBuffer( eventData->first )->GetNumRecords() == eventData->second + 1 )
-  {
-    this->InvokeEvent( TransformRealTimeAddedEvent, &eventData->first );
+  // Recording state of buffer changed
+  if ( event == vtkMRMLTransformBufferNode::RecordingStateChangedEvent )
+  { 
+    bool* eventData = reinterpret_cast< bool* >( callData );
+    if ( *eventData == false )
+    {
+      this->SetRealTimeProcessing( false ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
+    }
+  }
+
+
+  // Transform added to buffer
+  if ( event == vtkMRMLTransformBufferNode::TransformAddedEvent && this->RealTimeProcessing )
+  { 
+    vtkMRMLTransformBufferNode::TransformEventDataType* eventData = reinterpret_cast< vtkMRMLTransformBufferNode::TransformEventDataType* >( callData );
+    if ( transformBuffer->GetTransformRecordBuffer( eventData->first )->GetNumRecords() == eventData->second + 1 )
+    {
+      this->InvokeEvent( TransformRealTimeAddedEvent, &eventData->first );
+    }
   }
 
 }

@@ -88,32 +88,16 @@ void qSlicerPerkEvaluatorRecorderControlsWidget
 
 
 void qSlicerPerkEvaluatorRecorderControlsWidget
-::onStartButtonClicked()
+::onStartStopButtonClicked( bool state )
 {
   Q_D(qSlicerPerkEvaluatorRecorderControlsWidget);
 
-  this->qSlicerRecorderControlsWidget::onStartButtonClicked();
+  this->qSlicerRecorderControlsWidget::onStartStopButtonClicked( state );
 
   if ( this->PerkEvaluatorNode == NULL )
   {
     return;
   }
 
-  this->PerkEvaluatorNode->SetRealTimeProcessing( true );  
-}
-
-
-void qSlicerPerkEvaluatorRecorderControlsWidget
-::onStopButtonClicked()
-{
-  Q_D(qSlicerPerkEvaluatorRecorderControlsWidget);
-
-  this->qSlicerRecorderControlsWidget::onStopButtonClicked();
-
-  if ( this->PerkEvaluatorNode == NULL )
-  {
-    return;
-  }
-
-  this->PerkEvaluatorNode->SetRealTimeProcessing( false );  
+  this->PerkEvaluatorNode->SetRealTimeProcessing( state );    
 }

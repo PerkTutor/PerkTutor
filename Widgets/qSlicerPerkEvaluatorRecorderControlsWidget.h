@@ -43,9 +43,8 @@ protected slots:
 
   virtual void setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode );
 
-  void onStartButtonClicked();
-  void onStopButtonClicked();
-
+  void onStartStopButtonClicked( bool state );
+  
 protected:
   QScopedPointer<qSlicerPerkEvaluatorRecorderControlsWidgetPrivate> d_ptr;
 
