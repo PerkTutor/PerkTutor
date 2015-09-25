@@ -87,6 +87,10 @@ void qSlicerMessagesWidget
   connect( d->AddMessageButton, SIGNAL( clicked() ), this, SLOT( onAddMessageButtonClicked() ) );
   connect( d->RemoveMessageButton, SIGNAL( clicked() ), this, SLOT( onRemoveMessageButtonClicked() ) ); 
   connect( d->ClearMessagesButton, SIGNAL( clicked() ), this, SLOT( onClearMessagesButtonClicked() ) );
+
+  d->AddMessageButton->setContextMenuPolicy( Qt::CustomContextMenu );
+  connect( d->AddMessageButton, SIGNAL( customContextMenuRequested(const QPoint&) ), this, SLOT( onAddBlankMessageClicked() ) );
+
   connect( d->MessagesTableWidget, SIGNAL( cellDoubleClicked( int, int ) ), this, SLOT( onMessageDoubleClicked( int, int ) ) );
 
   this->updateWidget();  
@@ -165,6 +169,23 @@ void qSlicerMessagesWidget
   }
 
   this->TransformRecorderLogic->ClearMessages( this->TransformBufferNode );
+  
+  this->updateWidget();
+}
+
+
+void qSlicerMessagesWidget
+::onAddBlankMessageClicked()
+{
+  Q_D(qSlicerMessagesWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
+
+  double time = this->TransformBufferNode->GetCurrentTimestamp();
+  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, "", time );
   
   this->updateWidget();
 }

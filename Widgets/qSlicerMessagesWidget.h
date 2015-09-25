@@ -51,6 +51,8 @@ protected slots:
   virtual void onAddMessageButtonClicked();
   virtual void onRemoveMessageButtonClicked();
   virtual void onClearMessagesButtonClicked();
+  virtual void onAddBlankMessageClicked();
+
   virtual void updateWidget();
 
 protected:
