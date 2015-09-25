@@ -22,7 +22,7 @@
 #include <QFileInfo>
 
 // SlicerQt includes
-#include "qSlicerTransformRecorderIO.h"
+#include "qSlicerTransformBufferReader.h"
 
 // Logic includes
 #include "vtkSlicerTransformRecorderLogic.h"
@@ -33,61 +33,61 @@
 #include <vtkSmartPointer.h>
 
 //-----------------------------------------------------------------------------
-class qSlicerTransformRecorderIOPrivate
+class qSlicerTransformBufferReaderPrivate
 {
 public:
   vtkSmartPointer<vtkSlicerTransformRecorderLogic> TransformRecorderLogic;
 };
 
 //-----------------------------------------------------------------------------
-qSlicerTransformRecorderIO::qSlicerTransformRecorderIO( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic, QObject* _parent)
+qSlicerTransformBufferReader::qSlicerTransformBufferReader( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic, QObject* _parent)
   : Superclass(_parent)
-  , d_ptr(new qSlicerTransformRecorderIOPrivate)
+  , d_ptr(new qSlicerTransformBufferReaderPrivate)
 {
   this->setTransformRecorderLogic( newTransformRecorderLogic );
 }
 
 //-----------------------------------------------------------------------------
-qSlicerTransformRecorderIO::~qSlicerTransformRecorderIO()
+qSlicerTransformBufferReader::~qSlicerTransformBufferReader()
 {
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerTransformRecorderIO::setTransformRecorderLogic(vtkSlicerTransformRecorderLogic* newTransformRecorderLogic)
+void qSlicerTransformBufferReader::setTransformRecorderLogic(vtkSlicerTransformRecorderLogic* newTransformRecorderLogic)
 {
-  Q_D(qSlicerTransformRecorderIO);
+  Q_D(qSlicerTransformBufferReader);
   d->TransformRecorderLogic = newTransformRecorderLogic;
 }
 
 //-----------------------------------------------------------------------------
-vtkSlicerTransformRecorderLogic* qSlicerTransformRecorderIO::TransformRecorderLogic() const
+vtkSlicerTransformRecorderLogic* qSlicerTransformBufferReader::TransformRecorderLogic() const
 {
-  Q_D(const qSlicerTransformRecorderIO);
+  Q_D(const qSlicerTransformBufferReader);
   return d->TransformRecorderLogic;
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerTransformRecorderIO::description() const
+QString qSlicerTransformBufferReader::description() const
 {
   return "Transform Buffer";
 }
 
 //-----------------------------------------------------------------------------
-qSlicerIO::IOFileType qSlicerTransformRecorderIO::fileType() const
+qSlicerIO::IOFileType qSlicerTransformBufferReader::fileType() const
 {
   return QString("Transform Buffer");
 }
 
 //-----------------------------------------------------------------------------
-QStringList qSlicerTransformRecorderIO::extensions() const
+QStringList qSlicerTransformBufferReader::extensions() const
 {
-  return QStringList() << "Transform Buffer (*.xml)" << "Transform Buffer (*.mha)";
+  return QStringList() << "Transform Buffer (*.xml)" << "Transform Buffer (*.mha)" << "Transform Buffer (*)";
 }
 
 //-----------------------------------------------------------------------------
-bool qSlicerTransformRecorderIO::load(const IOProperties& properties)
+bool qSlicerTransformBufferReader::load(const IOProperties& properties)
 {
-  Q_D(qSlicerTransformRecorderIO);
+  Q_D(qSlicerTransformBufferReader);
   Q_ASSERT( properties.contains("fileName") );
   QString fileName = properties["fileName"].toString();
 
@@ -97,23 +97,21 @@ bool qSlicerTransformRecorderIO::load(const IOProperties& properties)
   
   vtkSmartPointer< vtkMRMLTransformBufferNode > importBufferNode;
   importBufferNode.TakeReference( vtkMRMLTransformBufferNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLTransformBufferNode" ) ) );
+  importBufferNode->SetName( baseName.toStdString().c_str() );
   importBufferNode->SetScene( this->mrmlScene() );
   this->mrmlScene()->AddNode( importBufferNode );
 
-  if ( extension.toStdString().compare( "xml" ) == 0 )
-  {
-    d->TransformRecorderLogic->ImportFromXMLFile( importBufferNode, fileName.toStdString() );
-  }  
+  // Unless it is an mha, assume that it is in xml format
   if ( extension.toStdString().compare( "mha" ) == 0 )
   {
     d->TransformRecorderLogic->ImportFromMHAFile( importBufferNode, fileName.toStdString() ); 
   }
+  else // if ( extension.toStdString().compare( "xml" ) == 0 )
+  {
+    d->TransformRecorderLogic->ImportFromXMLFile( importBufferNode, fileName.toStdString() );
+  }  
 
   d->TransformRecorderLogic->ObserveAllRecordedTransforms( importBufferNode ); // Automatically adds all transforms to the scene
-
-  std::stringstream importBufferName;
-  importBufferName << importBufferNode->GetName() << "_" << baseName.toStdString();
-  importBufferNode->SetName( importBufferName.str().c_str() );
 
   return true; // TODO: Check to see read was successful first
 }

@@ -18,25 +18,25 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerTransformRecorderIO_h
-#define __qSlicerTransformRecorderIO_h
+#ifndef __qSlicerTransformBufferReader_h
+#define __qSlicerTransformBufferReader_h
 
 // SlicerQt includes
 #include "qSlicerFileReader.h"
-class qSlicerTransformRecorderIOPrivate;
+class qSlicerTransformBufferReaderPrivate;
 
 // Slicer includes
 class vtkSlicerTransformRecorderLogic;
 
 //-----------------------------------------------------------------------------
-class qSlicerTransformRecorderIO
+class qSlicerTransformBufferReader
   : public qSlicerFileReader
 {
   Q_OBJECT
 public:
   typedef qSlicerFileReader Superclass;
-  qSlicerTransformRecorderIO( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic = 0, QObject* parent = 0 );
-  virtual ~qSlicerTransformRecorderIO();
+  qSlicerTransformBufferReader( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic = 0, QObject* parent = 0 );
+  virtual ~qSlicerTransformBufferReader();
 
   void setTransformRecorderLogic( vtkSlicerTransformRecorderLogic* newTransformRecorderLogic);
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic() const;
@@ -48,11 +48,11 @@ public:
   virtual bool load( const IOProperties& properties );
   
 protected:
-  QScopedPointer< qSlicerTransformRecorderIOPrivate > d_ptr;
+  QScopedPointer< qSlicerTransformBufferReaderPrivate > d_ptr;
 
 private:
-  Q_DECLARE_PRIVATE( qSlicerTransformRecorderIO );
-  Q_DISABLE_COPY( qSlicerTransformRecorderIO );
+  Q_DECLARE_PRIVATE( qSlicerTransformBufferReader );
+  Q_DISABLE_COPY( qSlicerTransformBufferReader );
 };
 
 #endif

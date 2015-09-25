@@ -24,7 +24,7 @@
 // TransformRecorder includes
 #include "qSlicerTransformRecorderModule.h"
 #include "qSlicerTransformRecorderModuleWidget.h"
-#include "qSlicerTransformRecorderIO.h"
+#include "qSlicerTransformBufferReader.h"
 
 // Slicer includes
 #include "qSlicerNodeWriter.h"
@@ -115,8 +115,8 @@ void qSlicerTransformRecorderModule::setup()
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( this->logic() );
   
   // Register the IO
-  app->coreIOManager()->registerIO( new qSlicerTransformRecorderIO( TransformRecorderLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "TransformRecorder", QString( "TransformBuffer" ), QStringList() << "vtkMRMLTransformBufferNode", true, this ) );
+  app->coreIOManager()->registerIO( new qSlicerTransformBufferReader( TransformRecorderLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Transform Recorder", QString( "Transform Buffer" ), QStringList() << "vtkMRMLTransformBufferNode", true, this ) );
   
 }
 

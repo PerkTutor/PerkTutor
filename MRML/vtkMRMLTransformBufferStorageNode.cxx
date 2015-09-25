@@ -78,7 +78,8 @@ bool vtkMRMLTransformBufferStorageNode
 void vtkMRMLTransformBufferStorageNode
 ::InitializeSupportedWriteFileTypes()
 {
-  this->SupportedWriteFileTypes->InsertNextValue("Transform Buffer (.xml)");
+  this->SupportedWriteFileTypes->InsertNextValue("Transform Buffer (*.xml)");
+  this->SupportedWriteFileTypes->InsertNextValue("Transform Buffer (*)");
 }
 
 
@@ -111,7 +112,6 @@ int vtkMRMLTransformBufferStorageNode
   parser->Parse();
 
   bufferNode->FromXMLElement( parser->GetRootElement() );
-  //bufferNode->SetActiveTransformsFromBuffer();
 
   // The buffer name should already be specified
   // The scene should already be populated with the desired transforms
