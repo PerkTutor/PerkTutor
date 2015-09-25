@@ -85,8 +85,7 @@ void qSlicerRecorderControlsWidget
 
   connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
 
-  connect( d->StartButton, SIGNAL( clicked() ), this, SLOT( onStartButtonClicked() ) );
-  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( onStopButtonClicked() ) );
+  connect( d->StartStopButton, SIGNAL( clicked( bool ) ), this, SLOT( onStartStopButtonClicked( bool ) ) );
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
 
   this->updateWidget();
@@ -104,6 +103,7 @@ void qSlicerRecorderControlsWidget
 
   this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformAddedEvent, this, SLOT( onTransformBufferActiveTransformsChanged() ) );
   this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent, this, SLOT( onTransformBufferActiveTransformsChanged() ) );
+  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::RecordingStateChangedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
@@ -161,7 +161,7 @@ void qSlicerRecorderControlsWidget
 
 
 void qSlicerRecorderControlsWidget
-::onStartButtonClicked()
+::onStartStopButtonClicked( bool state )
 {
   Q_D(qSlicerRecorderControlsWidget);
 
@@ -170,29 +170,23 @@ void qSlicerRecorderControlsWidget
     return;
   }
   
-  // The observed transforms should be dealt with in the TransformRecorder logic
-  this->TransformBufferNode->StartRecording();
-  d->StatusResultLabel->setText( "Recording" );
-  
-  this->updateWidget();
-}
-
-
-void qSlicerRecorderControlsWidget
-::onStopButtonClicked()
-{
-  Q_D(qSlicerRecorderControlsWidget);  
-
-  if ( this->TransformBufferNode == NULL )
+  // If recording is started
+  if ( state == true )
   {
-    return;
+    this->TransformBufferNode->StartRecording();
+    d->StatusResultLabel->setText( "Recording" );
+    d->StartStopButton->setText( "Stop" );
   }
-
-  this->TransformBufferNode->StopRecording();
-  d->StatusResultLabel->setText( "Waiting" );
+  else
+  {
+    this->TransformBufferNode->StopRecording();
+    d->StatusResultLabel->setText( "Stopped" );
+    d->StartStopButton->setText( "Start" );
+  }
   
   this->updateWidget();
 }
+
 
 
 void qSlicerRecorderControlsWidget
@@ -225,10 +219,14 @@ void qSlicerRecorderControlsWidget
   if ( this->TransformBufferNode->GetRecording() )
   {
     d->StatusResultLabel->setText( "Recording" );
+    d->StartStopButton->setChecked( true );
+    d->StartStopButton->setText( "Stop" );
   }
   else
   {
-    d->StatusResultLabel->setText( "Waiting" );
+    d->StatusResultLabel->setText( "Stopped" );
+    d->StartStopButton->setChecked( false );
+    d->StartStopButton->setText( "Start" );
   }
 
   this->onTransformBufferActiveTransformsChanged();

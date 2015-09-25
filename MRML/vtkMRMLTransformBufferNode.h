@@ -149,6 +149,7 @@ public:
     MessageRemovedEvent,
     ActiveTransformAddedEvent,
     ActiveTransformRemovedEvent,
+    RecordingStateChangedEvent,
   };
 
 

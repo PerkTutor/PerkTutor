@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>838</width>
+    <height>520</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -49,6 +49,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Select the transform to record.</string>
+       </property>
        <property name="nodeTypes">
         <stringlist>
          <string>vtkMRMLLinearTransformNode</string>
@@ -70,28 +73,21 @@
    <item>
     <layout class="QHBoxLayout" name="ControlButtonsLayout">
      <item>
-      <widget class="QPushButton" name="StartButton">
+      <widget class="QPushButton" name="StartStopButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Start/Stop recording the selected transforms into the current transform buffer.</string>
        </property>
        <property name="text">
         <string>Start</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="StopButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Stop</string>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -102,6 +98,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Clear all recorded transforms from the current transform buffer.</string>
        </property>
        <property name="text">
         <string>Clear</string>

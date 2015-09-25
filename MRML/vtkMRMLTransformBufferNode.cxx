@@ -613,6 +613,7 @@ void vtkMRMLTransformBufferNode
 ::StartRecording()
 {
   this->RecordingState = true;
+  this->InvokeEvent( RecordingStateChangedEvent, & this->RecordingState );
 }
 
 
@@ -620,6 +621,7 @@ void vtkMRMLTransformBufferNode
 ::StopRecording()
 {
   this->RecordingState = false;
+  this->InvokeEvent( RecordingStateChangedEvent, & this->RecordingState );
 }
 
 
