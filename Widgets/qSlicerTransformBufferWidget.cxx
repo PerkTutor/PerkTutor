@@ -89,7 +89,9 @@ void qSlicerTransformBufferWidget
   connect( d->BufferNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferNodeChanged( vtkMRMLNode* ) ) );
 
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( onImportButtonClicked() ) );
+  d->ImportButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogOpenButton ) );
   connect( d->ExportButton, SIGNAL( clicked() ), this, SLOT( onExportButtonClicked() ) );
+  d->ExportButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogSaveButton ) );
 
   this->updateWidget();  
 }
