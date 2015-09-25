@@ -115,7 +115,12 @@ void qSlicerMessagesWidget
 void qSlicerMessagesWidget
 ::onAddMessageButtonClicked()
 {
-  Q_D(qSlicerMessagesWidget);  
+  Q_D(qSlicerMessagesWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
 
   double time = this->TransformBufferNode->GetCurrentTimestamp();
 
@@ -138,6 +143,11 @@ void qSlicerMessagesWidget
 {
   Q_D(qSlicerMessagesWidget);
 
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
+
   this->TransformRecorderLogic->RemoveMessage( this->TransformBufferNode, d->MessagesTableWidget->currentRow() );
 
   this->updateWidget();
@@ -148,6 +158,11 @@ void qSlicerMessagesWidget
 ::onClearMessagesButtonClicked()
 {
   Q_D(qSlicerMessagesWidget);
+
+  if ( this->TransformBufferNode == NULL )
+  {
+    return;
+  }
 
   this->TransformRecorderLogic->ClearMessages( this->TransformBufferNode );
   
