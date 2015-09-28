@@ -51,8 +51,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
-        <height>771</height>
+        <width>598</width>
+        <height>720</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -336,8 +336,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
-        <height>771</height>
+        <width>598</width>
+        <height>720</height>
        </rect>
       </property>
       <attribute name="label">
@@ -345,9 +345,53 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <widget class="QGroupBox" name="MeasurementParametersGroupBox">
+        <widget class="QGroupBox" name="ResultsGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Results</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <property name="verticalSpacing">
+           <number>10</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="AnalyzeButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Analyze</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="ctkCollapsibleGroupBox" name="MeasurementParametersGroupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -355,7 +399,10 @@
          <property name="title">
           <string>Measurement Parameters</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="collapsed">
+          <bool>true</bool>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_12">
           <item>
            <layout class="QGridLayout" name="gridLayout_3">
             <item row="0" column="0">
@@ -543,50 +590,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="ResultsGroupBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="title">
-          <string>Results</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <property name="verticalSpacing">
-           <number>10</number>
-          </property>
-          <item row="0" column="0">
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QPushButton" name="AnalyzeButton">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Analyze</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="ctkCollapsibleGroupBox" name="BatchProcessingGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -734,8 +737,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
-        <height>771</height>
+        <width>531</width>
+        <height>158</height>
        </rect>
       </property>
       <attribute name="label">
@@ -855,7 +858,7 @@
                  <bool>true</bool>
                 </property>
                 <attribute name="buttonGroup">
-                 <string>NeedleOrientationButtonGroup</string>
+                 <string notr="true">NeedleOrientationButtonGroup</string>
                 </attribute>
                </widget>
               </item>
@@ -871,7 +874,7 @@
                  <string>-X</string>
                 </property>
                 <attribute name="buttonGroup">
-                 <string>NeedleOrientationButtonGroup</string>
+                 <string notr="true">NeedleOrientationButtonGroup</string>
                 </attribute>
                </widget>
               </item>
@@ -890,7 +893,7 @@
                  <bool>false</bool>
                 </property>
                 <attribute name="buttonGroup">
-                 <string>NeedleOrientationButtonGroup</string>
+                 <string notr="true">NeedleOrientationButtonGroup</string>
                 </attribute>
                </widget>
               </item>
@@ -906,7 +909,7 @@
                  <string>-Y</string>
                 </property>
                 <attribute name="buttonGroup">
-                 <string>NeedleOrientationButtonGroup</string>
+                 <string notr="true">NeedleOrientationButtonGroup</string>
                 </attribute>
                </widget>
               </item>
@@ -922,7 +925,7 @@
                  <string>Z</string>
                 </property>
                 <attribute name="buttonGroup">
-                 <string>NeedleOrientationButtonGroup</string>
+                 <string notr="true">NeedleOrientationButtonGroup</string>
                 </attribute>
                </widget>
               </item>
@@ -938,7 +941,7 @@
                  <string>-Z</string>
                 </property>
                 <attribute name="buttonGroup">
-                 <string>NeedleOrientationButtonGroup</string>
+                 <string notr="true">NeedleOrientationButtonGroup</string>
                 </attribute>
                </widget>
               </item>
