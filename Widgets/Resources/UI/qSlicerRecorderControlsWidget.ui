@@ -133,7 +133,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Waiting</string>
+        <string>Stopped</string>
        </property>
       </widget>
      </item>
