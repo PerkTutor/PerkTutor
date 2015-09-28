@@ -151,19 +151,21 @@ void qSlicerMetricsTableWidget
 {
   Q_D( qSlicerMetricsTableWidget );
 
-  // TODO: Should this be taken directly from the metrics table node?
   // Grab all of the contents from whatever is currently on the metrics table
   QString clipString = QString( "" );
 
-  for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
+  for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
   {
-    for ( int j = 0; j < d->MetricsTable->columnCount(); j++ )
-    {
-      QTableWidgetItem* currentItem = d->MetricsTable->item( i, j );
-      clipString.append( currentItem->text() );
-      clipString.append( QString( "\t" ) );
-    }
-    clipString.append( QString( "\n" ) );
+    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
+    clipString.append( " " );
+    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
+    clipString.append( " (" );
+    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
+    clipString.append( ") " );
+
+    clipString.append( "\t" );
+    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
+    clipString.append( "\n" );
   }
 
   QApplication::clipboard()->setText( clipString );
@@ -198,16 +200,16 @@ void qSlicerMetricsTableWidget
   for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
   {
     QString nameString;
-    nameString = nameString + QString( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
-    nameString = nameString + QString( " " );
-    nameString = nameString + QString( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
+    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
+    nameString.append( " " );
+    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
     QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
     d->MetricsTable->setItem( i, 0, nameItem );
 
     QString valueString;
-    valueString = valueString + QString( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
-    valueString = valueString + QString( " " );
-    valueString = valueString + QString( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
+    valueString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
+    valueString.append( " " );
+    valueString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
     QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
     d->MetricsTable->setItem( i, 1, valueItem );
   }
