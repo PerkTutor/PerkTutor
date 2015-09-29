@@ -520,6 +520,9 @@ void vtkMRMLPerkEvaluatorNode
     return;
   }
 
+  // Playback time
+  this->SetPlaybackTime( this->GetTransformBufferNode()->GetMinimumTime() ); // Set to minimum for convenience
+
   // Measurement range
   if ( this->GetAutoUpdateMeasurementRange() )
   {
