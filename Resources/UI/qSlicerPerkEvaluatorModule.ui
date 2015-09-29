@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>624</width>
-    <height>896</height>
+    <height>840</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -52,7 +52,7 @@
         <x>0</x>
         <y>0</y>
         <width>598</width>
-        <height>720</height>
+        <height>664</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -68,7 +68,7 @@
        <item>
         <widget class="QGroupBox" name="BufferGroupBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -88,7 +88,7 @@
        <item>
         <widget class="QGroupBox" name="PlaybackGroupbox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -109,7 +109,7 @@
           <item row="1" column="0">
            <widget class="ctkSliderWidget" name="PlaybackSlider">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -136,7 +136,7 @@
             <item>
              <widget class="QPushButton" name="BeginButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -153,15 +153,18 @@
                 <bold>true</bold>
                </font>
               </property>
+              <property name="toolTip">
+               <string>Skip to beginning of recording.</string>
+              </property>
               <property name="text">
-               <string>|&lt;&lt;</string>
+               <string/>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="PrevButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -178,53 +181,62 @@
                 <bold>true</bold>
                </font>
               </property>
+              <property name="toolTip">
+               <string>Move one frame backward.</string>
+              </property>
               <property name="text">
-               <string>&lt;&lt;</string>
+               <string/>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="PlayButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="maximumSize">
                <size>
-                <width>50</width>
+                <width>35</width>
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Play recording.</string>
+              </property>
               <property name="text">
-               <string>Play</string>
+               <string/>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="StopButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="maximumSize">
                <size>
-                <width>50</width>
+                <width>35</width>
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Pause playback of recording.</string>
+              </property>
               <property name="text">
-               <string>Stop</string>
+               <string/>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="NextButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -241,15 +253,18 @@
                 <bold>true</bold>
                </font>
               </property>
+              <property name="toolTip">
+               <string>Move one frame forward.</string>
+              </property>
               <property name="text">
-               <string>&gt;&gt;</string>
+               <string/>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="EndButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -266,8 +281,11 @@
                 <bold>true</bold>
                </font>
               </property>
+              <property name="toolTip">
+               <string>Skip to end of recording.</string>
+              </property>
               <property name="text">
-               <string>&gt;&gt;|</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -287,10 +305,13 @@
             <item>
              <widget class="QCheckBox" name="PlaybackRepeatCheckBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Continue playback from beginning when the end is reached.</string>
               </property>
               <property name="text">
                <string>Repeat</string>
@@ -312,6 +333,9 @@
          </property>
          <property name="title">
           <string>Messages</string>
+         </property>
+         <property name="collapsed">
+          <bool>true</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2"/>
         </widget>
@@ -337,7 +361,7 @@
         <x>0</x>
         <y>0</y>
         <width>598</width>
-        <height>720</height>
+        <height>664</height>
        </rect>
       </property>
       <attribute name="label">
@@ -373,7 +397,7 @@
             <item>
              <widget class="QPushButton" name="AnalyzeButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -391,7 +415,7 @@
        <item>
         <widget class="ctkCollapsibleGroupBox" name="MeasurementParametersGroupBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -408,7 +432,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="TissueNodeLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -421,7 +445,7 @@
             <item row="0" column="1">
              <widget class="qMRMLNodeComboBox" name="BodyNodeComboBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -439,7 +463,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="NeedleTransformLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -452,7 +476,7 @@
             <item row="1" column="1">
              <widget class="qMRMLNodeComboBox" name="NeedleReferenceComboBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -472,7 +496,7 @@
           <item>
            <widget class="QLabel" name="MeasurementRangeLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -487,7 +511,7 @@
             <item>
              <widget class="QPushButton" name="MarkBeginButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -500,7 +524,7 @@
             <item>
              <widget class="QDoubleSpinBox" name="BeginSpinBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -526,7 +550,7 @@
             <item>
              <widget class="QLabel" name="DashLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -561,7 +585,7 @@
             <item>
              <widget class="QDoubleSpinBox" name="EndSpinBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -574,7 +598,7 @@
             <item>
              <widget class="QPushButton" name="MarkEndButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -592,7 +616,7 @@
        <item>
         <widget class="ctkCollapsibleGroupBox" name="BatchProcessingGroupBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -609,7 +633,7 @@
             <item>
              <widget class="qMRMLCheckableNodeComboBox" name="BatchPerkEvaluatorNodeComboBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -620,12 +644,15 @@
                 <string>vtkMRMLTransformBufferNode</string>
                </stringlist>
               </property>
+              <property name="sizeAdjustPolicy">
+               <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+              </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="BatchProcessButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -643,7 +670,7 @@
        <item>
         <widget class="ctkCollapsibleGroupBox" name="RealTimeProcessingGroupBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -678,7 +705,7 @@
         <x>0</x>
         <y>0</y>
         <width>598</width>
-        <height>720</height>
+        <height>664</height>
        </rect>
       </property>
       <attribute name="label">
@@ -722,7 +749,7 @@
        <item>
         <widget class="ctkCollapsibleGroupBox" name="OptionsGroupBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -742,7 +769,7 @@
             <item row="0" column="1">
              <widget class="QPushButton" name="MetricsDirectoryButton">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -755,7 +782,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="MetricsDirectoryLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -768,7 +795,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="NeedleOrientationLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -786,7 +813,7 @@
               <item>
                <widget class="QRadioButton" name="PlusXRadioButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -805,7 +832,7 @@
               <item>
                <widget class="QRadioButton" name="MinusXRadioButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -821,7 +848,7 @@
               <item>
                <widget class="QRadioButton" name="PlusYRadioButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -840,7 +867,7 @@
               <item>
                <widget class="QRadioButton" name="MinusYRadioButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -856,7 +883,7 @@
               <item>
                <widget class="QRadioButton" name="PlusZRadioButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -872,7 +899,7 @@
               <item>
                <widget class="QRadioButton" name="MinusZRadioButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -900,7 +927,7 @@
             <item>
              <widget class="QLabel" name="AutoUpdateLabel">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -916,7 +943,7 @@
             <item>
              <widget class="QCheckBox" name="AutoUpdateMeasurementRangeCheckBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -932,7 +959,7 @@
             <item>
              <widget class="QCheckBox" name="AutoUpdateTransformRolesCheckBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>

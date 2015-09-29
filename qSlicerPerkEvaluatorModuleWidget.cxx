@@ -565,12 +565,20 @@ qSlicerPerkEvaluatorModuleWidget
   // Display tab
 
   connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
-  connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
-  connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
+  
   connect( d->BeginButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackBeginClicked() ) );
-  connect( d->EndButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackEndClicked() ) );
-  connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) );
+  d->BeginButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSkipBackward ) );
+  connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
+  d->PrevButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSeekBackward ) );
+  connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) ); 
+  d->PlayButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaPlay ) ); 
   connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
+  d->StopButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaPause ) );
+  connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
+  d->NextButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSeekForward ) );
+  connect( d->EndButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackEndClicked() ) );
+  d->EndButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSkipForward ) );
+
 
   connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 

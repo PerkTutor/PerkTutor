@@ -31,7 +31,7 @@
      <item>
       <widget class="qMRMLNodeComboBox" name="MetricsTableNodeComboBox">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -55,10 +55,13 @@
      <item>
       <widget class="QPushButton" name="ClipboardButton">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Copy metric names and values to clipboard.</string>
        </property>
        <property name="text">
         <string/>
