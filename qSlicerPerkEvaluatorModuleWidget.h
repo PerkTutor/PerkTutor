@@ -43,8 +43,7 @@ public slots:
 
   void OnAnalyzeClicked();
 
-  void OnBatchPerkEvaluatorNodeClicked();
-  void OnBatchTransformBufferClicked();
+  void OnBatchProcessButtonClicked();
 
   void OnMarkBeginChanged();
   void OnMarkBeginClicked();

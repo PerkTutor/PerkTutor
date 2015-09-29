@@ -250,40 +250,7 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnBatchPerkEvaluatorNodeClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  QProgressDialog dialog;
-  dialog.setModal( true );
-  dialog.setLabelText( "Please wait while analyzing procedures..." );
-  dialog.show();
-  dialog.setValue( 0 );
-
-  // Iterate over all nodes and calculate
-  QList< vtkMRMLNode* > peNodeBatch = d->BatchPerkEvaluatorNodeComboBox->checkedNodes();
-
-  for ( int i = 0; i < peNodeBatch.size(); i++ )
-  {
-    int progress = 100 * i / peNodeBatch.size();
-    dialog.setValue( progress );
-
-    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodeBatch.at( i ) );
-    if ( peNode == NULL )
-    {
-      continue;
-    }
-
-    d->logic()->ComputeMetrics( peNode );
-  }
-
-  dialog.setValue( 100 );
-  dialog.close();
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnBatchTransformBufferClicked()
+::OnBatchProcessButtonClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
@@ -297,25 +264,29 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLNode* originalPerkEvaluatorNode = d->PerkEvaluatorNodeComboBox->currentNode();
 
   // Iterate over all nodes and calculate
-  QList< vtkMRMLNode* > transformBufferBatch = d->BatchTransformBufferComboBox->checkedNodes();
+  QList< vtkMRMLNode* > peNodeBatch = d->BatchPerkEvaluatorNodeComboBox->checkedNodes();
 
-  for ( int i = 0; i < transformBufferBatch.size(); i++ )
+  for ( int i = 0; i < peNodeBatch.size(); i++ )
   {
-    int progress = 100 * i / transformBufferBatch.size();
+    int progress = 100 * i / peNodeBatch.size();
     dialog.setValue( progress );
 
-    vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( transformBufferBatch.at( i ) );
-    if ( transformBuffer == NULL )
+    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodeBatch.at( i ) );
+    if ( peNode == NULL )
     {
-      continue;
-    }
+      vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( peNodeBatch.at( i ) );
+      if ( transformBuffer == NULL )
+      {
+        continue;
+      }
 
-    // Create relevant nodes automatically
-    // TODO: Should this be done in the logic?
-    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->addNode() );
-    peNode->Copy( originalPerkEvaluatorNode );
-    d->MetricsTableWidget->addMetricsTableNode();
-    d->TransformBufferWidget->setTransformBufferNode( transformBuffer );
+      // Create relevant nodes automatically
+      // TODO: Should this be done in the logic?
+      peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->addNode() );
+      peNode->Copy( originalPerkEvaluatorNode );
+      d->MetricsTableWidget->addMetricsTableNode();
+      d->TransformBufferWidget->setTransformBufferNode( transformBuffer );
+    }
 
     d->logic()->ComputeMetrics( peNode );
   }
@@ -624,8 +595,8 @@ qSlicerPerkEvaluatorModuleWidget
 
   connect( d->AnalyzeButton, SIGNAL( clicked() ), this, SLOT( OnAnalyzeClicked() ) );
 
-  connect( d->BatchPerkEvaluatorNodeButton, SIGNAL( clicked() ), this, SLOT( OnBatchPerkEvaluatorNodeClicked() ) );
-  connect( d->BatchTransformBufferButton, SIGNAL( clicked() ), this, SLOT( OnBatchTransformBufferClicked() ) );
+  connect( d->BatchProcessButton, SIGNAL( clicked() ), this, SLOT( OnBatchProcessButtonClicked() ) );
+  d->BatchProcessButton->setIcon( QIcon( ":/Icons/Go.png" ) );
 
   // Update the recorder controls widget when the transform buffer is changed
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );

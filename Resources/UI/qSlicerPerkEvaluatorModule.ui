@@ -607,19 +607,6 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
-             <widget class="QLabel" name="BatchPerkEvaluatorNodeLabel">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Perk Evaluator Nodes:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="qMRMLCheckableNodeComboBox" name="BatchPerkEvaluatorNodeComboBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -630,72 +617,25 @@
               <property name="nodeTypes">
                <stringlist>
                 <string>vtkMRMLPerkEvaluatorNode</string>
-               </stringlist>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QPushButton" name="BatchPerkEvaluatorNodeButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Batch Process (Perk Evaluator Nodes)</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_6">
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="BatchTransformBufferLabel">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Transform Buffers:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="qMRMLCheckableNodeComboBox" name="BatchTransformBufferComboBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="nodeTypes">
-               <stringlist>
                 <string>vtkMRMLTransformBufferNode</string>
                </stringlist>
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QPushButton" name="BatchProcessButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
            </layout>
-          </item>
-          <item>
-           <widget class="QPushButton" name="BatchTransformBufferButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Batch Process (Transform Buffers)</string>
-            </property>
-           </widget>
           </item>
          </layout>
         </widget>
@@ -737,8 +677,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>531</width>
-        <height>158</height>
+        <width>598</width>
+        <height>720</height>
        </rect>
       </property>
       <attribute name="label">
@@ -1121,22 +1061,6 @@
     <hint type="destinationlabel">
      <x>454</x>
      <y>561</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>qSlicerPerkEvaluatorModule</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>BatchTransformBufferComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>311</x>
-     <y>447</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>454</x>
-     <y>602</y>
     </hint>
    </hints>
   </connection>
