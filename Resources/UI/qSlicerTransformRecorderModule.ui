@@ -22,6 +22,12 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="ctkCollapsibleButton" name="CTKCollapsibleButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Display</string>
      </property>
@@ -31,6 +37,12 @@
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QGroupBox" name="BufferGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="title">
          <string>Buffer</string>
         </property>
@@ -40,7 +52,7 @@
       <item>
        <widget class="QGroupBox" name="ControlsGroupBox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -53,12 +65,24 @@
       </item>
       <item>
        <widget class="QGroupBox" name="StatisticsGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="title">
          <string>Statistics</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="0" colspan="2">
           <widget class="QLabel" name="NumTransformsLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Number of Transforms:</string>
            </property>
@@ -66,6 +90,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="TotalTimeLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Total Time (s):</string>
            </property>
@@ -73,6 +103,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="TotalTimeResultLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>0.00</string>
            </property>
@@ -80,6 +116,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="NumTransformsResultLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -87,6 +129,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="NumMessagesLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Number of Messages:</string>
            </property>
@@ -94,6 +142,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="NumMessagesResultLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -104,6 +158,12 @@
       </item>
       <item>
        <widget class="QGroupBox" name="MessagesGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="title">
          <string>Messages</string>
         </property>
