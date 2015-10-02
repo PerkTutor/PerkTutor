@@ -157,7 +157,7 @@ class PythonMetricsCalculatorLogic:
   """
   def __init__( self ):
   
-    self.allMetrics = []
+    self.allMetricModules = []
     self.transformMetrics = dict()
     
     # By default, grab the instantiated module's logic (though other logics are possible)
@@ -177,7 +177,7 @@ class PythonMetricsCalculatorLogic:
   def SetPerkEvaluatorNodeID( self, newPENodeID ):
     self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
     # Now we can find all of the metrics
-    self.allMetrics = self.GetFreshMetrics()
+    self.allMetricModules = self.GetFreshMetricModules()
  
     
   def SetMetricsTableID( self, newMetricsTableID ):
@@ -205,71 +205,74 @@ class PythonMetricsCalculatorLogic:
   def OutputAllTransformMetricsToMetricsTable( self ):
     self.InitializeMetricsTable()
     
-    for t in self.transformMetrics:
-      for i in range( len( self.transformMetrics[ t ] ) ):
+    for transformName in self.transformMetrics:
+      for metric in self.transformMetrics[ transformName ]:
         currentMetricRow = vtk.vtkVariantArray()
-        currentMetricRow.InsertNextValue( t )
-        currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetricName() )
-        currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetricUnit() )
-        currentMetricRow.InsertNextValue( self.transformMetrics[ t ][ i ].GetMetric() )
+        currentMetricRow.InsertNextValue( transformName )
+        currentMetricRow.InsertNextValue( metric.GetMetricName() )
+        currentMetricRow.InsertNextValue( metric.GetMetricUnit() )
+        currentMetricRow.InsertNextValue( metric.GetMetric() )
         
         self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
       
 
-  def GetAllUserMetrics( self ): 
-    metricsList = []
+  def GetAllUserMetricModules( self ): 
+    metricModulesList = []
     
     # Read the metric scripts    
-    metricPath = self.peNode.GetMetricsDirectory()    
-    if ( metricPath == "" ):
-      return metricsList
+    metricsPath = self.peNode.GetMetricsDirectory()    
+    if ( metricsPath == "" ):
+      return metricModulesList
     
-    allScripts = glob.glob( metricPath + "/*.py" )
+    allMetricScripts = glob.glob( metricsPath + "/*.py" )
   
-    for j in range( len( allScripts ) ):
+    for scipt in allMetricScripts:
     
-      metricModuleString = "PerkEvaluatorUserMetric_" + os.path.splitext( os.path.basename( allScripts[j] ) )[0] # this puts the file name at the end
+      metricModuleString = "PerkEvaluatorUserMetric_" + os.path.splitext( os.path.basename( scipt ) )[0] # this puts the file name at the end
       
       try:
         # If it can't load properly, then just ignore
-        currentMetricModule = imp.load_source( metricModuleString, allScripts[j] )
-        metricInstance = currentMetricModule.PerkEvaluatorMetric() # Test that we can create an instance of the metric
-        metricsList.append( metricInstance )
+        currentMetricModule = imp.load_source( metricModuleString, scipt )
+        metricModulesList.append( currentMetricModule.PerkEvaluatorMetric ) # This implicitly tests whether the class is defined
       except:
         print "Could not load metric: ", metricModuleString, "."
         
-    return metricsList
+    return metricModulesList
     
     
-  def GetFreshMetrics( self ):
+  def GetFreshMetricModules( self ):
     # Import every metrics we can find
-    coreMetrics = PythonMetrics.GetFreshCoreMetrics()
-    userMetrics = self.GetAllUserMetrics()
+    coreMetricModules = PythonMetrics.GetFreshCoreMetricModules()
+    userMetricModules = self.GetAllUserMetricModules()
     
-    return ( coreMetrics + userMetrics )
+    return ( coreMetricModules + userMetricModules )
     
     
   def InitializeNewTransformMetrics( self, newTransformName ):
     # Get a fresh set of metrics
-    newTransformMetrics = self.GetFreshMetrics()    
-    newTransformMetrics = self.FilterMetricsByAnatomyRole( newTransformMetrics, self.GetAllSpecifiedAnatomyRoles() )
-    newTransformMetrics = self.AddMetricAnatomyNodes( newTransformMetrics )
-  
-    # Add each required metric for the new transform    
-    # Only the metrics which the transform is the role for
+    newTransformMetricModules = self.GetFreshMetricModules()
     newTransformRole = self.peNode.GetTransformRole( newTransformName )
-    newTransformMetrics = self.FilterMetricsByTransformRole( newTransformMetrics, newTransformRole )
+    # Filter out metrics whose roles are not satisfied
+    newTransformMetricModules = self.FilterMetricModulesByAnatomyRole( newTransformMetricModules, self.GetAllSpecifiedAnatomyRoles() )
+    newTransformMetricModules = self.FilterMetricModulesByTransformRole( newTransformMetricModules, newTransformRole )    
+  
+    # Instantiate each metric, and add the anatomy nodes to it
+    newTransformMetrics = []
+    for metricModule in newTransformMetricModules:
+      newTransformMetrics.append( metricModule() )
+      
+    newTransformMetrics = self.AddAnatomyNodesToMetrics( newTransformMetrics )   
     
     self.transformMetrics[ newTransformName ] = newTransformMetrics
     
     
       
-  def FilterMetricsByAnatomyRole( self, inMetrics, specifiedAnatomyRoles ):
+  def FilterMetricModulesByAnatomyRole( self, inMetricModules, specifiedAnatomyRoles ):
     # Only output metrics for which all of the required anatomy roles are fulfilled
-    outMetrics = []
+    outMetricModules = []
     
-    for metric in inMetrics:
-      currentMetricAnatomyRoles = metric.GetRequiredAnatomyRoles()
+    for metricModule in inMetricModules:
+      currentMetricAnatomyRoles = metricModule.GetRequiredAnatomyRoles()
       
       anatomyRolesSatisfied = True
       for role in currentMetricAnatomyRoles:
@@ -277,31 +280,30 @@ class PythonMetricsCalculatorLogic:
           anatomyRolesSatisfied = False
           
       if ( anatomyRolesSatisfied == True ):
-        outMetrics.append( metric )      
+        outMetricModules.append( metricModule )      
         
-    return outMetrics
+    return outMetricModules
         
         
-  def FilterMetricsByTransformRole( self, inMetrics, currentTransformRole ):     
+  def FilterMetricModulesByTransformRole( self, inMetricModules, currentTransformRole ):     
     # Only output metrics which accept the current transform's role
-    outMetrics = []
+    outMetricModules = []
     
     # Discard if the transform has no role
     if ( currentTransformRole == "" or currentTransformRole == "None" ):
-      return outMetrics
+      return outMetricModules
     
-    for metric in inMetrics:
-      currentMetricTransformRoles = metric.GetAcceptedTransformRoles()
+    for metricModule in inMetricModules:
+      currentMetricTransformRoles = metricModule.GetAcceptedTransformRoles()
       
       for role in currentMetricTransformRoles:
         if ( role == currentTransformRole or role == "Any" ):
-          outMetrics.append( metric )
+          outMetricModules.append( metricModule )
         
-    return outMetrics
+    return outMetricModules
     
     
-  def AddMetricAnatomyNodes( self, transformMetrics ):
-  
+  def AddAnatomyNodesToMetrics( self, transformMetrics ):  
     # Keep track of which metrics all anatomies are sucessfully delivered to    
     newTransformMetrics = []
   
@@ -317,7 +319,8 @@ class PythonMetricsCalculatorLogic:
         if ( added == False ):
           anatomiesFulfilled = False
           
-      # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be
+      # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be fulfilled
+      # However, if the wrong type of node is selected, then this may return false
       if ( anatomiesFulfilled == True ):
         newTransformMetrics.append( metric )
         
@@ -337,8 +340,8 @@ class PythonMetricsCalculatorLogic:
   def GetAllAnatomyRoles( self ):  
     allAnatomyRoles = []
     
-    for metric in self.allMetrics:
-      currentRequiredRoles = metric.GetRequiredAnatomyRoles()
+    for metricModule in self.allMetricModules:
+      currentRequiredRoles = metricModule.GetRequiredAnatomyRoles()
       # Each metric may require multiple roles, so we must check all of them
       for role in currentRequiredRoles:
         if ( role not in allAnatomyRoles ):
@@ -350,8 +353,8 @@ class PythonMetricsCalculatorLogic:
   def GetAllAnatomyClassNames( self ):
     allAnatomyClassNames = []
     
-    for metric in self.allMetrics:
-      currentRequiredClassNames = metric.GetRequiredAnatomyRoles().values()
+    for metricModule in self.allMetricModules:
+      currentRequiredClassNames = metricModule.GetRequiredAnatomyRoles().values()
       # Each metric may require multiple roles, so we must check all of them
       for className in currentRequiredClassNames:
         if ( className not in allAnatomyClassNames ):
@@ -363,8 +366,8 @@ class PythonMetricsCalculatorLogic:
   def GetAllTransformRoles( self ): 
     allTransformRoles = []
     
-    for metric in self.allMetrics:
-      currentAcceptedRoles = metric.GetAcceptedTransformRoles()
+    for metricModule in self.allMetricModules:
+      currentAcceptedRoles = metricModule.GetAcceptedTransformRoles()
       # Each metric may accept multiple roles, so we must check all of them
       for role in currentAcceptedRoles:
         if ( role not in allTransformRoles ):
