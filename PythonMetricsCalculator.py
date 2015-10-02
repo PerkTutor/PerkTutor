@@ -249,7 +249,7 @@ class PythonMetricsCalculatorLogic:
     return ( coreMetrics + userMetrics )
     
     
-  def InitializeNewTransformMetric( self, newTransformName ):
+  def InitializeNewTransformMetrics( self, newTransformName ):
     # Get a fresh set of metrics
     newTransformMetrics = self.GetFreshMetrics()    
     newTransformMetrics = self.FilterMetricsByAnatomyRole( newTransformMetrics, self.GetAllSpecifiedAnatomyRoles() )
@@ -268,16 +268,16 @@ class PythonMetricsCalculatorLogic:
     # Only output metrics for which all of the required anatomy roles are fulfilled
     outMetrics = []
     
-    for i in range( len( inMetrics ) ):
-      currentMetricRoles = inMetrics[i].GetRequiredAnatomyRoles()
+    for metric in inMetrics:
+      currentMetricAnatomyRoles = metric.GetRequiredAnatomyRoles()
       
       anatomyRolesSatisfied = True
-      for j in range( len( currentMetricRoles ) ):
-        if ( currentMetricRoles[j] not in specifiedAnatomyRoles ):
+      for role in currentMetricAnatomyRoles:
+        if ( role not in specifiedAnatomyRoles ):
           anatomyRolesSatisfied = False
           
       if ( anatomyRolesSatisfied == True ):
-        outMetrics.append( inMetrics[i] )      
+        outMetrics.append( metric )      
         
     return outMetrics
         
@@ -290,36 +290,36 @@ class PythonMetricsCalculatorLogic:
     if ( currentTransformRole == "" or currentTransformRole == "None" ):
       return outMetrics
     
-    for i in range( len( inMetrics ) ):
-      currentMetricRoles = inMetrics[i].GetAcceptedTransformRoles()
+    for metric in inMetrics:
+      currentMetricTransformRoles = metric.GetAcceptedTransformRoles()
       
-      for j in range( len( currentMetricRoles ) ):
-        if ( currentMetricRoles[j] == currentTransformRole or currentMetricRoles[j] == "Any" ):
-          outMetrics.append( inMetrics[i] )
+      for role in currentMetricTransformRoles:
+        if ( role == currentTransformRole or role == "Any" ):
+          outMetrics.append( metric )
         
     return outMetrics
     
     
   def AddMetricAnatomyNodes( self, transformMetrics ):
   
-    # Keep track of which metrics all anatomies are sucessfully delivered to
-    anatomiesFulfilled = [ True ] * len( transformMetrics )
+    # Keep track of which metrics all anatomies are sucessfully delivered to    
+    newTransformMetrics = []
   
-    for i in range( len( transformMetrics ) ):
-      currentMetricAnatomyRoles = transformMetrics[i].GetRequiredAnatomyRoles()
+    for metric in transformMetrics:
+      currentMetricAnatomyRoles = metric.GetRequiredAnatomyRoles()
+      anatomiesFulfilled = True
       
-      for j in range( len( currentMetricAnatomyRoles ) ):
-        currentAnatomyNodeName = self.peNode.GetAnatomyNodeName( currentMetricAnatomyRoles[j] )
+      for role in currentMetricAnatomyRoles:
+        currentAnatomyNodeName = self.peNode.GetAnatomyNodeName( role )
         currentAnatomyNode = self.mrmlScene.GetFirstNodeByName( currentAnatomyNodeName )
-        added = transformMetrics[i].AddAnatomyRole( currentMetricAnatomyRoles[j], currentAnatomyNode )
+        added = metric.AddAnatomyRole( role, currentAnatomyNode )
         
         if ( added == False ):
-          anatomiesFulfilled[i] = False
+          anatomiesFulfilled = False
           
-    newTransformMetrics = []
-    for i in range( len( anatomiesFulfilled ) ):
-      if ( anatomiesFulfilled[i] == True ):
-        newTransformMetrics.append( transformMetrics[i] )
+      # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be
+      if ( anatomiesFulfilled == True ):
+        newTransformMetrics.append( metric )
         
     return newTransformMetrics
     
@@ -336,24 +336,39 @@ class PythonMetricsCalculatorLogic:
         
   def GetAllAnatomyRoles( self ):  
     allAnatomyRoles = []
-    for i in range( len( self.allMetrics ) ):
-      currentRequiredRoles = self.allMetrics[i].GetRequiredAnatomyRoles()
+    
+    for metric in self.allMetrics:
+      currentRequiredRoles = metric.GetRequiredAnatomyRoles()
       # Each metric may require multiple roles, so we must check all of them
-      for j in range( len( currentRequiredRoles ) ):
-        if ( currentRequiredRoles[j] not in allAnatomyRoles ):
-          allAnatomyRoles.append( currentRequiredRoles[j] )
+      for role in currentRequiredRoles:
+        if ( role not in allAnatomyRoles ):
+          allAnatomyRoles.append( role )
           
     return allAnatomyRoles
     
     
+  def GetAllAnatomyClassNames( self ):
+    allAnatomyClassNames = []
+    
+    for metric in self.allMetrics:
+      currentRequiredClassNames = metric.GetRequiredAnatomyRoles().values()
+      # Each metric may require multiple roles, so we must check all of them
+      for className in currentRequiredClassNames:
+        if ( className not in allAnatomyClassNames ):
+          allAnatomyClassNames.append( className )
+          
+    return allAnatomyClassNames
+    
+    
   def GetAllTransformRoles( self ): 
     allTransformRoles = []
-    for i in range( len( self.allMetrics ) ):
-      currentAcceptedRoles = self.allMetrics[i].GetAcceptedTransformRoles()
+    
+    for metric in self.allMetrics:
+      currentAcceptedRoles = metric.GetAcceptedTransformRoles()
       # Each metric may accept multiple roles, so we must check all of them
-      for j in range( len( currentAcceptedRoles ) ):
-        if ( currentAcceptedRoles[j] not in allTransformRoles ):
-          allTransformRoles.append( currentAcceptedRoles[j] )
+      for role in currentAcceptedRoles:
+        if ( role not in allTransformRoles ):
+          allTransformRoles.append( role )
           
     return allTransformRoles
 
@@ -411,9 +426,9 @@ class PythonMetricsCalculatorLogic:
         
   def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
   
-    # First, initialize the metric if it doesn't already exist
+    # First, initialize the metrics if it doesn't already exist
     if( transformNode.GetName() not in self.transformMetrics ):
-      self.InitializeNewTransformMetric( transformNode.GetName() )
+      self.InitializeNewTransformMetrics( transformNode.GetName() )
       
     # The assumption is that the scene is already appropriately updated
     matrix = vtk.vtkMatrix4x4()
@@ -421,8 +436,8 @@ class PythonMetricsCalculatorLogic:
     transformNode.GetMatrixTransformToWorld( matrix )
     point = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ), matrix.GetElement( 3, 3 ) ]
     
-    for i in range( len( self.transformMetrics[ transformNode.GetName() ] ) ):
-      self.transformMetrics[ transformNode.GetName() ][ i ].AddTimestamp( absTime, matrix, point )
+    for metric in self.transformMetrics[ transformNode.GetName() ]:
+      metric.AddTimestamp( absTime, matrix, point )
       
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
