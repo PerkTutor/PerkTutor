@@ -115,7 +115,7 @@ std::vector< std::string > qSlicerPerkEvaluatorAnatomyRolesWidget
   Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
   
   vtkSmartPointer< vtkCollection > anatomyNodes = vtkSmartPointer< vtkCollection >::New();
-  this->PerkEvaluatorLogic->GetSceneVisibleAnatomyNodes( anatomyNodes );
+  this->PerkEvaluatorLogic->GetSceneVisibleAnatomyNodes( anatomyNodes, this->PerkEvaluatorNode );
   
   std::vector< std::string > anatomyNodeNames( anatomyNodes->GetNumberOfItems(), "" );
   

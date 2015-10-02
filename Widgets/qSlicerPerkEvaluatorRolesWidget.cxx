@@ -94,9 +94,11 @@ void qSlicerPerkEvaluatorRolesWidget
 void qSlicerPerkEvaluatorRolesWidget
 ::setMRMLScene( vtkMRMLScene* newScene )
 {
-  this->qvtkDisconnect( this->mrmlScene(), vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkDisconnect( this->mrmlScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkDisconnect( this->mrmlScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( updateWidget() ) );
   this->qSlicerWidget::setMRMLScene( newScene );
-  this->qvtkConnect( this->mrmlScene(), vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkConnect( this->mrmlScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkConnect( this->mrmlScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( updateWidget() ) );
 }
 
 

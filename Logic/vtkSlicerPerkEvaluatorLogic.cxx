@@ -315,20 +315,43 @@ std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 }
 
 
+std::vector< std::string > vtkSlicerPerkEvaluatorLogic
+::GetAllAnatomyClassNames( vtkMRMLPerkEvaluatorNode* peNode )
+{
+  if ( peNode == NULL )
+  {
+    return std::vector< std::string >();
+  }
+
+  // Use the python metrics calculator module
+  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
+  pythonManager->executeString( "import PythonMetricsCalculator" );
+  pythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyClassNames = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  pythonManager->executeString( QString( "PythonMetricsCalculatorLogicAnatomyClassNames.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
+  pythonManager->executeString( "PythonMetricsAnatomyClassNames = PythonMetricsCalculatorLogicAnatomyClassNames.GetAllAnatomyClassNames()" );
+  QVariant result = pythonManager->getVariable( "PythonMetricsAnatomyClassNames" );
+  QStringList anatomyClassNames = result.toStringList();
+
+  std::vector< std::string > anatomyClassNamesVector( anatomyClassNames.length(), "" );
+  for ( int i = 0; i < anatomyClassNames.length(); i++ )
+  {
+    anatomyClassNamesVector.at( i ) = anatomyClassNames.at( i ).toStdString();
+  }
+  return anatomyClassNamesVector;
+}
+
 
 void vtkSlicerPerkEvaluatorLogic
-::GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes )
+::GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes, vtkMRMLPerkEvaluatorNode* peNode )
 {
-  if ( visibleAnatomyNodes == NULL )
+  if ( visibleAnatomyNodes == NULL || peNode == NULL )
   {
     return;
   }
   visibleAnatomyNodes->RemoveAllItems();
 
   // Assume that all anatomy are either models or fiducials
-  std::vector< std::string > anatomyNodeTypes;
-  anatomyNodeTypes.push_back( "vtkMRMLModelNode" );
-  anatomyNodeTypes.push_back( "vtkMRMLMarkupsFiducialNode" );
+  std::vector< std::string > anatomyNodeTypes = this->GetAllAnatomyClassNames( peNode );
   // Add more node types here if it is necessary
 
   // We could allow all nodes, but then the user interface would be cluttered

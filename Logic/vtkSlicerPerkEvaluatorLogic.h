@@ -69,9 +69,10 @@ public:
 
   std::vector< std::string > GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode );
   std::vector< std::string > GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode );
+  std::vector< std::string > GetAllAnatomyClassNames( vtkMRMLPerkEvaluatorNode* peNode );
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
-  void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes );
+  void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes, vtkMRMLPerkEvaluatorNode* peNode );
 
   void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
 
