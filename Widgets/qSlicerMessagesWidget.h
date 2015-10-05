@@ -53,6 +53,9 @@ protected slots:
   virtual void onClearMessagesButtonClicked();
   virtual void onAddBlankMessageClicked();
 
+  virtual void onMessageEdited( int row, int column );
+  virtual void onMessageDoubleClicked( int row, int column );
+  
   virtual void updateWidget();
 
 protected:
@@ -60,6 +63,8 @@ protected:
 
   vtkMRMLTransformBufferNode* TransformBufferNode;
   vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+
+  enum MessagesColumnsEnum{ MESSAGE_TIME_COLUMN, MESSAGE_NAME_COLUMN };
 
   virtual void setup();
 

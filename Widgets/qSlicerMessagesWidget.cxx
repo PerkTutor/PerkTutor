@@ -24,6 +24,7 @@
 #include <QtGui>
 
 
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerMessagesWidgetPrivate
@@ -91,6 +92,7 @@ void qSlicerMessagesWidget
   d->AddMessageButton->setContextMenuPolicy( Qt::CustomContextMenu );
   connect( d->AddMessageButton, SIGNAL( customContextMenuRequested(const QPoint&) ), this, SLOT( onAddBlankMessageClicked() ) );
 
+  connect( d->MessagesTableWidget, SIGNAL( cellChanged( int, int ) ), this, SLOT( onMessageEdited( int, int ) ) );
   connect( d->MessagesTableWidget, SIGNAL( cellDoubleClicked( int, int ) ), this, SLOT( onMessageDoubleClicked( int, int ) ) );
 
   this->updateWidget();  
@@ -191,6 +193,34 @@ void qSlicerMessagesWidget
 }
 
 
+
+void qSlicerMessagesWidget
+::onMessageEdited( int row, int column )
+{
+  Q_D(qSlicerMessagesWidget);
+
+  if ( this->TransformBufferNode == NULL || column == qSlicerMessagesWidget::MESSAGE_TIME_COLUMN )
+  {
+    return;
+  }
+
+  // Find the entry that we changed
+  QTableWidgetItem* qItem = d->MessagesTableWidget->item( row, column );
+  QString qText = qItem->text();
+
+  this->TransformBufferNode->GetMessageAtIndex( row )->SetMessageString( qText.toStdString() );
+  
+  this->updateWidget();
+}
+
+
+void qSlicerMessagesWidget
+::onMessageDoubleClicked( int row, int column )
+{
+  // Do nothing, with the understanding that sublasses can implement this slot
+}
+
+
 void qSlicerMessagesWidget
 ::updateWidget()
 {
@@ -215,6 +245,9 @@ void qSlicerMessagesWidget
     return;
   }
 
+  // Block signals while updating
+  bool wasBlockedTableWidget = d->MessagesTableWidget->blockSignals( true );
+
   // Iterate over all the messages in the buffer and add them in order
   d->MessagesTableWidget->setRowCount( this->TransformBufferNode->GetNumMessages() );
   for ( int i = 0; i < this->TransformBufferNode->GetNumMessages(); i++ )
@@ -223,13 +256,13 @@ void qSlicerMessagesWidget
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
     timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
 	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAtIndex(i)->GetMessageString() ) );
-    messageItem->setFlags( messageItem->flags() & ~Qt::ItemIsEditable );
-    d->MessagesTableWidget->setItem( i, 0, timeItem );
-    d->MessagesTableWidget->setItem( i, 1, messageItem ); 
+    d->MessagesTableWidget->setItem( i, qSlicerMessagesWidget::MESSAGE_TIME_COLUMN, timeItem );
+    d->MessagesTableWidget->setItem( i, qSlicerMessagesWidget::MESSAGE_NAME_COLUMN, messageItem ); 
   }
 
   // Reset the current row and column to what they were
   d->MessagesTableWidget->setCurrentCell( currentRow, currentColumn );
   d->MessagesTableWidget->verticalScrollBar()->setValue( scrollPosition );
 
+  d->MessagesTableWidget->blockSignals( wasBlockedTableWidget );
 }
