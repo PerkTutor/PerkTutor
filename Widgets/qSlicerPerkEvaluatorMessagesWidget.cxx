@@ -76,6 +76,7 @@ qSlicerPerkEvaluatorMessagesWidget
 }
 
 
+
 void qSlicerPerkEvaluatorMessagesWidget
 ::setPerkEvaluatorNode( vtkMRMLNode* newPerkEvaluatorNode )
 {
@@ -123,7 +124,12 @@ void qSlicerPerkEvaluatorMessagesWidget
 void qSlicerPerkEvaluatorMessagesWidget
 ::onMessageDoubleClicked( int row, int column )
 {
-  Q_D(qSlicerPerkEvaluatorMessagesWidget);  
+  Q_D(qSlicerPerkEvaluatorMessagesWidget);
+
+  if ( this->TransformBufferNode == NULL || column == qSlicerMessagesWidget::MESSAGE_NAME_COLUMN )
+  {
+    return;
+  }
 
   double messageTime = this->TransformBufferNode->GetMessageAtIndex( row )->GetTime();
   this->PerkEvaluatorNode->SetPlaybackTime( messageTime );
