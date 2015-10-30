@@ -172,8 +172,14 @@ void vtkLabelVector
     return;  // If it's not a "log" or is the wrong tool jump to the next.
   }
 
-  this->FromString( std::string( element->GetAttribute( "Values" ) ), atoi( element->GetAttribute( "Size" ) ) );
-  this->SetLabel( std::string( element->GetAttribute( "Label" ) ) );
+  if ( element->GetAttribute( "Values" ) != NULL )
+  {
+    this->FromString( std::string( element->GetAttribute( "Values" ) ), atoi( element->GetAttribute( "Size" ) ) );
+  }
+  if ( element->GetAttribute( "Label" ) != NULL )
+  {
+    this->SetLabel( std::string( element->GetAttribute( "Label" ) ) );
+  }
 }
 
 
@@ -207,7 +213,7 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkLabelVector
 ::VectorsFromXMLElement( vtkXMLDataElement* element, std::string name )
 {
   std::vector< vtkSmartPointer< vtkLabelVector > > vectors;
-  if ( element == NULL || name.compare( element->GetAttribute( "Type" ) ) != 0 )
+  if ( element == NULL || element->GetAttribute( "Type" ) == NULL || name.compare( element->GetAttribute( "Type" ) ) != 0 )
   {
     return vectors;
   }
@@ -218,8 +224,8 @@ std::vector< vtkSmartPointer< vtkLabelVector > > vtkLabelVector
     vtkSmartPointer< vtkLabelVector > currentVector = vtkSmartPointer< vtkLabelVector >::New();
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-	  currentVector->FromString( std::string( noteElement->GetAttribute( "Values" ) ), atoi( noteElement->GetAttribute( "Size" ) ) );
-	  currentVector->SetLabel( std::string( noteElement->GetAttribute( "Label" ) ) );
+    noteElement->SetName( "Vector" );
+    currentVector->FromXMLElement( noteElement );
 
 	  vectors.push_back( currentVector );
   }

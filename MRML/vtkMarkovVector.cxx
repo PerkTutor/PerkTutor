@@ -93,6 +93,12 @@ void vtkMarkovVector
     return;  // If it's not a "MarkovVector" jump to the next.
   }
 
-  this->SetState( std::string( element->GetAttribute( "State" ) ) );
-  this->SetSymbol( std::string( element->GetAttribute( "Symbol" ) ) );
+  if ( element->GetAttribute( "State" ) != NULL )
+  {
+    this->SetState( std::string( element->GetAttribute( "State" ) ) );
+  }
+  if ( element->GetAttribute( "Symbol" ) != NULL )
+  {
+    this->SetSymbol( std::string( element->GetAttribute( "Symbol" ) ) );
+  }
 }

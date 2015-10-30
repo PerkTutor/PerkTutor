@@ -200,12 +200,12 @@ void vtkMRMLWorkflowTrainingNode
   {
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Vectors" ) != 0 && strcmp( noteElement->GetName(), "MarkovModel" ) != 0 )
+    if ( strcmp( noteElement->GetName(), "Vectors" ) != 0 && strcmp( noteElement->GetName(), "MarkovModel" ) != 0 || noteElement->GetAttribute( "Type" ) == NULL )
     {
       continue;  // If it's not a "Parameter" or "MarkovModel", jump to the next.
     }
 
-	  const char* elementType = noteElement->GetAttribute( "Type" );
+    const char* elementType = noteElement->GetAttribute( "Type" );
 
 	  if ( strcmp( elementType, "PrinComps" ) == 0 )
     {

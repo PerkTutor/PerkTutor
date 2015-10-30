@@ -149,7 +149,7 @@ void vtkMRMLWorkflowInputNode
   {
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 )
+    if ( strcmp( noteElement->GetName(), "Parameter" ) != 0 || noteElement->GetAttribute( "Type" ) == NULL )
     {
       continue;  // If it's not a "Parameter", jump to the next.
     }

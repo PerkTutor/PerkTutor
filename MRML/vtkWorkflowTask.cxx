@@ -68,10 +68,25 @@ void vtkWorkflowTask
     return;  // If it's not a "Task" or is the wrong tool jump to the next.
   }
 
-  this->Name = std::string( element->GetAttribute( "Name" ) );
-  this->Instruction = std::string( element->GetAttribute( "Instruction" ) );
-  this->Next = std::string( element->GetAttribute( "Next" ) );
-  this->Prerequisite = std::string( element->GetAttribute( "Prerequisite" ) );
-  this->Recovery = std::string( element->GetAttribute( "Recovery" ) );
+  if ( element->GetAttribute( "Name" ) != NULL )
+  {
+    this->Name = std::string( element->GetAttribute( "Name" ) );
+  }
+  if ( element->GetAttribute( "Instruction" ) != NULL )
+  {
+    this->Instruction = std::string( element->GetAttribute( "Instruction" ) );
+  }
+  if ( element->GetAttribute( "Next" ) != NULL )
+  {
+    this->Next = std::string( element->GetAttribute( "Next" ) );
+  }
+  if ( element->GetAttribute( "Prerequisite" ) != NULL )
+  {
+    this->Prerequisite = std::string( element->GetAttribute( "Prerequisite" ) );
+  }
+  if ( element->GetAttribute( "Recovery" ) != NULL )
+  {
+    this->Recovery = std::string( element->GetAttribute( "Recovery" ) );
+  }
 
 }

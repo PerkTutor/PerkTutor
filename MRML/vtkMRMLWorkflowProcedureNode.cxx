@@ -169,7 +169,10 @@ void vtkMRMLWorkflowProcedureNode
     return;
   }
 
-  this->SetProcedureName( element->GetAttribute( "ProcedureName" ) );
+  if ( element->GetAttribute( "ProcedureName" ) != NULL )
+  {
+    this->SetProcedureName( element->GetAttribute( "ProcedureName" ) );
+  }
   
   int numElements = element->GetNumberOfNestedElements();
 

@@ -139,8 +139,9 @@ void vtkLabelRecord
     return;  // If it's not a "record" jump to the next.
   }
 
-  this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
-  this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
-  this->GetVector()->FromString( std::string( element->GetAttribute( "Values" ) ), atoi( element->GetAttribute( "Size" ) ) );
-  this->GetVector()->SetLabel( std::string( element->GetAttribute( "Label" ) ) );
+  // Call the subclass/dataclass functions
+  element->SetName( "log" );
+  this->vtkLogRecord::FromXMLElement( element );
+  element->SetName( "Vector" );
+  this->GetVector()->FromXMLElement( element );
 }

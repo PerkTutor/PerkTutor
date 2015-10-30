@@ -372,7 +372,7 @@ void vtkMarkovModel
 ::FromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( strcmp( element->GetName(), "MarkovModel" ) != 0 || strcmp( element->GetAttribute( "Type" ), "Markov" ) != 0 )
+  if ( strcmp( element->GetName(), "MarkovModel" ) != 0 || element->GetAttribute( "Type" ) == NULL || strcmp( element->GetAttribute( "Type" ), "Markov" ) != 0 )
   {
     return;  // If it's not a "MarkovModel"
   }
@@ -389,7 +389,7 @@ void vtkMarkovModel
     vtkXMLDataElement* childElement = element->GetNestedElement( i );
 
 	  // Observe that we cannot use the vtkLabelVector methods since they have integers not strings
-    if ( strcmp( childElement->GetName(), "States" ) == 0 )
+    if ( strcmp( childElement->GetName(), "States" ) == 0 && childElement->GetAttribute( "Size" ) != NULL && childElement->GetAttribute( "Values" ) != NULL )
 	  {
       this->StateNames.clear();
       int size = atoi( childElement->GetAttribute( "Size" ) );
@@ -404,7 +404,7 @@ void vtkMarkovModel
       
 	  }
 
-	  if ( strcmp( childElement->GetName(), "Symbols" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Symbols" ) == 0 && childElement->GetAttribute( "Size" ) != NULL && childElement->GetAttribute( "Values" ) != NULL )
 	  {
       this->SymbolNames.clear();
       int size = atoi( childElement->GetAttribute( "Size" ) );
@@ -418,17 +418,17 @@ void vtkMarkovModel
 	    }
 	  }
 
-    if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovPi" ) == 0 )
+    if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovPi" ) == 0 )
 	  {
       tempPi = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovPi" ).at( 0 );
 	  }
 
-	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovA" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovA" ) == 0 )
 	  {
       tempA = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovA" );
 	  }
 
-	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && strcmp( childElement->GetAttribute( "Type" ), "MarkovB" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovB" ) == 0 )
 	  {
       tempB = vtkLabelVector::VectorsFromXMLElement( childElement, "MarkovB" );
 	  }
