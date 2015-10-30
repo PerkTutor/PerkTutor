@@ -66,12 +66,15 @@ std::string vtkMessageRecord
 void vtkMessageRecord
 ::FromXMLElement( vtkXMLDataElement* element )
 {
-  if ( element == NULL || strcmp( element->GetName(), "log" ) != 0 || strcmp( element->GetAttribute( "type" ), "message" ) != 0 )
+  if ( element == NULL || strcmp( element->GetName(), "log" ) != 0 || element->GetAttribute( "type" ) == NULL || strcmp( element->GetAttribute( "type" ), "message" ) != 0 )
   {
     return;
   }
 
-  this->MessageString = element->GetAttribute( "message" );
-  this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
-  this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
+  this->vtkLogRecord::FromXMLElement( element );
+  
+  if ( element->GetAttribute( "message" ) != NULL )
+  {
+    this->SetMessageString( std::string( element->GetAttribute( "message" ) ) );
+  }
 }

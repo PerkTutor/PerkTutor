@@ -145,13 +145,19 @@ std::string vtkTransformRecord
 void vtkTransformRecord
 ::FromXMLElement( vtkXMLDataElement* element )
 {
-  if ( element == NULL || strcmp( element->GetName(), "log" ) != 0 || strcmp( element->GetAttribute( "type" ), "transform" ) != 0 )
+  if ( element == NULL || strcmp( element->GetName(), "log" ) != 0 || element->GetAttribute( "type" ) == NULL || strcmp( element->GetAttribute( "type" ), "transform" ) != 0 )
   {
     return;
   }
 
-  this->TransformMatrix = element->GetAttribute( "transform" );
-  this->DeviceName = element->GetAttribute( "DeviceName" );
-  this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
-  this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
+  this->vtkLogRecord::FromXMLElement( element );
+  
+  if ( element->GetAttribute( "transform" ) != NULL )
+  {
+    this->TransformMatrix = std::string( element->GetAttribute( "transform" ) );
+  }
+  if ( element->GetAttribute( "DeviceName" ) != NULL )
+  {
+    this->DeviceName = std::string( element->GetAttribute( "DeviceName" ) );
+  }
 }

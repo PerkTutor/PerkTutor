@@ -97,6 +97,12 @@ void vtkLogRecord
     return;
   }
   
-  this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
-  this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
+  if ( element->GetAttribute( "TimeStampSec" ) != NULL )
+  {
+    this->TimeStampSec = atoi( element->GetAttribute( "TimeStampSec" ) );
+  }
+  if ( element->GetAttribute( "TimeStampNSec" ) != NULL )
+  {
+    this->TimeStampNSec = atoi( element->GetAttribute( "TimeStampNSec" ) );
+  }
 }
