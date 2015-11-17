@@ -311,6 +311,11 @@ vtkMessageRecord* vtkMRMLTransformBufferNode
 vtkLogRecordBuffer* vtkMRMLTransformBufferNode
 ::GetTransformRecordBuffer( std::string transformName )
 {
+  if ( this->TransformRecordBuffers.find( transformName ) == this->TransformRecordBuffers.end() )
+  {
+    return NULL;
+  }
+
   return this->TransformRecordBuffers[ transformName ];
 }
 
@@ -727,7 +732,7 @@ void vtkMRMLTransformBufferNode
   {
     vtkXMLDataElement* element = rootElement->GetNestedElement( i );
 
-	  if ( element == NULL || strcmp( element->GetName(), "log" ) != 0 )
+	  if ( element == NULL || strcmp( element->GetName(), "log" ) != 0 || element->GetAttribute( "type" ) == NULL )
 	  {
       continue;
 	  }
