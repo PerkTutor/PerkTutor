@@ -44,9 +44,6 @@ public:
   typedef qSlicerWidget Superclass;
   qSlicerPerkEvaluatorRolesWidget(QWidget *parent=0);
   virtual ~qSlicerPerkEvaluatorRolesWidget();
-  
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
-  vtkMRMLPerkEvaluatorNode* PerkEvaluatorNode;
 
 public slots:
 
@@ -74,6 +71,9 @@ protected:
   // Have two maps to correspond transforms nodes <-> ComboBox widgets
   std::map< std::string, QComboBox* > FixedToComboBoxMap;
   std::map< QComboBox*, std::string > ComboBoxToFixedMap;
+
+  vtkWeakPointer< vtkSlicerPerkEvaluatorLogic > PerkEvaluatorLogic;
+  vtkWeakPointer< vtkMRMLPerkEvaluatorNode > PerkEvaluatorNode;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorRolesWidget);

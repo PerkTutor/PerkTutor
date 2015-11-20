@@ -51,8 +51,8 @@ protected slots:
 protected:
   QScopedPointer<qSlicerPerkEvaluatorMessagesWidgetPrivate> d_ptr;
 
-  vtkMRMLPerkEvaluatorNode* PerkEvaluatorNode;
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+  vtkWeakPointer< vtkMRMLPerkEvaluatorNode > PerkEvaluatorNode;
+  vtkWeakPointer< vtkSlicerPerkEvaluatorLogic > PerkEvaluatorLogic;
   
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorMessagesWidget);

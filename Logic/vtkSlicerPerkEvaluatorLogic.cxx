@@ -132,7 +132,7 @@ void vtkSlicerPerkEvaluatorLogic
 {
 
   // Check conditions
-  if ( peNode == NULL )
+  if ( peNode == NULL || this->GetMRMLScene()->GetNodeByID( peNode->GetID() ) == NULL )
   {
     return;
   }
@@ -159,7 +159,7 @@ void vtkSlicerPerkEvaluatorLogic
 {
 
   // Check conditions
-  if ( peNode == NULL )
+  if ( peNode == NULL || this->GetMRMLScene()->GetNodeByID( peNode->GetID() ) == NULL )
   {
     return;
   }
@@ -244,7 +244,7 @@ void vtkSlicerPerkEvaluatorLogic
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 ::GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode )
 {
-  if ( peNode == NULL )
+  if ( peNode == NULL || this->GetMRMLScene()->GetNodeByID( peNode->GetID() ) == NULL )
   {
     return std::vector< std::string >();
   }
@@ -292,7 +292,7 @@ void vtkSlicerPerkEvaluatorLogic
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 ::GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode )
 {
-  if ( peNode == NULL )
+  if ( peNode == NULL || this->GetMRMLScene()->GetNodeByID( peNode->GetID() ) == NULL )
   {
     return std::vector< std::string >();
   }
@@ -318,7 +318,7 @@ std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 ::GetAllAnatomyClassNames( vtkMRMLPerkEvaluatorNode* peNode )
 {
-  if ( peNode == NULL )
+  if ( peNode == NULL || this->GetMRMLScene()->GetNodeByID( peNode->GetID() ) == NULL )
   {
     return std::vector< std::string >();
   }
