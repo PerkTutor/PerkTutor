@@ -61,8 +61,8 @@ protected slots:
 protected:
   QScopedPointer<qSlicerMessagesWidgetPrivate> d_ptr;
 
-  vtkMRMLTransformBufferNode* TransformBufferNode;
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
+  vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
   enum MessagesColumnsEnum{ MESSAGE_TIME_COLUMN, MESSAGE_NAME_COLUMN };
 

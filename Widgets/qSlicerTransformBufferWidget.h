@@ -66,8 +66,8 @@ protected:
 
   QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
 
-  vtkMRMLTransformBufferNode* TransformBufferNode;
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
+  vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
   virtual void setup();
 

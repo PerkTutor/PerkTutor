@@ -61,8 +61,8 @@ protected slots:
 protected:
   QScopedPointer<qSlicerRecorderControlsWidgetPrivate> d_ptr;
 
-  vtkMRMLTransformBufferNode* TransformBufferNode;
-  vtkSlicerTransformRecorderLogic* TransformRecorderLogic;
+  vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
+  vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
   virtual void setup();
 
