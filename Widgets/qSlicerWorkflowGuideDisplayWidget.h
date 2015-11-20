@@ -56,7 +56,7 @@ protected:
 
   QScopedPointer<qSlicerWorkflowGuideDisplayWidgetPrivate> d_ptr;
 
-  vtkMRMLWorkflowToolNode* WorkflowToolNode;
+  vtkWeakPointer< vtkMRMLWorkflowToolNode > WorkflowToolNode;
   QWidget* DefaultParentWidget;
 
   virtual void setup();

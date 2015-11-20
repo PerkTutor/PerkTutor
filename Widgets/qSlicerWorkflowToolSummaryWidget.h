@@ -61,8 +61,8 @@ protected:
 
   QScopedPointer<qSlicerWorkflowToolSummaryWidgetPrivate> d_ptr;
 
-  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic;
-  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationNode;
+  vtkWeakPointer< vtkSlicerWorkflowSegmentationLogic > WorkflowSegmentationLogic;
+  vtkWeakPointer< vtkMRMLWorkflowSegmentationNode > WorkflowSegmentationNode;
 
   virtual void setup();
 

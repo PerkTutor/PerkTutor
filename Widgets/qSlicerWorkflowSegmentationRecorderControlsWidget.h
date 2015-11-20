@@ -50,8 +50,8 @@ protected slots:
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate> d_ptr;
   
-  vtkMRMLWorkflowSegmentationNode* WorkflowSegmentationNode;
-  vtkSlicerWorkflowSegmentationLogic* WorkflowSegmentationLogic;
+  vtkWeakPointer< vtkMRMLWorkflowSegmentationNode > WorkflowSegmentationNode;
+  vtkWeakPointer< vtkSlicerWorkflowSegmentationLogic > WorkflowSegmentationLogic;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerWorkflowSegmentationRecorderControlsWidget);
