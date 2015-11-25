@@ -148,7 +148,6 @@ void qSlicerPerkEvaluatorRolesWidget
   // The only thing to do is update the table entries. Must ensure they are in sorted order (that's how they are stored in the buffer).
   d->RolesTable->clear();
   d->RolesTable->setRowCount( 0 );
-  d->RolesTable->setColumnCount( 0 );
   
   // This is where the moving and fixed labels are grabbed
   std::vector< std::string > fixed = this->getAllFixed();

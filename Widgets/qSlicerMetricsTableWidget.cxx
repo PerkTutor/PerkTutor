@@ -179,10 +179,14 @@ void qSlicerMetricsTableWidget
 
   d->MetricsTableNodeComboBox->setCurrentNode( this->MetricsTableNode );
 
+  // Check what the current row and column are
+  int currentRow = d->MetricsTable->currentRow();
+  int currentColumn = d->MetricsTable->currentColumn();
+  int scrollPosition = d->MetricsTable->verticalScrollBar()->value();
+
   // Set up the table
   d->MetricsTable->clear();
   d->MetricsTable->setRowCount( 0 );
-  d->MetricsTable->setColumnCount( 0 );
 
   if ( this->MetricsTableNode == NULL )
   {
@@ -213,4 +217,9 @@ void qSlicerMetricsTableWidget
     QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
     d->MetricsTable->setItem( i, 1, valueItem );
   }
+
+  // Reset the current row and column to what they were
+  d->MetricsTable->setCurrentCell( currentRow, currentColumn );
+  d->MetricsTable->verticalScrollBar()->setValue( scrollPosition );
+  d->MetricsTable->resizeRowsToContents();
 }
