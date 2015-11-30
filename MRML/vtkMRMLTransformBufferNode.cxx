@@ -651,6 +651,8 @@ double vtkMRMLTransformBufferNode
 void vtkMRMLTransformBufferNode
 ::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
 {
+  this->vtkMRMLTransformableNode::ProcessMRMLEvents( caller, event, callData );
+  
   // Do nothing if the node is not recording
   if ( ! this->RecordingState )
   {
