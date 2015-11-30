@@ -627,7 +627,10 @@ std::map< std::string, int > vtkMRMLWorkflowToolNode
 void vtkMRMLWorkflowToolNode
 ::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
 {
-  // Propagate modified events
+  // This will propagate the ReferenceNodeModifiedEvent
+  this->vtkMRMLTransformableNode::ProcessMRMLEvents( caller, event, callData );
+  
+  // Propagate ModifiedEvent
   if ( event == vtkCommand::ModifiedEvent )
   {
     this->Modified();

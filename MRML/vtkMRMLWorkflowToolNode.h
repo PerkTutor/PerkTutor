@@ -24,7 +24,7 @@
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
-vtkMRMLWorkflowToolNode : public vtkMRMLNode
+vtkMRMLWorkflowToolNode : public vtkMRMLTransformableNode
 {
 public:
   vtkTypeMacro( vtkMRMLWorkflowToolNode, vtkMRMLNode );
