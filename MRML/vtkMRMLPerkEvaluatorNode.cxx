@@ -573,7 +573,7 @@ void vtkMRMLPerkEvaluatorNode
 void vtkMRMLPerkEvaluatorNode
 ::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
 {
-  // TODO: Are regular modified events automatically propogated?
+  this->vtkMRMLTransformableNode::ProcessMRMLEvents( caller, event, callData );
 
   // The caller will be the node that was modified
   vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( caller );
