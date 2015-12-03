@@ -25,7 +25,6 @@
 // ExtensionTemplate includes
 #include "qSlicerPerkEvaluatorModule.h"
 #include "qSlicerPerkEvaluatorModuleWidget.h"
-#include "qSlicerTablesReader.h"
 
 #include "qSlicerNodeWriter.h"
 #include "qSlicerCoreIOManager.h"
@@ -113,11 +112,7 @@ void qSlicerPerkEvaluatorModule::setup()
   qSlicerCoreApplication* app = qSlicerCoreApplication::application();
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( this->logic() );
   
-  // Register the IO
-  // TODO: Remove when Tables integrated into Slicer core
-  app->coreIOManager()->registerIO( new qSlicerTablesReader( PerkEvaluatorLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "PerkEvaluator", QString( "Table" ), QStringList() << "vtkMRMLTableNode", true, this ) );
-  
+  // Register the IO  
 }
 
 //-----------------------------------------------------------------------------

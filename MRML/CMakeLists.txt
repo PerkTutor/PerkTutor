@@ -19,10 +19,6 @@ set(module_mrml_include_directories
 set(module_mrml_SRCS
   vtkMRMLPerkEvaluatorNode.cxx
   vtkMRMLPerkEvaluatorNode.h
-  vtkMRMLTableNode.cxx
-  vtkMRMLTableNode.h
-  vtkMRMLTableStorageNode.cxx
-  vtkMRMLTableStorageNode.h
   )
 
 # Additional Target libraries

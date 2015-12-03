@@ -58,9 +58,6 @@ protected:
   virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
 
 public:
-
-  // TODO: THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
-  vtkMRMLTableNode* AddTable(const char* fileName, const char* name = 0);
   
   bool IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child );
 

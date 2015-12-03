@@ -6,7 +6,6 @@
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLTableNode.h"
-#include "vtkMRMLTableStorageNode.h"
 
 // VTK includes
 #include <vtkDataArray.h>
@@ -93,14 +92,6 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::New();
   this->GetMRMLScene()->RegisterNodeClass( peNode );
   peNode->Delete();
-
-  // TODO: Remove when table nodes integrated into Slicer core
-  vtkMRMLTableNode* tNode = vtkMRMLTableNode::New();
-  this->GetMRMLScene()->RegisterNodeClass( tNode );
-  tNode->Delete();
-  vtkMRMLTableStorageNode* tsNode = vtkMRMLTableStorageNode::New();
-  this->GetMRMLScene()->RegisterNodeClass( tsNode );
-  tsNode->Delete();
 }
 
 
@@ -504,38 +495,4 @@ void vtkSlicerPerkEvaluatorLogic
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
   }
 
-}
-
-
-// TODO: THIS SHOULD BE REMOVED WHEN vtkMRMLTableNode is properly added to Slicer
-vtkMRMLTableNode* vtkSlicerPerkEvaluatorLogic
-::AddTable(const char* fileName, const char* name)
-{
-  if (this->GetMRMLScene() == 0 || fileName == 0)
-    {
-    return 0;
-    }
-
-  // Storage node
-  vtkNew<vtkMRMLTableStorageNode> tableStorageNode;
-  tableStorageNode->SetFileName(fileName);
-  this->GetMRMLScene()->AddNode(tableStorageNode.GetPointer());
-
-  // Storable node
-  vtkNew<vtkMRMLTableNode> tableNode;
-  this->GetMRMLScene()->AddNode(tableNode.GetPointer());
-
-  // Read
-  int res = tableStorageNode->ReadData(tableNode.GetPointer());
-  if (res == 0) // failed to read
-    {
-    this->GetMRMLScene()->RemoveNode(tableStorageNode.GetPointer());
-    this->GetMRMLScene()->RemoveNode(tableNode.GetPointer());
-    return 0;
-    }
-  if (name)
-    {
-    tableNode->SetName(name);
-    }
-  return tableNode.GetPointer();
 }
