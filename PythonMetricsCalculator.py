@@ -214,38 +214,21 @@ class PythonMetricsCalculatorLogic:
         currentMetricRow.InsertNextValue( metric.GetMetric() )
         
         self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
-      
-
-  def GetAllUserMetricModules( self ): 
-    metricModulesList = []
-    
-    # Read the metric scripts    
-    metricsPath = self.peNode.GetMetricsDirectory()    
-    if ( metricsPath == "" ):
-      return metricModulesList
-    
-    allMetricScripts = glob.glob( metricsPath + "/*.py" )
-  
-    for scipt in allMetricScripts:
-    
-      metricModuleString = "PerkEvaluatorUserMetric_" + os.path.splitext( os.path.basename( scipt ) )[0] # this puts the file name at the end
-      
-      try:
-        # If it can't load properly, then just ignore
-        currentMetricModule = imp.load_source( metricModuleString, scipt )
-        metricModulesList.append( currentMetricModule.PerkEvaluatorMetric ) # This implicitly tests whether the class is defined
-      except:
-        print "Could not load metric: ", metricModuleString, "."
-        
-    return metricModulesList
     
     
   def GetFreshMetricModules( self ):
-    # Import every metrics we can find
-    coreMetricModules = PythonMetrics.GetFreshCoreMetricModules()
-    userMetricModules = self.GetAllUserMetricModules()
     
-    return ( coreMetricModules + userMetricModules )
+    # Setup the metrics currently associated with the selected PerkEvaluator node
+    metricModuleDict = dict()
+    metricModuleList = []
+    
+    # TODO: Make the reference role calling more robust (i.e. vtkMRMLPerkEvaluatorNode::METRICS_SCRIPT_REFERENCE_ROLE)
+    for i in range( self.peNode.GetNumberOfNodeReferences( "MetricScript" ) ):
+      metricScriptNode = self.peNode.GetNthNodeReference( "MetricScript", i )
+      exec metricScriptNode.GetPythonSourceCode() in metricModuleDict
+      metricModuleList.append( metricModuleDict[ "PerkEvaluatorMetric" ] )
+    
+    return metricModuleList
     
     
   def InitializeNewTransformMetrics( self, newTransformName ):
