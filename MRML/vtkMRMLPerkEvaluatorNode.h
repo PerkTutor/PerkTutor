@@ -94,9 +94,9 @@ public:
   NeedleOrientationEnum GetNeedleOrientation();
   void SetNeedleOrientation( NeedleOrientationEnum needleOrietation );
   
-  // Metrics directory
-  std::string GetMetricsDirectory();
-  void SetMetricsDirectory( std::string newMetricsDirectory );
+  // Metric nodes
+  bool IsMetricScriptID( std::string metricScriptID );
+  void SetMetricScriptIDs( std::vector< std::string > metricScriptIDs );
 
   // Playback time
   double GetPlaybackTime();

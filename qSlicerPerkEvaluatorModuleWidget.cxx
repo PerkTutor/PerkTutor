@@ -441,7 +441,7 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnMetricsDirectoryClicked()
+::OnMetricScriptNodesChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
@@ -451,12 +451,17 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  QString fileName = QFileDialog::getExistingDirectory( this, tr("Open metrics directory"), "", QFileDialog::ShowDirsOnly );  
-  if ( fileName.isEmpty() == false )
+  // Accumluate all of the IDs, and then write them to the node
+  std::vector< std::string > metricScriptIDs;
+  for ( int i = 0; i < d->MetricScriptComboBox->nodeCount(); i++ )
   {
-    peNode->SetMetricsDirectory( fileName.toStdString() );
+    if( d->MetricScriptComboBox->checkState( d->MetricScriptComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
+    {
+      metricScriptIDs.push_back( d->MetricScriptComboBox->nodeFromIndex( i )->GetID() );
+    }
   }
 
+  peNode->SetMetricScriptIDs( metricScriptIDs );
 }
 
 
@@ -613,7 +618,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Advanced tab
 
-  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
+  connect( d->MetricScriptComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricScriptNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->AutoUpdateTransformRolesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateTransformRolesToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
@@ -734,10 +739,23 @@ void qSlicerPerkEvaluatorModuleWidget
   vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
   d->BodyNodeComboBox->setCurrentNode( tissueNode );
 
-  // Get the name of the base directory
-  QDir metricsDirectory( peNode->GetMetricsDirectory().c_str() );
-  d->MetricsDirectoryButton->setText( metricsDirectory.dirName() );
-  d->MetricsDirectoryButton->setToolTip( metricsDirectory.absolutePath() );
+  // For the metric scripts
+  // Disable to the onCheckedChanged listener when initializing the selections
+  // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
+  disconnect( d->MetricScriptComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricScriptNodesChanged() ) );
+  for ( int i = 0; i < d->MetricScriptComboBox->nodeCount(); i++ )
+  {
+    if ( peNode->IsMetricScriptID( d->MetricScriptComboBox->nodeFromIndex( i )->GetID() ) )
+    {
+	    d->MetricScriptComboBox->setCheckState( d->MetricScriptComboBox->nodeFromIndex( i ), Qt::Checked );
+    }
+    else
+    {
+      d->MetricScriptComboBox->setCheckState( d->MetricScriptComboBox->nodeFromIndex( i ), Qt::Unchecked );
+    }
+  }
+  connect( d->MetricScriptComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricScriptNodesChanged() ) );
+
 
   d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 
   d->AutoUpdateTransformRolesCheckBox->setChecked( peNode->GetAutoUpdateTransformRoles() ); 

@@ -5,6 +5,7 @@
 // Constants ------------------------------------------------------------------
 static const char* TRANSFORM_BUFFER_REFERENCE_ROLE = "TransformBuffer";
 static const char* METRICS_TABLE_REFERENCE_ROLE = "MetricsTable";
+static const char* METRIC_SCRIPT_REFERENCE_ROLE = "MetricScript";
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
@@ -192,6 +193,7 @@ vtkMRMLPerkEvaluatorNode
 
   this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
+  this->AddNodeReferenceRole( METRIC_SCRIPT_REFERENCE_ROLE );
 }
 
 
@@ -328,24 +330,6 @@ void vtkMRMLPerkEvaluatorNode
 }
 
 
-std::string vtkMRMLPerkEvaluatorNode
-::GetMetricsDirectory()
-{
-  return this->MetricsDirectory;
-}
-
-
-void vtkMRMLPerkEvaluatorNode
-::SetMetricsDirectory( std::string newMetricsDirectory )
-{
-  if ( newMetricsDirectory.compare( this->MetricsDirectory ) != 0 )
-  {
-    this->MetricsDirectory = newMetricsDirectory;
-    this->Modified();
-  }
-}
-
-
 double vtkMRMLPerkEvaluatorNode
 ::GetPlaybackTime()
 {
@@ -388,6 +372,39 @@ void vtkMRMLPerkEvaluatorNode
   }
 }
 
+
+// Metric scripts ------------------------------------------------------------------------------------------------
+
+void vtkMRMLPerkEvaluatorNode
+::SetMetricScriptIDs( std::vector< std::string > metricScriptIDs )
+{
+  // Remove all of the active transform IDs
+  while( this->GetNumberOfNodeReferences( METRIC_SCRIPT_REFERENCE_ROLE ) > 0 )
+  {
+    this->RemoveNthNodeReferenceID( METRIC_SCRIPT_REFERENCE_ROLE, 0 );
+  }
+
+  // Add all of the specified IDs
+  for ( int i = 0; i < metricScriptIDs.size(); i++ )
+  {
+    this->AddAndObserveNodeReferenceID( METRIC_SCRIPT_REFERENCE_ROLE, metricScriptIDs.at( i ).c_str() );
+  }
+}
+
+bool vtkMRMLPerkEvaluatorNode
+::IsMetricScriptID( std::string metricScriptID )
+{
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( METRIC_SCRIPT_REFERENCE_ROLE ); i++ )
+  {
+    if ( metricScriptID.compare( this->GetNthNodeReferenceID( METRIC_SCRIPT_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 
 // Transform/Anatomy roles ---------------------------------------------------------------------------------------

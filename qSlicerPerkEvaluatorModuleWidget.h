@@ -50,7 +50,7 @@ public slots:
   void OnMarkEndChanged();
   void OnMarkEndClicked();
 
-  void OnMetricsDirectoryClicked();
+  void OnMetricScriptNodesChanged();
   void OnAutoUpdateMeasurementRangeToggled();
   void OnAutoUpdateTransformRolesToggled();
 
