@@ -18,6 +18,8 @@
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLTableNode.h"
 #include "vtkMRMLPerkEvaluatorNode.h"
+#include "vtkMRMLMetricScriptNode.h"
+#include "vtkMRMLMetricScriptStorageNode.h"
 
 
 // STD includes

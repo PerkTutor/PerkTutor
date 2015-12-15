@@ -92,6 +92,14 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::New();
   this->GetMRMLScene()->RegisterNodeClass( peNode );
   peNode->Delete();
+
+  vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( msNode );
+  msNode->Delete();
+
+  vtkMRMLMetricScriptStorageNode* mssNode = vtkMRMLMetricScriptStorageNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( mssNode );
+  mssNode->Delete();
 }
 
 

@@ -19,6 +19,10 @@ set(module_mrml_include_directories
 set(module_mrml_SRCS
   vtkMRMLPerkEvaluatorNode.cxx
   vtkMRMLPerkEvaluatorNode.h
+  vtkMRMLMetricScriptNode.cxx
+  vtkMRMLMetricScriptNode.h
+  vtkMRMLMetricScriptStorageNode.cxx
+  vtkMRMLMetricScriptStorageNode.h
   )
 
 # Additional Target libraries
