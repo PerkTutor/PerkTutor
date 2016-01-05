@@ -157,12 +157,20 @@ class PythonMetricsCalculatorLogic:
   """
   def __init__( self ):
   
-    self.allMetricModules = []
-    self.transformMetrics = dict()
+    self.allMetricModules = dict()
+    self.allMetrics = dict()
     
     # By default, grab the instantiated module's logic (though other logics are possible)
     self.SetPerkEvaluatorLogic( slicer.modules.perkevaluator.logic() )
     self.SetMRMLScene( self.peLogic.GetMRMLScene() )
+    
+    
+  @staticmethod
+  def AddCoreMetricsToScene():
+    # Add the "Core" metrics by default
+    coreMetricScriptFiles = glob.glob( os.path.dirname( __file__ ) + "/PythonMetrics/*.py" )
+    for script in coreMetricScriptFiles:
+      slicer.util.loadNodeFromFile( script, "Python Metric Script" )
     
   
   # We need this in order to determine the tissue model node, etc.  
@@ -187,8 +195,6 @@ class PythonMetricsCalculatorLogic:
   def InitializeMetricsTable( self ):
     self.metricsTable.GetTable().Initialize()
     
-    transformNameColumn = vtk.vtkStringArray()
-    transformNameColumn.SetName( "TransformName" )
     metricNameColumn = vtk.vtkStringArray()
     metricNameColumn.SetName( "MetricName" )
     metricUnitColumn = vtk.vtkStringArray()
@@ -196,171 +202,115 @@ class PythonMetricsCalculatorLogic:
     metricValueColumn = vtk.vtkStringArray()
     metricValueColumn.SetName( "MetricValue" )
     
-    self.metricsTable.GetTable().AddColumn( transformNameColumn )
     self.metricsTable.GetTable().AddColumn( metricNameColumn )
     self.metricsTable.GetTable().AddColumn( metricUnitColumn )
     self.metricsTable.GetTable().AddColumn( metricValueColumn )
       
       
-  def OutputAllTransformMetricsToMetricsTable( self ):
+  def OutputAllMetricsToMetricsTable( self ):
     self.InitializeMetricsTable()
-    
-    for transformName in self.transformMetrics:
-      for metric in self.transformMetrics[ transformName ]:
-        currentMetricRow = vtk.vtkVariantArray()
-        currentMetricRow.InsertNextValue( transformName )
-        currentMetricRow.InsertNextValue( metric.GetMetricName() )
-        currentMetricRow.InsertNextValue( metric.GetMetricUnit() )
-        currentMetricRow.InsertNextValue( metric.GetMetric() )
+
+    for metric in self.allMetrics.values():
+      currentMetricRow = vtk.vtkVariantArray()
+      currentMetricRow.InsertNextValue( metric.GetMetricName() )
+      currentMetricRow.InsertNextValue( metric.GetMetricUnit() )
+      currentMetricRow.InsertNextValue( metric.GetMetric() )
         
-        self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
+      self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
     
     
   def GetFreshMetricModules( self ):
     
     # Setup the metrics currently associated with the selected PerkEvaluator node
+    execDict = dict()
     metricModuleDict = dict()
-    metricModuleList = []
     
-    # TODO: Make the reference role calling more robust (i.e. vtkMRMLPerkEvaluatorNode::METRICS_SCRIPT_REFERENCE_ROLE)
-    for i in range( self.peNode.GetNumberOfNodeReferences( "MetricScript" ) ):
-      metricScriptNode = self.peNode.GetNthNodeReference( "MetricScript", i )
-      exec metricScriptNode.GetPythonSourceCode() in metricModuleDict
-      metricModuleList.append( metricModuleDict[ "PerkEvaluatorMetric" ] )
+    # Grab all of the metric script nodes in the scene
+    metricScriptNodes = self.mrmlScene.GetNodesByClass( "vtkMRMLMetricScriptNode" )
     
-    return metricModuleList
+    for i in range( metricScriptNodes.GetNumberOfItems() ):
+      currentMetricScriptNode = metricScriptNodes.GetItemAsObject( i )
+      exec currentMetricScriptNode.GetPythonSourceCode() in execDict
+      metricModuleDict[ currentMetricScriptNode.GetID() ] = execDict[ "PerkEvaluatorMetric" ]
+    
+    return metricModuleDict
     
     
-  def InitializeNewTransformMetrics( self, newTransformName ):
+  def GetFreshMetrics( self ):
     # Get a fresh set of metrics
     newTransformMetricModules = self.GetFreshMetricModules()
-    newTransformRole = self.peNode.GetTransformRole( newTransformName )
-    # Filter out metrics whose roles are not satisfied
-    newTransformMetricModules = self.FilterMetricModulesByAnatomyRole( newTransformMetricModules, self.GetAllSpecifiedAnatomyRoles() )
-    newTransformMetricModules = self.FilterMetricModulesByTransformRole( newTransformMetricModules, newTransformRole )    
-  
-    # Instantiate each metric, and add the anatomy nodes to it
-    newTransformMetrics = []
-    for metricModule in newTransformMetricModules:
-      newTransformMetrics.append( metricModule() )
+    
+    # Setup the metrics currently associated with the selected PerkEvaluator node
+    execDict = dict()
+    metricDict = dict()
+    
+    # TODO: Make the reference role calling more robust (i.e. vtkMRMLPerkEvaluatorNode::METRIC_INSTANCE_REFERENCE_ROLE)
+    for i in range( self.peNode.GetNumberOfNodeReferences( "MetricInstance" ) ):
+      metricInstanceNode = self.peNode.GetNthNodeReference( "MetricInstance", i )
+      associatedMetricModule = newTransformMetricModules[ metricInstanceNode.GetAssociatedMetricScriptID() ]
+      if ( self.AreMetricModuleRolesSatisfied( associatedMetricModule, metricInstanceNode ) ):
+        metricDict[ metricInstanceNode.GetID() ] = associatedMetricModule()
+   
+    return metricDict
+    
+    
+  def AreMetricModuleRolesSatisfied( self, metricModule, metricInstanceNode ):
+    # Output whether or not the metric module has its roles completely satisfied by the metricInstance node
+     
+    rolesSatisfied = True
       
-    newTransformMetrics = self.AddAnatomyNodesToMetrics( newTransformMetrics )   
-    
-    self.transformMetrics[ newTransformName ] = newTransformMetrics
-    
-    
-      
-  def FilterMetricModulesByAnatomyRole( self, inMetricModules, specifiedAnatomyRoles ):
-    # Only output metrics for which all of the required anatomy roles are fulfilled
-    outMetricModules = []
-    
-    for metricModule in inMetricModules:
-      currentMetricAnatomyRoles = metricModule.GetRequiredAnatomyRoles()
-      
-      anatomyRolesSatisfied = True
-      for role in currentMetricAnatomyRoles:
-        if ( role not in specifiedAnatomyRoles ):
-          anatomyRolesSatisfied = False
+    for role in metricModule.GetRequiredAnatomyRoles():
+      if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.AnatomyRole ) == "" ):
+        rolesSatisfied = False        
           
-      if ( anatomyRolesSatisfied == True ):
-        outMetricModules.append( metricModule )      
-        
-    return outMetricModules
-        
-        
-  def FilterMetricModulesByTransformRole( self, inMetricModules, currentTransformRole ):     
-    # Only output metrics which accept the current transform's role
-    outMetricModules = []
+    for role in metricModule.GetAcceptedTransformRoles():
+      if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == "" ):
+        rolesSatisfied = False
+          
+    return rolesSatisfied
+
     
-    # Discard if the transform has no role
-    if ( currentTransformRole == "" or currentTransformRole == "None" ):
-      return outMetricModules
-    
-    for metricModule in inMetricModules:
-      currentMetricTransformRoles = metricModule.GetAcceptedTransformRoles()
-      
-      for role in currentMetricTransformRoles:
-        if ( role == currentTransformRole or role == "Any" ):
-          outMetricModules.append( metricModule )
-        
-    return outMetricModules
-    
-    
-  def AddAnatomyNodesToMetrics( self, transformMetrics ):  
+  # Note: This modifies the inputted dictionary of metrics
+  def AddAnatomyNodesToMetrics( self, metrics ):  
     # Keep track of which metrics all anatomies are sucessfully delivered to    
-    newTransformMetrics = []
   
-    for metric in transformMetrics:
-      currentMetricAnatomyRoles = metric.GetRequiredAnatomyRoles()
+    for metricInstanceID in metrics:
+      metricAnatomyRoles = metrics[ metricInstanceID ].GetRequiredAnatomyRoles()
+      metricInstanceNode = self.mrmlScene.GetNodeByID( metricInstanceID )
       anatomiesFulfilled = True
       
-      for role in currentMetricAnatomyRoles:
-        currentAnatomyNodeName = self.peNode.GetAnatomyNodeName( role )
-        currentAnatomyNode = self.mrmlScene.GetFirstNodeByName( currentAnatomyNodeName )
-        added = metric.AddAnatomyRole( role, currentAnatomyNode )
+      for role in metricAnatomyRoles:
+        anatomyNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.TransformRole )
+        added = metrics[ metricInstanceID ].AddAnatomyRole( role, currentAnatomyNode )
         
-        if ( added == False ):
+        if ( not added ):
           anatomiesFulfilled = False
           
       # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be fulfilled
       # However, if the wrong type of node is selected, then this may return false
-      if ( anatomiesFulfilled == True ):
-        newTransformMetrics.append( metric )
+      if ( not anatomiesFulfilled  ):
+        metrics.pop( metricInstanceID )
+
         
-    return newTransformMetrics
+  # Note: We are returning a dictionary here, not a list
+  def GetAllAnatomyRoles( self, metricScriptID ):  
+    return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
+
     
+  # Note: We are returning a list here
+  def GetAllTransformRoles( self, metricScriptID ):
+    return self.allMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
+    
+  # Note: We are returning a string here
+  def GetAnatomyRoleClassName( self, metricScriptID, role ):
+    return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles()[ role ]
+
+    
+
+  def CalculateAllMetrics( self ):
   
-  def GetAllSpecifiedAnatomyRoles( self ):
-    specifiedAnatomyRoles = []
-    
-    for role in ( self.GetAllAnatomyRoles() ):
-      if ( self.peNode.GetAnatomyNodeName( role ) != "" ):
-        specifiedAnatomyRoles.append( role )
-        
-    return specifiedAnatomyRoles
-
-        
-  def GetAllAnatomyRoles( self ):  
-    allAnatomyRoles = []
-    
-    for metricModule in self.allMetricModules:
-      currentRequiredRoles = metricModule.GetRequiredAnatomyRoles()
-      # Each metric may require multiple roles, so we must check all of them
-      for role in currentRequiredRoles:
-        if ( role not in allAnatomyRoles ):
-          allAnatomyRoles.append( role )
-          
-    return allAnatomyRoles
-    
-    
-  def GetAllAnatomyClassNames( self ):
-    allAnatomyClassNames = []
-    
-    for metricModule in self.allMetricModules:
-      currentRequiredClassNames = metricModule.GetRequiredAnatomyRoles().values()
-      # Each metric may require multiple roles, so we must check all of them
-      for className in currentRequiredClassNames:
-        if ( className not in allAnatomyClassNames ):
-          allAnatomyClassNames.append( className )
-          
-    return allAnatomyClassNames
-    
-    
-  def GetAllTransformRoles( self ): 
-    allTransformRoles = []
-    
-    for metricModule in self.allMetricModules:
-      currentAcceptedRoles = metricModule.GetAcceptedTransformRoles()
-      # Each metric may accept multiple roles, so we must check all of them
-      for role in currentAcceptedRoles:
-        if ( role not in allTransformRoles ):
-          allTransformRoles.append( role )
-          
-    return allTransformRoles
-
-    
-
-  def CalculateAllMetrics( self ):  
+    self.allMetrics = self.GetFreshMetrics()
+  
     # Start at the beginning (but remember where we were)
     originalPlaybackTime = self.peNode.GetPlaybackTime()
     
@@ -392,7 +342,7 @@ class PythonMetricsCalculatorLogic:
         self.UpdateTransformMetrics( currentTransformNode, absTime, False )
       
     self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
-    self.OutputAllTransformMetricsToMetricsTable()
+    self.OutputAllMetricsToMetricsTable()
 
     
   def UpdateSelfAndChildMetrics( self, transformName, absTime ):
@@ -411,10 +361,6 @@ class PythonMetricsCalculatorLogic:
 
         
   def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
-  
-    # First, initialize the metrics if it doesn't already exist
-    if( transformNode.GetName() not in self.transformMetrics ):
-      self.InitializeNewTransformMetrics( transformNode.GetName() )
       
     # The assumption is that the scene is already appropriately updated
     matrix = vtk.vtkMatrix4x4()
@@ -422,15 +368,18 @@ class PythonMetricsCalculatorLogic:
     transformNode.GetMatrixTransformToWorld( matrix )
     point = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ), matrix.GetElement( 3, 3 ) ]
     
-    for metric in self.transformMetrics[ transformNode.GetName() ]:
-      metric.AddTimestamp( absTime, matrix, point )
+    for metricInstanceID in self.allMetrics:
+      metric = self.allMetrics[ metricInstanceID ]
+      metricInstanceNode = self.mrmlScene.GetNodeByID( metricInstanceID )
+      
+      for role in metric.GetAcceptedTransformRoles():
+        if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == transformNode.GetID() ):
+          metric.AddTimestamp( absTime, matrix, point )
       
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
     if ( updateTable ):
-      self.OutputAllTransformMetricsToMetricsTable()
-
-
+      self.OutputAllMetricsToMetricsTable()
 
     
 
