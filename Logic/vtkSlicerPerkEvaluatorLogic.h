@@ -20,6 +20,7 @@
 #include "vtkMRMLPerkEvaluatorNode.h"
 #include "vtkMRMLMetricScriptNode.h"
 #include "vtkMRMLMetricScriptStorageNode.h"
+#include "vtkMRMLMetricInstanceNode.h"
 
 
 // STD includes
@@ -66,9 +67,9 @@ public:
   void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
   void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
 
-  std::vector< std::string > GetAllTransformRoles( vtkMRMLPerkEvaluatorNode* peNode );
-  std::vector< std::string > GetAllAnatomyRoles( vtkMRMLPerkEvaluatorNode* peNode );
-  std::vector< std::string > GetAllAnatomyClassNames( vtkMRMLPerkEvaluatorNode* peNode );
+  std::vector< std::string > GetAllTransformRoles( vtkMRMLMetricInstanceNode* miNode );
+  std::vector< std::string > GetAllAnatomyRoles( vtkMRMLMetricInstanceNode* miNode );
+  std::string GetAnatomyRoleClassName( vtkMRMLMetricInstanceNode* miNode, std::string role );
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
   void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes, vtkMRMLPerkEvaluatorNode* peNode );

@@ -50,7 +50,11 @@ public slots:
   void OnMarkEndChanged();
   void OnMarkEndClicked();
 
-  void OnMetricScriptNodesChanged();
+  void OnMetricInstanceNodesChanged();
+
+  void OnEditMetricInstanceNodeCreated( vtkMRMLNode* node );
+  void OnEditMetricInstanceNodeChanged();
+
   void OnAutoUpdateMeasurementRangeToggled();
   void OnAutoUpdateTransformRolesToggled();
 

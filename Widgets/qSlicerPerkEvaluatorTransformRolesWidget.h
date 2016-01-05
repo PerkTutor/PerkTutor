@@ -45,12 +45,12 @@ protected slots:
 protected:
   QScopedPointer<qSlicerPerkEvaluatorTransformRolesWidgetPrivate> d_ptr;
 
-  std::string getFixedHeader();
-  std::string getMovingHeader();
+  std::string getRolesHeader();
+  std::string getCandidateHeader();
   
-  std::vector< std::string > getAllFixed();
-  std::vector< std::string > getAllMoving();
-  std::string getMovingFromFixed( std::string fixed );
+  std::vector< std::string > getAllRoles(); // Just a list of all roles
+  std::string getNodeTypeForRole( std::string role ); // A list of the node types for that role
+  std::string getNodeIDFromRole( std::string role ); // Get the ID of the node fulfilling the role
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorTransformRolesWidget);

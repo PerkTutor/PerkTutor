@@ -411,6 +411,35 @@ qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::OnEditMetricInstanceNodeCreated( vtkMRMLNode* node )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( node );
+  vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( d->BaseMetricScriptComboBox->currentNode() );
+  if ( miNode == NULL || msNode == NULL )
+  {
+    return;
+  }
+
+  std::stringstream miNodeName;
+  miNodeName << msNode->GetName() << "_Instance";
+  miNode->SetName( miNodeName.str().c_str() );
+  miNode->SetAssociatedMetricScriptID( msNode->GetID() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnEditMetricInstanceNodeChanged()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->AnatomyRolesWidget->setMetricInstanceNode( d->EditMetricInstanceNodeComboBox->currentNode() );
+  d->TransformRolesWidget->setMetricInstanceNode( d->EditMetricInstanceNodeComboBox->currentNode() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::OnAutoUpdateMeasurementRangeToggled()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -441,7 +470,7 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnMetricScriptNodesChanged()
+::OnMetricInstanceNodesChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
@@ -452,16 +481,16 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   // Accumluate all of the IDs, and then write them to the node
-  std::vector< std::string > metricScriptIDs;
-  for ( int i = 0; i < d->MetricScriptComboBox->nodeCount(); i++ )
+  std::vector< std::string > metricInstanceIDs;
+  for ( int i = 0; i < d->MetricInstanceComboBox->nodeCount(); i++ )
   {
-    if( d->MetricScriptComboBox->checkState( d->MetricScriptComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
+    if( d->MetricInstanceComboBox->checkState( d->MetricInstanceComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
     {
-      metricScriptIDs.push_back( d->MetricScriptComboBox->nodeFromIndex( i )->GetID() );
+      metricInstanceIDs.push_back( d->MetricInstanceComboBox->nodeFromIndex( i )->GetID() );
     }
   }
 
-  peNode->SetMetricScriptIDs( metricScriptIDs );
+  peNode->SetMetricInstanceIDs( metricInstanceIDs );
 }
 
 
@@ -617,8 +646,9 @@ qSlicerPerkEvaluatorModuleWidget
 
 
   // Advanced tab
-
-  connect( d->MetricScriptComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricScriptNodesChanged() ) );
+  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( nodeAdded( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeCreated( vtkMRMLNode* ) ) );
+  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
+  connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->AutoUpdateTransformRolesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateTransformRolesToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
@@ -721,8 +751,10 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   // Update the roles widgets and metrics table widget every time the Perk Evaluator node is modified
-  d->TransformRolesWidget->setPerkEvaluatorNode( peNode );
-  d->AnatomyRolesWidget->setPerkEvaluatorNode( peNode );
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->MetricInstanceComboBox->currentNode() );
+  d->TransformRolesWidget->setMetricInstanceNode( miNode );
+  d->AnatomyRolesWidget->setMetricInstanceNode( peNode );
+
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
   d->TransformBufferWidget->setTransformBufferNode( peNode->GetTransformBufferNode() );
 
@@ -742,19 +774,19 @@ void qSlicerPerkEvaluatorModuleWidget
   // For the metric scripts
   // Disable to the onCheckedChanged listener when initializing the selections
   // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
-  disconnect( d->MetricScriptComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricScriptNodesChanged() ) );
-  for ( int i = 0; i < d->MetricScriptComboBox->nodeCount(); i++ )
+  disconnect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
+  for ( int i = 0; i < d->MetricInstanceComboBox->nodeCount(); i++ )
   {
-    if ( peNode->IsMetricScriptID( d->MetricScriptComboBox->nodeFromIndex( i )->GetID() ) )
+    if ( peNode->IsMetricInstanceID( d->MetricInstanceComboBox->nodeFromIndex( i )->GetID() ) )
     {
-	    d->MetricScriptComboBox->setCheckState( d->MetricScriptComboBox->nodeFromIndex( i ), Qt::Checked );
+	    d->MetricInstanceComboBox->setCheckState( d->MetricInstanceComboBox->nodeFromIndex( i ), Qt::Checked );
     }
     else
     {
-      d->MetricScriptComboBox->setCheckState( d->MetricScriptComboBox->nodeFromIndex( i ), Qt::Unchecked );
+      d->MetricInstanceComboBox->setCheckState( d->MetricInstanceComboBox->nodeFromIndex( i ), Qt::Unchecked );
     }
   }
-  connect( d->MetricScriptComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricScriptNodesChanged() ) );
+  connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
 
 
   d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 

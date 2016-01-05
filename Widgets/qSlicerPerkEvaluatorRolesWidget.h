@@ -24,6 +24,7 @@
 // Qt includes
 #include <QtGui>
 #include "qSlicerWidget.h"
+#include "qMRMLNodeComboBox.h"
 
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
@@ -48,7 +49,7 @@ public:
 public slots:
 
   virtual void setMRMLScene( vtkMRMLScene* newScene );
-  void setPerkEvaluatorNode( vtkMRMLNode* node );
+  void setMetricInstanceNode( vtkMRMLNode* node );
 
 protected slots:
 
@@ -61,19 +62,19 @@ protected:
   virtual void setup();
   virtual void enter();
 
-  virtual std::string getFixedHeader();
-  virtual std::string getMovingHeader();
+  virtual std::string getRolesHeader();
+  virtual std::string getCandidateHeader();
 
-  virtual std::vector< std::string > getAllFixed() = 0; // Just a list of all fixed options
-  virtual std::vector< std::string > getAllMoving() = 0; // Just a list of all moving option
-  virtual std::string getMovingFromFixed( std::string fixed ) = 0;
+  virtual std::vector< std::string > getAllRoles() = 0; // Just a list of all roles
+  virtual std::string getNodeTypeForRole( std::string role ) = 0; // A list of the node types for that role
+  virtual std::string getNodeIDFromRole( std::string role ) = 0; // Get the ID of the node fulfilling the role
   
   // Have two maps to correspond transforms nodes <-> ComboBox widgets
-  std::map< std::string, QComboBox* > FixedToComboBoxMap;
-  std::map< QComboBox*, std::string > ComboBoxToFixedMap;
+  std::map< std::string, qMRMLNodeComboBox* > RolesToComboBoxMap;
+  std::map< qMRMLNodeComboBox*, std::string > ComboBoxToRolesMap;
 
   vtkWeakPointer< vtkSlicerPerkEvaluatorLogic > PerkEvaluatorLogic;
-  vtkWeakPointer< vtkMRMLPerkEvaluatorNode > PerkEvaluatorNode;
+  vtkWeakPointer< vtkMRMLMetricInstanceNode > MetricInstanceNode;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorRolesWidget);

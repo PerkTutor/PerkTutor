@@ -5,7 +5,7 @@
 // Constants ------------------------------------------------------------------
 static const char* TRANSFORM_BUFFER_REFERENCE_ROLE = "TransformBuffer";
 static const char* METRICS_TABLE_REFERENCE_ROLE = "MetricsTable";
-static const char* METRIC_SCRIPT_REFERENCE_ROLE = "MetricScript";
+static const char* METRIC_INSTANCE_REFERENCE_ROLE = "MetricInstance";
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
@@ -193,7 +193,7 @@ vtkMRMLPerkEvaluatorNode
 
   this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
-  this->AddNodeReferenceRole( METRIC_SCRIPT_REFERENCE_ROLE );
+  this->AddNodeReferenceRole( METRIC_INSTANCE_REFERENCE_ROLE );
 }
 
 
@@ -376,28 +376,28 @@ void vtkMRMLPerkEvaluatorNode
 // Metric scripts ------------------------------------------------------------------------------------------------
 
 void vtkMRMLPerkEvaluatorNode
-::SetMetricScriptIDs( std::vector< std::string > metricScriptIDs )
+::SetMetricInstanceIDs( std::vector< std::string > metricInstanceIDs )
 {
   // Remove all of the active transform IDs
-  while( this->GetNumberOfNodeReferences( METRIC_SCRIPT_REFERENCE_ROLE ) > 0 )
+  while( this->GetNumberOfNodeReferences( METRIC_INSTANCE_REFERENCE_ROLE ) > 0 )
   {
-    this->RemoveNthNodeReferenceID( METRIC_SCRIPT_REFERENCE_ROLE, 0 );
+    this->RemoveNthNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, 0 );
   }
 
   // Add all of the specified IDs
-  for ( int i = 0; i < metricScriptIDs.size(); i++ )
+  for ( int i = 0; i < metricInstanceIDs.size(); i++ )
   {
-    this->AddAndObserveNodeReferenceID( METRIC_SCRIPT_REFERENCE_ROLE, metricScriptIDs.at( i ).c_str() );
+    this->AddAndObserveNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, metricInstanceIDs.at( i ).c_str() );
   }
 }
 
 bool vtkMRMLPerkEvaluatorNode
-::IsMetricScriptID( std::string metricScriptID )
+::IsMetricInstanceID( std::string metricInstanceID )
 {
   // Check all referenced node IDs
-  for ( int i = 0; i < this->GetNumberOfNodeReferences( METRIC_SCRIPT_REFERENCE_ROLE ); i++ )
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( METRIC_INSTANCE_REFERENCE_ROLE ); i++ )
   {
-    if ( metricScriptID.compare( this->GetNthNodeReferenceID( METRIC_SCRIPT_REFERENCE_ROLE, i ) ) == 0 )
+    if ( metricInstanceID.compare( this->GetNthNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, i ) ) == 0 )
     {
       return true;
     }

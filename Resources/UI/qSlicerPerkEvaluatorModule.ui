@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>624</width>
-    <height>840</height>
+    <height>860</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -52,7 +52,7 @@
         <x>0</x>
         <y>0</y>
         <width>598</width>
-        <height>664</height>
+        <height>684</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -361,7 +361,7 @@
         <x>0</x>
         <y>0</y>
         <width>598</width>
-        <height>664</height>
+        <height>684</height>
        </rect>
       </property>
       <attribute name="label">
@@ -705,7 +705,7 @@
         <x>0</x>
         <y>0</y>
         <width>598</width>
-        <height>664</height>
+        <height>684</height>
        </rect>
       </property>
       <attribute name="label">
@@ -713,24 +713,28 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_13">
        <item>
-        <widget class="ctkCollapsibleGroupBox" name="TransformRolesGroupBox">
+        <widget class="qMRMLNodeComboBox" name="BaseMetricScriptComboBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="title">
-          <string>Transform Roles</string>
+         <property name="nodeTypes">
+          <stringlist>
+           <string>vtkMRMLMetricScriptNode</string>
+          </stringlist>
          </property>
-         <property name="collapsed">
-          <bool>true</bool>
+         <property name="addEnabled">
+          <bool>false</bool>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_7"/>
+         <property name="removeEnabled">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>
-        <widget class="ctkCollapsibleGroupBox" name="AnatomyRolesGroupBox">
+        <widget class="ctkCollapsibleGroupBox" name="MetricEditorGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -738,12 +742,62 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Anatomy Roles</string>
+          <string>Metric Editor</string>
          </property>
          <property name="collapsed">
           <bool>true</bool>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3"/>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="qMRMLNodeComboBox" name="EditMetricInstanceNodeComboBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="nodeTypes">
+             <stringlist>
+              <string>vtkMRMLMetricInstanceNode</string>
+             </stringlist>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="ctkCollapsibleGroupBox" name="TransformRolesGroupBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Transform Roles</string>
+            </property>
+            <property name="collapsed">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_7"/>
+           </widget>
+          </item>
+          <item>
+           <widget class="ctkCollapsibleGroupBox" name="AnatomyRolesGroupBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Anatomy Roles</string>
+            </property>
+            <property name="collapsed">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_3"/>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
@@ -902,7 +956,7 @@
              </layout>
             </item>
             <item row="0" column="1">
-             <widget class="qMRMLCheckableNodeComboBox" name="MetricScriptComboBox">
+             <widget class="qMRMLCheckableNodeComboBox" name="MetricInstanceComboBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -911,7 +965,7 @@
               </property>
               <property name="nodeTypes">
                <stringlist>
-                <string>vtkMRMLMetricScriptNode</string>
+                <string>vtkMRMLMetricInstanceNode</string>
                </stringlist>
               </property>
              </widget>
@@ -1096,7 +1150,7 @@
   <connection>
    <sender>qSlicerPerkEvaluatorModule</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>MetricScriptComboBox</receiver>
+   <receiver>MetricInstanceComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1106,6 +1160,38 @@
     <hint type="destinationlabel">
      <x>422</x>
      <y>313</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerPerkEvaluatorModule</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>EditMetricInstanceNodeComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>311</x>
+     <y>429</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>258</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerPerkEvaluatorModule</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>BaseMetricScriptComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>311</x>
+     <y>429</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>189</y>
     </hint>
    </hints>
   </connection>

@@ -82,6 +82,10 @@ public:
 
   std::string GetPythonSourceCode();
   void SetPythonSourceCode( std::string newPythonSourceCode );
+
+  // Instances of the metrics
+  bool IsAssociatedMetricInstanceID( std::string associatedMetricInstanceID );
+
   
 protected:
 

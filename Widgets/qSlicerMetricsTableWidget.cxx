@@ -204,16 +204,15 @@ void qSlicerMetricsTableWidget
   for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
   {
     QString nameString;
-    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
-    nameString.append( " " );
     nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
+    nameString.append( " (" );
+    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
+    nameString.append( ")" );
     QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
     d->MetricsTable->setItem( i, 0, nameItem );
 
     QString valueString;
     valueString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
-    valueString.append( " " );
-    valueString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
     QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
     d->MetricsTable->setItem( i, 1, valueItem );
   }

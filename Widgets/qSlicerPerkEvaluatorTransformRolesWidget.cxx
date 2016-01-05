@@ -75,16 +75,16 @@ qSlicerPerkEvaluatorTransformRolesWidget
 
 
 std::string qSlicerPerkEvaluatorTransformRolesWidget
-::getFixedHeader()
+::getRolesHeader()
 {
-  return "Transform Node";
+  return "Role";
 }
 
 
 std::string qSlicerPerkEvaluatorTransformRolesWidget
-::getMovingHeader()
+::getCandidateHeader()
 {
-  return "Role";
+  return "Transform Node";
 }
 
 
@@ -94,64 +94,48 @@ void qSlicerPerkEvaluatorTransformRolesWidget
 {
   Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
 
-  if ( this->PerkEvaluatorNode == NULL )
+  if ( this->MetricInstanceNode == NULL )
   {
     return;
   }
 
   // Find who the sender is and the corresponding node
-  QComboBox* sender = (QComboBox*) this->sender();
-  std::string transformName = this->ComboBoxToFixedMap[ sender ];
+  qMRMLNodeComboBox* sender = ( qMRMLNodeComboBox* ) this->sender();
+  std::string transformRole = this->ComboBoxToRolesMap[ sender ];
   
-  this->PerkEvaluatorNode->SetTransformRole( transformName, sender->currentText().toStdString() );
+  this->MetricInstanceNode->SetRoleID( sender->currentNodeID().toStdString(), transformRole, vtkMRMLMetricInstanceNode::TransformRole );
 
   this->updateWidget();
 }
 
 
-std::vector< std::string > qSlicerPerkEvaluatorTransformRolesWidget
-::getAllMoving()
+std::string qSlicerPerkEvaluatorTransformRolesWidget
+::getNodeTypeForRole( std::string role )
 {
   Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
-  
-  if ( this->PerkEvaluatorNode == NULL )
-  {
-    return std::vector< std::string >();
-  }
 
-  return this->PerkEvaluatorLogic->GetAllTransformRoles( this->PerkEvaluatorNode );
-}
-
-
-std::vector< std::string > qSlicerPerkEvaluatorTransformRolesWidget
-::getAllFixed()
-{
-  Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
-  
-  vtkSmartPointer< vtkCollection > transformNodes = vtkSmartPointer< vtkCollection >::New();
-  this->PerkEvaluatorLogic->GetSceneVisibleTransformNodes( transformNodes );
-  
-  std::vector< std::string > transformNodeNames( transformNodes->GetNumberOfItems(), "" );
-  
-  for ( int i = 0; i < transformNodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLNode* currentTransformNode = vtkMRMLNode::SafeDownCast( transformNodes->GetItemAsObject( i ) );
-    transformNodeNames.at( i ) = currentTransformNode->GetName();
-  }
-
-  return transformNodeNames;
+  return "vtkMRMLLinearTransformNode";
 }
 
 
 std::string qSlicerPerkEvaluatorTransformRolesWidget
-::getMovingFromFixed( std::string fixed )
+::getNodeIDFromRole( std::string role )
 {
   Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
 
-  if ( this->PerkEvaluatorNode == NULL )
+  return this->MetricInstanceNode->GetRoleID( role, vtkMRMLMetricInstanceNode::TransformRole );
+}
+
+
+std::vector< std::string > qSlicerPerkEvaluatorTransformRolesWidget
+::getAllRoles()
+{
+  Q_D(qSlicerPerkEvaluatorTransformRolesWidget);
+
+  if ( this->MetricInstanceNode == NULL )
   {
-    return "";
+    return std::vector< std::string >();
   }
   
-  return this->PerkEvaluatorNode->GetTransformRole( fixed );
+  return this->PerkEvaluatorLogic->GetAllTransformRoles( this->MetricInstanceNode );
 }

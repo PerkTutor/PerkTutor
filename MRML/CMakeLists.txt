@@ -23,6 +23,8 @@ set(module_mrml_SRCS
   vtkMRMLMetricScriptNode.h
   vtkMRMLMetricScriptStorageNode.cxx
   vtkMRMLMetricScriptStorageNode.h
+  vtkMRMLMetricInstanceNode.cxx
+  vtkMRMLMetricInstanceNode.h
   )
 
 # Additional Target libraries

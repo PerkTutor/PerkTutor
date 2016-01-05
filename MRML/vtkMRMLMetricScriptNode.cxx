@@ -2,6 +2,9 @@
 
 #include "vtkMRMLMetricScriptNode.h"
 
+// Constants -----------------------------------------------------------------------------
+
+static const char* ASSOCIATED_METRIC_INSTANCE_REFERENCE_ROLE = "AssociatedMetricInstance";
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
@@ -96,34 +99,23 @@ void vtkMRMLMetricScriptNode
 ::SetPythonSourceCode( std::string newPythonSourceCode )
 {
   this->PythonSourceCode = newPythonSourceCode;
+}
 
-  /* TODO: Move to the vtkMRMLPerkEvaluatorLogic class or PythonMetricsCalculator?
-  
-  if ( newPythonManager != this->PythonManager )
-  {
-    // Now we can set up the python environment as we need
-    this->PythonManager = newPythonManager;
-    this->PythonManager->executeString( "PythonMetricScriptDict = dict()" )
-  }
-  
-  if ( this->PythonSourceCode.compare( "" ) == 0 )
-  {
-    return;    
-  }
-  
-  // Add the current metric to the dictionary of python metrics
-  std::string dictionaryString = "PythonMetricScriptDict[ '%1' ]";
-  
-  std::stringstream commandString;
-  commandString << dictionaryString << " = dict()";
-  this->PythonManager->executeString( QString( commandString ).arg( this->GetID() ) );
-  
-  commandString.clear();
-  commandString << "exec " << this->PythonString << " in " << dictionaryString;
-  this->PythonManager->executeString( QString( commandString ).arg( this->GetID() ) );
-  // NOTE: We are adding a reference to the class, not an instance of the class
-  */
+// Associated Instance Metrics ---------------------------------------------------------------
 
+bool vtkMRMLMetricScriptNode
+::IsAssociatedMetricInstanceID( std::string associatedMetricInstanceID )
+{
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( ASSOCIATED_METRIC_INSTANCE_REFERENCE_ROLE ); i++ )
+  {
+    if ( associatedMetricInstanceID.compare( this->GetNthNodeReferenceID( ASSOCIATED_METRIC_INSTANCE_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // C++ interface -----------------------------------------------------------------------------
