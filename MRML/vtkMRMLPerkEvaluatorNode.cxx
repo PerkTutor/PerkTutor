@@ -375,6 +375,44 @@ void vtkMRMLPerkEvaluatorNode
 
 // Metric scripts ------------------------------------------------------------------------------------------------
 
+
+void vtkMRMLPerkEvaluatorNode
+::AddMetricInstanceID( std::string metricInstanceID )
+{
+  this->AddAndObserveNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, metricInstanceID.c_str() );
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::RemoveMetricInstanceID( std::string transformID )
+{
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( METRIC_INSTANCE_REFERENCE_ROLE ); i++ )
+  {
+    if ( transformID.compare( this->GetNthNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, i ) ) == 0 )
+    {
+      this->RemoveNthNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, i );
+      i--;
+    }
+  }
+}
+
+
+std::vector< std::string > vtkMRMLPerkEvaluatorNode
+::GetMetricInstanceIDs()
+{
+  std::vector< std::string > metricInstanceIDs;
+
+  // Check all referenced node IDs
+  for ( int i = 0; i < this->GetNumberOfNodeReferences( METRIC_INSTANCE_REFERENCE_ROLE ); i++ )
+  {
+    metricInstanceIDs.push_back( this->GetNthNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, i ) );
+  }
+
+  return metricInstanceIDs;
+}
+
+
 void vtkMRMLPerkEvaluatorNode
 ::SetMetricInstanceIDs( std::vector< std::string > metricInstanceIDs )
 {
@@ -529,6 +567,7 @@ void vtkMRMLPerkEvaluatorNode
   vtkNew< vtkIntArray > events;
   events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
   events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
+  events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformAddedEvent );
   this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
 
   // Auto-update as necessary
@@ -550,15 +589,7 @@ void vtkMRMLPerkEvaluatorNode
   // Transform roles
   if ( this->GetAutoUpdateTransformRoles() )
   {
-    std::vector< std::string > anyRoleTransforms = this->GetTransformBufferNode()->GetAllRecordedTransformNames();
-    for ( int i = 0; i < anyRoleTransforms.size(); i++ )
-    {
-      // If it already has a non-generic role, let it maintain the more specific role (since the generic metrics will be computed regardless)
-      if ( this->GetTransformRole( anyRoleTransforms.at( i ) ).compare( "" ) == 0 )
-      {
-        this->SetTransformRole( anyRoleTransforms.at( i ), "Any" );
-      }
-    }
+    this->InvokeEvent( BufferActiveTransformAddedEvent );
   }
 
 }
@@ -607,6 +638,12 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->SetRealTimeProcessing( false ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
     }
+  }
+
+  // The active transforms of the buffer have changed
+  if ( event == vtkMRMLTransformBufferNode::ActiveTransformAddedEvent )
+  {
+    this->InvokeEvent( BufferActiveTransformAddedEvent );
   }
 
 

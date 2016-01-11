@@ -26,6 +26,9 @@
 // STD includes
 #include <cstdlib>
 
+#include "qSlicerApplication.h"
+#include "qSlicerPythonManager.h"
+
 #include "vtkSmartPointer.h"
 #include "vtkXMLDataParser.h"
 #include "vtkDoubleArray.h"
@@ -60,6 +63,8 @@ protected:
   virtual void OnMRMLSceneNodeAdded( vtkMRMLNode* node );
   virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
 
+  qSlicerPythonManager* PythonManager;
+
 public:
   
   bool IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child );
@@ -67,12 +72,11 @@ public:
   void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
   void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
 
-  std::vector< std::string > GetAllTransformRoles( vtkMRMLMetricInstanceNode* miNode );
-  std::vector< std::string > GetAllAnatomyRoles( vtkMRMLMetricInstanceNode* miNode );
-  std::string GetAnatomyRoleClassName( vtkMRMLMetricInstanceNode* miNode, std::string role );
+  std::vector< std::string > GetAllTransformRoles( std::string msNodeID );
+  std::vector< std::string > GetAllAnatomyRoles( std::string msNodeID );
+  std::string GetAnatomyRoleClassName( std::string msNodeID, std::string role );
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
-  void GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes, vtkMRMLPerkEvaluatorNode* peNode );
 
   void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
 

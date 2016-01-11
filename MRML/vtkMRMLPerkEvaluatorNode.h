@@ -95,6 +95,9 @@ public:
   void SetNeedleOrientation( NeedleOrientationEnum needleOrietation );
   
   // Metric nodes
+  void AddMetricInstanceID( std::string metricInstanceID );
+  void RemoveMetricInstanceID( std::string metricInstanceID );
+  std::vector< std::string > GetMetricInstanceIDs();
   bool IsMetricInstanceID( std::string metricInstanceID );
   void SetMetricInstanceIDs( std::vector< std::string > metricInstanceIDs );
 
@@ -133,6 +136,7 @@ public:
   {
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
     RealTimeProcessingStartedEvent,
+    BufferActiveTransformAddedEvent,
   };
   
 

@@ -422,10 +422,8 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  std::stringstream miNodeName;
-  miNodeName << msNode->GetName() << "_Instance";
-  miNode->SetName( miNodeName.str().c_str() );
   miNode->SetAssociatedMetricScriptID( msNode->GetID() );
+  miNode->SetName( msNode->GetName() );
 }
 
 

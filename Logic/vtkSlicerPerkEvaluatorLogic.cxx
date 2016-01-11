@@ -27,13 +27,29 @@
 #include <limits>
 #include <sstream>
 
-#include "qSlicerApplication.h"
-#include "qSlicerPythonManager.h"
-
 
 //----------------------------------------------------------------------------
 
 vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
+
+
+// Helper for converting QVariants holding string lists to std::vectors of std::strings
+std::vector< std::string > QVariantToVector( QVariant variant )
+{
+  if ( ! variant.canConvert( QVariant::StringList ) )
+  {
+    return std::vector< std::string >();
+  }
+
+  QStringList stringList = variant.toStringList();
+
+  std::vector< std::string > resultVector( stringList.length(), "" );
+  for ( int i = 0; i < stringList.length(); i++ )
+  {
+    resultVector.at( i ) = stringList.at( i ).toStdString();
+  }
+  return resultVector;
+}
 
 
 // Constructors and Desctructors ----------------------------------------------
@@ -105,9 +121,9 @@ void vtkSlicerPerkEvaluatorLogic
   this->GetMRMLScene()->RegisterNodeClass( miNode );
   miNode->Delete();
 
-  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
-  pythonManager->executeString( "import PythonMetricsCalculator" );
-  pythonManager->executeString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.AddCoreMetricsToScene()" );;
+  this->PythonManager = qSlicerApplication::application()->pythonManager();
+  this->PythonManager->executeString( "import PythonMetricsCalculator" );
+  this->PythonManager->executeString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.AddCoreMetricsToScene()" );
 }
 
 
@@ -149,12 +165,10 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Use the python metrics calculator module
-  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
-  pythonManager->executeString( "import PythonMetricsCalculator" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicCompute = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  pythonManager->executeString( QString( "PythonMetricsCalculatorLogicCompute.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
-  pythonManager->executeString( QString( "PythonMetricsCalculatorLogicCompute.SetMetricsTableID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicCompute.CalculateAllMetrics()" );
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicInstance.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
+  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicInstance.SetMetricsTableID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance.CalculateAllMetrics()" );
 
   peNode->GetMetricsTableNode()->Modified(); // Table has been modified
   peNode->GetMetricsTableNode()->StorableModified(); // Make sure the metrics table is saved by default
@@ -172,11 +186,9 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Use the python metrics calculator module
-  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
-  pythonManager->executeString( "import PythonMetricsCalculator" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicRealTime = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  pythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTime.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
-  pythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTime.SetMetricsTableID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicInstance.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
+  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicInstance.SetMetricsTableID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
 }
 
 
@@ -249,29 +261,58 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
-::GetAllTransformRoles( vtkMRMLMetricInstanceNode* miNode )
+::GetAllTransformRoles( std::string msNodeID )
 {
-  if ( miNode == NULL || this->GetMRMLScene()->GetNodeByID( miNode->GetID() ) == NULL )
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
   {
     return std::vector< std::string >();
   }
 
   // Use the python metrics calculator module
-  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
-  pythonManager->executeString( "import PythonMetricsCalculator" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicTransformRoles = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicTransformRoles.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
-  pythonManager->executeString( QString( "PythonMetricScriptTransformRoles = PythonMetricsCalculatorLogicTransformRoles.GetAllTransformRoles( '%1' )" ).arg( miNode->GetAssociatedMetricScriptID().c_str() ) );
-  QVariant result = pythonManager->getVariable( "PythonMetricScriptTransformRoles" );
-  QStringList transformRoles = result.toStringList();
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
+  this->PythonManager->executeString( QString( "PythonMetricScriptTransformRoles = PythonMetricsCalculatorLogicInstance.GetAllTransformRoles( '%1' )" ).arg( msNodeID.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptTransformRoles" );
 
-  std::vector< std::string > transformRolesVector( transformRoles.length(), "" );
-  for ( int i = 0; i < transformRoles.length(); i++ )
-  {
-    transformRolesVector.at( i ) = transformRoles.at( i ).toStdString();
-  }
-  return transformRolesVector;
+  return QVariantToVector( result );
 }
+
+
+std::vector< std::string > vtkSlicerPerkEvaluatorLogic
+::GetAllAnatomyRoles( std::string msNodeID )
+{
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
+  {
+    return std::vector< std::string >();
+  }
+
+  // Use the python metrics calculator module
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
+  this->PythonManager->executeString( QString( "PythonMetricScriptAnatomyRoles = PythonMetricsCalculatorLogicInstance.GetAllAnatomyRoles( '%1' )" ).arg( msNodeID.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptAnatomyRoles" );
+
+  return QVariantToVector( result );
+}
+
+
+std::string vtkSlicerPerkEvaluatorLogic
+::GetAnatomyRoleClassName( std::string msNodeID, std::string role )
+{
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
+  {
+    return "";
+  }
+
+  // Use the python metrics calculator module
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
+  this->PythonManager->executeString( "PythonMetricsCalculatorLogicInstance.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
+  this->PythonManager->executeString( QString( "PythonMetricScriptAnatomyClassName = PythonMetricsCalculatorLogicInstance.GetAnatomyRoleClassName( '%1', '%2' )" ).arg( msNodeID.c_str() ).arg( role.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptAnatomyClassName" );
+  
+  return result.toString().toStdString();
+}
+
 
 
 void vtkSlicerPerkEvaluatorLogic
@@ -293,86 +334,6 @@ void vtkSlicerPerkEvaluatorLogic
       visibleTransformNodes->AddItem( transformNode );
     }
   }
-}
-
-
-std::vector< std::string > vtkSlicerPerkEvaluatorLogic
-::GetAllAnatomyRoles( vtkMRMLMetricInstanceNode* miNode )
-{
-  if ( miNode == NULL || this->GetMRMLScene()->GetNodeByID( miNode->GetID() ) == NULL )
-  {
-    return std::vector< std::string >();
-  }
-
-  // Use the python metrics calculator module
-  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
-  pythonManager->executeString( "import PythonMetricsCalculator" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyRoles = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyRoles.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
-  pythonManager->executeString( QString( "PythonMetricScriptAnatomyRoles = PythonMetricsCalculatorLogicAnatomyRoles.GetAllAnatomyRoles( '%1' )" ).arg( miNode->GetAssociatedMetricScriptID().c_str() ) );
-  QVariant result = pythonManager->getVariable( "PythonMetricScriptAnatomyRoles" );
-  QStringList anatomyRoles = result.toStringList();
-
-  std::vector< std::string > anatomyRolesVector( anatomyRoles.length(), "" );
-  for ( int i = 0; i < anatomyRoles.length(); i++ )
-  {
-    anatomyRolesVector.at( i ) = anatomyRoles.at( i ).toStdString();
-  }
-  return anatomyRolesVector;
-}
-
-
-std::string vtkSlicerPerkEvaluatorLogic
-::GetAnatomyRoleClassName( vtkMRMLMetricInstanceNode* miNode, std::string role )
-{
-  if ( miNode == NULL || this->GetMRMLScene()->GetNodeByID( miNode->GetID() ) == NULL )
-  {
-    return "";
-  }
-
-  // Use the python metrics calculator module
-  qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager();
-  pythonManager->executeString( "import PythonMetricsCalculator" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyClassName = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  pythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyClassName.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
-  pythonManager->executeString( QString( "PythonMetricScriptAnatomyClassName = PythonMetricsCalculatorLogicAnatomyClassName.GetAnatomyRoleClassName( '%1', '%2' )" ).arg( miNode->GetAssociatedMetricScriptID().c_str() ).arg( role.c_str() ) );
-  QVariant result = pythonManager->getVariable( "PythonMetricScriptAnatomyClassName" );
-  
-  return result.toString().toStdString();
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::GetSceneVisibleAnatomyNodes( vtkCollection* visibleAnatomyNodes, vtkMRMLPerkEvaluatorNode* peNode )
-{
-  /*
-  if ( visibleAnatomyNodes == NULL || peNode == NULL )
-  {
-    return;
-  }
-  visibleAnatomyNodes->RemoveAllItems();
-
-  // Assume that all anatomy are either models or fiducials
-  std::vector< std::string > anatomyNodeTypes = this->GetAllAnatomyClassNames( peNode );
-  // Add more node types here if it is necessary
-
-  // We could allow all nodes, but then the user interface would be cluttered
-
-  for ( int i = 0; i < anatomyNodeTypes.size(); i++ )
-  {
-
-    vtkSmartPointer< vtkCollection > nodes = this->GetMRMLScene()->GetNodesByClass( anatomyNodeTypes.at( i ).c_str() );  
-    for ( int j = 0; j < nodes->GetNumberOfItems(); j++ )
-    {
-      vtkMRMLNode* currentNode = vtkMRMLNode::SafeDownCast( nodes->GetItemAsObject( j ) );
-      if ( currentNode != NULL && currentNode->GetHideFromEditors() == false )
-      {
-        visibleAnatomyNodes->AddItem( currentNode );
-      }
-    }
-
-  }
-  */
 }
 
 
@@ -475,6 +436,58 @@ void vtkSlicerPerkEvaluatorLogic
     this->SetupRealTimeProcessing( peNode );
   }
 
+  // Update the metric instances for the node
+  if ( peNode != NULL && event == vtkMRMLPerkEvaluatorNode::BufferActiveTransformAddedEvent )
+  {
+    if ( peNode->GetTransformBufferNode() == NULL )
+    {
+      return;
+    }
+
+    vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+    vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
+    std::vector< std::string > activeTransformIDs = peNode->GetTransformBufferNode()->GetActiveTransformIDs();
+
+    for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
+    {
+      // Assume that we want to add any metric whose only transform role in "Any" and has no anatomy roles
+      vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
+      if ( this->GetAllAnatomyRoles( msNode->GetID() ).size() > 0 || this->GetAllTransformRoles( msNode->GetID() ).size() != 1 || this->GetAllTransformRoles( msNode->GetID() ).at( 0 ).compare( "Any" ) != 0 )
+      {
+        continue;
+      }
+      
+      for ( int j = 0; j < activeTransformIDs.size(); j++ )
+      {
+        bool currentActiveTransformFulfilled = false;
+        for ( int k = 0; k < metricInstanceNodes->GetNumberOfItems(); k++ )
+        {
+          vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( metricInstanceNodes->GetItemAsObject( k ) );
+          if ( this->GetAllAnatomyRoles( miNode->GetAssociatedMetricScriptID() ).size() > 0 || this->GetAllTransformRoles( miNode->GetAssociatedMetricScriptID() ).size() != 1 || this->GetAllTransformRoles( miNode->GetAssociatedMetricScriptID() ).at( 0 ).compare( "Any" ) != 0 )
+          {
+            continue;
+          }
+          if ( miNode->GetRoleID( "Any", vtkMRMLMetricInstanceNode::TransformRole ).compare( activeTransformIDs.at( j ) ) == 0 )
+          {
+            currentActiveTransformFulfilled = true;
+          }
+        }
+
+        if ( ! currentActiveTransformFulfilled )
+        {
+          vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
+          newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
+          newMINode->SetScene( this->GetMRMLScene() );
+	        this->GetMRMLScene()->AddNode( newMINode );
+          newMINode->SetName( msNode->GetName() );
+          newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
+          newMINode->SetRoleID( activeTransformIDs.at( j ), "Any", vtkMRMLMetricInstanceNode::TransformRole );
+        }
+      }
+      
+    }
+  }
+
   // Handle an event in the real-time processing
   if ( peNode != NULL && peNode->GetRealTimeProcessing() && event == vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent )
   {
@@ -483,8 +496,7 @@ void vtkSlicerPerkEvaluatorLogic
     // The time
     double absTime = peNode->GetTransformBufferNode()->GetTransformRecordBuffer( *transformName )->GetCurrentRecord()->GetTime();
     // Call the metrics update function
-    qSlicerPythonManager* pythonManager = qSlicerApplication::application()->pythonManager(); // This is a constant each time the function is called
-    pythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTime.UpdateSelfAndChildMetrics( '%1', %2 )" ).arg( transformName->c_str() ).arg( absTime ) );
+    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicInstance.UpdateSelfAndChildMetrics( '%1', %2 )" ).arg( transformName->c_str() ).arg( absTime ) );
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }
@@ -504,6 +516,19 @@ void vtkSlicerPerkEvaluatorLogic
     // Observe if a real-time transform event is added
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+    peNode->AddObserver( vtkMRMLPerkEvaluatorNode::BufferActiveTransformAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+  }
+
+  // If a metric instance node was added to the scene, then all perk evaluator nodes should observe it
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( addedNode );
+  if ( event == vtkMRMLScene::NodeAddedEvent && miNode != NULL )
+  {
+    vtkCollection* peNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+    for ( int i = 0; i < peNodes->GetNumberOfItems(); i++ )
+    {
+      vtkMRMLPerkEvaluatorNode* currNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodes->GetItemAsObject( i ) );
+      currNode->AddMetricInstanceID( miNode->GetID() );
+    }
   }
 
 }

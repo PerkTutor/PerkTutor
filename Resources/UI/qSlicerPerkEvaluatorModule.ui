@@ -713,27 +713,6 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_13">
        <item>
-        <widget class="qMRMLNodeComboBox" name="BaseMetricScriptComboBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="nodeTypes">
-          <stringlist>
-           <string>vtkMRMLMetricScriptNode</string>
-          </stringlist>
-         </property>
-         <property name="addEnabled">
-          <bool>false</bool>
-         </property>
-         <property name="removeEnabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="ctkCollapsibleGroupBox" name="MetricEditorGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -749,6 +728,40 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
+           <widget class="qMRMLNodeComboBox" name="BaseMetricScriptComboBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Choose a metric script node as a template to create instances.</string>
+            </property>
+            <property name="nodeTypes">
+             <stringlist>
+              <string>vtkMRMLMetricScriptNode</string>
+             </stringlist>
+            </property>
+            <property name="addEnabled">
+             <bool>false</bool>
+            </property>
+            <property name="removeEnabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="HorizontalLine">
+            <property name="frameShape">
+             <enum>QFrame::HLine</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Plain</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="qMRMLNodeComboBox" name="EditMetricInstanceNodeComboBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -756,17 +769,23 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Create a metric instance node based on the selected templates.</string>
+            </property>
             <property name="nodeTypes">
              <stringlist>
               <string>vtkMRMLMetricInstanceNode</string>
              </stringlist>
             </property>
+            <property name="renameEnabled">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
-           <widget class="ctkCollapsibleGroupBox" name="TransformRolesGroupBox">
+           <widget class="QGroupBox" name="TransformRolesGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -774,16 +793,13 @@
             <property name="title">
              <string>Transform Roles</string>
             </property>
-            <property name="collapsed">
-             <bool>true</bool>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_7"/>
+            <layout class="QVBoxLayout" name="verticalLayout_14"/>
            </widget>
           </item>
           <item>
-           <widget class="ctkCollapsibleGroupBox" name="AnatomyRolesGroupBox">
+           <widget class="QGroupBox" name="AnatomyRolesGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -791,10 +807,7 @@
             <property name="title">
              <string>Anatomy Roles</string>
             </property>
-            <property name="collapsed">
-             <bool>true</bool>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_3"/>
+            <layout class="QVBoxLayout" name="verticalLayout_15"/>
            </widget>
           </item>
          </layout>

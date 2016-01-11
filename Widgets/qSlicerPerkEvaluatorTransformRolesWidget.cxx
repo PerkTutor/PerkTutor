@@ -137,5 +137,5 @@ std::vector< std::string > qSlicerPerkEvaluatorTransformRolesWidget
     return std::vector< std::string >();
   }
   
-  return this->PerkEvaluatorLogic->GetAllTransformRoles( this->MetricInstanceNode );
+  return this->PerkEvaluatorLogic->GetAllTransformRoles( this->MetricInstanceNode->GetAssociatedMetricScriptID() );
 }
