@@ -51,6 +51,9 @@ public:
   virtual vtkMRMLTableNode* getMetricsTableNode();
   virtual vtkMRMLTableNode* addMetricsTableNode();
 
+  Q_INVOKABLE void setExpandHeightToContents( bool expand );
+  Q_INVOKABLE bool getExpandHeightToContents();
+
 protected slots:
 
   virtual void onMetricsTableNodeChanged( vtkMRMLNode* newMetricsTableNode );
@@ -71,6 +74,8 @@ protected:
 
   vtkMRMLTableNode* MetricsTableNode;
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
+
+  bool ExpandHeightToContents;
 
   virtual void setup();
 
