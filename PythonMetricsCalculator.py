@@ -203,6 +203,9 @@ class PythonMetricsCalculatorLogic:
       
       
   def OutputAllTransformMetricsToMetricsTable( self ):
+    # Hold off on modified events until we are finished modifying
+    modifyFlag = self.metricsTable.StartModify()
+  
     self.InitializeMetricsTable()
     
     for transformName in self.transformMetrics:
@@ -213,7 +216,9 @@ class PythonMetricsCalculatorLogic:
         currentMetricRow.InsertNextValue( metric.GetMetricUnit() )
         currentMetricRow.InsertNextValue( metric.GetMetric() )
         
-        self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
+        self.metricsTable.GetTable().InsertNextRow( currentMetricRow )
+        
+    self.metricsTable.EndModify( modifyFlag )
       
 
   def GetAllUserMetricModules( self ): 
