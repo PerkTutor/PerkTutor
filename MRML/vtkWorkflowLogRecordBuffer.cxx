@@ -712,12 +712,9 @@ void vtkWorkflowLogRecordBuffer
 
 		    j--;
       }
-      
 
-      // HACK! Doing "real-time" filtering
-      /*
 	    // Iterate over all records nearby to the right
-	    int j = i;
+	    j = i + 1;
 	    while ( j < this->GetNumRecords() ) // Iterate forward
       {
 	      // If too far from "peak" of distribution, the stop - we're just wasting time
@@ -737,7 +734,6 @@ void vtkWorkflowLogRecordBuffer
 
 		    j++;
       }
-      */
 
 	    // Add to the new values
 	    gaussRecord->GetVector()->SetElement( d, weightSum / normSum );
