@@ -298,3 +298,24 @@ void qSlicerWorkflowSegmentationModuleWidget
   d->ToolSummaryWidget->setWorkflowSegmentationNode( wsNode ); // TODO: Is this necessary
   // Everything else taken care of by the child widgets
 }
+
+
+
+// HACK: Filtering transform buffer node (until Python wrapping is fixed)
+void qSlicerWorkflowSegmentationModuleWidget
+::GaussianFilterBuffer( vtkMRMLTransformBufferNode* inBuffer, vtkMRMLTransformBufferNode* outBuffer )
+{
+  // Set some parameters
+  double width = 0.3;
+  std::string transformName = "StylusToEntry";
+
+  // Create the workflow log buffer
+  vtkSmartPointer< vtkWorkflowLogRecordBuffer > wlrb = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
+  wlrb->FromTransformBufferNode( inBuffer, transformName, std::vector< std::string >() );
+
+  // Apply the filtering
+  wlrb->GaussianFilter( width );
+
+  // Put the result into the output
+  wlrb->ToTransformBufferNode( outBuffer );
+}

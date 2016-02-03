@@ -32,6 +32,11 @@ public:
   qSlicerWorkflowSegmentationModuleWidget(QWidget *parent=0);
   virtual ~qSlicerWorkflowSegmentationModuleWidget();
 
+public slots:
+
+  // HACK: To create filtered workflow buffers (until Python wrapping is fixed)
+  void GaussianFilterBuffer( vtkMRMLTransformBufferNode* inBuffer, vtkMRMLTransformBufferNode* outBuffer );
+
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
   
