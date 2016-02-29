@@ -29,7 +29,7 @@
 #include "vtkMRMLModelNode.h"
 #include "vtkTransform.h"
 #include "vtkMRMLNode.h"
-#include "vtkMRMLStorableNode.h"
+#include "vtkMRMLTransformableNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkObject.h"
@@ -57,10 +57,10 @@
 
 
 class VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPORT
-vtkMRMLTransformBufferNode : public vtkMRMLStorableNode
+vtkMRMLTransformBufferNode : public vtkMRMLTransformableNode
 {
 public:
-  vtkTypeMacro( vtkMRMLTransformBufferNode, vtkMRMLStorableNode );
+  vtkTypeMacro( vtkMRMLTransformBufferNode, vtkMRMLTransformableNode );
 
   // Standard MRML node methods  
   static vtkMRMLTransformBufferNode* New();  
