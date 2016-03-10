@@ -363,7 +363,7 @@ qSlicerPerkEvaluatorModuleWidget
 ::onTissueModelChanged( vtkMRMLNode* node )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-
+/*
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
   if ( peNode == NULL )
   {
@@ -373,12 +373,13 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( node );
   if ( mnode != NULL )
   {
-    peNode->SetAnatomyNodeName( "Tissue", mnode->GetName() );
+    //peNode->SetAnatomyNodeName( "Tissue", mnode->GetName() );
   }
   else
   {
-    peNode->SetAnatomyNodeName( "Tissue", "" );
+    //peNode->SetAnatomyNodeName( "Tissue", "" );
   }
+  */
 }
 
 
@@ -388,7 +389,7 @@ qSlicerPerkEvaluatorModuleWidget
 ::onNeedleTransformChanged( vtkMRMLNode* node )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-
+/*
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
   if ( peNode == NULL )
   {
@@ -398,7 +399,7 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( node );
   if ( tnode != NULL )
   {
-    peNode->SetTransformRole( tnode->GetName(), "Needle" );
+    //peNode->SetTransformRole( tnode->GetName(), "Needle" );
   }
   else
   {
@@ -407,6 +408,7 @@ qSlicerPerkEvaluatorModuleWidget
       peNode->SetTransformRole( peNode->GetFirstTransformNodeName( "Needle" ), "" );
     }
   }
+  */
 }
 
 
@@ -763,11 +765,13 @@ void qSlicerPerkEvaluatorModuleWidget
   d->PlaybackSlider->setMaximum( d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
   d->PlaybackSlider->setValue( d->logic()->GetRelativePlaybackTime( peNode ) );
 
+  /*
   vtkMRMLNode* needleNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetFirstTransformNodeName( "Needle" ).c_str() );
   d->NeedleReferenceComboBox->setCurrentNode( needleNode );
 
   vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
   d->BodyNodeComboBox->setCurrentNode( tissueNode );
+  */
 
   // For the metric scripts
   // Disable to the onCheckedChanged listener when initializing the selections

@@ -61,21 +61,6 @@ void vtkMRMLPerkEvaluatorNode
   of << indent << "MetricsDirectory=\"" << this->MetricsDirectory << "\"";
   of << indent << "PlaybackTime=\"" << this->PlaybackTime << "\"";
   of << indent << "RealTimeProcessing=\"" << this->RealTimeProcessing << "\"";
-  
-  // Add the transform role map
-  int transformRoleCounter = 0;
-  for ( std::map< std::string, std::string >::iterator itr = this->TransformRoleMap.begin(); itr != this->TransformRoleMap.end(); itr++ )
-  {
-    of << indent << "TransformRoleMap" << transformRoleCounter << "=\"" << itr->first << " " << itr->second << "\"";
-    transformRoleCounter++;
-  }
-  // Add the anatomy node map
-  int anatomyNodeCounter = 0;
-  for ( std::map< std::string, std::string >::iterator itr = this->AnatomyNodeMap.begin(); itr != this->AnatomyNodeMap.end(); itr++ )
-  {
-    of << indent << "AnatomyNodeMap" << anatomyNodeCounter << "=\"" << itr->first << " " << itr->second << "\"";
-    anatomyNodeCounter++;
-  }
 }
 
 
@@ -83,10 +68,6 @@ void vtkMRMLPerkEvaluatorNode
 ::ReadXMLAttributes( const char** atts )
 {
   Superclass::ReadXMLAttributes(atts);
-
-  // Don't maintain any roles that aren't in the read xml
-  this->TransformRoleMap.clear();
-  this->AnatomyNodeMap.clear();
 
   // Read all MRML node attributes from two arrays of names and values
   const char* attName;
@@ -129,22 +110,6 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->RealTimeProcessing = atof( attValue );
     }
-
-    if ( std::string( attName ).find( "TransformRoleMap" ) != std::string::npos )
-    {
-      std::stringstream transformRoleStream( attValue );
-      std::string transformNodeName; transformRoleStream >> transformNodeName; 
-      std::string transformRole; transformRoleStream >> transformRole;
-      this->TransformRoleMap[ transformNodeName ] = transformRole;
-    }
-    
-    if ( std::string( attName ).find( "AnatomyNodeMap" ) != std::string::npos )
-    {
-      std::stringstream anatomyNodeStream( attValue );
-      std::string anatomyRole; anatomyNodeStream >> anatomyRole; 
-      std::string anatomyNodeName; anatomyNodeStream >> anatomyNodeName;
-      this->AnatomyNodeMap[ anatomyRole ] = anatomyNodeName;
-    }
     
   }
 
@@ -166,9 +131,6 @@ void vtkMRMLPerkEvaluatorNode
   this->MetricsDirectory = std::string( node->MetricsDirectory );
   this->PlaybackTime = node->PlaybackTime;
   this->RealTimeProcessing = node->RealTimeProcessing;
-  
-  this->TransformRoleMap = std::map< std::string, std::string >( node->TransformRoleMap );
-  this->AnatomyNodeMap = std::map< std::string, std::string >( node->AnatomyNodeMap );
 }
 
 
@@ -200,8 +162,6 @@ vtkMRMLPerkEvaluatorNode
 vtkMRMLPerkEvaluatorNode
 ::~vtkMRMLPerkEvaluatorNode()
 {
-  this->TransformRoleMap.clear();
-  this->AnatomyNodeMap.clear();
 }
 
 
@@ -443,87 +403,6 @@ bool vtkMRMLPerkEvaluatorNode
 
   return false;
 }
-
-
-// Transform/Anatomy roles ---------------------------------------------------------------------------------------
-
-std::string vtkMRMLPerkEvaluatorNode
-::GetTransformRole( std::string transformNodeName )
-{
-  if ( this->TransformRoleMap.find( transformNodeName ) != this->TransformRoleMap.end() )
-  {
-    return this->TransformRoleMap[ transformNodeName ];
-  }
-  else
-  {
-    return "";
-  }
-}
-
-
-std::string vtkMRMLPerkEvaluatorNode
-::GetFirstTransformNodeName( std::string transformRole )
-{
-  for( std::map< std::string, std::string >::iterator itr = this->TransformRoleMap.begin(); itr != this->TransformRoleMap.end(); itr++ )
-  {
-    if ( transformRole.compare( itr->second ) == 0 )
-    {
-      return itr->first;
-    }
-  }
-  return "";
-}
-
-
-void vtkMRMLPerkEvaluatorNode
-::SetTransformRole( std::string transformNodeName, std::string newTransformRole )
-{
-  if ( newTransformRole.compare( this->TransformRoleMap[ transformNodeName ] ) != 0 )
-  {
-    this->TransformRoleMap[ transformNodeName ] = newTransformRole;
-    this->Modified();
-  }
-}
-
-
-std::string vtkMRMLPerkEvaluatorNode
-::GetAnatomyNodeName( std::string anatomyRole )
-{
-  if ( this->AnatomyNodeMap.find( anatomyRole ) != this->AnatomyNodeMap.end() )
-  {
-    return this->AnatomyNodeMap[ anatomyRole ];
-  }
-  else
-  {
-    return "";
-  }
-}
-
-
-std::string vtkMRMLPerkEvaluatorNode
-::GetFirstAnatomyRole( std::string anatomyNodeName )
-{
-  for( std::map< std::string, std::string >::iterator itr = this->AnatomyNodeMap.begin(); itr != this->AnatomyNodeMap.end(); itr++ )
-  {
-    if ( anatomyNodeName.compare( itr->second ) == 0 )
-    {
-      return itr->first;
-    }
-  }
-  return "";
-}
-
-
-void vtkMRMLPerkEvaluatorNode
-::SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName )
-{
-  if ( newAnatomyNodeName.compare( this->AnatomyNodeMap[ anatomyRole ] ) != 0 )
-  {
-    this->AnatomyNodeMap[ anatomyRole ] = newAnatomyNodeName;
-    this->Modified();
-  }
-}
-
 
 
 // Transform buffer/metrics table References ----------------------------------------------------------------------

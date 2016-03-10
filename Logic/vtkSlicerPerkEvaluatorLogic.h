@@ -88,6 +88,8 @@ public:
 
   void SetupRealTimeProcessing( vtkMRMLPerkEvaluatorNode* peNode );
 
+  void UpdateMetricInstances( vtkMRMLPerkEvaluatorNode* peNode );
+
   void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
   void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );
 

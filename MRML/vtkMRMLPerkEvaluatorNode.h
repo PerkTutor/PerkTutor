@@ -107,16 +107,6 @@ public:
 
   bool GetRealTimeProcessing();
   void SetRealTimeProcessing( bool newRealTimeProcessing );
-  
-
-  // Getters/setters associated with roles
-  std::string GetTransformRole( std::string transformNodeName );
-  std::string GetFirstTransformNodeName( std::string transformRole );
-  void SetTransformRole( std::string transformNodeName, std::string newTransformRole );
-
-  std::string GetAnatomyNodeName( std::string anatomyRole );
-  std::string GetFirstAnatomyRole( std::string anatomyNodeName );
-  void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
 
 
   // Reference to transform buffer and to metrics node
@@ -166,9 +156,6 @@ PlaybackTime
   double PlaybackTime;
 
   bool RealTimeProcessing;
-
-  std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
-  std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names
   
 };  
 

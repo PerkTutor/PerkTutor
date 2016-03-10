@@ -70,12 +70,16 @@ protected:
 public:
 
   // Transform and Anatomy roles
-  enum RoleTypeEnum{ TransformRole, AnatomyRole };
+  enum RoleTypeEnum
+  { 
+    TransformRole, 
+    AnatomyRole, 
+  };
 
   vtkMRMLNode* GetRoleNode( std::string role, RoleTypeEnum roleType );
   std::string GetRoleID( std::string role, RoleTypeEnum roleType );
   void SetRoleID( std::string nodeID, std::string role, RoleTypeEnum roleType );
-
+  std::string GetCombinedRoleString();
 
 
   
@@ -88,6 +92,7 @@ protected:
 
   static std::string GetFullReferenceRoleName( std::string role, RoleTypeEnum roleType );
   std::string GetNodeReferenceIDString( std::string referenceRole );
+  void UpdateNodeName();
  
 };  
 

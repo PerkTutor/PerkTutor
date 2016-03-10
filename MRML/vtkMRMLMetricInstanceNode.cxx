@@ -4,6 +4,7 @@
 
 // Constants -----------------------------------------------------------------------------
 static const char* ASSOCIATED_METRIC_SCRIPT_REFERENCE_ROLE = "AssociatedMetricScript";
+static const char* ROLE_SEPARATOR = "/";
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
@@ -106,6 +107,7 @@ void vtkMRMLMetricInstanceNode
 ::SetAssociatedMetricScriptID( std::string newAssociatedMetricScriptID )
 {
   this->SetNodeReferenceID( ASSOCIATED_METRIC_SCRIPT_REFERENCE_ROLE, newAssociatedMetricScriptID.c_str() );
+  this->UpdateNodeName();
 }
 
 // Transform and Anatomy Roles ---------------------------------------------------------------
@@ -131,6 +133,33 @@ void vtkMRMLMetricInstanceNode
 {
   std::string fullReferenceRole = this->GetFullReferenceRoleName( role, roleType );
   this->SetNodeReferenceID( fullReferenceRole.c_str(), nodeID.c_str() );
+  this->UpdateNodeName();
+}
+
+
+std::string vtkMRMLMetricInstanceNode
+::GetCombinedRoleString()
+{
+  std::stringstream roleStringStream;
+  for( NodeReferencesType::iterator itr = this->NodeReferences.begin(); itr != this->NodeReferences.end(); itr++ )
+  {
+    std::string currentRole ( itr->first ); 
+    vtkMRMLNode* nodeReference = this->GetNodeReference( currentRole.c_str() );
+    int separatorLocation = currentRole.find( ROLE_SEPARATOR );
+    if ( separatorLocation == std::string::npos || itr->first.find( ASSOCIATED_METRIC_SCRIPT_REFERENCE_ROLE ) != std::string::npos || nodeReference == NULL )
+    {
+      continue;
+    }
+    currentRole.erase( currentRole.begin(), currentRole.begin() + separatorLocation + 1 ); // Remove the ugly RoleType enum at the beginning
+    roleStringStream << currentRole << " = " << nodeReference->GetName() << ", ";
+  }
+
+  std::string roleString = roleStringStream.str();
+  if ( roleString.length() > 0 )
+  {
+    roleString.erase( roleString.end() - 2, roleString.end() ); // Remove the last ", "
+  }
+  return roleString;
 }
 
 
@@ -159,6 +188,26 @@ std::string vtkMRMLMetricInstanceNode
 ::GetFullReferenceRoleName( std::string role, RoleTypeEnum roleType )
 {
   std::stringstream fullReferenceRoleStream;
-  fullReferenceRoleStream << roleType << "/" << role;
+  fullReferenceRoleStream << roleType << ROLE_SEPARATOR << role;
   return fullReferenceRoleStream.str();  
+}
+
+
+void vtkMRMLMetricInstanceNode
+::UpdateNodeName()
+{
+  // The node name should be of the form:
+  // Tissue Damage [Transform/Needle = StylusTipToStylus, Anatomy/Tissue = TissueModel]
+  std::stringstream nodeNameStream;
+  vtkMRMLNode* metricScriptNode = this->GetAssociatedMetricScriptNode();
+  if ( metricScriptNode != NULL )
+  {
+    nodeNameStream << metricScriptNode->GetName();
+  }
+
+  nodeNameStream << " [";
+  nodeNameStream << this->GetCombinedRoleString();
+  nodeNameStream << "]";
+
+  this->SetName( nodeNameStream.str().c_str() );
 }

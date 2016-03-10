@@ -121,6 +121,25 @@ vtkMRMLTableNode* qSlicerMetricsTableWidget
 }
 
 
+bool qSlicerMetricsTableWidget
+::getExpandHeightToContents()
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  return this->ExpandHeightToContents;
+}
+
+
+void qSlicerMetricsTableWidget
+::setExpandHeightToContents( bool expand )
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  this->ExpandHeightToContents = expand;
+  this->updateWidget();
+}
+
+
 void qSlicerMetricsTableWidget
 ::onMetricsTableNodeChanged( vtkMRMLNode* newMetricsTableNode )
 {
@@ -156,10 +175,10 @@ void qSlicerMetricsTableWidget
 
   for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
   {
-    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
-    clipString.append( " " );
     clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
-    clipString.append( " (" );
+    clipString.append( " [" );
+    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricRoles" ).ToString() );
+    clipString.append( "] (" );
     clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
     clipString.append( ") " );
 
@@ -205,7 +224,9 @@ void qSlicerMetricsTableWidget
   {
     QString nameString;
     nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
-    nameString.append( " (" );
+    nameString.append( " [" );
+    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricRoles" ).ToString() );
+    nameString.append( "] (" );
     nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
     nameString.append( ")" );
     QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
@@ -217,8 +238,20 @@ void qSlicerMetricsTableWidget
     d->MetricsTable->setItem( i, 1, valueItem );
   }
 
+  d->MetricsTable->resizeRowsToContents();
+
+  if ( this->ExpandHeightToContents )
+  {
+    // Make sure the table widget is large enough so that no scroll bar is needed to see all of the data
+    int contentHeight = ( d->MetricsTable->rowCount() - 1 ) + d->MetricsTable->horizontalHeader()->height();
+    for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
+    {
+      contentHeight += d->MetricsTable->rowHeight( i );
+    }
+    d->MetricsTable->setMinimumHeight( contentHeight );
+  }
+
   // Reset the current row and column to what they were
   d->MetricsTable->setCurrentCell( currentRow, currentColumn );
   d->MetricsTable->verticalScrollBar()->setValue( scrollPosition );
-  d->MetricsTable->resizeRowsToContents();
 }
