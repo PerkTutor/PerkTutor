@@ -168,7 +168,7 @@ class PythonMetricsCalculatorLogic:
   @staticmethod
   def AddCoreMetricsToScene():
     # Add the "Core" metrics by default
-    coreMetricScriptFiles = glob.glob( os.path.dirname( __file__ ) + "/PythonMetrics/*.py" )
+    coreMetricScriptFiles = glob.glob( os.path.dirname( __file__ ) + "/PythonMetrics/[a-z]*.py" ) # This will ignore any file that doesn't start with a letter # TODO: Is this a good way to ignore __init__.py?
     for script in coreMetricScriptFiles:
       slicer.util.loadNodeFromFile( script, "Python Metric Script" )
     
@@ -195,28 +195,25 @@ class PythonMetricsCalculatorLogic:
   def InitializeMetricsTable( self ):
     self.metricsTable.GetTable().Initialize()
     
-    metricNameColumn = vtk.vtkStringArray()
-    metricNameColumn.SetName( "MetricName" )
-    metricUnitColumn = vtk.vtkStringArray()
-    metricUnitColumn.SetName( "MetricUnit" )
-    metricValueColumn = vtk.vtkStringArray()
-    metricValueColumn.SetName( "MetricValue" )
-    
-    self.metricsTable.GetTable().AddColumn( metricNameColumn )
-    self.metricsTable.GetTable().AddColumn( metricUnitColumn )
-    self.metricsTable.GetTable().AddColumn( metricValueColumn )
+    # TODO: Make the more robust (e.g. qSlicerMetricsTableWidget::METRIC_TABLE_COLUMNS) 
+    metricsTableColumnNames = [ "MetricName", "MetricRoles", "MetricUnit", "MetricValue" ]
+    for columnName in metricsTableColumnNames:
+      column = vtk.vtkStringArray()
+      column.SetName( columnName )
+      self.metricsTable.GetTable().AddColumn( column )
       
       
   def OutputAllMetricsToMetricsTable( self ):
     self.InitializeMetricsTable()
 
+    self.metricsTable.GetTable().SetNumberOfRows( len( self.allMetrics ) )
+    insertRow = 0
     for metric in self.allMetrics.values():
-      currentMetricRow = vtk.vtkVariantArray()
-      currentMetricRow.InsertNextValue( metric.GetMetricName() )
-      currentMetricRow.InsertNextValue( metric.GetMetricUnit() )
-      currentMetricRow.InsertNextValue( metric.GetMetric() )
-        
-      self.metricsTable.GetTable().InsertNextRow( currentMetricRow )   
+      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricName", metric.GetMetricName() )
+      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricRoles", metric.CombinedRoleString )
+      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricUnit", metric.GetMetricUnit() )
+      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricValue", metric.GetMetric() )
+      insertRow += 1
     
     
   def GetFreshMetricModules( self ):
@@ -250,6 +247,11 @@ class PythonMetricsCalculatorLogic:
       associatedMetricModule = newTransformMetricModules[ metricInstanceNode.GetAssociatedMetricScriptID() ]
       if ( self.AreMetricModuleRolesSatisfied( associatedMetricModule, metricInstanceNode ) ):
         metricDict[ metricInstanceNode.GetID() ] = associatedMetricModule()
+        # Add the roles description (to make it easier to distinguish the same metric under different roles)
+        metricDict[ metricInstanceNode.GetID() ].CombinedRoleString = metricInstanceNode.GetCombinedRoleString()
+        
+    # Add the anatomy to the fresh metrics
+    self.AddAnatomyNodesToMetrics( metricDict )
    
     return metricDict
     
@@ -273,23 +275,23 @@ class PythonMetricsCalculatorLogic:
   # Note: This modifies the inputted dictionary of metrics
   def AddAnatomyNodesToMetrics( self, metrics ):  
     # Keep track of which metrics all anatomies are sucessfully delivered to    
+    unfulfilledAnatomies = []    
   
     for metricInstanceID in metrics:
       metricAnatomyRoles = metrics[ metricInstanceID ].GetRequiredAnatomyRoles()
       metricInstanceNode = self.mrmlScene.GetNodeByID( metricInstanceID )
-      anatomiesFulfilled = True
       
       for role in metricAnatomyRoles:
-        anatomyNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.TransformRole )
-        added = metrics[ metricInstanceID ].AddAnatomyRole( role, currentAnatomyNode )
+        anatomyNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.AnatomyRole )
+        added = metrics[ metricInstanceID ].AddAnatomyRole( role, anatomyNode )
         
         if ( not added ):
-          anatomiesFulfilled = False
+          unfulfilledAnatomies.append( metricInstanceID )
           
-      # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be fulfilled
-      # However, if the wrong type of node is selected, then this may return false
-      if ( not anatomiesFulfilled  ):
-        metrics.pop( metricInstanceID )
+    # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be fulfilled
+    # However, if the wrong type of node is selected, then this may return false
+    for metricInstanceID in unfulfilledAnatomies:
+      metrics.pop( metricInstanceID )
 
         
   # Note: We are returning a dictionary here, not a list
