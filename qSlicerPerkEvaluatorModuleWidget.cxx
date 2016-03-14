@@ -751,9 +751,9 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   // Update the roles widgets and metrics table widget every time the Perk Evaluator node is modified
-  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->MetricInstanceComboBox->currentNode() );
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->EditMetricInstanceNodeComboBox->currentNode() );
   d->TransformRolesWidget->setMetricInstanceNode( miNode );
-  d->AnatomyRolesWidget->setMetricInstanceNode( peNode );
+  d->AnatomyRolesWidget->setMetricInstanceNode( miNode );
 
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
   d->TransformBufferWidget->setTransformBufferNode( peNode->GetTransformBufferNode() );
