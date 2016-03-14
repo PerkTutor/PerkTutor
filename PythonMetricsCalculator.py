@@ -317,37 +317,31 @@ class PythonMetricsCalculatorLogic:
     originalPlaybackTime = self.peNode.GetPlaybackTime()
     
     # Now iterate over all of the trajectories
-    transformCollection = vtk.vtkCollection()
-    self.peLogic.GetSceneVisibleTransformNodes( transformCollection )
+    combinedTransformBuffer = slicer.modulemrml.vtkLogRecordBuffer()
+    self.peNode.GetTransformBufferNode().GetCombinedTransformRecordBuffer( combinedTransformBuffer )
+    
+    if ( combinedTransformBuffer.GetNumRecords() == 0 ):
+      return
+      
+    self.peNode.SetPlaybackTime( combinedTransformBuffer.GetRecord( 0 ).GetTime(), True )
+    minTime = self.peNode.GetTransformBufferNode().GetMinimumTime()
   
-    for i in range( transformCollection.GetNumberOfItems() ):
-      currentTransformNode = transformCollection.GetItemAsObject( i )
+    for i in range( combinedTransformBuffer.GetNumRecords() ):
+      absTime = combinedTransformBuffer.GetRecord( i ).GetTime()
+      self.peNode.SetPlaybackTime( absTime, True )
+      self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
+      relTime = absTime - minTime # Can't just take the 0th record of the combined buffer, because this doesn't account for the messages
       
-      # Need the transform times
-      timesArray = vtk.vtkDoubleArray()
-      self.peLogic.GetSelfAndParentTimes( self.peNode, currentTransformNode, timesArray )
-      
-      if ( timesArray.GetNumberOfTuples() == 0 ):
+      if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
         continue
         
-      self.peNode.SetPlaybackTime( timesArray.GetValue( 0 ), True )
-        
-      for j in range( timesArray.GetNumberOfTuples() ):
-        absTime = timesArray.GetValue( j )
-        self.peNode.SetPlaybackTime( absTime, True )
-        self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
-        relTime = absTime - self.peNode.GetTransformBufferNode().GetMinimumTime()
-      
-        if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
-          continue
-        
-        self.UpdateTransformMetrics( currentTransformNode, absTime, False )
-      
+      self.UpdateSelfAndChildMetrics( combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, False )
+
     self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
     self.OutputAllMetricsToMetricsTable()
 
     
-  def UpdateSelfAndChildMetrics( self, transformName, absTime ):
+  def UpdateSelfAndChildMetrics( self, transformName, absTime, updateTable ):
     # Get the recorded transform node
     updatedTransformNode = self.mrmlScene.GetFirstNodeByName( transformName )
     
@@ -359,7 +353,7 @@ class PythonMetricsCalculatorLogic:
     for i in range( transformCollection.GetNumberOfItems() ):
       currentTransformNode = transformCollection.GetItemAsObject( i )
       if ( self.peLogic.IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
-        self.UpdateTransformMetrics( currentTransformNode, absTime, True )
+        self.UpdateTransformMetrics( currentTransformNode, absTime, updateTable )
 
         
   def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
@@ -376,7 +370,10 @@ class PythonMetricsCalculatorLogic:
       
       for role in metric.GetAcceptedTransformRoles():
         if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == transformNode.GetID() ):
-          metric.AddTimestamp( absTime, matrix, point )
+          try:
+            metric.AddTimestamp( absTime, matrix, point, role )
+          except TypeError: # Only look if there is an issue with the number of arguments
+            metric.AddTimestamp( absTime, matrix, point ) # TODO: Keep this for backwards compatibility with Python Metrics?
       
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
