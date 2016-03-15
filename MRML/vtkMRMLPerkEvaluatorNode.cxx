@@ -339,7 +339,10 @@ void vtkMRMLPerkEvaluatorNode
 void vtkMRMLPerkEvaluatorNode
 ::AddMetricInstanceID( std::string metricInstanceID )
 {
-  this->AddAndObserveNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, metricInstanceID.c_str() );
+  if ( ! this->IsMetricInstanceID( metricInstanceID ) )
+  {
+    this->AddAndObserveNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, metricInstanceID.c_str() );
+  }
 }
 
 
@@ -377,10 +380,7 @@ void vtkMRMLPerkEvaluatorNode
 ::SetMetricInstanceIDs( std::vector< std::string > metricInstanceIDs )
 {
   // Remove all of the active transform IDs
-  while( this->GetNumberOfNodeReferences( METRIC_INSTANCE_REFERENCE_ROLE ) > 0 )
-  {
-    this->RemoveNthNodeReferenceID( METRIC_INSTANCE_REFERENCE_ROLE, 0 );
-  }
+  this->RemoveNodeReferenceIDs( METRIC_INSTANCE_REFERENCE_ROLE );
 
   // Add all of the specified IDs
   for ( int i = 0; i < metricInstanceIDs.size(); i++ )
@@ -447,6 +447,7 @@ void vtkMRMLPerkEvaluatorNode
   events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
   events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
   events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformAddedEvent );
+  events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent );
   this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
 
   // Auto-update as necessary
@@ -468,7 +469,7 @@ void vtkMRMLPerkEvaluatorNode
   // Transform roles
   if ( this->GetAutoUpdateTransformRoles() )
   {
-    this->InvokeEvent( BufferActiveTransformAddedEvent );
+    this->InvokeEvent( BufferActiveTransformsChangedEvent );
   }
 
 }
@@ -520,9 +521,9 @@ void vtkMRMLPerkEvaluatorNode
   }
 
   // The active transforms of the buffer have changed
-  if ( event == vtkMRMLTransformBufferNode::ActiveTransformAddedEvent )
+  if ( event == vtkMRMLTransformBufferNode::ActiveTransformAddedEvent || event == vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent )
   {
-    this->InvokeEvent( BufferActiveTransformAddedEvent );
+    this->InvokeEvent( BufferActiveTransformsChangedEvent );
   }
 
 

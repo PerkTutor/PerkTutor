@@ -363,7 +363,7 @@ qSlicerPerkEvaluatorModuleWidget
 ::onTissueModelChanged( vtkMRMLNode* node )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-/*
+
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
   if ( peNode == NULL )
   {
@@ -373,13 +373,12 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( node );
   if ( mnode != NULL )
   {
-    //peNode->SetAnatomyNodeName( "Tissue", mnode->GetName() );
+    d->logic()->SetMetricInstancesRolesToID( peNode, mnode->GetID(), "Tissue", vtkMRMLMetricInstanceNode::AnatomyRole );
   }
   else
   {
-    //peNode->SetAnatomyNodeName( "Tissue", "" );
+    d->logic()->SetMetricInstancesRolesToID( peNode, "", "Tissue", vtkMRMLMetricInstanceNode::AnatomyRole );
   }
-  */
 }
 
 
@@ -389,7 +388,7 @@ qSlicerPerkEvaluatorModuleWidget
 ::onNeedleTransformChanged( vtkMRMLNode* node )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-/*
+
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
   if ( peNode == NULL )
   {
@@ -399,16 +398,12 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( node );
   if ( tnode != NULL )
   {
-    //peNode->SetTransformRole( tnode->GetName(), "Needle" );
+    d->logic()->SetMetricInstancesRolesToID( peNode, tnode->GetID(), "Needle", vtkMRMLMetricInstanceNode::TransformRole );
   }
   else
   {
-    while( peNode->GetFirstTransformNodeName( "Needle" ).compare( "" ) != 0 )
-    {
-      peNode->SetTransformRole( peNode->GetFirstTransformNodeName( "Needle" ), "" );
-    }
+    d->logic()->SetMetricInstancesRolesToID( peNode, "", "Needle", vtkMRMLMetricInstanceNode::TransformRole );
   }
-  */
 }
 
 

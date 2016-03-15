@@ -126,7 +126,7 @@ public:
   {
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
     RealTimeProcessingStartedEvent,
-    BufferActiveTransformAddedEvent,
+    BufferActiveTransformsChangedEvent,
   };
   
 

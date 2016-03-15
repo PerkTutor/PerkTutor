@@ -142,5 +142,5 @@ std::vector< std::string > qSlicerPerkEvaluatorAnatomyRolesWidget
     return std::vector< std::string >();
   }
   
-  return this->PerkEvaluatorLogic->GetAllAnatomyRoles( this->MetricInstanceNode->GetAssociatedMetricScriptID() );
+  return this->PerkEvaluatorLogic->GetAllRoles( this->MetricInstanceNode->GetAssociatedMetricScriptID(), vtkMRMLMetricInstanceNode::AnatomyRole );
 }
