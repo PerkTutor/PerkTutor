@@ -155,14 +155,28 @@ class PythonMetricsCalculatorLogic:
   this class and make use of the functionality without
   requiring an instance of the Widget
   """
+  
+  # We propose three "scopes" of metrics:
+  # Global: These metrics are shared amongst all Perk Evaluator nodes in the scene. They are created for every transform in the scene and are only defined if the metric takes one transform and no anatomies. Example: Total Time.
+  # Local: These metrics are created specifically (and automatically) for each Perk Evaluator node to have its own copy of. The roles needs to be specified by the user. Example: Tissue Damage
+  # Manual: These metrics need to be manually created by the user.
+  
   def __init__( self ):
   
     self.allMetricModules = dict()
     self.allMetrics = dict()
     
+    self.peLogic = None
+    self.peNode = None
+    self.mrmlScene = None
+    self.metricsTable = None
+    
     # By default, grab the instantiated module's logic (though other logics are possible)
-    self.SetPerkEvaluatorLogic( slicer.modules.perkevaluator.logic() )
-    self.SetMRMLScene( self.peLogic.GetMRMLScene() )
+    try:
+      self.SetPerkEvaluatorLogic( slicer.modules.perkevaluator.logic() )
+      self.SetMRMLScene( self.peLogic.GetMRMLScene() )
+    except:
+      pass
     
     
   @staticmethod
@@ -183,16 +197,25 @@ class PythonMetricsCalculatorLogic:
     
 
   def SetPerkEvaluatorNodeID( self, newPENodeID ):
+    if ( self.mrmlScene == None ):
+      return
+    
     self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
     # Now we can find all of the metrics
     self.allMetricModules = self.GetFreshMetricModules()
  
     
   def SetMetricsTableID( self, newMetricsTableID ):
+    if ( self.mrmlScene == None ):
+      return
+      
     self.metricsTable = self.mrmlScene.GetNodeByID( newMetricsTableID )
     
     
   def InitializeMetricsTable( self ):
+    if ( self.metricsTable == None ):
+      return
+  
     self.metricsTable.GetTable().Initialize()
     
     # TODO: Make the more robust (e.g. qSlicerMetricsTableWidget::METRIC_TABLE_COLUMNS) 
@@ -204,6 +227,9 @@ class PythonMetricsCalculatorLogic:
       
       
   def OutputAllMetricsToMetricsTable( self ):
+    if ( self.metricsTable == None ):
+      return
+  
     self.InitializeMetricsTable()
 
     self.metricsTable.GetTable().SetNumberOfRows( len( self.allMetrics ) )
@@ -217,6 +243,8 @@ class PythonMetricsCalculatorLogic:
     
     
   def GetFreshMetricModules( self ):
+    if ( self.mrmlScene == None ):
+      return dict()
     
     # Setup the metrics currently associated with the selected PerkEvaluator node
     execDict = dict()
@@ -234,6 +262,9 @@ class PythonMetricsCalculatorLogic:
     
     
   def GetFreshMetrics( self ):
+    if ( self.peNode == None ):
+      return dict()
+  
     # Get a fresh set of metrics
     newTransformMetricModules = self.GetFreshMetricModules()
     
@@ -244,6 +275,9 @@ class PythonMetricsCalculatorLogic:
     # TODO: Make the reference role calling more robust (i.e. vtkMRMLPerkEvaluatorNode::METRIC_INSTANCE_REFERENCE_ROLE)
     for i in range( self.peNode.GetNumberOfNodeReferences( "MetricInstance" ) ):
       metricInstanceNode = self.peNode.GetNthNodeReference( "MetricInstance", i )
+      if ( metricInstanceNode.GetAssociatedMetricScriptID() not in newTransformMetricModules ):
+        continue # Ignore metrics whose associated script is not loaded (e.g. if it has been deleted)
+      
       associatedMetricModule = newTransformMetricModules[ metricInstanceNode.GetAssociatedMetricScriptID() ]
       if ( self.AreMetricModuleRolesSatisfied( associatedMetricModule, metricInstanceNode ) ):
         metricDict[ metricInstanceNode.GetID() ] = associatedMetricModule()
@@ -273,7 +307,10 @@ class PythonMetricsCalculatorLogic:
 
     
   # Note: This modifies the inputted dictionary of metrics
-  def AddAnatomyNodesToMetrics( self, metrics ):  
+  def AddAnatomyNodesToMetrics( self, metrics ): 
+    if ( self.mrmlScene == None ):
+      return
+  
     # Keep track of which metrics all anatomies are sucessfully delivered to    
     unfulfilledAnatomies = []    
   
@@ -294,22 +331,47 @@ class PythonMetricsCalculatorLogic:
       metrics.pop( metricInstanceID )
 
         
-  # Note: We are returning a dictionary here, not a list
-  def GetAllAnatomyRoles( self, metricScriptID ):  
-    return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
-
+  # Note: We are returning a list here, not a dictionary
+  def GetAllRoles( self, metricScriptID, roleType ):
+    if ( metricScriptID not in self.allMetricModules ):
+      return []
+  
+    if ( roleType == slicer.modulemrml.vtkMRMLMetricInstanceNode.TransformRole ):
+      return self.allMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
+    elif ( roleType == slicer.modulemrml.vtkMRMLMetricInstanceNode.AnatomyRole ):
+      return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
+    else:
+      return []
     
-  # Note: We are returning a list here
-  def GetAllTransformRoles( self, metricScriptID ):
-    return self.allMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
     
   # Note: We are returning a string here
   def GetAnatomyRoleClassName( self, metricScriptID, role ):
+    if ( metricScriptID not in self.allMetricModules ):
+      return []
+      
     return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles()[ role ]
+    
+    
+  # Note: We are returning a string here
+  def GetContext( self, metricScriptID ):
+    if ( metricScriptID not in self.allMetricModules ):
+      return []
+  
+    try:
+      self.allMetricModules[ metricScriptID ].GetContext()
+    except: # TODO: Keep this for backwards compatibility with Python Metrics?
+      numTransformRoles = len( self.allMetricModules[ metricScriptID ].GetAcceptedTransformRoles() ) #TODO: Add check for "Any" role
+      numAnatomyRoles = len( self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys() )
+      if ( numTransformRoles == 1 and numAnatomyRoles == 0 ):
+        return "Global"
+      else:
+        return "Local"
 
     
 
   def CalculateAllMetrics( self ):
+    if ( self.peNode == None or self.peLogic == None ):
+      return
   
     self.allMetrics = self.GetFreshMetrics()
   
@@ -328,13 +390,12 @@ class PythonMetricsCalculatorLogic:
   
     for i in range( combinedTransformBuffer.GetNumRecords() ):
       absTime = combinedTransformBuffer.GetRecord( i ).GetTime()
-      self.peNode.SetPlaybackTime( absTime, True )
-      self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
       relTime = absTime - minTime # Can't just take the 0th record of the combined buffer, because this doesn't account for the messages
-      
       if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
         continue
         
+      self.peNode.SetPlaybackTime( absTime, True )
+      self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
       self.UpdateSelfAndChildMetrics( combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, False )
 
     self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
@@ -342,6 +403,9 @@ class PythonMetricsCalculatorLogic:
 
     
   def UpdateSelfAndChildMetrics( self, transformName, absTime, updateTable ):
+    if ( self.mrmlScene == None or self.peLogic == None ):
+      return
+  
     # Get the recorded transform node
     updatedTransformNode = self.mrmlScene.GetFirstNodeByName( transformName )
     
@@ -357,6 +421,8 @@ class PythonMetricsCalculatorLogic:
 
         
   def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
+    if ( self.mrmlScene == None ):
+      return
       
     # The assumption is that the scene is already appropriately updated
     matrix = vtk.vtkMatrix4x4()
