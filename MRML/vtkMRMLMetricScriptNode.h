@@ -83,8 +83,16 @@ public:
   std::string GetPythonSourceCode();
   void SetPythonSourceCode( std::string newPythonSourceCode );
 
+  // Compare metric scripts
+  bool IsEqual( vtkMRMLMetricScriptNode* msNode );
+
   // Instances of the metrics
-  bool IsAssociatedMetricInstanceID( std::string associatedMetricInstanceID );
+  bool IsAssociatedMetricInstanceID( std::string associatedMetricInstanceID ); // TODO: Is this ok?
+
+  enum
+  {
+    PythonSourceCodeChangedEvent = vtkCommand::UserEvent + 1,
+  };
 
   
 protected:

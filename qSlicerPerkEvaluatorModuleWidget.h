@@ -65,6 +65,7 @@ public slots:
   void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
   void onMetricsTableChanged( vtkMRMLNode* newMetricsTable );
   void mrmlNodeChanged( vtkMRMLNode* peNode );
+  void onPerkEvaluatorNodeCreated( vtkMRMLNode* peNode );
   void updateWidgetFromMRMLNode();
 
 protected:

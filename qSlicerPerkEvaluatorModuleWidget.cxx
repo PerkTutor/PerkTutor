@@ -588,6 +588,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Connect the Perk Evaluator node to the update
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( nodeAddedByUser( vtkMRMLNode* ) ), this, SLOT( onPerkEvaluatorNodeCreated( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
   // NOTE: The roles widgets will be updated with the other components of the widget
 
 
@@ -641,7 +642,7 @@ qSlicerPerkEvaluatorModuleWidget
 
 
   // Advanced tab
-  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( nodeAdded( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeCreated( vtkMRMLNode* ) ) );
+  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( nodeAddedByUser( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeCreated( vtkMRMLNode* ) ) );
   connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
   connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
@@ -730,6 +731,22 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   this->updateWidgetFromMRMLNode();
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::onPerkEvaluatorNodeCreated( vtkMRMLNode* node )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( node );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+  
+  d->logic()->CreateLocalMetrics( peNode );
+  // Everything else is taken care of by the mrmlNodeChanged function
 }
 
 

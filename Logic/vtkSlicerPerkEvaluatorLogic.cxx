@@ -261,6 +261,41 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 void vtkSlicerPerkEvaluatorLogic
+::CreateGlobalMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole )
+{
+  if ( msNode == NULL || transformNode == NULL )
+  {
+    return;
+  }
+
+  // Check it doesn't already exist in the scene
+  vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
+
+  for ( int i = 0; i < metricInstanceNodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( metricInstanceNodes->GetItemAsObject( i ) );
+    bool scriptsEqual = miNode->GetAssociatedMetricScriptNode()->IsEqual( msNode );
+    bool oneTransformRole = this->GetAllRoles( msNode->GetID(), vtkMRMLMetricInstanceNode::TransformRole ).size() == 1;
+    bool transformRoleIDsEqual = miNode->GetRoleID( transformRole, vtkMRMLMetricInstanceNode::TransformRole ).compare( transformNode->GetID() ) == 0;
+    if ( scriptsEqual && oneTransformRole && transformRoleIDsEqual )
+    {
+      return; // Get out the the function. The metric already exists, so there is nothing to do here.
+    }
+  }
+
+  // Create it and add it to the scene
+  vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
+  newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
+  newMINode->SetScene( this->GetMRMLScene() );
+	this->GetMRMLScene()->AddNode( newMINode );
+  newMINode->SetName( msNode->GetName() );
+  newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
+  newMINode->SetRoleID( transformNode->GetID(), transformRole, vtkMRMLMetricInstanceNode::TransformRole );
+  newMINode->SetSaveWithScene( false ); // Don't save the global instances with the scene, since they will be automatically recreated whenever necessary
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
 ::UpdateGlobalMetrics( vtkMRMLLinearTransformNode* transformNode )
 {
   if ( transformNode == NULL )
@@ -288,13 +323,7 @@ void vtkSlicerPerkEvaluatorLogic
     }
 
     // Create a metric instance node, with this transform serving the lone transform role
-    vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
-    newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
-    newMINode->SetScene( this->GetMRMLScene() );
-	  this->GetMRMLScene()->AddNode( newMINode );
-    newMINode->SetName( msNode->GetName() );
-    newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
-    newMINode->SetRoleID( transformNode->GetID(), transformRoles.at( 0 ), vtkMRMLMetricInstanceNode::TransformRole );   
+   this->CreateGlobalMetric( msNode, transformNode, transformRoles.at( 0 ) );
   }
 
 }
@@ -315,26 +344,21 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Grab all transforms
-  vtkCollection* transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkSmartPointer< vtkCollection > transformNodes = vtkSmartPointer< vtkCollection >::New();
+  this->GetSceneVisibleTransformNodes( transformNodes );
 
   for ( int i = 0; i < transformNodes->GetNumberOfItems(); i++ )
   {
     vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNodes->GetItemAsObject( i ) );
     // Create a metric instance node, with this transform serving the lone transform role
-    vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
-    newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
-    newMINode->SetScene( this->GetMRMLScene() );
-	  this->GetMRMLScene()->AddNode( newMINode );
-    newMINode->SetName( msNode->GetName() );
-    newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
-    newMINode->SetRoleID( transformNode->GetID(), transformRoles.at( 0 ), vtkMRMLMetricInstanceNode::TransformRole );     
+    this->CreateGlobalMetric( msNode, transformNode, transformRoles.at( 0 ) );   
   }
 
 }
 
 
 void vtkSlicerPerkEvaluatorLogic
-::UpdateLocalMetrics( vtkMRMLPerkEvaluatorNode* peNode )
+::CreateLocalMetrics( vtkMRMLPerkEvaluatorNode* peNode )
 {
   if ( peNode == NULL )
   {
@@ -348,7 +372,9 @@ void vtkSlicerPerkEvaluatorLogic
   {
     // Assume that we want to add any metric whose only transform role in "Any" and has no anatomy roles
     vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
-    if ( this->GetContext( msNode->GetID() ).compare( "Local" ) != 0 )
+    bool emptySource = msNode->GetPythonSourceCode().compare( "" ) == 0;
+    bool localContext = this->GetContext( msNode->GetID() ).compare( "Local" ) == 0;
+    if ( emptySource || ! localContext )
     {
       continue;
     }
@@ -364,6 +390,43 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
 }
+
+
+void vtkSlicerPerkEvaluatorLogic
+::MergeMetricScripts( vtkMRMLMetricScriptNode* newMetricScriptNode )
+{
+  // If any metric script currently in the scene already has the same source code, then move all of its metric instances to the new node
+  if ( newMetricScriptNode == NULL )
+  {
+    return;
+  }
+
+  vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+
+  for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
+  {
+    // Assume that we want to add any metric whose only transform role in "Any" and has no anatomy roles
+    vtkMRMLMetricScriptNode* currMetricScriptNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
+    bool sameNode = strcmp( currMetricScriptNode->GetID(), newMetricScriptNode->GetID() ) == 0;
+    bool equalSource = currMetricScriptNode->IsEqual( newMetricScriptNode );
+    bool emptySource = currMetricScriptNode->GetPythonSourceCode().compare( "" ) == 0;
+    if ( sameNode || ! equalSource || emptySource )
+    {
+      continue;
+    }
+
+    std::vector< vtkMRMLNode* > referencingNodes;
+    this->GetMRMLScene()->GetReferencingNodes( currMetricScriptNode, referencingNodes );
+    for ( int j = 0; j < referencingNodes.size(); j++ )
+    {
+      referencingNodes.at( j )->UpdateReferenceID( currMetricScriptNode->GetID(), newMetricScriptNode->GetID() );
+    }
+
+    this->GetMRMLScene()->RemoveNode( currMetricScriptNode );    
+  }
+
+}
+
 
 
 bool vtkSlicerPerkEvaluatorLogic
@@ -602,9 +665,10 @@ void vtkSlicerPerkEvaluatorLogic
 ::ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData )
 {
   vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( caller );
+  vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( caller );
 
-  // The caller must be a vtkMRMLPerkEvaluatorNode
 
+  // Perk Evaluator Node
   // Setup the real-time processing
   if ( peNode != NULL && event == vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent )
   {
@@ -629,6 +693,15 @@ void vtkSlicerPerkEvaluatorLogic
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }
+
+  // Metric Script Node
+  // Update metrics whenever the source code is changed
+  // Though, note that it is recommended only to set it once (and then never touch it again)
+  if ( msNode != NULL && event == vtkMRMLMetricScriptNode::PythonSourceCodeChangedEvent )
+  {
+    this->MergeMetricScripts( msNode );
+    this->UpdateGlobalMetrics( msNode );
+  }
 }
 
 
@@ -646,8 +719,6 @@ void vtkSlicerPerkEvaluatorLogic
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::BufferActiveTransformsChangedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
-    // Create all of the necessary metric instances for all local metrics
-    this->UpdateLocalMetrics( peNode );
   }
 
   // If a transform or metric script was added to the scene, make sure all transforms have all global metric instances
@@ -659,7 +730,7 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( addedNode );
   if ( event == vtkMRMLScene::NodeAddedEvent && msNode != NULL )
   {
-    this->UpdateGlobalMetrics( msNode );
+    msNode->AddObserver( vtkMRMLMetricScriptNode::PythonSourceCodeChangedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
   }
 
 }

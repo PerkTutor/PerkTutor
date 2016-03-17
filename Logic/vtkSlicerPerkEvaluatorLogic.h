@@ -92,7 +92,9 @@ public:
   void SetMetricInstancesRolesToID( vtkMRMLPerkEvaluatorNode* peNode, std::string nodeID, std::string role, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType );
   void UpdateGlobalMetrics( vtkMRMLLinearTransformNode* transformNode );
   void UpdateGlobalMetrics( vtkMRMLMetricScriptNode* msNode );
-  void UpdateLocalMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  void CreateLocalMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  void MergeMetricScripts( vtkMRMLMetricScriptNode* newMetricScriptNode );
+  void CreateGlobalMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole );
 
   void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
   void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );

@@ -284,7 +284,7 @@ void vtkMRMLPerkEvaluatorNode
 {
   if ( newNeedleOrientation != this->NeedleOrientation )
   {
-    this->NeedleOrientation = newNeedleOrientation;\
+    this->NeedleOrientation = newNeedleOrientation;
     this->Modified();
   }
 }

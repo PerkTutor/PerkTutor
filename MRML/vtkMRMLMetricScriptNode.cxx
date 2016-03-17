@@ -99,10 +99,27 @@ void vtkMRMLMetricScriptNode
 ::SetPythonSourceCode( std::string newPythonSourceCode )
 {
   this->PythonSourceCode = newPythonSourceCode;
+  this->InvokeEvent( PythonSourceCodeChangedEvent );
 }
+
+
+// Comparison -----------------------------------------------------------------------------
+
+bool vtkMRMLMetricScriptNode
+::IsEqual( vtkMRMLMetricScriptNode* msNode )
+{
+  if ( this->GetPythonSourceCode().compare( msNode->GetPythonSourceCode() ) != 0 )
+  {
+    return false;
+  }
+  return true;
+}
+
+
 
 // Associated Instance Metrics ---------------------------------------------------------------
 
+// TODO: This isn't used. Do we really need to store references to the metric instances referencing this script?
 bool vtkMRMLMetricScriptNode
 ::IsAssociatedMetricInstanceID( std::string associatedMetricInstanceID )
 {
