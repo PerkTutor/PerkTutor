@@ -58,7 +58,6 @@ void vtkMRMLPerkEvaluatorNode
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
   of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
-  of << indent << "MetricsDirectory=\"" << this->MetricsDirectory << "\"";
   of << indent << "PlaybackTime=\"" << this->PlaybackTime << "\"";
   of << indent << "RealTimeProcessing=\"" << this->RealTimeProcessing << "\"";
 }
@@ -98,10 +97,6 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->NeedleOrientation = ( NeedleOrientationEnum ) atoi( attValue );
     }
-    if ( ! strcmp( attName, "MetricsDirectory" ) )
-    {
-      this->MetricsDirectory = std::string( attValue );
-    }
     if ( ! strcmp( attName, "PlaybackTime" ) )
     {
       this->PlaybackTime = atof( attValue );
@@ -128,8 +123,8 @@ void vtkMRMLPerkEvaluatorNode
   this->MarkBegin = node->MarkBegin;
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
-  this->MetricsDirectory = std::string( node->MetricsDirectory );
   this->PlaybackTime = node->PlaybackTime;
+  this->AnalysisState = node->AnalysisState;
   this->RealTimeProcessing = node->RealTimeProcessing;
 }
 
@@ -147,9 +142,9 @@ vtkMRMLPerkEvaluatorNode
   this->MarkEnd = 0.0;
   
   this->NeedleOrientation = vtkMRMLPerkEvaluatorNode::PlusX;
-  this->MetricsDirectory = "";
 
   this->PlaybackTime = 0.0;
+  this->AnalysisState = -1;
 
   this->RealTimeProcessing = false;
 
@@ -307,6 +302,24 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->Modified();
     }
+  }
+}
+
+
+int vtkMRMLPerkEvaluatorNode
+::GetAnalysisState()
+{
+  return this->AnalysisState;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetAnalysisState( int newAnalysisState )
+{
+  if ( newAnalysisState != this->AnalysisState )
+  {
+    this->AnalysisState = newAnalysisState;
+    this->InvokeEvent( AnalysisStateUpdatedEvent, &this->AnalysisState );
   }
 }
 

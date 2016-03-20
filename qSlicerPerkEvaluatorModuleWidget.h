@@ -43,6 +43,9 @@ public slots:
 
   void OnAnalyzeClicked();
 
+  void OnAnalysisStateUpdated( vtkObject* caller, void* value );
+  void OnAnalysisCanceled();
+
   void OnBatchProcessButtonClicked();
 
   void OnMarkBeginChanged();

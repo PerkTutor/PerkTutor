@@ -108,6 +108,12 @@ public:
   bool GetRealTimeProcessing();
   void SetRealTimeProcessing( bool newRealTimeProcessing );
 
+  // Analysis state
+  // -1 means analysis is halted
+  // Other values indicate the progress of the analysis (on 0%-100%)
+  int GetAnalysisState();
+  void SetAnalysisState( int newAnalysisState );
+
 
   // Reference to transform buffer and to metrics node
   std::string GetNodeReferenceIDString( std::string referenceRole );
@@ -127,6 +133,7 @@ public:
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
     RealTimeProcessingStartedEvent,
     BufferActiveTransformsChangedEvent,
+    AnalysisStateUpdatedEvent,
   };
   
 
@@ -150,10 +157,10 @@ PlaybackTime
   double MarkEnd;
   
   NeedleOrientationEnum NeedleOrientation;
-  
-  std::string MetricsDirectory;
 
   double PlaybackTime;
+
+  int AnalysisState;
 
   bool RealTimeProcessing;
   
