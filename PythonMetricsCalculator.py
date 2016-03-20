@@ -370,7 +370,7 @@ class PythonMetricsCalculatorLogic:
     
 
   def CalculateAllMetrics( self ):
-    if ( self.peNode == None or self.peLogic == None ):
+    if ( self.peLogic == None or self.peNode == None or self.peNode.GetTransformBufferNode() == None ):
       return
   
     self.allMetrics = self.GetFreshMetrics()
@@ -386,9 +386,11 @@ class PythonMetricsCalculatorLogic:
       return
       
     self.peNode.SetPlaybackTime( combinedTransformBuffer.GetRecord( 0 ).GetTime(), True )
+    self.peNode.SetAnalysisState( 0 )
     minTime = self.peNode.GetTransformBufferNode().GetMinimumTime()
   
     for i in range( combinedTransformBuffer.GetNumRecords() ):
+    
       absTime = combinedTransformBuffer.GetRecord( i ).GetTime()
       relTime = absTime - minTime # Can't just take the 0th record of the combined buffer, because this doesn't account for the messages
       if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
@@ -397,9 +399,20 @@ class PythonMetricsCalculatorLogic:
       self.peNode.SetPlaybackTime( absTime, True )
       self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
       self.UpdateSelfAndChildMetrics( combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, False )
+      
+      # Update the progress
+      progressPercent = 100 * ( relTime - self.peNode.GetMarkBegin() ) / ( self.peNode.GetMarkEnd() - self.peNode.GetMarkBegin() )
+      self.peNode.SetAnalysisState( int( progressPercent ) )
+      
+      if ( self.peNode.GetAnalysisState() < 0 ):
+        break
 
+        
+    if ( self.peNode.GetAnalysisState() >= 0 ):
+      self.OutputAllMetricsToMetricsTable()
+      
     self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
-    self.OutputAllMetricsToMetricsTable()
+    self.peNode.SetAnalysisState( 0 )
 
     
   def UpdateSelfAndChildMetrics( self, transformName, absTime, updateTable ):
