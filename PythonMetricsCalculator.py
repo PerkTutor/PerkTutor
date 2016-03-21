@@ -420,7 +420,7 @@ class PythonMetricsCalculatorLogic:
       return
   
     # Get the recorded transform node
-    updatedTransformNode = self.mrmlScene.GetFirstNodeByName( transformName )
+    updatedTransformNode = self.mrmlScene.GetFirstNode( transformName, "vtkMRMLLinearTransformNode", [ False ] ) # TODO: Is there an error in this function?
     
     # Get all transforms in the scene
     transformCollection = vtk.vtkCollection()
