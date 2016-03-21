@@ -360,8 +360,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>598</width>
-        <height>684</height>
+        <width>454</width>
+        <height>252</height>
        </rect>
       </property>
       <attribute name="label">
@@ -834,7 +834,7 @@
              <number>0</number>
             </property>
             <item row="0" column="0">
-             <widget class="QLabel" name="MetricScriptsLabel">
+             <widget class="QLabel" name="MetricInstancesLabel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -842,7 +842,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Metrics Scripts:</string>
+               <string>Metrics Instances:</string>
               </property>
              </widget>
             </item>

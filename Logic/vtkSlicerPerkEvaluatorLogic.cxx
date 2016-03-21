@@ -208,12 +208,19 @@ void vtkSlicerPerkEvaluatorLogic
   for ( int i = 0; i < metricInstanceNodes->GetNumberOfItems(); i++ )
   {
     vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( metricInstanceNodes->GetItemAsObject( i ) );
+    
     std::vector< std::string > transformRoles = this->GetAllRoles( miNode->GetAssociatedMetricScriptID(), vtkMRMLMetricInstanceNode::TransformRole );
-    if ( transformRoles.size() != 1 )
+    bool oneTransformRole = transformRoles.size() == 1;
+    bool globalContext = this->GetContext( miNode->GetAssociatedMetricScriptID() ).compare( "Global" ) == 0;
+    if ( ! oneTransformRole || ! globalContext )
     {
       continue;
     }
 
+    // Remove the metric instance (it will be added back if it should be)
+    peNode->RemoveMetricInstanceID( miNode->GetID() );
+
+    // Observe the metric instance if it matches one of the active transforms
     for ( int j = 0; j < activeTransformIDs.size(); j++ )
     {      
       if ( miNode->GetRoleID( transformRoles.at( 0 ), vtkMRMLMetricInstanceNode::TransformRole ).compare( activeTransformIDs.at( j ) ) == 0 )
@@ -263,6 +270,7 @@ void vtkSlicerPerkEvaluatorLogic
 void vtkSlicerPerkEvaluatorLogic
 ::CreateGlobalMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole )
 {
+  // The assumption is that we have already established that the context of the metric script is "Global"
   if ( msNode == NULL || transformNode == NULL )
   {
     return;

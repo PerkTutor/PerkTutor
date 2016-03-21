@@ -503,16 +503,22 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   // Accumluate all of the IDs, and then write them to the node
-  std::vector< std::string > metricInstanceIDs;
-  for ( int i = 0; i < d->MetricInstanceComboBox->nodeCount(); i++ )
+  // Assume that it was the current node that was changed
+  // This will be much faster if we don't have to deal with all the nodes
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->MetricInstanceComboBox->currentNode() );
+  if ( miNode == NULL )
   {
-    if( d->MetricInstanceComboBox->checkState( d->MetricInstanceComboBox->nodeFromIndex( i ) ) == Qt::Checked  )
-    {
-      metricInstanceIDs.push_back( d->MetricInstanceComboBox->nodeFromIndex( i )->GetID() );
-    }
+    return;
   }
 
-  peNode->SetMetricInstanceIDs( metricInstanceIDs );
+  if ( d->MetricInstanceComboBox->checkState( miNode ) == Qt::Checked )
+  {
+    peNode->AddMetricInstanceID( miNode->GetID() );
+  }
+  else
+  {
+    peNode->RemoveMetricInstanceID( miNode->GetID() );
+  }
 }
 
 
@@ -811,13 +817,6 @@ void qSlicerPerkEvaluatorModuleWidget
   d->PlaybackSlider->setMaximum( d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
   d->PlaybackSlider->setValue( d->logic()->GetRelativePlaybackTime( peNode ) );
 
-  /*
-  vtkMRMLNode* needleNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetFirstTransformNodeName( "Needle" ).c_str() );
-  d->NeedleReferenceComboBox->setCurrentNode( needleNode );
-
-  vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
-  d->BodyNodeComboBox->setCurrentNode( tissueNode );
-  */
 
   // For the metric scripts
   // Disable to the onCheckedChanged listener when initializing the selections
