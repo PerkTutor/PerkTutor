@@ -160,25 +160,23 @@ class PythonMetricsCalculatorLogic:
   # Global: These metrics are shared amongst all Perk Evaluator nodes in the scene. They are created for every transform in the scene and are only defined if the metric takes one transform and no anatomies. Example: Total Time.
   # Local: These metrics are created specifically (and automatically) for each Perk Evaluator node to have its own copy of. The roles needs to be specified by the user. Example: Tissue Damage
   # Manual: These metrics need to be manually created by the user.
-  
-  def __init__( self ):
-  
-    self.allMetricModules = dict()
-    self.allMetrics = dict()
-    
-    self.peLogic = None
-    self.peNode = None
-    self.mrmlScene = None
-    self.metricsTable = None
-    
-    # By default, grab the instantiated module's logic (though other logics are possible)
-    try:
-      self.SetPerkEvaluatorLogic( slicer.modules.perkevaluator.logic() )
-      self.SetMRMLScene( self.peLogic.GetMRMLScene() )
-    except:
-      pass
+   
+  def __init__( self ):    
+    self.realTimeMetrics = dict()
+    self.realTimeMetricsTable = None
     
     
+  @staticmethod
+  def Initialize():
+    # Static variables (common to all instances of the PythonMetricsCalculatorLogic)
+    PythonMetricsCalculatorLogic.AllMetricModules = dict()
+    
+    PythonMetricsCalculatorLogic.SetMRMLScene( None )
+    PythonMetricsCalculatorLogic.SetPerkEvaluatorLogic( None )
+    
+    PythonMetricsCalculatorLogic.AddCoreMetricsToScene()
+      
+      
   @staticmethod
   def AddCoreMetricsToScene():
     # Add the "Core" metrics by default
@@ -187,110 +185,129 @@ class PythonMetricsCalculatorLogic:
       slicer.util.loadNodeFromFile( script, "Python Metric Script" )
     
   
-  # We need this in order to determine the tissue model node, etc.  
-  def SetMRMLScene( self, newScene ):
-    self.mrmlScene = newScene
+  @staticmethod 
+  def SetMRMLScene( newScene ):
+    PythonMetricsCalculatorLogic.mrmlScene = newScene
   
-
-  def SetPerkEvaluatorLogic( self, newPELogic ):
-    self.peLogic = newPELogic    
-    
-
-  def SetPerkEvaluatorNodeID( self, newPENodeID ):
-    if ( self.mrmlScene == None ):
-      return
-    
-    self.peNode = self.mrmlScene.GetNodeByID( newPENodeID )
-    # Now we can find all of the metrics
-    self.allMetricModules = self.GetFreshMetricModules()
- 
-    
-  def SetMetricsTableID( self, newMetricsTableID ):
-    if ( self.mrmlScene == None ):
-      return
+  
+  @staticmethod
+  def GetMRMLScene():
+    if ( PythonMetricsCalculatorLogic.mrmlScene != None ):
+      return PythonMetricsCalculatorLogic.mrmlScene # Try to return the set scene
       
-    self.metricsTable = self.mrmlScene.GetNodeByID( newMetricsTableID )
+    try:
+      return slicer.mrmlScene # Try to return Slicer's scene
+    except:
+      return None
+  
+
+  @staticmethod
+  def SetPerkEvaluatorLogic( newPELogic ):
+    PythonMetricsCalculatorLogic.peLogic = newPELogic    
+    
+  
+  @staticmethod
+  def GetPerkEvaluatorLogic():
+    if ( PythonMetricsCalculatorLogic.peLogic != None ):
+      return PythonMetricsCalculatorLogic.peLogic # Try to return the set logic
+      
+    try:
+      return slicer.modules.perkevaluator.logic() # Try to return the module's logic from Python
+    except:
+      return None
     
     
-  def InitializeMetricsTable( self ):
-    if ( self.metricsTable == None ):
+  @staticmethod
+  def InitializeMetricsTable( metricsTable ):
+    if ( metricsTable == None ):
       return
   
-    self.metricsTable.GetTable().Initialize()
+    metricsTable.GetTable().Initialize()
     
     # TODO: Make the more robust (e.g. qSlicerMetricsTableWidget::METRIC_TABLE_COLUMNS) 
     metricsTableColumnNames = [ "MetricName", "MetricRoles", "MetricUnit", "MetricValue" ]
     for columnName in metricsTableColumnNames:
       column = vtk.vtkStringArray()
       column.SetName( columnName )
-      self.metricsTable.GetTable().AddColumn( column )
+      metricsTable.GetTable().AddColumn( column )
       
       
-  def OutputAllMetricsToMetricsTable( self ):
-    if ( self.metricsTable == None ):
+  @staticmethod   
+  def OutputAllMetricsToMetricsTable( metricsTable, allMetrics ):
+    if ( metricsTable == None ):
       return
   
-    self.InitializeMetricsTable()
+    PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable )
 
-    self.metricsTable.GetTable().SetNumberOfRows( len( self.allMetrics ) )
+    metricsTable.GetTable().SetNumberOfRows( len( allMetrics ) )
     insertRow = 0
-    for metric in self.allMetrics.values():
-      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricName", metric.GetMetricName() )
-      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricRoles", metric.CombinedRoleString )
-      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricUnit", metric.GetMetricUnit() )
-      self.metricsTable.GetTable().SetValueByName( insertRow, "MetricValue", metric.GetMetric() )
+    for metric in allMetrics.values():
+      metricsTable.GetTable().SetValueByName( insertRow, "MetricName", metric.GetMetricName() )
+      metricsTable.GetTable().SetValueByName( insertRow, "MetricRoles", metric.CombinedRoleString )
+      metricsTable.GetTable().SetValueByName( insertRow, "MetricUnit", metric.GetMetricUnit() )
+      metricsTable.GetTable().SetValueByName( insertRow, "MetricValue", metric.GetMetric() )
       insertRow += 1
     
+
+  @staticmethod
+  def RefreshMetricModules():
+    PythonMetricsCalculatorLogic.AllMetricModules = PythonMetricsCalculatorLogic.GetFreshMetricModules()
     
-  def GetFreshMetricModules( self ):
-    if ( self.mrmlScene == None ):
+  @staticmethod
+  def GetFreshMetricModules():
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
       return dict()
     
     # Setup the metrics currently associated with the selected PerkEvaluator node
-    execDict = dict()
     metricModuleDict = dict()
     
     # Grab all of the metric script nodes in the scene
-    metricScriptNodes = self.mrmlScene.GetNodesByClass( "vtkMRMLMetricScriptNode" )
+    metricScriptNodes = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodesByClass( "vtkMRMLMetricScriptNode" )
     
     for i in range( metricScriptNodes.GetNumberOfItems() ):
+      execDict = dict()
       currentMetricScriptNode = metricScriptNodes.GetItemAsObject( i )
       exec currentMetricScriptNode.GetPythonSourceCode() in execDict
       metricModuleDict[ currentMetricScriptNode.GetID() ] = execDict[ "PerkEvaluatorMetric" ]
     
     return metricModuleDict
     
-    
-  def GetFreshMetrics( self ):
-    if ( self.peNode == None ):
+  
+  @staticmethod
+  def GetFreshMetrics( peNodeID ):
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
+      return dict()
+      
+    peNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( peNodeID )
+    if ( peNode == None ):
       return dict()
   
-    # Get a fresh set of metrics
-    newTransformMetricModules = self.GetFreshMetricModules()
+    # Get a fresh set of metric modules
+    newMetricModules = PythonMetricsCalculatorLogic.GetFreshMetricModules()
     
     # Setup the metrics currently associated with the selected PerkEvaluator node
-    execDict = dict()
     metricDict = dict()
     
     # TODO: Make the reference role calling more robust (i.e. vtkMRMLPerkEvaluatorNode::METRIC_INSTANCE_REFERENCE_ROLE)
-    for i in range( self.peNode.GetNumberOfNodeReferences( "MetricInstance" ) ):
-      metricInstanceNode = self.peNode.GetNthNodeReference( "MetricInstance", i )
-      if ( metricInstanceNode.GetAssociatedMetricScriptID() not in newTransformMetricModules ):
+    for i in range( peNode.GetNumberOfNodeReferences( "MetricInstance" ) ):
+      metricInstanceNode = peNode.GetNthNodeReference( "MetricInstance", i )
+      if ( metricInstanceNode.GetAssociatedMetricScriptID() not in newMetricModules ):
         continue # Ignore metrics whose associated script is not loaded (e.g. if it has been deleted)
       
-      associatedMetricModule = newTransformMetricModules[ metricInstanceNode.GetAssociatedMetricScriptID() ]
-      if ( self.AreMetricModuleRolesSatisfied( associatedMetricModule, metricInstanceNode ) ):
-        metricDict[ metricInstanceNode.GetID() ] = associatedMetricModule()
+      associatedMetricModule = newMetricModules[ metricInstanceNode.GetAssociatedMetricScriptID() ]
+      if ( PythonMetricsCalculatorLogic.AreMetricModuleRolesSatisfied( associatedMetricModule, metricInstanceNode ) ):
+        metricDict[ metricInstanceNode.GetID() ] = associatedMetricModule() # Note: The brackets are important (they instantiate the instance)
         # Add the roles description (to make it easier to distinguish the same metric under different roles)
         metricDict[ metricInstanceNode.GetID() ].CombinedRoleString = metricInstanceNode.GetCombinedRoleString()
         
     # Add the anatomy to the fresh metrics
-    self.AddAnatomyNodesToMetrics( metricDict )
+    PythonMetricsCalculatorLogic.AddAnatomyNodesToMetrics( metricDict )
    
     return metricDict
     
     
-  def AreMetricModuleRolesSatisfied( self, metricModule, metricInstanceNode ):
+  @staticmethod
+  def AreMetricModuleRolesSatisfied( metricModule, metricInstanceNode ):
     # Output whether or not the metric module has its roles completely satisfied by the metricInstance node
      
     rolesSatisfied = True
@@ -307,8 +324,9 @@ class PythonMetricsCalculatorLogic:
 
     
   # Note: This modifies the inputted dictionary of metrics
-  def AddAnatomyNodesToMetrics( self, metrics ): 
-    if ( self.mrmlScene == None ):
+  @staticmethod
+  def AddAnatomyNodesToMetrics( metrics ): 
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
       return
   
     # Keep track of which metrics all anatomies are sucessfully delivered to    
@@ -316,7 +334,7 @@ class PythonMetricsCalculatorLogic:
   
     for metricInstanceID in metrics:
       metricAnatomyRoles = metrics[ metricInstanceID ].GetRequiredAnatomyRoles()
-      metricInstanceNode = self.mrmlScene.GetNodeByID( metricInstanceID )
+      metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
       
       for role in metricAnatomyRoles:
         anatomyNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.AnatomyRole )
@@ -332,109 +350,118 @@ class PythonMetricsCalculatorLogic:
 
         
   # Note: We are returning a list here, not a dictionary
-  def GetAllRoles( self, metricScriptID, roleType ):
-    if ( metricScriptID not in self.allMetricModules ):
+  @staticmethod
+  def GetAllRoles( metricScriptID, roleType ):
+    if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
       return []
   
     if ( roleType == slicer.modulemrml.vtkMRMLMetricInstanceNode.TransformRole ):
-      return self.allMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
+      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
     elif ( roleType == slicer.modulemrml.vtkMRMLMetricInstanceNode.AnatomyRole ):
-      return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
+      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
     else:
       return []
     
     
   # Note: We are returning a string here
-  def GetAnatomyRoleClassName( self, metricScriptID, role ):
-    if ( metricScriptID not in self.allMetricModules ):
+  @staticmethod
+  def GetAnatomyRoleClassName( metricScriptID, role ):
+    if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
       return []
       
-    return self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles()[ role ]
+    return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles()[ role ]
     
     
   # Note: We are returning a string here
-  def GetContext( self, metricScriptID ):
-    if ( metricScriptID not in self.allMetricModules ):
+  @staticmethod
+  def GetContext( metricScriptID ):
+    if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
       return []
   
     try:
-      self.allMetricModules[ metricScriptID ].GetContext()
+      PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetContext()
     except: # TODO: Keep this for backwards compatibility with Python Metrics?
-      numTransformRoles = len( self.allMetricModules[ metricScriptID ].GetAcceptedTransformRoles() ) #TODO: Add check for "Any" role
-      numAnatomyRoles = len( self.allMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys() )
+      numTransformRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles() ) #TODO: Add check for "Any" role
+      numAnatomyRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys() )
       if ( numTransformRoles == 1 and numAnatomyRoles == 0 ):
         return "Global"
       else:
         return "Local"
 
     
-
-  def CalculateAllMetrics( self ):
-    if ( self.peLogic == None or self.peNode == None or self.peNode.GetTransformBufferNode() == None ):
+  @staticmethod
+  def CalculateAllMetrics( peNodeID ):
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None or PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic() == None ):
       return
+      
+    peNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( peNodeID )
+    if ( peNode == None or peNode.GetTransformBufferNode() == None ):
+      return dict()
   
-    self.allMetrics = self.GetFreshMetrics()
+    allMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
   
     # Start at the beginning (but remember where we were)
-    originalPlaybackTime = self.peNode.GetPlaybackTime()
+    originalPlaybackTime = peNode.GetPlaybackTime()
     
     # Now iterate over all of the trajectories
     combinedTransformBuffer = slicer.modulemrml.vtkLogRecordBuffer()
-    self.peNode.GetTransformBufferNode().GetCombinedTransformRecordBuffer( combinedTransformBuffer )
+    peNode.GetTransformBufferNode().GetCombinedTransformRecordBuffer( combinedTransformBuffer )
     
     if ( combinedTransformBuffer.GetNumRecords() == 0 ):
       return
       
-    self.peNode.SetPlaybackTime( combinedTransformBuffer.GetRecord( 0 ).GetTime(), True )
-    self.peNode.SetAnalysisState( 0 )
-    minTime = self.peNode.GetTransformBufferNode().GetMinimumTime()
+    peNode.SetPlaybackTime( combinedTransformBuffer.GetRecord( 0 ).GetTime(), True )
+    peNode.SetAnalysisState( 0 )
+    minTime = peNode.GetTransformBufferNode().GetMinimumTime()
   
     for i in range( combinedTransformBuffer.GetNumRecords() ):
     
       absTime = combinedTransformBuffer.GetRecord( i ).GetTime()
       relTime = absTime - minTime # Can't just take the 0th record of the combined buffer, because this doesn't account for the messages
-      if ( relTime < self.peNode.GetMarkBegin() or relTime > self.peNode.GetMarkEnd() ):
+      if ( relTime < peNode.GetMarkBegin() or relTime > peNode.GetMarkEnd() ):
         continue
         
-      self.peNode.SetPlaybackTime( absTime, True )
-      self.peLogic.UpdateSceneToPlaybackTime( self.peNode )
-      self.UpdateSelfAndChildMetrics( combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, False )
+      peNode.SetPlaybackTime( absTime, True )
+      PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().UpdateSceneToPlaybackTime( peNode )
+      PythonMetricsCalculatorLogic.UpdateSelfAndChildMetrics( allMetrics, combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, None )
       
       # Update the progress
-      progressPercent = 100 * ( relTime - self.peNode.GetMarkBegin() ) / ( self.peNode.GetMarkEnd() - self.peNode.GetMarkBegin() )
-      self.peNode.SetAnalysisState( int( progressPercent ) )
+      progressPercent = 100 * ( relTime - peNode.GetMarkBegin() ) / ( peNode.GetMarkEnd() - peNode.GetMarkBegin() )
+      peNode.SetAnalysisState( int( progressPercent ) )
       
-      if ( self.peNode.GetAnalysisState() < 0 ):
+      if ( peNode.GetAnalysisState() < 0 ):
         break
 
-        
-    if ( self.peNode.GetAnalysisState() >= 0 ):
-      self.OutputAllMetricsToMetricsTable()
-      
-    self.peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
-    self.peNode.SetAnalysisState( 0 )
-
     
-  def UpdateSelfAndChildMetrics( self, transformName, absTime, updateTable ):
-    if ( self.mrmlScene == None or self.peLogic == None ):
+    if ( peNode.GetAnalysisState() >= 0 ):
+      PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( peNode.GetMetricsTableNode(), allMetrics )
+      
+    peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
+    peNode.SetAnalysisState( 0 )
+
+  
+  @staticmethod  
+  def UpdateSelfAndChildMetrics( allMetrics, transformName, absTime, metricsTable ):
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None or PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic() == None ):
       return
   
     # Get the recorded transform node
-    updatedTransformNode = self.mrmlScene.GetFirstNode( transformName, "vtkMRMLLinearTransformNode", [ False ] ) # TODO: Is there an error in this function?
+    updatedTransformNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetFirstNode( transformName, "vtkMRMLLinearTransformNode", [ False ] ) # TODO: Is there an error in this function?
     
     # Get all transforms in the scene
     transformCollection = vtk.vtkCollection()
-    self.peLogic.GetSceneVisibleTransformNodes( transformCollection )
+    PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().GetSceneVisibleTransformNodes( transformCollection )
     
     # Update all metrics associated with children of the recorded transform
     for i in range( transformCollection.GetNumberOfItems() ):
       currentTransformNode = transformCollection.GetItemAsObject( i )
-      if ( self.peLogic.IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
-        self.UpdateTransformMetrics( currentTransformNode, absTime, updateTable )
+      if ( PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
+        PythonMetricsCalculatorLogic.UpdateMetrics( allMetrics, currentTransformNode, absTime, metricsTable )
 
-        
-  def UpdateTransformMetrics( self, transformNode, absTime, updateTable ):
-    if ( self.mrmlScene == None ):
+  
+  @staticmethod  
+  def UpdateMetrics( allMetrics, transformNode, absTime, metricsTable ):
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
       return
       
     # The assumption is that the scene is already appropriately updated
@@ -443,9 +470,9 @@ class PythonMetricsCalculatorLogic:
     transformNode.GetMatrixTransformToWorld( matrix )
     point = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ), matrix.GetElement( 3, 3 ) ]
     
-    for metricInstanceID in self.allMetrics:
-      metric = self.allMetrics[ metricInstanceID ]
-      metricInstanceNode = self.mrmlScene.GetNodeByID( metricInstanceID )
+    for metricInstanceID in allMetrics:
+      metric = allMetrics[ metricInstanceID ]
+      metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
       
       for role in metric.GetAcceptedTransformRoles():
         if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == transformNode.GetID() ):
@@ -456,9 +483,25 @@ class PythonMetricsCalculatorLogic:
       
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
-    if ( updateTable ):
-      self.OutputAllMetricsToMetricsTable()
-
+    if ( metricsTable != None ):
+      self.OutputAllMetricsToMetricsTable( metricsTable, allMetrics )
+      
+      
+  # Instance methods for real-time metric computation
+  def SetupRealTimeMetricComputation( self, peNodeID ):
+    if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None  ):
+      return
+      
+    peNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( peNodeID )
+    if ( peNode == None or peNode.GetMetricsTableNode() == None ):
+      return dict()
+      
+    self.realTimeMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
+    self.realTimeMetricsTable = peNode.GetMetricsTableNode()
+    
+    
+  def UpdateRealTimeMetrics( self, transformName, absTime ):
+    PythonMetricsCalculatorLogic.UpdateSelfAndChildMetrics( self.realTimeMetrics, transformName, absTime, self.realTimeMetricsTable )
     
 
 
