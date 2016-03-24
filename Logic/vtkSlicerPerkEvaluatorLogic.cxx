@@ -123,7 +123,7 @@ void vtkSlicerPerkEvaluatorLogic
 
   this->PythonManager = qSlicerApplication::application()->pythonManager();
   this->PythonManager->executeString( "import PythonMetricsCalculator" );
-  this->PythonManager->executeString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.AddCoreMetricsToScene()" );
+  this->PythonManager->executeString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.Initialize()" );
 }
 
 
@@ -165,10 +165,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Use the python metrics calculator module
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicComputeInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicComputeInstance.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
-  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicComputeInstance.SetMetricsTableID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicComputeInstance.CalculateAllMetrics()" );
+  this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.CalculateAllMetrics( '%1' )" ).arg( peNode->GetID() ) );
 
   peNode->GetMetricsTableNode()->Modified(); // Table has been modified
   peNode->GetMetricsTableNode()->StorableModified(); // Make sure the metrics table is saved by default
@@ -187,9 +184,7 @@ void vtkSlicerPerkEvaluatorLogic
 
   // Use the python metrics calculator module
   this->PythonManager->executeString( "PythonMetricsCalculatorLogicRealTimeInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.SetPerkEvaluatorNodeID( '%1' )" ).arg( peNode->GetID() ) );
-  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.SetMetricsTableID( '%1' )" ).arg( peNode->GetMetricsTableID().c_str() ) );
-  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.allMetrics = PythonMetricsCalculatorLogicRealTimeInstance.GetFreshMetrics()" ) ); // Create the metrics
+  this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.SetupRealTimeMetricComputation( '%1' )" ).arg( peNode->GetID() ) );
 }
 
 
@@ -200,6 +195,9 @@ void vtkSlicerPerkEvaluatorLogic
   {
     return;
   }
+
+  // Hold off on modified events until we are done
+  int modifyFlag = peNode->StartModify();
 
   vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
   std::vector< std::string > activeTransformIDs = peNode->GetTransformBufferNode()->GetActiveTransformIDs();
@@ -230,6 +228,8 @@ void vtkSlicerPerkEvaluatorLogic
     }
 
   }
+
+  peNode->EndModify( modifyFlag );
      
 }
 
@@ -514,9 +514,7 @@ std::vector< std::string > vtkSlicerPerkEvaluatorLogic
   }
 
   // Use the python metrics calculator module
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicRolesInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicRolesInstance.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
-  this->PythonManager->executeString( QString( "PythonMetricScriptRoles = PythonMetricsCalculatorLogicRolesInstance.GetAllRoles( '%1', %2 )" ).arg( msNodeID.c_str() ).arg( roleType ) );
+  this->PythonManager->executeString( QString( "PythonMetricScriptRoles = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetAllRoles( '%1', %2 )" ).arg( msNodeID.c_str() ).arg( roleType ) );
   QVariant result = this->PythonManager->getVariable( "PythonMetricScriptRoles" );
 
   return QVariantToVector( result );
@@ -532,9 +530,7 @@ std::string vtkSlicerPerkEvaluatorLogic
   }
 
   // Use the python metrics calculator module
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicAnatomyInstance.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
-  this->PythonManager->executeString( QString( "PythonMetricScriptAnatomyClassName = PythonMetricsCalculatorLogicAnatomyInstance.GetAnatomyRoleClassName( '%1', '%2' )" ).arg( msNodeID.c_str() ).arg( role.c_str() ) );
+  this->PythonManager->executeString( QString( "PythonMetricScriptAnatomyClassName = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetAnatomyRoleClassName( '%1', '%2' )" ).arg( msNodeID.c_str() ).arg( role.c_str() ) );
   QVariant result = this->PythonManager->getVariable( "PythonMetricScriptAnatomyClassName" );
   
   return result.toString().toStdString();
@@ -551,9 +547,7 @@ std::string vtkSlicerPerkEvaluatorLogic
   }
 
   // Use the python metrics calculator module
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicContextInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
-  this->PythonManager->executeString( "PythonMetricsCalculatorLogicContextInstance.SetPerkEvaluatorNodeID( '' )" ); // Note that we don't actually need a PerkEvaluator node for this, but this is convenient for setting things up
-  this->PythonManager->executeString( QString( "PythonMetricScriptContext = PythonMetricsCalculatorLogicContextInstance.GetContext( '%1' )" ).arg( msNodeID.c_str() ) );
+  this->PythonManager->executeString( QString( "PythonMetricScriptContext = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetContext( '%1' )" ).arg( msNodeID.c_str() ) );
   QVariant result = this->PythonManager->getVariable( "PythonMetricScriptContext" );
   
   return result.toString().toStdString();
@@ -697,7 +691,7 @@ void vtkSlicerPerkEvaluatorLogic
     // The time
     double absTime = peNode->GetTransformBufferNode()->GetTransformRecordBuffer( *transformName )->GetCurrentRecord()->GetTime();
     // Call the metrics update function
-    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateSelfAndChildMetrics( '%1', %2, True )" ).arg( transformName->c_str() ).arg( absTime ) );
+    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics( '%1', %2 )" ).arg( transformName->c_str() ).arg( absTime ) );
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }
@@ -708,6 +702,7 @@ void vtkSlicerPerkEvaluatorLogic
   if ( msNode != NULL && event == vtkMRMLMetricScriptNode::PythonSourceCodeChangedEvent )
   {
     this->MergeMetricScripts( msNode );
+    this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.RefreshMetricModules()" ) );
     this->UpdateGlobalMetrics( msNode );
   }
 }
