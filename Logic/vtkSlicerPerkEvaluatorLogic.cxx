@@ -230,7 +230,6 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   peNode->EndModify( modifyFlag );
-     
 }
 
 
@@ -579,25 +578,33 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 void vtkSlicerPerkEvaluatorLogic
-::UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode )
+::UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, std::string transformName )
 {
   if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
   {
     return;
   }
   
-  std::vector< std::string > recordedTransformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
+  std::vector< std::string > transformNames;
+  if ( transformName.compare( "" ) == 0 )
+  {
+    transformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
+  }
+  else
+  {
+    transformNames = std::vector< std::string >( 1, transformName );
+  }
 
-  for ( int i = 0; i < recordedTransformNames.size(); i++ )
+  for ( int i = 0; i < transformNames.size(); i++ )
   {	
     // Find the linear transform node assicated with the transform name
-    vtkMRMLLinearTransformNode* linearTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( recordedTransformNames.at( i ).c_str(), "vtkMRMLLinearTransformNode" ) );
+    vtkMRMLLinearTransformNode* linearTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( transformNames.at( i ).c_str(), "vtkMRMLLinearTransformNode" ) );
     if ( linearTransformNode == NULL )
     {
       continue;
     }
 
-    vtkTransformRecord* currentRecord = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), recordedTransformNames.at( i ) );
+    vtkTransformRecord* currentRecord = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), transformNames.at( i ) );
     if ( currentRecord == NULL )
     {
       continue;

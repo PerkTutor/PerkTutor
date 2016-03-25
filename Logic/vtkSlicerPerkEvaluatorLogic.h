@@ -78,7 +78,7 @@ public:
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
 
-  void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
+  void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, std::string transformName = "" );
 
   double GetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
   void SetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double time );

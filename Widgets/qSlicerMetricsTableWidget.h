@@ -53,6 +53,7 @@ public:
 
   void setExpandHeightToContents( bool expand );
   bool getExpandHeightToContents();
+  int getContentHeight();
 
 protected slots:
 
@@ -60,6 +61,8 @@ protected slots:
   void onMetricsTableNodeModified();
   
   void onClipboardButtonClicked();
+
+  void onHeaderDoubleClicked( int column );
 
   void updateWidget();
 

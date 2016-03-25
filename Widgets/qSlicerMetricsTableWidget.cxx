@@ -67,6 +67,7 @@ qSlicerMetricsTableWidget
 {
   this->MetricsTableNode = NULL;
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
+  this->ExpandHeightToContents = true;
   this->setup();
 }
 
@@ -88,6 +89,8 @@ void qSlicerMetricsTableWidget
   
   connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( onClipboardButtonClicked() ) );
   d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
+
+  connect( d->MetricsTable->horizontalHeader(), SIGNAL( sectionDoubleClicked( int ) ), this, SLOT( onHeaderDoubleClicked( int ) ) );
 
   this->updateWidget();  
 }
@@ -138,6 +141,21 @@ void qSlicerMetricsTableWidget
   this->ExpandHeightToContents = expand;
   this->updateWidget();
 }
+
+
+int qSlicerMetricsTableWidget
+::getContentHeight()
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  int contentHeight = d->MetricsTable->horizontalHeader()->height() + 4; // This "magic" number makes it so there is no scroll bar
+  for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
+  {
+    contentHeight += d->MetricsTable->rowHeight( i );
+  }
+  return contentHeight;
+}
+
 
 
 void qSlicerMetricsTableWidget
@@ -192,6 +210,22 @@ void qSlicerMetricsTableWidget
 
 
 void qSlicerMetricsTableWidget
+::onHeaderDoubleClicked( int column )
+{
+  Q_D( qSlicerMetricsTableWidget );
+
+  // Sort the column, and then reset the table sizing
+  d->MetricsTable->sortItems( column );
+  d->MetricsTable->resizeRowsToContents();
+
+  if ( this->ExpandHeightToContents )
+  {
+    d->MetricsTable->setMinimumHeight( this->getContentHeight() );
+  }
+}
+
+
+void qSlicerMetricsTableWidget
 ::updateWidget()
 {
   Q_D(qSlicerMetricsTableWidget);
@@ -240,15 +274,10 @@ void qSlicerMetricsTableWidget
 
   d->MetricsTable->resizeRowsToContents();
 
+  // Make sure the table widget is large enough so that no scroll bar is needed to see all of the data
   if ( this->ExpandHeightToContents )
   {
-    // Make sure the table widget is large enough so that no scroll bar is needed to see all of the data
-    int contentHeight = ( d->MetricsTable->rowCount() - 1 ) + d->MetricsTable->horizontalHeader()->height();
-    for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
-    {
-      contentHeight += d->MetricsTable->rowHeight( i );
-    }
-    d->MetricsTable->setMinimumHeight( contentHeight );
+    d->MetricsTable->setMinimumHeight( this->getContentHeight() );
   }
 
   // Reset the current row and column to what they were
