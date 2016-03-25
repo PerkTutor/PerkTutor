@@ -422,7 +422,7 @@ class PythonMetricsCalculatorLogic:
         continue
         
       peNode.SetPlaybackTime( absTime, True )
-      PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().UpdateSceneToPlaybackTime( peNode )
+      PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().UpdateSceneToPlaybackTime( peNode, combinedTransformBuffer.GetRecord( i ).GetDeviceName() )
       PythonMetricsCalculatorLogic.UpdateSelfAndChildMetrics( allMetrics, combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, None )
       
       # Update the progress
