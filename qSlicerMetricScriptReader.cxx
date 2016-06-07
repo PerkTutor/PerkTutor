@@ -97,24 +97,23 @@ bool qSlicerMetricScriptReader::load(const IOProperties& properties)
   
   vtkSmartPointer< vtkMRMLMetricScriptNode > msNode;
   msNode.TakeReference( vtkMRMLMetricScriptNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLMetricScriptNode" ) ) );
-  msNode->SetName( this->mrmlScene()->GetUniqueNameByString( baseName.toLatin1() ) );
-  msNode->SetScene( this->mrmlScene() );
-  this->mrmlScene()->AddNode( msNode );
-
+  
   vtkSmartPointer< vtkMRMLMetricScriptStorageNode > mssNode;
   mssNode.TakeReference( vtkMRMLMetricScriptStorageNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLMetricScriptStorageNode" ) ) );
   mssNode->SetFileName( fileName.toLatin1() );
-  mssNode->SetScene( this->mrmlScene() );
-  this->mrmlScene()->AddNode( mssNode );
-  
-  // Read
-  int result = mssNode->ReadData( msNode );
-  if ( result == 0 ) // failed to read
+
+  int result = mssNode->ReadData( msNode ); // Read
+  if ( result == 0 )
   {
-    this->mrmlScene()->RemoveNode( mssNode );
-    this->mrmlScene()->RemoveNode( msNode );
     return false;
   }
+
+  msNode->SetName( this->mrmlScene()->GetUniqueNameByString( baseName.toLatin1() ) );  
+  msNode->SetScene( this->mrmlScene() );
+  this->mrmlScene()->AddNode( msNode );
+
+  mssNode->SetScene( this->mrmlScene() );
+  this->mrmlScene()->AddNode( mssNode );
   
   return true;
 }

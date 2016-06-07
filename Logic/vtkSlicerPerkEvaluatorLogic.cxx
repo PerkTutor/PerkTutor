@@ -19,6 +19,7 @@
 #include <vtkPolyData.h>
 #include <vtkSelectEnclosedPoints.h>
 #include <vtkSmartPointer.h>
+#include <vtkTable.h>
 
 // STD includes
 #include <cassert>
@@ -124,6 +125,8 @@ void vtkSlicerPerkEvaluatorLogic
   this->PythonManager = qSlicerApplication::application()->pythonManager();
   this->PythonManager->executeString( "import PythonMetricsCalculator" );
   this->PythonManager->executeString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.Initialize()" );
+
+
 }
 
 
@@ -171,6 +174,40 @@ void vtkSlicerPerkEvaluatorLogic
   peNode->GetMetricsTableNode()->StorableModified(); // Make sure the metrics table is saved by default
 }
 
+std::string vtkSlicerPerkEvaluatorLogic
+::GetMetricValue( vtkMRMLMetricInstanceNode* miNode, vtkMRMLPerkEvaluatorNode* peNode )
+{
+  // Verify that the table node exists
+  if ( peNode == NULL )
+  {
+    return "";
+  }
+  vtkMRMLTableNode* metricsTableNode = peNode->GetMetricsTableNode();
+  if ( metricsTableNode == NULL )
+  {
+    return "";
+  }
+
+  std::string miName = this->GetMetricName( miNode->GetAssociatedMetricScriptID() );
+  std::string miUnit = this->GetMetricUnit( miNode->GetAssociatedMetricScriptID() );
+  std::string miRoles = miNode->GetCombinedRoleString();
+
+  // Simply iterate through all entries in the table, and check if they correspond to the given metric instance node
+  for ( int i = 0; i < metricsTableNode->GetTable()->GetNumberOfRows(); i++ )
+  {    
+    bool namesMatch = miName.compare( metricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() ) == 0;
+    bool unitsMatch = miUnit.compare( metricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() ) == 0;
+    bool rolesMatch = miRoles.compare( metricsTableNode->GetTable()->GetValueByName( i, "MetricRoles" ).ToString() ) == 0;
+
+    if ( namesMatch && unitsMatch && rolesMatch )
+    {
+      return metricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString(); // Note: returning a string here
+    }
+  }
+
+  return "";
+}
+
 
 void vtkSlicerPerkEvaluatorLogic
 ::SetupRealTimeProcessing( vtkMRMLPerkEvaluatorNode* peNode )
@@ -185,51 +222,6 @@ void vtkSlicerPerkEvaluatorLogic
   // Use the python metrics calculator module
   this->PythonManager->executeString( "PythonMetricsCalculatorLogicRealTimeInstance = PythonMetricsCalculator.PythonMetricsCalculatorLogic()" );
   this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.SetupRealTimeMetricComputation( '%1' )" ).arg( peNode->GetID() ) );
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::ObserveGlobalMetricInstances( vtkMRMLPerkEvaluatorNode* peNode )
-{
-  if ( peNode->GetTransformBufferNode() == NULL )
-  {
-    return;
-  }
-
-  // Hold off on modified events until we are done
-  int modifyFlag = peNode->StartModify();
-
-  vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
-  std::vector< std::string > activeTransformIDs = peNode->GetTransformBufferNode()->GetActiveTransformIDs();
-
-  // Since all of the "global" metrics instances should already be added to the scene, we just need to find them
-  for ( int i = 0; i < metricInstanceNodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( metricInstanceNodes->GetItemAsObject( i ) );
-    
-    std::vector< std::string > transformRoles = this->GetAllRoles( miNode->GetAssociatedMetricScriptID(), vtkMRMLMetricInstanceNode::TransformRole );
-    bool oneTransformRole = transformRoles.size() == 1;
-    bool globalContext = this->GetContext( miNode->GetAssociatedMetricScriptID() ).compare( "Global" ) == 0;
-    if ( ! oneTransformRole || ! globalContext )
-    {
-      continue;
-    }
-
-    // Remove the metric instance (it will be added back if it should be)
-    peNode->RemoveMetricInstanceID( miNode->GetID() );
-
-    // Observe the metric instance if it matches one of the active transforms
-    for ( int j = 0; j < activeTransformIDs.size(); j++ )
-    {      
-      if ( miNode->GetRoleID( transformRoles.at( 0 ), vtkMRMLMetricInstanceNode::TransformRole ).compare( activeTransformIDs.at( j ) ) == 0 )
-      {
-        peNode->AddMetricInstanceID( miNode->GetID() );
-      }
-    }
-
-  }
-
-  peNode->EndModify( modifyFlag );
 }
 
 
@@ -267,9 +259,9 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 void vtkSlicerPerkEvaluatorLogic
-::CreateGlobalMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole )
+::CreatePervasiveMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole )
 {
-  // The assumption is that we have already established that the context of the metric script is "Global"
+  // The assumption is that we have already established that the context of the metric script is "Pervasive"
   if ( msNode == NULL || transformNode == NULL )
   {
     return;
@@ -291,19 +283,14 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Create it and add it to the scene
-  vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
-  newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
-  newMINode->SetScene( this->GetMRMLScene() );
-	this->GetMRMLScene()->AddNode( newMINode );
-  newMINode->SetName( msNode->GetName() );
-  newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
+  vtkMRMLMetricInstanceNode* newMINode = this->CreateMetricInstance( msNode );
   newMINode->SetRoleID( transformNode->GetID(), transformRole, vtkMRMLMetricInstanceNode::TransformRole );
-  newMINode->SetSaveWithScene( false ); // Don't save the global instances with the scene, since they will be automatically recreated whenever necessary
+  newMINode->SetSaveWithScene( false ); // Don't save the pervasive metric instances with the scene, since they will be automatically recreated whenever necessary
 }
 
 
 void vtkSlicerPerkEvaluatorLogic
-::UpdateGlobalMetrics( vtkMRMLLinearTransformNode* transformNode )
+::UpdatePervasiveMetrics( vtkMRMLLinearTransformNode* transformNode )
 {
   if ( transformNode == NULL )
   {
@@ -317,38 +304,27 @@ void vtkSlicerPerkEvaluatorLogic
   {
     // Assume that we want to add any metric whose only transform role in "Any" and has no anatomy roles
     vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
-    if ( this->GetContext( msNode->GetID() ).compare( "Global" ) != 0 )
+    if ( ! this->GetMetricPervasive( msNode->GetID() ) )
     {
       continue;
     }
 
-    // Check that we only have one transform role
-    std::vector< std::string > transformRoles = this->GetAllRoles( msNode->GetID(), vtkMRMLMetricInstanceNode::TransformRole );
-    if ( transformRoles.size() != 1 )
-    {
-      continue;
-    }
-
-    // Create a metric instance node, with this transform serving the lone transform role
-   this->CreateGlobalMetric( msNode, transformNode, transformRoles.at( 0 ) );
+    // Create a metric instance node, with this transform serving the lone transform role    
+    std::vector< std::string > transformRoles = this->GetAllRoles( msNode->GetID(), vtkMRMLMetricInstanceNode::TransformRole );    
+    this->CreatePervasiveMetric( msNode, transformNode, transformRoles.at( 0 ) );
   }
 
 }
 
 
 void vtkSlicerPerkEvaluatorLogic
-::UpdateGlobalMetrics( vtkMRMLMetricScriptNode* msNode )
+::UpdatePervasiveMetrics( vtkMRMLMetricScriptNode* msNode )
 {
-  if ( msNode == NULL || this->GetContext( msNode->GetID() ).compare( "Global" ) != 0 )
+  if ( msNode == NULL || ! this->GetMetricPervasive( msNode->GetID() ) )
   {
     return;
   }
-  // Check that we only have one transform role
   std::vector< std::string > transformRoles = this->GetAllRoles( msNode->GetID(), vtkMRMLMetricInstanceNode::TransformRole );
-  if ( transformRoles.size() != 1 )
-  {
-    return;
-  }
 
   // Grab all transforms
   vtkSmartPointer< vtkCollection > transformNodes = vtkSmartPointer< vtkCollection >::New();
@@ -358,42 +334,75 @@ void vtkSlicerPerkEvaluatorLogic
   {
     vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNodes->GetItemAsObject( i ) );
     // Create a metric instance node, with this transform serving the lone transform role
-    this->CreateGlobalMetric( msNode, transformNode, transformRoles.at( 0 ) );   
+    this->CreatePervasiveMetric( msNode, transformNode, transformRoles.at( 0 ) ); // Must have precisely one transform role if it is pervasive 
   }
 
 }
 
 
+vtkMRMLMetricInstanceNode* vtkSlicerPerkEvaluatorLogic
+::CreateMetricInstance( vtkMRMLMetricScriptNode* msNode )
+{
+  if ( msNode == NULL )
+  {
+    return NULL; // Only work on non-pervasive metrics, the pervasive metrics need a different mechanism
+  }
+
+  // Create a metric instance node, with empty roles
+  vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
+  newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
+  newMINode->SetScene( this->GetMRMLScene() );
+	this->GetMRMLScene()->AddNode( newMINode );
+  newMINode->SetName( msNode->GetName() );
+  newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
+  // If it is shared, it will be added automatically to all the perk evaluator nodes
+  // If it is not shared, it must be added manually to perk evaluator nodes
+
+  return newMINode;
+}
+
+
 void vtkSlicerPerkEvaluatorLogic
-::CreateLocalMetrics( vtkMRMLPerkEvaluatorNode* peNode )
+::ShareMetricInstances( vtkMRMLPerkEvaluatorNode* peNode )
 {
   if ( peNode == NULL )
   {
     return;
   }
 
-  // Grab all metric scripts
-  vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+  // Grab all metric instances
+  vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
 
-  for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
+  for ( int i = 0; i < metricInstanceNodes->GetNumberOfItems(); i++ )
   {
-    // Assume that we want to add any metric whose only transform role in "Any" and has no anatomy roles
-    vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
-    bool emptySource = msNode->GetPythonSourceCode().compare( "" ) == 0;
-    bool localContext = this->GetContext( msNode->GetID() ).compare( "Local" ) == 0;
-    if ( emptySource || ! localContext )
+    // Add all metrics that are "shared"
+    vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( metricInstanceNodes->GetItemAsObject( i ) );
+    if ( ! this->GetMetricShared( miNode->GetAssociatedMetricScriptID() ) )
     {
       continue;
     }
+    peNode->AddMetricInstanceID( miNode->GetID() );
+  }
 
-    // Create a metric instance node, with empty roles
-    vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
-    newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
-    newMINode->SetScene( this->GetMRMLScene() );
-	  this->GetMRMLScene()->AddNode( newMINode );
-    newMINode->SetName( msNode->GetName() );
-    newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
-    peNode->AddMetricInstanceID( newMINode->GetID() );      
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::ShareMetricInstances( vtkMRMLMetricInstanceNode* miNode )
+{
+  if ( miNode == NULL || ! this->GetMetricShared( miNode->GetAssociatedMetricScriptID() ) )
+  {
+    return;
+  }
+
+  // Grab all Perk Evaluator nodes
+  vtkSmartPointer< vtkCollection > perkEvaluatorNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+
+  for ( int i = 0; i < perkEvaluatorNodes->GetNumberOfItems(); i++ )
+  {
+    // Add the metric to all of the perk evaluator nodes (since it is shared)
+    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( perkEvaluatorNodes->GetItemAsObject( i ) );
+    peNode->AddMetricInstanceID( miNode->GetID() );
   }
 
 }
@@ -504,6 +513,70 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
+std::string vtkSlicerPerkEvaluatorLogic
+::GetMetricName( std::string msNodeID )
+{
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
+  {
+    return "";
+  }
+
+  // Use the python metrics calculator module
+  this->PythonManager->executeString( QString( "PythonMetricScriptMetricName = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetMetricName( '%1' )" ).arg( msNodeID.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptMetricName" );
+  
+  return result.toString().toStdString();
+}
+
+
+std::string vtkSlicerPerkEvaluatorLogic
+::GetMetricUnit( std::string msNodeID )
+{
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
+  {
+    return "";
+  }
+
+  // Use the python metrics calculator module
+  this->PythonManager->executeString( QString( "PythonMetricScriptMetricUnit = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetMetricUnit( '%1' )" ).arg( msNodeID.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptMetricUnit" );
+  
+  return result.toString().toStdString();
+}
+
+
+bool vtkSlicerPerkEvaluatorLogic
+::GetMetricShared( std::string msNodeID )
+{
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
+  {
+    return "";
+  }
+
+  // Use the python metrics calculator module
+  this->PythonManager->executeString( QString( "PythonMetricScriptMetricShared = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetMetricShared( '%1' )" ).arg( msNodeID.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptMetricShared" );
+  
+  return result.toBool();
+}
+
+
+bool vtkSlicerPerkEvaluatorLogic
+::GetMetricPervasive( std::string msNodeID )
+{
+  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
+  {
+    return "";
+  }
+
+  // Use the python metrics calculator module
+  this->PythonManager->executeString( QString( "PythonMetricScriptMetricPervasive = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetMetricPervasive( '%1' )" ).arg( msNodeID.c_str() ) );
+  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptMetricPervasive" );
+  
+  return result.toBool();
+}
+
+
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
 ::GetAllRoles( std::string msNodeID, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType )
 {
@@ -534,24 +607,6 @@ std::string vtkSlicerPerkEvaluatorLogic
   
   return result.toString().toStdString();
 }
-
-
-
-std::string vtkSlicerPerkEvaluatorLogic
-::GetContext( std::string msNodeID )
-{
-  if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
-  {
-    return "";
-  }
-
-  // Use the python metrics calculator module
-  this->PythonManager->executeString( QString( "PythonMetricScriptContext = PythonMetricsCalculator.PythonMetricsCalculatorLogic.GetContext( '%1' )" ).arg( msNodeID.c_str() ) );
-  QVariant result = this->PythonManager->getVariable( "PythonMetricScriptContext" );
-  
-  return result.toString().toStdString();
-}
-
 
 
 void vtkSlicerPerkEvaluatorLogic
@@ -684,12 +739,6 @@ void vtkSlicerPerkEvaluatorLogic
     this->SetupRealTimeProcessing( peNode );
   }
 
-  // Update the metric instances for the node
-  if ( peNode != NULL && event == vtkMRMLPerkEvaluatorNode::BufferActiveTransformsChangedEvent )
-  {
-    this->ObserveGlobalMetricInstances( peNode );
-  }
-
   // Handle an event in the real-time processing
   if ( peNode != NULL && peNode->GetRealTimeProcessing() && event == vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent )
   {
@@ -703,15 +752,6 @@ void vtkSlicerPerkEvaluatorLogic
     peNode->GetMetricsTableNode()->Modified();
   }
 
-  // Metric Script Node
-  // Update metrics whenever the source code is changed
-  // Though, note that it is recommended only to set it once (and then never touch it again)
-  if ( msNode != NULL && event == vtkMRMLMetricScriptNode::PythonSourceCodeChangedEvent )
-  {
-    this->MergeMetricScripts( msNode );
-    this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.RefreshMetricModules()" ) );
-    this->UpdateGlobalMetrics( msNode );
-  }
 }
 
 
@@ -729,18 +769,33 @@ void vtkSlicerPerkEvaluatorLogic
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::BufferActiveTransformsChangedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+    this->ShareMetricInstances( peNode );
   }
 
-  // If a transform or metric script was added to the scene, make sure all transforms have all global metric instances
+  // If a transform or metric script was added to the scene, make sure all transforms have all pervasive metric instances
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( addedNode );
   if ( event == vtkMRMLScene::NodeAddedEvent && transformNode != NULL )
   {
-    this->UpdateGlobalMetrics( transformNode );
+    this->UpdatePervasiveMetrics( transformNode );
   }
   vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( addedNode );
   if ( event == vtkMRMLScene::NodeAddedEvent && msNode != NULL )
   {
-    msNode->AddObserver( vtkMRMLMetricScriptNode::PythonSourceCodeChangedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
+    this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.RefreshMetricModules()" ) );
+    if ( this->GetMetricPervasive( msNode->GetID() ) )
+    {
+      this->UpdatePervasiveMetrics( msNode );
+    }
+    else
+    {
+      this->CreateMetricInstance( msNode );
+    }
   }
 
+  // Share any shared metric with all perk evaluator nodes
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( addedNode );
+  if ( event == vtkMRMLScene::NodeAddedEvent && miNode != NULL )
+  {
+    this->ShareMetricInstances( miNode );
+  }
 }

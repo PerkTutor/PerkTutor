@@ -72,9 +72,14 @@ public:
   void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
   void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
 
+  std::string GetMetricName( std::string msNodeID );
+  std::string GetMetricUnit( std::string msNodeID );
+  bool GetMetricShared( std::string msNodeID );
+  bool GetMetricPervasive( std::string msNodeID );
+
   std::vector< std::string > GetAllRoles( std::string msNodeID, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType );
   std::string GetAnatomyRoleClassName( std::string msNodeID, std::string role );
-  std::string GetContext( std::string msNodeID );
+  
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
 
@@ -85,16 +90,19 @@ public:
   double GetMaximumRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
 
   void ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  std::string GetMetricValue( vtkMRMLMetricInstanceNode* miNode, vtkMRMLPerkEvaluatorNode* peNode );
 
   void SetupRealTimeProcessing( vtkMRMLPerkEvaluatorNode* peNode );
 
-  void ObserveGlobalMetricInstances( vtkMRMLPerkEvaluatorNode* peNode );
   void SetMetricInstancesRolesToID( vtkMRMLPerkEvaluatorNode* peNode, std::string nodeID, std::string role, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType );
-  void UpdateGlobalMetrics( vtkMRMLLinearTransformNode* transformNode );
-  void UpdateGlobalMetrics( vtkMRMLMetricScriptNode* msNode );
-  void CreateLocalMetrics( vtkMRMLPerkEvaluatorNode* peNode );
+  void UpdatePervasiveMetrics( vtkMRMLLinearTransformNode* transformNode );
+  void UpdatePervasiveMetrics( vtkMRMLMetricScriptNode* msNode );
+  void CreatePervasiveMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole );
+  vtkMRMLMetricInstanceNode* CreateMetricInstance( vtkMRMLMetricScriptNode* msNode );
+  void ShareMetricInstances( vtkMRMLPerkEvaluatorNode* peNode );
+  void ShareMetricInstances( vtkMRMLMetricInstanceNode* miNode );
   void MergeMetricScripts( vtkMRMLMetricScriptNode* newMetricScriptNode );
-  void CreateGlobalMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole );
+
 
   void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
   void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );

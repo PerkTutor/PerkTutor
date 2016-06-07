@@ -785,7 +785,7 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
   
-  d->logic()->CreateLocalMetrics( peNode );
+  // d->logic()->CreateLocalMetrics( peNode );
   // Everything else is taken care of by the mrmlNodeChanged function
 }
 
