@@ -156,10 +156,9 @@ class PythonMetricsCalculatorLogic:
   requiring an instance of the Widget
   """
   
-  # We propose three "scopes" of metrics:
-  # Global: These metrics are shared amongst all Perk Evaluator nodes in the scene. They are created for every transform in the scene and are only defined if the metric takes one transform and no anatomies. Example: Total Time.
-  # Local: These metrics are created specifically (and automatically) for each Perk Evaluator node to have its own copy of. The roles needs to be specified by the user. Example: Tissue Damage
-  # Manual: These metrics need to be manually created by the user.
+  # We propose two concepts for metric distribution:
+  # Sharing: Whether or not to sync the metric with every Perk Evaluator node
+  # Ubiquity: Whether or not the metric spreads to every transform
    
   def __init__( self ):    
     self.realTimeMetrics = dict()
@@ -367,27 +366,56 @@ class PythonMetricsCalculatorLogic:
   @staticmethod
   def GetAnatomyRoleClassName( metricScriptID, role ):
     if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
-      return []
+      return "" 
       
     return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles()[ role ]
     
-    
   # Note: We are returning a string here
   @staticmethod
-  def GetContext( metricScriptID ):
+  def GetMetricName( metricScriptID ):
     if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
-      return []
-  
-    try:
-      PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetContext()
-    except: # TODO: Keep this for backwards compatibility with Python Metrics?
-      numTransformRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles() ) #TODO: Add check for "Any" role
-      numAnatomyRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys() )
-      if ( numTransformRoles == 1 and numAnatomyRoles == 0 ):
-        return "Global"
-      else:
-        return "Local"
+      return ""
+      
+    return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetMetricName()
+      
+      
+  # Note: We are returning a string here
+  @staticmethod
+  def GetMetricUnit( metricScriptID ):
+    if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
+      return ""
+            
+    return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetMetricUnit()      
 
+   
+  # Note: We are returning a bool here
+  @staticmethod
+  def GetMetricShared( metricScriptID ):
+    if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
+      return False
+      
+    try:
+      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetMetricShared()
+    except: # TODO: Keep this for backwards compatibility with Python Metrics?
+      return True
+      
+  
+  # Note: We are returning a bool here
+  @staticmethod
+  def GetMetricPervasive( metricScriptID ):
+    if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
+      return False
+    
+    numTransformRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles() ) #TODO: Add check for "Any" role?
+    numAnatomyRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys() )
+    if ( numTransformRoles != 1 or numAnatomyRoles != 0 ):
+      return False
+      
+    try:
+      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetMetricPervasive()
+    except: # TODO: Keep this for backwards compatibility with Python Metrics?
+      return True
+      
     
   @staticmethod
   def CalculateAllMetrics( peNodeID ):
