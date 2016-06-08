@@ -159,6 +159,8 @@ class PythonMetricsCalculatorLogic:
   # We propose two concepts for metric distribution:
   # Sharing: Whether or not to sync the metric with every Perk Evaluator node
   # Ubiquity: Whether or not the metric spreads to every transform
+  
+  NEEDLE_LENGTH = 300 # 30cm is approximate need length
    
   def __init__( self ):    
     self.realTimeMetrics = dict()
@@ -301,6 +303,7 @@ class PythonMetricsCalculatorLogic:
         
     # Add the anatomy to the fresh metrics
     PythonMetricsCalculatorLogic.AddAnatomyNodesToMetrics( metricDict )
+    PythonMetricsCalculatorLogic.SetNeedleOrientation( metricDict, peNode )
    
     return metricDict
     
@@ -347,6 +350,18 @@ class PythonMetricsCalculatorLogic:
     for metricInstanceID in unfulfilledAnatomies:
       metrics.pop( metricInstanceID )
 
+  
+  @staticmethod
+  def SetNeedleOrientation( metrics, peNode ):
+    if( peNode == None ):
+      return
+      
+    peNodeNeedleOrientation = [ 0, 0, 0 ]
+    peNode.GetNeedleOrientation( peNodeNeedleOrientation )
+    
+    for metricInstanceID in metrics:
+      metrics[ metricInstanceID ].NeedleOrientation = peNodeNeedleOrientation[:] # Element copy
+      
         
   # Note: We are returning a list here, not a dictionary
   @staticmethod
