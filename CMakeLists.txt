@@ -15,7 +15,6 @@ execute_process(
 
 #-----------------------------------------------------------------------------
 set(PERKTUTOR_CORE_METRICS
-  PythonMetrics/__init__.py
   PythonMetrics/ElapsedTime.py
   PythonMetrics/PathLength.py
   PythonMetrics/TissueDamage.py
