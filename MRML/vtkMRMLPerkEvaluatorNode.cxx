@@ -141,7 +141,7 @@ vtkMRMLPerkEvaluatorNode
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
   
-  this->NeedleOrientation = vtkMRMLPerkEvaluatorNode::PlusX;
+  this->NeedleOrientation = vtkMRMLPerkEvaluatorNode::PlusZ; // Default needle orientation protocol
 
   this->PlaybackTime = 0.0;
   this->AnalysisState = -1;
@@ -237,33 +237,33 @@ void vtkMRMLPerkEvaluatorNode
 
 
 void vtkMRMLPerkEvaluatorNode
-::GetNeedleBase( double needleBase[ 4 ] )
+::GetNeedleOrientation( double needleOrientation[ 3 ] )
 {
+  // Note: The base is in the opposite direction of the pointing, so the signs will be opposite
   if ( this->NeedleOrientation == vtkMRMLPerkEvaluatorNode::PlusX )
   {
-    needleBase[ 0 ] = 1; needleBase[ 1 ] = 0; needleBase[ 2 ] = 0;
+    needleOrientation[ 0 ] = 1; needleOrientation[ 1 ] = 0; needleOrientation[ 2 ] = 0;
   }
   if ( this->NeedleOrientation == vtkMRMLPerkEvaluatorNode::MinusX )
   {
-    needleBase[ 0 ] = -1; needleBase[ 1 ] = 0; needleBase[ 2 ] = 0;
+    needleOrientation[ 0 ] = -1; needleOrientation[ 1 ] = 0; needleOrientation[ 2 ] = 0;
   }
   if ( this->NeedleOrientation == vtkMRMLPerkEvaluatorNode::PlusY )
   {
-    needleBase[ 0 ] = 0; needleBase[ 1 ] = 1; needleBase[ 2 ] = 0;
+    needleOrientation[ 0 ] = 0; needleOrientation[ 1 ] = 1; needleOrientation[ 2 ] = 0;
   }
   if ( this->NeedleOrientation == vtkMRMLPerkEvaluatorNode::MinusY )
   {
-    needleBase[ 0 ] = 0; needleBase[ 1 ] = -1; needleBase[ 2 ] = 0;
+    needleOrientation[ 0 ] = 0; needleOrientation[ 1 ] = -1; needleOrientation[ 2 ] = 0;
   }
   if ( this->NeedleOrientation == vtkMRMLPerkEvaluatorNode::PlusZ )
   {
-    needleBase[ 0 ] = 0; needleBase[ 1 ] = 0; needleBase[ 2 ] = 1;
+    needleOrientation[ 0 ] = 0; needleOrientation[ 1 ] = 0; needleOrientation[ 2 ] = 1;
   }
   if ( this->NeedleOrientation == vtkMRMLPerkEvaluatorNode::MinusZ )
   {
-    needleBase[ 0 ] = 0; needleBase[ 1 ] = 0; needleBase[ 2 ] = -1;
+    needleOrientation[ 0 ] = 0; needleOrientation[ 1 ] = 0; needleOrientation[ 2 ] = -1;
   }
-  needleBase[ 3 ] = 1;
 }
 
 

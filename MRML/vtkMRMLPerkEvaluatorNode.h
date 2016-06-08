@@ -90,7 +90,7 @@ public:
   // Enumerate all of the possible needle orientations
   enum NeedleOrientationEnum{ PlusX, MinusX, PlusY, MinusY, PlusZ, MinusZ };  
   // Needle orientation
-  void GetNeedleBase( double needleBase[ 4 ] );
+  void GetNeedleOrientation( double needleOrientation[ 3 ] ); // This is the direction in which the needle points
   NeedleOrientationEnum GetNeedleOrientation();
   void SetNeedleOrientation( NeedleOrientationEnum needleOrietation );
   
