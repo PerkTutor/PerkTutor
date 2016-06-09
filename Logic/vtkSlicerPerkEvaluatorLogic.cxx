@@ -94,6 +94,7 @@ void vtkSlicerPerkEvaluatorLogic
   events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
   events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
   events->InsertNextValue(vtkMRMLScene::EndBatchProcessEvent);
+  events->InsertNextValue(vtkMRMLScene::EndImportEvent);
   this->SetAndObserveMRMLSceneEventsInternal(newScene, events.GetPointer());
 }
 
@@ -285,7 +286,6 @@ void vtkSlicerPerkEvaluatorLogic
   // Create it and add it to the scene
   vtkMRMLMetricInstanceNode* newMINode = this->CreateMetricInstance( msNode );
   newMINode->SetRoleID( transformNode->GetID(), transformRole, vtkMRMLMetricInstanceNode::TransformRole );
-  newMINode->SetSaveWithScene( false ); // Don't save the pervasive metric instances with the scene, since they will be automatically recreated whenever necessary
 }
 
 
@@ -425,8 +425,9 @@ void vtkSlicerPerkEvaluatorLogic
     vtkMRMLMetricScriptNode* currMetricScriptNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
     bool sameNode = strcmp( currMetricScriptNode->GetID(), newMetricScriptNode->GetID() ) == 0;
     bool equalSource = currMetricScriptNode->IsEqual( newMetricScriptNode );
+    bool equalName = strcmp( currMetricScriptNode->GetName(), newMetricScriptNode->GetName() ) == 0;
     bool emptySource = currMetricScriptNode->GetPythonSourceCode().compare( "" ) == 0;
-    if ( sameNode || ! equalSource || emptySource )
+    if ( sameNode || ! equalSource || ! equalName || emptySource )
     {
       continue;
     }
@@ -443,6 +444,22 @@ void vtkSlicerPerkEvaluatorLogic
 
 }
 
+
+void vtkSlicerPerkEvaluatorLogic
+::MergeAllMetricScripts()
+{
+  vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+
+  for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLMetricScriptNode* currMetricScriptNode = vtkMRMLMetricScriptNode::SafeDownCast( metricScriptNodes->GetItemAsObject( i ) );
+    if ( currMetricScriptNode->GetScene() != NULL ) // Don't look at metrics that have already been removed from the scene
+    {
+      this->MergeMetricScripts( currMetricScriptNode );
+    }
+  }
+
+}
 
 
 bool vtkSlicerPerkEvaluatorLogic
@@ -769,7 +786,17 @@ void vtkSlicerPerkEvaluatorLogic
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::BufferActiveTransformsChangedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
-    this->ShareMetricInstances( peNode );
+  }
+
+  // If a scene is being imported, ignore everything below (because the references should already be set in the scene)
+  if ( this->GetMRMLScene() != NULL && this->GetMRMLScene()->IsImporting() )
+  {
+    return;
+  }
+  if ( event == vtkMRMLScene::EndImportEvent )
+  {
+    this->MergeAllMetricScripts();
+    this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.RefreshMetricModules()" ) );
   }
 
   // If a transform or metric script was added to the scene, make sure all transforms have all pervasive metric instances
@@ -781,6 +808,7 @@ void vtkSlicerPerkEvaluatorLogic
   vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( addedNode );
   if ( event == vtkMRMLScene::NodeAddedEvent && msNode != NULL )
   {
+    this->MergeMetricScripts( msNode );
     this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.RefreshMetricModules()" ) );
     if ( this->GetMetricPervasive( msNode->GetID() ) )
     {
@@ -797,5 +825,10 @@ void vtkSlicerPerkEvaluatorLogic
   if ( event == vtkMRMLScene::NodeAddedEvent && miNode != NULL )
   {
     this->ShareMetricInstances( miNode );
+  }
+  peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( addedNode );
+  if ( event == vtkMRMLScene::NodeAddedEvent && peNode != NULL )
+  {
+    this->ShareMetricInstances( peNode );
   }
 }

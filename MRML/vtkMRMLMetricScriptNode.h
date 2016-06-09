@@ -30,13 +30,11 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 
-
 // Slicer includes
 #include "vtkMRMLStorableNode.h"
 
-
-
 // PerkEvaluator includes
+#include "vtkMRMLMetricScriptStorageNode.h"
 #include "vtkSlicerPerkEvaluatorModuleMRMLExport.h"
 
 
@@ -55,6 +53,11 @@ public:
   virtual void ReadXMLAttributes( const char** atts );
   virtual void WriteXML( ostream& of, int indent );
   virtual void Copy( vtkMRMLNode *node );
+
+  // To use the storage node
+  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() { return vtkMRMLMetricScriptStorageNode::New(); };
+  bool GetModifiedSinceRead() { return ( this->GetMTime() > this->GetStoredTime() ); };
+  virtual void UpdateScene( vtkMRMLScene *scene ) { vtkMRMLStorableNode::UpdateScene(scene); };
 
   
 protected:

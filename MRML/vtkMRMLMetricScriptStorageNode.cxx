@@ -114,7 +114,7 @@ int vtkMRMLMetricScriptStorageNode
   std::stringstream sourceCodeStream;
   sourceCodeStream << inFileStream.rdbuf();
 
-  msNode->SetPythonSourceCode( sourceCodeStream.str() );;
+  msNode->SetPythonSourceCode( sourceCodeStream.str() );
   
   inFileStream.close();
 

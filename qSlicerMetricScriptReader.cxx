@@ -105,15 +105,16 @@ bool qSlicerMetricScriptReader::load(const IOProperties& properties)
   int result = mssNode->ReadData( msNode ); // Read
   if ( result == 0 )
   {
+    // this->mrmlScene()->RemoveNode( msNode );
     return false;
   }
 
-  msNode->SetName( this->mrmlScene()->GetUniqueNameByString( baseName.toLatin1() ) );  
+  msNode->SetName( baseName.toStdString().c_str() );  
   msNode->SetScene( this->mrmlScene() );
   this->mrmlScene()->AddNode( msNode );
 
-  mssNode->SetScene( this->mrmlScene() );
-  this->mrmlScene()->AddNode( mssNode );
+  // Indicate that the node was successfully loaded
+  this->setLoadedNodes( QStringList( QString( msNode->GetID() ) ) );
   
   return true;
 }

@@ -102,6 +102,7 @@ public:
   void ShareMetricInstances( vtkMRMLPerkEvaluatorNode* peNode );
   void ShareMetricInstances( vtkMRMLMetricInstanceNode* miNode );
   void MergeMetricScripts( vtkMRMLMetricScriptNode* newMetricScriptNode );
+  void MergeAllMetricScripts();
 
 
   void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
