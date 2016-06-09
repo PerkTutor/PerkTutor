@@ -810,8 +810,13 @@ void qSlicerPerkEvaluatorModuleWidget
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
   d->TransformBufferWidget->setTransformBufferNode( peNode->GetTransformBufferNode() );
 
+  // Disconnect to the GUI from updating the MRML node with rounded values
+  disconnect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
+  disconnect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
   d->BeginSpinBox->setValue( peNode->GetMarkBegin() );
   d->EndSpinBox->setValue( peNode->GetMarkEnd() );
+  connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
+  connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
 
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
