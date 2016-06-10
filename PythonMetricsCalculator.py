@@ -586,24 +586,28 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     except Exception, e:
       self.delayDisplay( "Test caused exception!\n" + str(e) )
 
-  def test_PythonMetricsCalculatorLumbar(self):
+  def test_PythonMetricsCalculatorLumbar(self):  
+    print( "CTEST_FULL_OUTPUT" )
     
     # These are the IDs of the relevant nodes
     transformBufferID = "vtkMRMLTransformBufferNode1"
     tissueModelID = "vtkMRMLModelNode4"
     needleTransformID = "vtkMRMLLinearTransformNode4"
+    trueTableID = "vtkMRMLTableNode1"
     
-    # TODO: Does this work for all OS?
-    sceneFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Scenes/Lumbar/TransformBuffer_Lumbar_Scene.mrml"
-    resultsFile = os.path.dirname( os.path.abspath( __file__ ) ) + "/Data/Results/Lumbar.xml"
+    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
     
     # Load the scene
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
     if ( activeScene.Import() != 1 ):
-      raise Exception( "Scene import failed. Scene file:" + sceneFile )   
+      raise Exception( "Scene import failed. Scene file: " + sceneFile )   
     
+    # Manually add the metric scripts (since they are not saved with the scene, and will be clear with the scene clear)
+    coreMetricScriptFiles = glob.glob( os.path.join( os.path.dirname( __file__ ), "PythonMetrics", "[a-z]*.py" ) )
+    for script in coreMetricScriptFiles:
+      slicer.util.loadNodeFromFile( script, "Python Metric Script" ) # This will load into activeScene, since activeScene == slicer.mrmlScene
     
     transformBufferNode = activeScene.GetNodeByID( transformBufferID )
     if ( transformBufferNode == None ):
@@ -616,70 +620,69 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     needleTransformNode = activeScene.GetNodeByID( needleTransformID )
     if ( needleTransformNode == None ):
       raise Exception( "Bad needle transform." )
-    
-    # Parse the results xml file
-    resultsParser = vtk.vtkXMLDataParser()
-    resultsParser.SetFileName( resultsFile )
-    resultsParser.Parse()
-    rootElement = resultsParser.GetRootElement()
-    if ( rootElement == None or rootElement.GetName() != "PythonMetricsResults" ):
-      raise Exception( "Reading results failed. Results file:" + resultsFile )   
-    
-    # Create a dictionary to store results
-    metricsDict = dict()
-    
-    for i in range( rootElement.GetNumberOfNestedElements() ):
-      element = rootElement.GetNestedElement( i )
-      if ( element == None or element.GetName() != "Metric" ):
-        continue
-      metricsDict[ element.GetAttribute( "Name" ) ] = float( element.GetAttribute( "Value" ) )
+      
+    trueTableNode = activeScene.GetNodeByID( trueTableID )
+    if ( trueTableNode == None ):
+      raise Exception( "Bad true metrics table." )
     
     # Setup the analysis
     peLogic = slicer.modules.perkevaluator.logic()
 
-    peLogic.UpdateToolTrajectories( transformBufferNode )
-    peLogic.SetPlaybackTime( peLogic.GetMinTime() )
-    
     # Setup the parameters
     peNode = activeScene.CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" )
-    
-    peNode.SetAnatomyNodeName( "Tissue", tissueModelNode.GetName() )
-    peNode.SetTransformRole( needleTransformNode.GetName(), "Needle" )
-    
-    peNode.SetMarkBegin( 0 )
-    peNode.SetMarkEnd( peLogic.GetTotalTime() )
-    
+    peNode.SetScene( activeScene )
     activeScene.AddNode( peNode )
     
+    mtNode = activeScene.CreateNodeByClass( "vtkMRMLTableNode" )
+    mtNode.SetScene( activeScene )
+    activeScene.AddNode( mtNode )
+    
+    peNode.SetTransformBufferID( transformBufferNode.GetID() )
+    peNode.SetMetricsTableID( mtNode.GetID() )
+
+    # Now propagate the roles
+    peLogic.SetMetricInstancesRolesToID( peNode, needleTransformNode.GetID(), "Needle", slicer.modulemrml.vtkMRMLMetricInstanceNode.TransformRole )
+    peLogic.SetMetricInstancesRolesToID( peNode, tissueModelNode.GetID(), "Tissue", slicer.modulemrml.vtkMRMLMetricInstanceNode.AnatomyRole )
+
+    # Set the analysis begin and end times
+    peNode.SetMarkBegin( 0 )
+    peNode.SetMarkEnd( peLogic.GetMaximumRelativePlaybackTime( peNode ) )
+    
     # Calculate the metrics
-    pmcLogic = PythonMetricsCalculatorLogic()
-    pmcLogic.SetPerkEvaluatorNodeID( peNode.GetID() )
+    peLogic.ComputeMetrics( peNode )
     
-    metricStringList = pmcLogic.CalculateAllMetrics()
-    if ( len( metricStringList ) == 0 ):
-      raise Exception( "No metrics were calculated." )
-    if ( len( metricStringList ) % 2 != 0 ):
-      raise Exception( "Metric calculation produced an unexpected result." ) 
-    
+    # Check both tables to make sure they have the same number of rows    
+    if ( trueTableNode.GetTable().GetNumberOfRows() != mtNode.GetTable().GetNumberOfRows() ):
+      print "True number of metrics:", trueTableNode.GetTable().GetNumberOfRows(), ", calculated number of metrics:", mtNode.GetTable().GetNumberOfRows()
+      raise Exception( "A different number of metrics was computed."  )
+
     # Compare the metrics to the expected results
-    metricIndex = 0
     metricsFail = False
-    precision = 2
-    
-    while ( metricIndex < len( metricStringList ) ):
-      metricName = metricStringList[ metricIndex ]
-      metricValue = float( metricStringList[ metricIndex + 1 ] )
+    for i in range( mtNode.GetTable().GetNumberOfRows() ):
       
-      if ( metricName not in metricsDict ):
-        print "Could not find expected result for metric:", metricName, ". Value:", metricValue, "."
-      else:
-        if ( round( metricValue, precision ) != round( metricsDict[ metricName ], precision ) ):
-          print "Incorrect metric:", metricName, ". Expected:", metricsDict[ metricName ], "but got", metricValue, "!"
-          metricsFail = True
-        else:
-          print "Correct! Metric:", metricName, ". Expected:", metricsDict[ metricName ], "and got", metricValue, "!"
+      rowMatch = False # Need to match one row
+      for j in range( trueTableNode.GetTable().GetNumberOfRows() ):
         
-      metricIndex = metricIndex + 2
+        colMatch = True # For a given row, need to match every column
+        for k in range( trueTableNode.GetTable().GetNumberOfColumns() ):
+          columnName = trueTableNode.GetTable().GetColumnName( k )
+          trueValue = trueTableNode.GetTable().GetValueByName( j, columnName )
+          testValue = mtNode.GetTable().GetValueByName( i, columnName )
+          if ( not testValue.IsValid() ):
+            raise Exception( "The metrics table was improperly formatted." )
+          if ( trueValue != testValue ):
+            colMatch = False
+        
+        if ( colMatch ):
+          rowMatch = True
+          
+      # If we could not find a row in the true table that matches the row in the test table, report an incorrect metric
+      if ( not rowMatch ):
+        print "Incorrect metric.",
+        for k in range( mtNode.GetTable().GetNumberOfColumns() ):
+          print mtNode.GetTable().GetColumnName( k ), mtNode.GetTable().GetValue( i, k ),
+        print ""          
+        metricsFail = True
         
     if ( metricsFail == True ):
       self.delayDisplay( "Test failed! Calculated metrics were not consistent with results." )

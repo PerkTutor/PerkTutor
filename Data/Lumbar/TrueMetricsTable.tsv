@@ -1,0 +1,10 @@
+MetricName	MetricRoles	MetricUnit	MetricValue
+Elapsed Time	Any = ProbeToRAS	s	47.831
+Path Length	Any = ProbeToRAS	mm	1271.15
+Elapsed Time	Any = StylusTipToRAS	s	47.831
+Path Length	Any = StylusTipToRAS	mm	2694.23
+Tissue Damage	Needle = NeedleRotation, Tissue = BodyModel	mm^2	8312.69
+Path in Tissue	Needle = NeedleRotation, Tissue = BodyModel	mm	623.519
+Time in Tissue	Needle = NeedleRotation, Tissue = BodyModel	s	34.384
+Elapsed Time	Any = NeedleRotation	s	47.831
+Path Length	Any = NeedleRotation	mm	2694.23
