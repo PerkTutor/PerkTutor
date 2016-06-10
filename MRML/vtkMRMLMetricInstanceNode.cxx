@@ -113,7 +113,7 @@ void vtkMRMLMetricInstanceNode
 // Transform and Anatomy Roles ---------------------------------------------------------------
 
 vtkMRMLNode* vtkMRMLMetricInstanceNode
-::GetRoleNode( std::string role, RoleTypeEnum roleType )
+::GetRoleNode( std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType )
 {
   std::string fullReferenceRole = this->GetFullReferenceRoleName( role, roleType );
   return this->GetNodeReference( fullReferenceRole.c_str() );
@@ -121,7 +121,7 @@ vtkMRMLNode* vtkMRMLMetricInstanceNode
 
 
 std::string vtkMRMLMetricInstanceNode
-::GetRoleID( std::string role, RoleTypeEnum roleType )
+::GetRoleID( std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType )
 {
   std::string fullReferenceRole = this->GetFullReferenceRoleName( role, roleType );
   return this->GetNodeReferenceIDString( fullReferenceRole.c_str() );
@@ -129,7 +129,7 @@ std::string vtkMRMLMetricInstanceNode
 
 
 void vtkMRMLMetricInstanceNode
-::SetRoleID( std::string nodeID, std::string role, RoleTypeEnum roleType )
+::SetRoleID( std::string nodeID, std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType )
 {
   std::string fullReferenceRole = this->GetFullReferenceRoleName( role, roleType );
   this->SetNodeReferenceID( fullReferenceRole.c_str(), nodeID.c_str() );
@@ -185,7 +185,7 @@ std::string vtkMRMLMetricInstanceNode
 
 
 std::string vtkMRMLMetricInstanceNode
-::GetFullReferenceRoleName( std::string role, RoleTypeEnum roleType )
+::GetFullReferenceRoleName( std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType )
 {
   std::stringstream fullReferenceRoleStream;
   fullReferenceRoleStream << roleType << ROLE_SEPARATOR << role;

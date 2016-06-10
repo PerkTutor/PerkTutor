@@ -228,7 +228,7 @@ void vtkSlicerPerkEvaluatorLogic
 
 // This function is kind of akin to the old "role" system
 void vtkSlicerPerkEvaluatorLogic
-::SetMetricInstancesRolesToID( vtkMRMLPerkEvaluatorNode* peNode, std::string nodeID, std::string role, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType )
+::SetMetricInstancesRolesToID( vtkMRMLPerkEvaluatorNode* peNode, std::string nodeID, std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType )
 {
   if ( peNode == NULL )
   {
@@ -595,7 +595,7 @@ bool vtkSlicerPerkEvaluatorLogic
 
 
 std::vector< std::string > vtkSlicerPerkEvaluatorLogic
-::GetAllRoles( std::string msNodeID, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType )
+::GetAllRoles( std::string msNodeID, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType )
 {
   if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
   {

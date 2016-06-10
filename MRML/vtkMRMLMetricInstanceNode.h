@@ -70,15 +70,18 @@ protected:
 public:
 
   // Transform and Anatomy roles
+  // Note: No functions should take this enum as a parameter, otherwise they cannot be Python wrapped
+  // Instead, take int as a parameter (this should be the case for all functions, so we don't need to cast enum <-> int)
   enum RoleTypeEnum
   { 
-    TransformRole, 
-    AnatomyRole, 
+    TransformRole = 0, 
+    AnatomyRole,
+    NumberOfRoleTypes,
   };
 
-  vtkMRMLNode* GetRoleNode( std::string role, RoleTypeEnum roleType );
-  std::string GetRoleID( std::string role, RoleTypeEnum roleType );
-  void SetRoleID( std::string nodeID, std::string role, RoleTypeEnum roleType );
+  vtkMRMLNode* GetRoleNode( std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType );
+  std::string GetRoleID( std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType );
+  void SetRoleID( std::string nodeID, std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType );
   std::string GetCombinedRoleString();
 
 
@@ -90,7 +93,7 @@ public:
   
 protected:
 
-  static std::string GetFullReferenceRoleName( std::string role, RoleTypeEnum roleType );
+  static std::string GetFullReferenceRoleName( std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType );
   std::string GetNodeReferenceIDString( std::string referenceRole );
   void UpdateNodeName();
  

@@ -77,7 +77,7 @@ public:
   bool GetMetricShared( std::string msNodeID );
   bool GetMetricPervasive( std::string msNodeID );
 
-  std::vector< std::string > GetAllRoles( std::string msNodeID, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType );
+  std::vector< std::string > GetAllRoles( std::string msNodeID, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType ); // For Python wrapping. Pass an enum in c++.
   std::string GetAnatomyRoleClassName( std::string msNodeID, std::string role );
   
 
@@ -94,7 +94,7 @@ public:
 
   void SetupRealTimeProcessing( vtkMRMLPerkEvaluatorNode* peNode );
 
-  void SetMetricInstancesRolesToID( vtkMRMLPerkEvaluatorNode* peNode, std::string nodeID, std::string role, vtkMRMLMetricInstanceNode::RoleTypeEnum roleType );
+  void SetMetricInstancesRolesToID( vtkMRMLPerkEvaluatorNode* peNode, std::string nodeID, std::string role, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType ); // For Python wrapping. Pass an enum in c++.
   void UpdatePervasiveMetrics( vtkMRMLLinearTransformNode* transformNode );
   void UpdatePervasiveMetrics( vtkMRMLMetricScriptNode* msNode );
   void CreatePervasiveMetric( vtkMRMLMetricScriptNode* msNode, vtkMRMLLinearTransformNode* transformNode, std::string transformRole );
