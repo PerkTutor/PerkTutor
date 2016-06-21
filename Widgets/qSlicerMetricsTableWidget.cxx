@@ -182,6 +182,11 @@ void qSlicerMetricsTableWidget
 {
   Q_D( qSlicerMetricsTableWidget );
 
+  if ( this->MetricsTableNode == NULL )
+  {
+    return;
+  }
+  
   // Grab all of the contents from whatever is currently on the metrics table
   QString clipString = QString( "" );
 
