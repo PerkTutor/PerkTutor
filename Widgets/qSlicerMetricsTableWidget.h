@@ -54,6 +54,8 @@ public:
   Q_INVOKABLE void setExpandHeightToContents( bool expand );
   Q_INVOKABLE bool getExpandHeightToContents();
 
+  Q_INVOKABLE void setMetricsTableSelectionRowVisible( bool visible );
+
 protected slots:
 
   virtual void onMetricsTableNodeChanged( vtkMRMLNode* newMetricsTableNode );

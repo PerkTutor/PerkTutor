@@ -142,6 +142,17 @@ void qSlicerMetricsTableWidget
 
 
 void qSlicerMetricsTableWidget
+::setMetricsTableSelectionRowVisible( bool visible )
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  d->MetricsTableNodeComboBox->setVisible( visible );
+  d->ClipboardButton->setVisible( visible );
+  this->updateWidget();
+}
+
+
+void qSlicerMetricsTableWidget
 ::onMetricsTableNodeChanged( vtkMRMLNode* newMetricsTableNode )
 {
   Q_D(qSlicerMetricsTableWidget);
