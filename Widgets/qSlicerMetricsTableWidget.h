@@ -47,9 +47,9 @@ public:
   qSlicerMetricsTableWidget(QWidget *parent=0);
   virtual ~qSlicerMetricsTableWidget();
 
-  virtual void setMetricsTableNode( vtkMRMLNode* newMetricsTableNode );
-  virtual vtkMRMLTableNode* getMetricsTableNode();
-  virtual vtkMRMLTableNode* addMetricsTableNode();
+  Q_INVOKABLE virtual void setMetricsTableNode( vtkMRMLNode* newMetricsTableNode );
+  Q_INVOKABLE virtual vtkMRMLTableNode* getMetricsTableNode();
+  Q_INVOKABLE virtual vtkMRMLTableNode* addMetricsTableNode();
 
   Q_INVOKABLE void setExpandHeightToContents( bool expand );
   Q_INVOKABLE bool getExpandHeightToContents();
