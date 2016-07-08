@@ -205,8 +205,10 @@ void qSlicerMetricsTableWidget
     return;
   }
 
-  
   // Grab all of the contents of the selected rows from whatever is currently on the metrics table
+  // Note that we copy from the table widget, not directly from the table node
+  // This is because the user expects what they copied to be what was on the table widget
+  // In the case of sorting the table widget, the underlying table node would have different order than the user, causing the copied text to be unexpectedly different from what is displayed on the table widget
   QString clipString = QString( "" );
   for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
   {
@@ -215,15 +217,9 @@ void qSlicerMetricsTableWidget
       continue;
     }
 
-    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
-    clipString.append( " " );
-    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
-    clipString.append( " (" );
-    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
-    clipString.append( ") " );
-
+    clipString.append( d->MetricsTable->item( i, 0 )->text() ); // The metric name column
     clipString.append( "\t" );
-    clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
+    clipString.append( d->MetricsTable->item( i, 1 )->text() ); // The metric value column
     clipString.append( "\n" );
   }
 
