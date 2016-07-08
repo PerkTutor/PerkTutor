@@ -62,8 +62,11 @@ protected slots:
   void onMetricsTableNodeModified();
   
   void onClipboardButtonClicked();
+  void copyMetricsTableToClipboard( std::vector<bool> copyRow );
 
   void updateWidget();
+
+  virtual bool eventFilter( QObject * watched, QEvent * event );
 
 signals:
 

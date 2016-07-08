@@ -90,6 +90,8 @@ void qSlicerMetricsTableWidget
   connect( d->ClipboardButton, SIGNAL( clicked() ), this, SLOT( onClipboardButtonClicked() ) );
   d->ClipboardButton->setIcon( QIcon( ":/Icons/Small/SlicerEditCopy.png" ) );
 
+  d->MetricsTable->installEventFilter( this );
+
   this->updateWidget();  
 }
 
@@ -187,11 +189,32 @@ void qSlicerMetricsTableWidget
     return;
   }
   
-  // Grab all of the contents from whatever is currently on the metrics table
-  QString clipString = QString( "" );
+  // Add all rows to the clipboard vector
+  std::vector<bool> copyRow = std::vector<bool>( this->MetricsTableNode->GetTable()->GetNumberOfRows(), true );
+  this->copyMetricsTableToClipboard( copyRow );
+}
 
+
+void qSlicerMetricsTableWidget
+::copyMetricsTableToClipboard( std::vector<bool> copyRow )
+{
+  Q_D( qSlicerMetricsTableWidget );
+
+  if ( this->MetricsTableNode == NULL )
+  {
+    return;
+  }
+
+  
+  // Grab all of the contents of the selected rows from whatever is currently on the metrics table
+  QString clipString = QString( "" );
   for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
   {
+    if ( ! copyRow.at( i ) )
+    {
+      continue;
+    }
+
     clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "TransformName" ).ToString() );
     clipString.append( " " );
     clipString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
@@ -205,6 +228,35 @@ void qSlicerMetricsTableWidget
   }
 
   QApplication::clipboard()->setText( clipString );
+}
+
+
+bool qSlicerMetricsTableWidget
+::eventFilter( QObject * watched, QEvent * event )
+{
+  Q_D( qSlicerMetricsTableWidget );
+
+  if ( watched != d->MetricsTable || event->type() != QEvent::KeyPress )
+  {
+    return false;
+  }
+
+  QKeyEvent* keyEvent = static_cast< QKeyEvent* >( event );
+  if ( ! keyEvent->matches(QKeySequence::Copy) )
+  {
+    return false;
+  }
+  
+  QModelIndexList modelIndexList = d->MetricsTable->selectionModel()->selectedIndexes();
+  std::vector<bool> copyRow = std::vector<bool>( this->MetricsTableNode->GetTable()->GetNumberOfRows(), false );
+  for ( QModelIndexList::iterator index = modelIndexList.begin(); index != modelIndexList.end(); index++ )
+  {
+    copyRow.at( ( *index ).row() ) = true;
+  }
+  // Add all rows to the clipboard vector
+  this->copyMetricsTableToClipboard( copyRow );
+
+  return true;
 }
 
 
