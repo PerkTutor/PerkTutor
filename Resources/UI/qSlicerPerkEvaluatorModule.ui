@@ -51,8 +51,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>598</width>
-        <height>684</height>
+        <width>606</width>
+        <height>735</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -360,8 +360,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>454</width>
-        <height>252</height>
+        <width>606</width>
+        <height>735</height>
        </rect>
       </property>
       <attribute name="label">
@@ -704,14 +704,50 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>598</width>
-        <height>684</height>
+        <width>606</width>
+        <height>735</height>
        </rect>
       </property>
       <attribute name="label">
        <string>Advanced</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_13">
+       <item>
+        <widget class="ctkCollapsibleGroupBox" name="MetricsGroupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>Metrics</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="qMRMLCheckableNodeComboBox" name="MetricInstanceComboBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="nodeTypes">
+             <stringlist>
+              <string>vtkMRMLMetricInstanceNode</string>
+             </stringlist>
+            </property>
+            <property name="showHidden">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
        <item>
         <widget class="ctkCollapsibleGroupBox" name="MetricEditorGroupBox">
          <property name="sizePolicy">
@@ -777,6 +813,9 @@
               <string>vtkMRMLMetricInstanceNode</string>
              </stringlist>
             </property>
+            <property name="showHidden">
+             <bool>true</bool>
+            </property>
             <property name="renameEnabled">
              <bool>true</bool>
             </property>
@@ -833,33 +872,7 @@
             <property name="topMargin">
              <number>0</number>
             </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="MetricInstancesLabel">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Metrics Instances:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="NeedleOrientationLabel">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Needle Orientation:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
+            <item row="0" column="1">
              <layout class="QHBoxLayout" name="NeedleOrientationLayout">
               <property name="topMargin">
                <number>0</number>
@@ -968,18 +981,16 @@
               </item>
              </layout>
             </item>
-            <item row="0" column="1">
-             <widget class="qMRMLCheckableNodeComboBox" name="MetricInstanceComboBox">
+            <item row="0" column="0">
+             <widget class="QLabel" name="NeedleOrientationLabel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
-              <property name="nodeTypes">
-               <stringlist>
-                <string>vtkMRMLMetricInstanceNode</string>
-               </stringlist>
+              <property name="text">
+               <string>Needle Orientation:</string>
               </property>
              </widget>
             </item>

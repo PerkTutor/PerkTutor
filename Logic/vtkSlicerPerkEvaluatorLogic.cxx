@@ -20,6 +20,8 @@
 #include <vtkSelectEnclosedPoints.h>
 #include <vtkSmartPointer.h>
 #include <vtkTable.h>
+#include <vtkCollection.h>
+#include <vtkCollectionIterator.h>
 
 // STD includes
 #include <cassert>
@@ -795,6 +797,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
   if ( event == vtkMRMLScene::EndImportEvent )
   {
+    this->FixOldStyleScene();
     this->MergeAllMetricScripts();
     this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.RefreshMetricModules()" ) );
   }
@@ -830,5 +833,67 @@ void vtkSlicerPerkEvaluatorLogic
   if ( event == vtkMRMLScene::NodeAddedEvent && peNode != NULL )
   {
     this->ShareMetricInstances( peNode );
+  }
+}
+
+
+// This function is only for supporting reading of "old-style" scenes
+void vtkSlicerPerkEvaluatorLogic
+::FixOldStyleScene()
+{
+  bool isOldStyleScene = false;
+  // Add all metrics from the directories from all Perk Evaluator nodes
+  vtkSmartPointer< vtkCollection > peNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+  vtkSmartPointer< vtkCollectionIterator > peNodeItr = vtkSmartPointer< vtkCollectionIterator >::New();
+  peNodeItr->SetCollection( peNodes );
+  for ( peNodeItr->InitTraversal(); ! peNodeItr->IsDoneWithTraversal(); peNodeItr->GoToNextItem() )
+  {
+    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodeItr->GetCurrentObject() );
+    if ( peNode == NULL )
+    {
+      continue;
+    }
+    if ( peNode->MetricsDirectory.compare( "" ) != 0 ) // Metrics directory
+    {
+      this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.AddMetricsFromDirectoryToScene( '%1' )" ).arg( peNode->MetricsDirectory.c_str() ) );
+      isOldStyleScene = true;
+    }
+    for ( std::map< std::string, std::string >::iterator itr = peNode->TransformRoleMap.begin(); itr != peNode->TransformRoleMap.end(); itr++ ) // Transform roles
+    {
+      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNodeByName( itr->first.c_str() ) );
+      if ( transformNode != NULL )
+      {
+        this->SetMetricInstancesRolesToID( peNode, transformNode->GetID(), itr->second, vtkMRMLMetricInstanceNode::TransformRole );
+        isOldStyleScene = true;
+      }
+    }
+    for ( std::map< std::string, std::string >::iterator itr = peNode->AnatomyNodeMap.begin(); itr != peNode->AnatomyNodeMap.end(); itr++ ) // Transform roles
+    {
+      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNodeByName( itr->second.c_str() ) );
+      if ( transformNode != NULL )
+      {
+        this->SetMetricInstancesRolesToID( peNode, transformNode->GetID(), itr->first, vtkMRMLMetricInstanceNode::AnatomyRole );
+        isOldStyleScene = true;
+      }
+    }
+  }
+
+  if ( ! isOldStyleScene )
+  {
+    return;
+  }
+  // Pervade all the metrics - they are not automatically pervaded during scene load (since the nodes should already exist)
+  // But the nodes do not already exist in old-style scenes
+  vtkSmartPointer< vtkCollection > transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkSmartPointer< vtkCollectionIterator > transformNodeItr = vtkSmartPointer< vtkCollectionIterator >::New();
+  transformNodeItr->SetCollection( transformNodes );
+  for ( transformNodeItr->InitTraversal(); ! transformNodeItr->IsDoneWithTraversal(); transformNodeItr->GoToNextItem() )
+  {
+    vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNodeItr->GetCurrentObject() );
+    if ( transformNode == NULL || transformNode->GetHideFromEditors() )
+    {
+      continue;
+    }
+    this->UpdatePervasiveMetrics( transformNode );
   }
 }

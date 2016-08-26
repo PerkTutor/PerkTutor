@@ -72,6 +72,10 @@ void vtkMRMLPerkEvaluatorNode
   const char* attName;
   const char* attValue;
 
+  // Setup attributes from "old-style" scene
+  this->TransformRoleMap.clear();
+  this->AnatomyNodeMap.clear();
+
   while (*atts != NULL)
   {
     attName  = *(atts++);
@@ -104,6 +108,26 @@ void vtkMRMLPerkEvaluatorNode
     if ( ! strcmp( attName, "RealTimeProcessing" ) )
     {
       this->RealTimeProcessing = atof( attValue );
+    }
+
+    // Read attributes from "old-style" scene
+    if ( ! strcmp( attName, "MetricsDirectory" ) )
+    {
+      this->MetricsDirectory = std::string( attValue );
+    }
+    if ( std::string( attName ).find( "TransformRoleMap" ) != std::string::npos )
+    {
+      std::stringstream transformRoleStream( attValue );
+      std::string transformNodeName; transformRoleStream >> transformNodeName; 
+      std::string transformRole; transformRoleStream >> transformRole;
+      this->TransformRoleMap[ transformNodeName ] = transformRole;
+    }    
+    if ( std::string( attName ).find( "AnatomyNodeMap" ) != std::string::npos )
+    {
+      std::stringstream anatomyNodeStream( attValue );
+      std::string anatomyRole; anatomyNodeStream >> anatomyRole; 
+      std::string anatomyNodeName; anatomyNodeStream >> anatomyNodeName;
+      this->AnatomyNodeMap[ anatomyRole ] = anatomyNodeName;
     }
     
   }
@@ -151,6 +175,9 @@ vtkMRMLPerkEvaluatorNode
   this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRIC_INSTANCE_REFERENCE_ROLE );
+
+  // Setup for "old-style" attributes
+  this->MetricsDirectory = "";
 }
 
 

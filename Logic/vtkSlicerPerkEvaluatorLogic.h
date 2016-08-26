@@ -104,6 +104,9 @@ public:
   void MergeMetricScripts( vtkMRMLMetricScriptNode* newMetricScriptNode );
   void MergeAllMetricScripts();
 
+  // Fix "old-style" scenes
+  void FixOldStyleScene();
+
 
   void ProcessMRMLNodesEvents( vtkObject* caller, unsigned long event, void* callData );
   void ProcessMRMLSceneEvents( vtkObject* caller, unsigned long event, void* callData );

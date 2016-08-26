@@ -77,6 +77,7 @@ vtkMRMLMetricInstanceNode
 ::vtkMRMLMetricInstanceNode()
 {
   // Nothing to do
+  this->SetHideFromEditors( true );
 }
 
 

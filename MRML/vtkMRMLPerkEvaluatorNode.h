@@ -136,19 +136,15 @@ public:
     AnalysisStateUpdatedEvent,
   };
   
-
+  
+  // Deprecated
+  // Attributes to facilitate loading from "old-style" scenes
+  // These are public so that they can be accessed from the logic without maintaining infrastructure
+  std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
+  std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names
+  std::string MetricsDirectory; // From roles to anatomy node names
   
 protected:
-
-/* To store:
-TransformRoleMap
-AnatomyRoleMap
-MarkEnd
-MarkBegin
-NeedleOrientation
-MetricsDirectory
-PlaybackTime
-*/
 
   bool AutoUpdateMeasurementRange;
   bool AutoUpdateTransformRoles;
@@ -163,7 +159,7 @@ PlaybackTime
   int AnalysisState;
 
   bool RealTimeProcessing;
-  
+
 };  
 
 #endif
