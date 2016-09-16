@@ -54,7 +54,6 @@ void vtkMRMLPerkEvaluatorNode
   vtkIndent indent(nIndent);
   
   of << indent << "AutoUpdateMeasurementRange=\"" << this->AutoUpdateMeasurementRange << "\"";
-  of << indent << "AutoUpdateTransformRoles=\"" << this->AutoUpdateTransformRoles << "\"";
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
   of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
@@ -84,10 +83,6 @@ void vtkMRMLPerkEvaluatorNode
     if ( ! strcmp( attName, "AutoUpdateMeasurementRange" ) )
     {
       this->AutoUpdateMeasurementRange = atoi( attValue );
-    }
-    if ( ! strcmp( attName, "AutoUpdateTransformRoles" ) )
-    {
-      this->AutoUpdateTransformRoles = atoi( attValue );
     }
     if ( ! strcmp( attName, "MarkBegin" ) )
     {
@@ -143,7 +138,6 @@ void vtkMRMLPerkEvaluatorNode
   vtkMRMLPerkEvaluatorNode *node = ( vtkMRMLPerkEvaluatorNode* ) anode;
 
   this->AutoUpdateMeasurementRange = node->AutoUpdateMeasurementRange;
-  this->AutoUpdateTransformRoles = node->AutoUpdateTransformRoles;
   this->MarkBegin = node->MarkBegin;
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
@@ -160,7 +154,6 @@ vtkMRMLPerkEvaluatorNode
 ::vtkMRMLPerkEvaluatorNode()
 {
   this->AutoUpdateMeasurementRange = true;
-  this->AutoUpdateTransformRoles = true;
 
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
@@ -207,23 +200,6 @@ void vtkMRMLPerkEvaluatorNode
   }
 }
 
-
-bool vtkMRMLPerkEvaluatorNode
-::GetAutoUpdateTransformRoles()
-{
-  return this->AutoUpdateTransformRoles;
-}
-
-
-void vtkMRMLPerkEvaluatorNode
-::SetAutoUpdateTransformRoles( bool update )
-{
-  if ( update != this->AutoUpdateTransformRoles )
-  {
-    this->AutoUpdateTransformRoles = update;
-    this->Modified();
-  }
-}
 
 // Let the user set whatever values the want for MarkEnd and MarkBegin
 // If they are too large/small, that is ok. Only analyze within the range.
@@ -505,13 +481,6 @@ void vtkMRMLPerkEvaluatorNode
     this->SetMarkBegin( 0.0 );
     this->SetMarkEnd( this->GetTransformBufferNode()->GetTotalTime() );
   }
-
-  // Transform roles
-  if ( this->GetAutoUpdateTransformRoles() )
-  {
-    this->InvokeEvent( BufferActiveTransformsChangedEvent );
-  }
-
 }
 
 
@@ -559,13 +528,6 @@ void vtkMRMLPerkEvaluatorNode
       this->SetRealTimeProcessing( false ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
     }
   }
-
-  // The active transforms of the buffer have changed
-  if ( event == vtkMRMLTransformBufferNode::ActiveTransformAddedEvent || event == vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent )
-  {
-    this->InvokeEvent( BufferActiveTransformsChangedEvent );
-  }
-
 
   // Transform added to buffer
   if ( event == vtkMRMLTransformBufferNode::TransformAddedEvent && this->RealTimeProcessing )

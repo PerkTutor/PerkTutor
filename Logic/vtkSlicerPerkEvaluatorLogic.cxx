@@ -787,7 +787,6 @@ void vtkSlicerPerkEvaluatorLogic
     // Observe if a real-time transform event is added
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
     peNode->AddObserver( vtkMRMLPerkEvaluatorNode::RealTimeProcessingStartedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
-    peNode->AddObserver( vtkMRMLPerkEvaluatorNode::BufferActiveTransformsChangedEvent, ( vtkCommand* ) this->GetMRMLNodesCallbackCommand() );
   }
 
   // If a scene is being imported, ignore everything below (because the references should already be set in the scene)

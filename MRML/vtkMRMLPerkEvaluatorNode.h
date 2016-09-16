@@ -77,9 +77,6 @@ public:
   bool GetAutoUpdateMeasurementRange();
   void SetAutoUpdateMeasurementRange( bool update );
 
-  bool GetAutoUpdateTransformRoles();
-  void SetAutoUpdateTransformRoles( bool update );
-
   // Analysis start/end times (note: these are relative times)
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
@@ -132,7 +129,6 @@ public:
   {
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
     RealTimeProcessingStartedEvent,
-    BufferActiveTransformsChangedEvent,
     AnalysisStateUpdatedEvent,
   };
   
@@ -147,7 +143,6 @@ public:
 protected:
 
   bool AutoUpdateMeasurementRange;
-  bool AutoUpdateTransformRoles;
 
   double MarkBegin;
   double MarkEnd;

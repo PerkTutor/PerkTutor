@@ -59,7 +59,6 @@ public slots:
   void OnEditMetricInstanceNodeChanged();
 
   void OnAutoUpdateMeasurementRangeToggled();
-  void OnAutoUpdateTransformRolesToggled();
 
   void onTissueModelChanged( vtkMRMLNode* node );
   void onNeedleTransformChanged( vtkMRMLNode* node );

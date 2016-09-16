@@ -477,21 +477,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnAutoUpdateTransformRolesToggled()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-  if ( peNode == NULL )
-  {
-    return;
-  }
-
-  peNode->SetAutoUpdateTransformRoles( d->AutoUpdateTransformRolesCheckBox->isChecked() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
 ::OnMetricInstanceNodesChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -686,7 +671,6 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
   connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
-  connect( d->AutoUpdateTransformRolesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateTransformRolesToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
 
 
@@ -842,7 +826,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
   d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 
-  d->AutoUpdateTransformRolesCheckBox->setChecked( peNode->GetAutoUpdateTransformRoles() ); 
 
   if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusX )
   {

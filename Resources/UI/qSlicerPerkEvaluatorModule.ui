@@ -864,7 +864,7 @@
           <string>Options</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
@@ -1033,22 +1033,6 @@
               </property>
               <property name="text">
                <string>Measurement Range</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="AutoUpdateTransformRolesCheckBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="toolTip">
-               <string>Update transform roles when the transform buffer changes.</string>
-              </property>
-              <property name="text">
-               <string>Transform Roles</string>
               </property>
              </widget>
             </item>
