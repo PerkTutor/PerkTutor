@@ -115,7 +115,9 @@ vtkMRMLTransformBufferNode
   // No need to initialize the vectors
   this->MessageRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
 
-  this->AddNodeReferenceRole( ACTIVE_TRANSFORM_REFERENCE_ROLE );
+  vtkNew< vtkIntArray > events;
+  events->InsertNextValue( vtkMRMLLinearTransformNode::TransformModifiedEvent );
+  this->AddNodeReferenceRole( ACTIVE_TRANSFORM_REFERENCE_ROLE, NULL, events.GetPointer() );
 
   this->RecordingState = false;
   this->Clock0 = clock();
