@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 2.8.7 )
 
 set( EXTENSION_NAME PerkTutor )
 
-set( EXTENSION_HOMEPAGE "https://github.com/PerkTutor/PerkTutor/wiki" )
+set( EXTENSION_HOMEPAGE "http://www.perktutor.org/" )
 set( EXTENSION_CATEGORY "Training" )
 set( EXTENSION_CONTRIBUTORS "Tamas Ungi, Matthew S. Holden (Queen's University)" )
 set( EXTENSION_DESCRIPTION "This extension holds modules for training of needle interventions and analysis of operator performance." )
