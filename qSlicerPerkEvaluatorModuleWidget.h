@@ -43,6 +43,9 @@ public slots:
 
   void OnAnalyzeClicked();
 
+  void OnAnalysisStateUpdated( vtkObject* caller, void* value );
+  void OnAnalysisCanceled();
+
   void OnBatchProcessButtonClicked();
 
   void OnMarkBeginChanged();
@@ -50,9 +53,12 @@ public slots:
   void OnMarkEndChanged();
   void OnMarkEndClicked();
 
-  void OnMetricsDirectoryClicked();
+  void OnMetricInstanceNodesChanged();
+
+  void OnEditMetricInstanceNodeCreated( vtkMRMLNode* node );
+  void OnEditMetricInstanceNodeChanged();
+
   void OnAutoUpdateMeasurementRangeToggled();
-  void OnAutoUpdateTransformRolesToggled();
 
   void onTissueModelChanged( vtkMRMLNode* node );
   void onNeedleTransformChanged( vtkMRMLNode* node );
@@ -61,6 +67,7 @@ public slots:
   void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
   void onMetricsTableChanged( vtkMRMLNode* newMetricsTable );
   void mrmlNodeChanged( vtkMRMLNode* peNode );
+  void onPerkEvaluatorNodeCreated( vtkMRMLNode* peNode );
   void updateWidgetFromMRMLNode();
 
 protected:

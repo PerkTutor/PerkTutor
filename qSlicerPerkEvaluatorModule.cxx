@@ -25,6 +25,7 @@
 // ExtensionTemplate includes
 #include "qSlicerPerkEvaluatorModule.h"
 #include "qSlicerPerkEvaluatorModuleWidget.h"
+#include "qSlicerMetricScriptReader.h"
 
 #include "qSlicerNodeWriter.h"
 #include "qSlicerCoreIOManager.h"
@@ -112,7 +113,10 @@ void qSlicerPerkEvaluatorModule::setup()
   qSlicerCoreApplication* app = qSlicerCoreApplication::application();
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( this->logic() );
   
-  // Register the IO  
+  // Register the IO
+  app->coreIOManager()->registerIO( new qSlicerMetricScriptReader( PerkEvaluatorLogic, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Python Metric Script", QString( "Python MetricScript" ), QStringList() << "vtkMRMLMetricScriptNode", true, this ) );
+
 }
 
 //-----------------------------------------------------------------------------

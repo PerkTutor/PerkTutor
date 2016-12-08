@@ -77,9 +77,6 @@ public:
   bool GetAutoUpdateMeasurementRange();
   void SetAutoUpdateMeasurementRange( bool update );
 
-  bool GetAutoUpdateTransformRoles();
-  void SetAutoUpdateTransformRoles( bool update );
-
   // Analysis start/end times (note: these are relative times)
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
@@ -90,13 +87,16 @@ public:
   // Enumerate all of the possible needle orientations
   enum NeedleOrientationEnum{ PlusX, MinusX, PlusY, MinusY, PlusZ, MinusZ };  
   // Needle orientation
-  void GetNeedleBase( double needleBase[ 4 ] );
+  void GetNeedleOrientation( double needleOrientation[ 3 ] ); // This is the direction in which the needle points
   NeedleOrientationEnum GetNeedleOrientation();
   void SetNeedleOrientation( NeedleOrientationEnum needleOrietation );
   
-  // Metrics directory
-  std::string GetMetricsDirectory();
-  void SetMetricsDirectory( std::string newMetricsDirectory );
+  // Metric nodes
+  void AddMetricInstanceID( std::string metricInstanceID );
+  void RemoveMetricInstanceID( std::string metricInstanceID );
+  std::vector< std::string > GetMetricInstanceIDs();
+  bool IsMetricInstanceID( std::string metricInstanceID );
+  void SetMetricInstanceIDs( std::vector< std::string > metricInstanceIDs );
 
   // Playback time
   double GetPlaybackTime();
@@ -104,16 +104,12 @@ public:
 
   bool GetRealTimeProcessing();
   void SetRealTimeProcessing( bool newRealTimeProcessing );
-  
 
-  // Getters/setters associated with roles
-  std::string GetTransformRole( std::string transformNodeName );
-  std::string GetFirstTransformNodeName( std::string transformRole );
-  void SetTransformRole( std::string transformNodeName, std::string newTransformRole );
-
-  std::string GetAnatomyNodeName( std::string anatomyRole );
-  std::string GetFirstAnatomyRole( std::string anatomyNodeName );
-  void SetAnatomyNodeName( std::string anatomyRole, std::string newAnatomyNodeName );
+  // Analysis state
+  // -1 means analysis is halted
+  // Other values indicate the progress of the analysis (on 0%-100%)
+  int GetAnalysisState();
+  void SetAnalysisState( int newAnalysisState );
 
 
   // Reference to transform buffer and to metrics node
@@ -133,39 +129,32 @@ public:
   {
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,
     RealTimeProcessingStartedEvent,
+    AnalysisStateUpdatedEvent,
   };
   
-
+  
+  // Deprecated
+  // Attributes to facilitate loading from "old-style" scenes
+  // These are public so that they can be accessed from the logic without maintaining infrastructure
+  std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
+  std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names
+  std::string MetricsDirectory; // From roles to anatomy node names
   
 protected:
 
-/* To store:
-TransformRoleMap
-AnatomyRoleMap
-MarkEnd
-MarkBegin
-NeedleOrientation
-MetricsDirectory
-PlaybackTime
-*/
-
   bool AutoUpdateMeasurementRange;
-  bool AutoUpdateTransformRoles;
 
   double MarkBegin;
   double MarkEnd;
   
   NeedleOrientationEnum NeedleOrientation;
-  
-  std::string MetricsDirectory;
 
   double PlaybackTime;
 
+  int AnalysisState;
+
   bool RealTimeProcessing;
 
-  std::map< std::string, std::string > TransformRoleMap; // From transform node names to roles
-  std::map< std::string, std::string > AnatomyNodeMap; // From roles to anatomy node names
-  
 };  
 
 #endif
