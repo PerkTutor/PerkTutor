@@ -56,8 +56,6 @@ public:
 
   Q_INVOKABLE void setMetricsTableSelectionRowVisible( bool visible );
 
-  void setExpandHeightToContents( bool expand );
-  bool getExpandHeightToContents();
   int getContentHeight();
 
 protected slots:
