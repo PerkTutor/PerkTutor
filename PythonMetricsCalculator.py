@@ -1,7 +1,6 @@
 import os, imp, glob, sys
 import unittest
 from __main__ import vtk, qt, ctk, slicer
-import PythonMetrics
 
 #
 # Python Metrics Calculator
@@ -239,7 +238,7 @@ class PythonMetricsCalculatorLogic:
       return
 
     # Hold off on modified events until we are finished modifying
-    modifyFlag = self.metricsTable.StartModify()
+    modifyFlag = metricsTable.StartModify()
   
     PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable )
 
@@ -252,7 +251,7 @@ class PythonMetricsCalculatorLogic:
       metricsTable.GetTable().SetValueByName( insertRow, "MetricValue", metric.GetMetric() )
       insertRow += 1
 
-    self.metricsTable.EndModify( modifyFlag )
+    metricsTable.EndModify( modifyFlag )
     
 
   @staticmethod
@@ -374,9 +373,9 @@ class PythonMetricsCalculatorLogic:
     if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
       return []
   
-    if ( roleType == slicer.modulemrml.vtkMRMLMetricInstanceNode.TransformRole ):
+    if ( roleType == slicer.vtkMRMLMetricInstanceNode.TransformRole ):
       return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
-    elif ( roleType == slicer.modulemrml.vtkMRMLMetricInstanceNode.AnatomyRole ):
+    elif ( roleType == slicer.vtkMRMLMetricInstanceNode.AnatomyRole ):
       return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
     else:
       return []
@@ -452,7 +451,7 @@ class PythonMetricsCalculatorLogic:
     originalPlaybackTime = peNode.GetPlaybackTime()
     
     # Now iterate over all of the trajectories
-    combinedTransformBuffer = slicer.modulemrml.vtkLogRecordBuffer()
+    combinedTransformBuffer = slicer.vtkLogRecordBuffer()
     peNode.GetTransformBufferNode().GetCombinedTransformRecordBuffer( combinedTransformBuffer )
     
     if ( combinedTransformBuffer.GetNumRecords() == 0 ):
@@ -646,8 +645,8 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     peNode.SetMetricsTableID( mtNode.GetID() )
 
     # Now propagate the roles
-    peLogic.SetMetricInstancesRolesToID( peNode, needleTransformNode.GetID(), "Needle", slicer.modulemrml.vtkMRMLMetricInstanceNode.TransformRole )
-    peLogic.SetMetricInstancesRolesToID( peNode, tissueModelNode.GetID(), "Tissue", slicer.modulemrml.vtkMRMLMetricInstanceNode.AnatomyRole )
+    peLogic.SetMetricInstancesRolesToID( peNode, needleTransformNode.GetID(), "Needle", slicer.vtkMRMLMetricInstanceNode.TransformRole )
+    peLogic.SetMetricInstancesRolesToID( peNode, tissueModelNode.GetID(), "Tissue", slicer.vtkMRMLMetricInstanceNode.AnatomyRole )
 
     # Set the analysis begin and end times
     peNode.SetMarkBegin( 0 )
