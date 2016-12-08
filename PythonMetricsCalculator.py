@@ -531,7 +531,7 @@ class PythonMetricsCalculatorLogic:
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
     if ( metricsTable != None ):
-      self.OutputAllMetricsToMetricsTable( metricsTable, allMetrics )
+      PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( metricsTable, allMetrics )
       
       
   # Instance methods for real-time metric computation
