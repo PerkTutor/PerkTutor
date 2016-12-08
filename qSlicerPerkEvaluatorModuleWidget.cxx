@@ -59,6 +59,8 @@ public:
   qSlicerPerkEvaluatorRecorderControlsWidget* RecorderControlsWidget;
   qSlicerPerkEvaluatorTransformRolesWidget* TransformRolesWidget;
   qSlicerPerkEvaluatorAnatomyRolesWidget* AnatomyRolesWidget;
+
+  QProgressDialog* AnalysisStateDialog;
 };
 
 
@@ -226,12 +228,6 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  QProgressDialog dialog;
-  dialog.setModal( true );
-  dialog.setLabelText( "Please wait while analyzing procedure..." );
-  dialog.show();
-  dialog.setValue( 10 );
-
   // Metrics table
   vtkMRMLTableNode* metricsTableNode = peNode->GetMetricsTableNode();
   if ( metricsTableNode == NULL )
@@ -239,13 +235,46 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  dialog.setValue( 20 );
+  d->AnalysisStateDialog->setLabelText( "Please wait while analyzing procedure..." );
+  d->AnalysisStateDialog->show();
+  d->AnalysisStateDialog->setValue( 0 );
+  this->qvtkConnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
 
   d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
 
-  dialog.setValue( 80 );
+  this->qvtkDisconnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
+  d->AnalysisStateDialog->hide();
+}
 
-  dialog.close();
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnAnalysisStateUpdated( vtkObject* caller, void* value )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  // Check we can downcast
+  int* progressValue = reinterpret_cast< int* >( value );
+  d->AnalysisStateDialog->setValue( *progressValue );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnAnalysisCanceled()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+  
+  // Cancel all analyses (even though only one should be going on at a given time)
+  vtkCollection* nodes = d->logic()->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+  for ( int i = 0; i < nodes->GetNumberOfItems(); i++ )
+  {
+    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( nodes->GetItemAsObject( i ) );
+    if ( peNode == NULL )
+    {
+      return;
+    }
+    peNode->SetAnalysisState( -1 ); // This will halt the analysis
+  }
+
 }
 
 
@@ -253,12 +282,6 @@ void qSlicerPerkEvaluatorModuleWidget
 ::OnBatchProcessButtonClicked()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  QProgressDialog dialog;
-  dialog.setModal( true );
-  dialog.setLabelText( "Please wait while analyzing procedures..." );
-  dialog.show();
-  dialog.setValue( 0 );
 
   // Remember the original Perk Evaluator node
   vtkMRMLNode* originalPerkEvaluatorNode = d->PerkEvaluatorNodeComboBox->currentNode();
@@ -268,9 +291,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
   for ( int i = 0; i < peNodeBatch.size(); i++ )
   {
-    int progress = 100 * i / peNodeBatch.size();
-    dialog.setValue( progress );
-
     vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodeBatch.at( i ) );
     if ( peNode == NULL )
     {
@@ -288,13 +308,20 @@ void qSlicerPerkEvaluatorModuleWidget
       d->TransformBufferWidget->setTransformBufferNode( transformBuffer );
     }
 
-    d->logic()->ComputeMetrics( peNode );
+    std::stringstream labelText;
+    labelText << "Please wait while analyzing procedure (" << i + 1 << "/" << peNodeBatch.size() << ")..."; // Use i + 1 to be human-readable
+    d->AnalysisStateDialog->setLabelText( labelText.str().c_str() );
+    d->AnalysisStateDialog->setValue( 0 );
+    d->AnalysisStateDialog->show();
+    this->qvtkConnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
+
+    d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
+
+    this->qvtkDisconnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
+    d->AnalysisStateDialog->hide();
   }
 
   d->PerkEvaluatorNodeComboBox->setCurrentNode( originalPerkEvaluatorNode );
-
-  dialog.setValue( 100 );
-  dialog.close();
 }
 
 
@@ -373,11 +400,11 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast( node );
   if ( mnode != NULL )
   {
-    peNode->SetAnatomyNodeName( "Tissue", mnode->GetName() );
+    d->logic()->SetMetricInstancesRolesToID( peNode, mnode->GetID(), "Tissue", vtkMRMLMetricInstanceNode::AnatomyRole );
   }
   else
   {
-    peNode->SetAnatomyNodeName( "Tissue", "" );
+    d->logic()->SetMetricInstancesRolesToID( peNode, "", "Tissue", vtkMRMLMetricInstanceNode::AnatomyRole );
   }
 }
 
@@ -398,15 +425,39 @@ qSlicerPerkEvaluatorModuleWidget
   vtkMRMLLinearTransformNode* tnode = vtkMRMLLinearTransformNode::SafeDownCast( node );
   if ( tnode != NULL )
   {
-    peNode->SetTransformRole( tnode->GetName(), "Needle" );
+    d->logic()->SetMetricInstancesRolesToID( peNode, tnode->GetID(), "Needle", vtkMRMLMetricInstanceNode::TransformRole );
   }
   else
   {
-    while( peNode->GetFirstTransformNodeName( "Needle" ).compare( "" ) != 0 )
-    {
-      peNode->SetTransformRole( peNode->GetFirstTransformNodeName( "Needle" ), "" );
-    }
+    d->logic()->SetMetricInstancesRolesToID( peNode, "", "Needle", vtkMRMLMetricInstanceNode::TransformRole );
   }
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnEditMetricInstanceNodeCreated( vtkMRMLNode* node )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( node );
+  vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( d->BaseMetricScriptComboBox->currentNode() );
+  if ( miNode == NULL || msNode == NULL )
+  {
+    return;
+  }
+
+  miNode->SetAssociatedMetricScriptID( msNode->GetID() );
+  miNode->SetName( msNode->GetName() );
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
+::OnEditMetricInstanceNodeChanged()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->AnatomyRolesWidget->setMetricInstanceNode( d->EditMetricInstanceNodeComboBox->currentNode() );
+  d->TransformRolesWidget->setMetricInstanceNode( d->EditMetricInstanceNodeComboBox->currentNode() );
 }
 
 
@@ -426,7 +477,7 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnAutoUpdateTransformRolesToggled()
+::OnMetricInstanceNodesChanged()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
@@ -436,27 +487,23 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  peNode->SetAutoUpdateTransformRoles( d->AutoUpdateTransformRolesCheckBox->isChecked() );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnMetricsDirectoryClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-  if ( peNode == NULL )
+  // Accumluate all of the IDs, and then write them to the node
+  // Assume that it was the current node that was changed
+  // This will be much faster if we don't have to deal with all the nodes
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->MetricInstanceComboBox->currentNode() );
+  if ( miNode == NULL )
   {
     return;
   }
 
-  QString fileName = QFileDialog::getExistingDirectory( this, tr("Open metrics directory"), "", QFileDialog::ShowDirsOnly );  
-  if ( fileName.isEmpty() == false )
+  if ( d->MetricInstanceComboBox->checkState( miNode ) == Qt::Checked )
   {
-    peNode->SetMetricsDirectory( fileName.toStdString() );
+    peNode->AddMetricInstanceID( miNode->GetID() );
   }
-
+  else
+  {
+    peNode->RemoveMetricInstanceID( miNode->GetID() );
+  }
 }
 
 
@@ -539,6 +586,11 @@ qSlicerPerkEvaluatorModuleWidget
   d->AnatomyRolesWidget->setMRMLScene( NULL ); 
   d->AnatomyRolesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
+  d->AnalysisStateDialog = new QProgressDialog();
+  d->AnalysisStateDialog->setModal( true );
+  d->AnalysisStateDialog->setValue( 0 );
+  d->AnalysisStateDialog->close();
+
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
 
@@ -560,6 +612,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Connect the Perk Evaluator node to the update
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( nodeAddedByUser( vtkMRMLNode* ) ), this, SLOT( onPerkEvaluatorNodeCreated( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
   // NOTE: The roles widgets will be updated with the other components of the widget
 
 
@@ -607,16 +660,18 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->BatchProcessButton, SIGNAL( clicked() ), this, SLOT( OnBatchProcessButtonClicked() ) );
   d->BatchProcessButton->setIcon( QIcon( ":/Icons/Go.png" ) );
 
+  connect( d->AnalysisStateDialog, SIGNAL( canceled() ), this, SLOT( OnAnalysisCanceled() ) );
+
   // Update the recorder controls widget when the transform buffer is changed
   connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 
   // Advanced tab
-
-  connect( d->MetricsDirectoryButton, SIGNAL( clicked() ), this, SLOT( OnMetricsDirectoryClicked() ) );
+  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( nodeAddedByUser( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeCreated( vtkMRMLNode* ) ) );
+  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
+  connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
-  connect( d->AutoUpdateTransformRolesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateTransformRolesToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
 
 
@@ -705,6 +760,22 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
+::onPerkEvaluatorNodeCreated( vtkMRMLNode* node )
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( node );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+  
+  // d->logic()->CreateLocalMetrics( peNode );
+  // Everything else is taken care of by the mrmlNodeChanged function
+}
+
+
+void qSlicerPerkEvaluatorModuleWidget
 ::updateWidgetFromMRMLNode()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -717,31 +788,45 @@ void qSlicerPerkEvaluatorModuleWidget
   }
 
   // Update the roles widgets and metrics table widget every time the Perk Evaluator node is modified
-  d->TransformRolesWidget->setPerkEvaluatorNode( peNode );
-  d->AnatomyRolesWidget->setPerkEvaluatorNode( peNode );
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->EditMetricInstanceNodeComboBox->currentNode() );
+  d->TransformRolesWidget->setMetricInstanceNode( miNode );
+  d->AnatomyRolesWidget->setMetricInstanceNode( miNode );
+
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
   d->TransformBufferWidget->setTransformBufferNode( peNode->GetTransformBufferNode() );
 
+  // Disconnect to the GUI from updating the MRML node with rounded values
+  disconnect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
+  disconnect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
   d->BeginSpinBox->setValue( peNode->GetMarkBegin() );
   d->EndSpinBox->setValue( peNode->GetMarkEnd() );
+  connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
+  connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
 
   d->PlaybackSlider->setMinimum( 0 );
   d->PlaybackSlider->setMaximum( d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
   d->PlaybackSlider->setValue( d->logic()->GetRelativePlaybackTime( peNode ) );
 
-  vtkMRMLNode* needleNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetFirstTransformNodeName( "Needle" ).c_str() );
-  d->NeedleReferenceComboBox->setCurrentNode( needleNode );
 
-  vtkMRMLNode* tissueNode = this->mrmlScene()->GetFirstNodeByName( peNode->GetAnatomyNodeName( "Tissue" ).c_str() );
-  d->BodyNodeComboBox->setCurrentNode( tissueNode );
+  // For the metric scripts
+  // Disable to the onCheckedChanged listener when initializing the selections
+  // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
+  disconnect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
+  for ( int i = 0; i < d->MetricInstanceComboBox->nodeCount(); i++ )
+  {
+    if ( peNode->IsMetricInstanceID( d->MetricInstanceComboBox->nodeFromIndex( i )->GetID() ) )
+    {
+	    d->MetricInstanceComboBox->setCheckState( d->MetricInstanceComboBox->nodeFromIndex( i ), Qt::Checked );
+    }
+    else
+    {
+      d->MetricInstanceComboBox->setCheckState( d->MetricInstanceComboBox->nodeFromIndex( i ), Qt::Unchecked );
+    }
+  }
+  connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
 
-  // Get the name of the base directory
-  QDir metricsDirectory( peNode->GetMetricsDirectory().c_str() );
-  d->MetricsDirectoryButton->setText( metricsDirectory.dirName() );
-  d->MetricsDirectoryButton->setToolTip( metricsDirectory.absolutePath() );
 
   d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 
-  d->AutoUpdateTransformRolesCheckBox->setChecked( peNode->GetAutoUpdateTransformRoles() ); 
 
   if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusX )
   {

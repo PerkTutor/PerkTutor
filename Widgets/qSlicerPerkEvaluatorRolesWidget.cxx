@@ -66,7 +66,7 @@ qSlicerPerkEvaluatorRolesWidget
 ::qSlicerPerkEvaluatorRolesWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorRolesWidgetPrivate(*this) )
 {
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
-  this->PerkEvaluatorNode = NULL;
+  this->MetricInstanceNode = NULL;
   this->setup();
 }
 
@@ -109,27 +109,27 @@ void qSlicerPerkEvaluatorRolesWidget
 
 
 void qSlicerPerkEvaluatorRolesWidget
-::setPerkEvaluatorNode( vtkMRMLNode* node )
+::setMetricInstanceNode( vtkMRMLNode* node )
 {
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( node );
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( node );
 
   // This is ok if the node is null
-  this->qvtkDisconnect( this->PerkEvaluatorNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
-  this->PerkEvaluatorNode = peNode;
-  this->qvtkConnect( this->PerkEvaluatorNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkDisconnect( this->MetricInstanceNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->MetricInstanceNode = miNode;
+  this->qvtkConnect( this->MetricInstanceNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
 
 std::string qSlicerPerkEvaluatorRolesWidget
-::getFixedHeader()
+::getRolesHeader()
 {
   return "";
 }
 
 
 std::string qSlicerPerkEvaluatorRolesWidget
-::getMovingHeader()
+::getCandidateHeader()
 {
   return "";
 }
@@ -149,47 +149,47 @@ void qSlicerPerkEvaluatorRolesWidget
   d->RolesTable->clear();
   d->RolesTable->setRowCount( 0 );
   
-  // This is where the moving and fixed labels are grabbed
-  std::vector< std::string > fixed = this->getAllFixed();
-  std::vector< std::string > moving = this->getAllMoving();
-  moving.insert( moving.begin(), "" ); // Put it at the beginning so we have a "blank" option that is default
+  // This is where the roles are grabbed
+  std::vector< std::string > roles = this->getAllRoles();
 
-  d->RolesTable->setRowCount( fixed.size() );
+  d->RolesTable->setRowCount( roles.size() );
   d->RolesTable->setColumnCount( 2 );
   QStringList RolesTableHeaders;
-  RolesTableHeaders << this->getFixedHeader().c_str() << this->getMovingHeader().c_str();
+  RolesTableHeaders << this->getRolesHeader().c_str() << this->getCandidateHeader().c_str();
   d->RolesTable->setHorizontalHeaderLabels( RolesTableHeaders ); 
   d->RolesTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
 
   // Set the roles in the table
-  for ( int i = 0; i < fixed.size(); i++ )
+  for ( int i = 0; i < roles.size(); i++ )
   {
     // Add the fixed item to the table
-    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( fixed.at( i ) ) );
+    QTableWidgetItem* nameItem = new QTableWidgetItem( QString::fromStdString( roles.at( i ) ) );
     d->RolesTable->setItem( i, 0, nameItem );
 
     // Determine the current transform's role
-    std::string currentMoving = this->getMovingFromFixed( fixed.at( i ) );
+    std::string currentCandidateID = this->getNodeIDFromRole( roles.at( i ) );
 	
     // Create the combo box
-    QComboBox* roleComboBox = new QComboBox();
-    roleComboBox->setCurrentIndex( 0 );
-    for ( int j = 0; j < moving.size(); j++ )
-    {
-      roleComboBox->addItem( QString::fromStdString( moving.at( j ) ) );
-      if ( currentMoving.compare( moving.at( j ) ) == 0 )
-      {
-        roleComboBox->setCurrentIndex( j );
-      }
-    }
+    qMRMLNodeComboBox* candidateComboBox = new qMRMLNodeComboBox();
+    candidateComboBox->setNoneEnabled( true );
+    candidateComboBox->setAddEnabled( false );
+    candidateComboBox->setRemoveEnabled( false );
+    candidateComboBox->setShowHidden( false );
+    candidateComboBox->setShowChildNodeTypes( true );
+    candidateComboBox->setMRMLScene( this->PerkEvaluatorLogic->GetMRMLScene() );
+
+    std::string roleNodeType = this->getNodeTypeForRole( roles.at( i ) );
+    candidateComboBox->setNodeTypes( QStringList( QString::fromStdString( roleNodeType ) ) );
+
+    candidateComboBox->setCurrentNodeID( QString::fromStdString( currentCandidateID ) );
 	
-    connect( roleComboBox, SIGNAL( currentIndexChanged( int ) ), this, SLOT( onRolesChanged() ) );
+    connect( candidateComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onRolesChanged() ) );
 	
-    d->RolesTable->setCellWidget( i, 1, roleComboBox );
+    d->RolesTable->setCellWidget( i, 1, candidateComboBox );
 
     // Populate the maps
-    this->ComboBoxToFixedMap[ roleComboBox ] = fixed.at( i );
-    this->FixedToComboBoxMap[ fixed.at( i ) ] = roleComboBox;
+    this->ComboBoxToRolesMap[ candidateComboBox ] = roles.at( i );
+    this->RolesToComboBoxMap[ roles.at( i ) ] = candidateComboBox;
   }
 
   // Reset the current row and column to what they were

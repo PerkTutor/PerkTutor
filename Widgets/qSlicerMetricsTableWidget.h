@@ -56,6 +56,10 @@ public:
 
   Q_INVOKABLE void setMetricsTableSelectionRowVisible( bool visible );
 
+  void setExpandHeightToContents( bool expand );
+  bool getExpandHeightToContents();
+  int getContentHeight();
+
 protected slots:
 
   virtual void onMetricsTableNodeChanged( vtkMRMLNode* newMetricsTableNode );
@@ -63,6 +67,8 @@ protected slots:
   
   void onClipboardButtonClicked();
   void copyMetricsTableToClipboard( std::vector<bool> copyRow );
+
+  void onHeaderDoubleClicked( int column );
 
   void updateWidget();
 

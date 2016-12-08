@@ -75,14 +75,14 @@ qSlicerPerkEvaluatorAnatomyRolesWidget
 
 
 std::string qSlicerPerkEvaluatorAnatomyRolesWidget
-::getFixedHeader()
+::getRolesHeader()
 {
   return "Role";
 }
 
 
 std::string qSlicerPerkEvaluatorAnatomyRolesWidget
-::getMovingHeader()
+::getCandidateHeader()
 {
   return "Anatomy Node";
 }
@@ -94,64 +94,53 @@ void qSlicerPerkEvaluatorAnatomyRolesWidget
 {
   Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
 
-  if ( this->PerkEvaluatorNode == NULL )
+  if ( this->MetricInstanceNode == NULL )
   {
     return;
   }
 
   // Find who the sender is and the corresponding node
-  QComboBox* sender = (QComboBox*) this->sender();
-  std::string anatomyRole = this->ComboBoxToFixedMap[ sender ];
+  qMRMLNodeComboBox* sender = ( qMRMLNodeComboBox* ) this->sender();
+  std::string anatomyRole = this->ComboBoxToRolesMap[ sender ];
   
-  this->PerkEvaluatorNode->SetAnatomyNodeName( anatomyRole, sender->currentText().toStdString() );
+  this->MetricInstanceNode->SetRoleID( sender->currentNodeID().toStdString(), anatomyRole, vtkMRMLMetricInstanceNode::AnatomyRole );
 
   this->updateWidget();
 }
 
 
-std::vector< std::string > qSlicerPerkEvaluatorAnatomyRolesWidget
-::getAllMoving()
-{
-  Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
-  
-  vtkSmartPointer< vtkCollection > anatomyNodes = vtkSmartPointer< vtkCollection >::New();
-  this->PerkEvaluatorLogic->GetSceneVisibleAnatomyNodes( anatomyNodes, this->PerkEvaluatorNode );
-  
-  std::vector< std::string > anatomyNodeNames( anatomyNodes->GetNumberOfItems(), "" );
-  
-  for ( int i = 0; i < anatomyNodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLNode* currentAnatomyNode = vtkMRMLNode::SafeDownCast( anatomyNodes->GetItemAsObject( i ) );
-    anatomyNodeNames.at( i ) = currentAnatomyNode->GetName();
-  }
-
-  return anatomyNodeNames;
-}
-
-
-std::vector< std::string > qSlicerPerkEvaluatorAnatomyRolesWidget
-::getAllFixed()
-{
-  Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
-
-  if ( this->PerkEvaluatorNode == NULL )
-  {
-    return std::vector< std::string >();
-  }
-  
-  return this->PerkEvaluatorLogic->GetAllAnatomyRoles( this->PerkEvaluatorNode );
-}
-
-
 std::string qSlicerPerkEvaluatorAnatomyRolesWidget
-::getMovingFromFixed( std::string fixed )
+::getNodeTypeForRole( std::string role )
 {
   Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
 
-  if ( this->PerkEvaluatorNode == NULL )
+  if ( this->MetricInstanceNode == NULL )
   {
     return "";
   }
   
-  return this->PerkEvaluatorNode->GetAnatomyNodeName( fixed );
+  return this->PerkEvaluatorLogic->GetAnatomyRoleClassName( this->MetricInstanceNode->GetAssociatedMetricScriptID(), role );
+}
+
+
+std::string qSlicerPerkEvaluatorAnatomyRolesWidget
+::getNodeIDFromRole( std::string role )
+{
+  Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
+
+  return this->MetricInstanceNode->GetRoleID( role, vtkMRMLMetricInstanceNode::AnatomyRole );
+}
+
+
+std::vector< std::string > qSlicerPerkEvaluatorAnatomyRolesWidget
+::getAllRoles()
+{
+  Q_D(qSlicerPerkEvaluatorAnatomyRolesWidget);
+
+  if ( this->MetricInstanceNode == NULL )
+  {
+    return std::vector< std::string >();
+  }
+  
+  return this->PerkEvaluatorLogic->GetAllRoles( this->MetricInstanceNode->GetAssociatedMetricScriptID(), vtkMRMLMetricInstanceNode::AnatomyRole );
 }
