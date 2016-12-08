@@ -15,7 +15,6 @@ execute_process(
 
 #-----------------------------------------------------------------------------
 set(PERKTUTOR_CORE_METRICS
-  PythonMetrics/__init__.py
   PythonMetrics/ElapsedTime.py
   PythonMetrics/PathLength.py
   PythonMetrics/TissueDamage.py
@@ -31,17 +30,15 @@ set(MODULE_PYTHON_SCRIPTS
 
 #-----------------------------------------------------------------------------
 set(SCENE_TEST_RESOURCES
-  Data/Scenes/Lumbar/BodyModel.stl
-  Data/Scenes/Lumbar/NeedleRotation.tfm
-  Data/Scenes/Lumbar/ProbeToRAS.tfm
-  Data/Scenes/Lumbar/StylusTipToRAS.tfm
-  Data/Scenes/Lumbar/TransformBuffer_Subject13.xml
-  Data/Scenes/Lumbar/TransformBuffer_Lumbar_Scene.mrml  
+  Data/Lumbar/BodyModel.stl
+  Data/Lumbar/NeedleRotation.tfm
+  Data/Lumbar/ProbeToRAS.tfm
+  Data/Lumbar/StylusTipToRAS.tfm
+  Data/Lumbar/TransformBuffer_Lumbar_Anonymous.xml
+  Data/Lumbar/TrueMetricsTable.tsv
+  Data/Lumbar/Scene_Lumbar.mrml
   )
-  
-set(RESULTS_TEST_RESOURCES
-  Data/Results/Lumbar.xml
-  )
+
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_RESOURCES
@@ -52,7 +49,6 @@ if (BUILD_TESTING)
   set(MODULE_PYTHON_RESOURCES
     ${MODULE_PYTHON_RESOURCES}
     ${SCENE_TEST_RESOURCES}
-    ${RESULTS_TEST_RESOURCES}
     )
 endif()
 
