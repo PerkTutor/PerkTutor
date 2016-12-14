@@ -328,7 +328,7 @@
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
+           <verstretch>1</verstretch>
           </sizepolicy>
          </property>
          <property name="title">
@@ -373,7 +373,7 @@
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
+           <verstretch>1</verstretch>
           </sizepolicy>
          </property>
          <property name="maximumSize">
@@ -753,7 +753,7 @@
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
+           <verstretch>1</verstretch>
           </sizepolicy>
          </property>
          <property name="title">
@@ -864,7 +864,7 @@
           <string>Options</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
