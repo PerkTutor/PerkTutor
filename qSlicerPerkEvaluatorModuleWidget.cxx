@@ -476,6 +476,16 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnDownloadAdditionalMetricsClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->logic()->DownloadAdditionalMetrics();
+}
+
+
 void qSlicerPerkEvaluatorModuleWidget
 ::OnMetricInstanceNodesChanged()
 {
@@ -673,6 +683,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
+  connect( d->DownloadAdditionalMetricsButton, SIGNAL( clicked() ), this, SLOT( OnDownloadAdditionalMetricsClicked() ) );
 
 
 

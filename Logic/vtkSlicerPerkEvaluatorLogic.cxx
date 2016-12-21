@@ -31,6 +31,8 @@
 #include <sstream>
 
 
+
+
 //----------------------------------------------------------------------------
 
 vtkStandardNewMacro( vtkSlicerPerkEvaluatorLogic );
@@ -625,6 +627,16 @@ std::string vtkSlicerPerkEvaluatorLogic
   QVariant result = this->PythonManager->getVariable( "PythonMetricScriptAnatomyClassName" );
   
   return result.toString().toStdString();
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::DownloadAdditionalMetrics()
+{
+  // This just call the python metrics calculator's function to download the additional metrics
+  // This is because these operations are easier to do in Python
+  // TODO: Is there an elegant way to do this in C++
+  this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.DownloadAdditionalMetrics()" ) );
 }
 
 

@@ -79,6 +79,8 @@ public:
 
   std::vector< std::string > GetAllRoles( std::string msNodeID, /*vtkMRMLMetricInstanceNode::RoleTypeEnum*/ int roleType ); // For Python wrapping. Pass an enum in c++.
   std::string GetAnatomyRoleClassName( std::string msNodeID, std::string role );
+
+  void DownloadAdditionalMetrics();
   
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );

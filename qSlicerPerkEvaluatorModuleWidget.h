@@ -60,6 +60,8 @@ public slots:
 
   void OnAutoUpdateMeasurementRangeToggled();
 
+  void OnDownloadAdditionalMetricsClicked();
+
   void onTissueModelChanged( vtkMRMLNode* node );
   void onNeedleTransformChanged( vtkMRMLNode* node );
   void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
