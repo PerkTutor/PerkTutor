@@ -54,6 +54,9 @@ public:
   Q_INVOKABLE void setExpandHeightToContents( bool expand );
   Q_INVOKABLE bool getExpandHeightToContents();
 
+  Q_INVOKABLE void setShowMetricRoles( bool show );
+  Q_INVOKABLE bool getShowMetricRoles();
+
   Q_INVOKABLE void setMetricsTableSelectionRowVisible( bool visible );
 
   int getContentHeight();
@@ -85,6 +88,7 @@ protected:
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 
   bool ExpandHeightToContents;
+  bool ShowMetricRoles;
 
   virtual void setup();
 

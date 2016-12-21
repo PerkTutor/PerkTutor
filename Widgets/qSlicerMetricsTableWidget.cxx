@@ -160,6 +160,25 @@ int qSlicerMetricsTableWidget
 }
 
 
+bool qSlicerMetricsTableWidget
+::getShowMetricRoles()
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  return this->ShowMetricRoles;
+}
+
+
+void qSlicerMetricsTableWidget
+::setShowMetricRoles( bool show )
+{
+  Q_D(qSlicerMetricsTableWidget);
+
+  this->ShowMetricRoles = show;
+  this->updateWidget();
+}
+
+
 void qSlicerMetricsTableWidget
 ::setMetricsTableSelectionRowVisible( bool visible )
 {
@@ -323,9 +342,15 @@ void qSlicerMetricsTableWidget
   {
     QString nameString;
     nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
-    nameString.append( " [" );
-    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricRoles" ).ToString() );
-    nameString.append( "] (" );
+    
+    if ( this->ShowMetricRoles )
+    {
+      nameString.append( " [" );
+      nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricRoles" ).ToString() );
+      nameString.append( "]" );
+    }
+
+    nameString.append( " (" );
     nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
     nameString.append( ")" );
     QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
