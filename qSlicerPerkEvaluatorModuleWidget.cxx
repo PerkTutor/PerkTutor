@@ -243,7 +243,7 @@ void qSlicerPerkEvaluatorModuleWidget
   d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
 
   this->qvtkDisconnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
-  d->AnalysisStateDialog->hide();
+  d->AnalysisStateDialog->close();
 }
 
 
@@ -318,7 +318,7 @@ void qSlicerPerkEvaluatorModuleWidget
     d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
 
     this->qvtkDisconnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
-    d->AnalysisStateDialog->hide();
+    d->AnalysisStateDialog->close();
   }
 
   d->PerkEvaluatorNodeComboBox->setCurrentNode( originalPerkEvaluatorNode );
