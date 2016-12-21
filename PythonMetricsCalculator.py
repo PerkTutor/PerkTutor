@@ -1,4 +1,5 @@
 import os, imp, glob, sys
+import urllib, zipfile
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 
@@ -160,6 +161,9 @@ class PythonMetricsCalculatorLogic:
   # Ubiquity: Whether or not the metric spreads to every transform
   
   NEEDLE_LENGTH = 300 # 30cm is approximate need length
+  
+  ADDITIONAL_METRICS_URL = "https://github.com/PerkTutor/PythonMetrics/archive/master.zip"
+  METRICS_ZIP_FILE_NAME = "PythonMetrics.zip"
    
   def __init__( self ):    
     self.realTimeMetrics = dict()
@@ -179,9 +183,30 @@ class PythonMetricsCalculatorLogic:
       
   @staticmethod
   def AddCoreMetricsToScene():
-    # Add the "Core" metrics by default
-    coreMetricScriptFiles = glob.glob( os.path.dirname( __file__ ) + "/PythonMetrics/[a-z]*.py" ) # This will ignore any file that doesn't start with a letter # TODO: Is this a good way to ignore __init__.py?
-    for script in coreMetricScriptFiles:
+    coreMetricScriptDirectory = os.path.join( os.path.dirname( __file__ ), "PythonMetrics" )
+    PythonMetricsCalculatorLogic.AddMetricsFromDirectoryToScene( coreMetricScriptDirectory )
+
+      
+  @staticmethod
+  def DownloadAdditionalMetrics():
+    metricsDownloadDirectory = slicer.mrmlScene.GetCacheManager().GetRemoteCacheDirectory()
+    metricsFullZipFileName = os.path.join( metricsDownloadDirectory, PythonMetricsCalculatorLogic.METRICS_ZIP_FILE_NAME )
+
+    # Download the zip file
+    urllib.urlretrieve( PythonMetricsCalculatorLogic.ADDITIONAL_METRICS_URL, metricsFullZipFileName )
+
+    # Extract the zip file
+    metricsZipFile = zipfile.ZipFile( metricsFullZipFileName )
+    metricsZipFile.extractall( metricsDownloadDirectory )
+    
+    additionalMetricScriptDirectory = os.path.join( metricsDownloadDirectory, "PythonMetrics-master" )
+    PythonMetricsCalculatorLogic.AddMetricsFromDirectoryToScene( additionalMetricScriptDirectory )
+
+    
+  @staticmethod
+  def AddMetricsFromDirectoryToScene( metricsDirectory ):
+    metricScriptFiles = glob.glob( os.path.join( metricsDirectory, "[a-z]*.py" ) )
+    for script in metricScriptFiles:
       slicer.util.loadNodeFromFile( script, "Python Metric Script" )
     
   
