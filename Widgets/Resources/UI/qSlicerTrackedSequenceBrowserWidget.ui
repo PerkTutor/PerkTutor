@@ -38,7 +38,7 @@
        </property>
        <property name="nodeTypes">
         <stringlist>
-         <string>vtkMRMLTransformBufferNode</string>
+         <string>vtkMRMLSequenceBrowserNode</string>
         </stringlist>
        </property>
        <property name="showHidden">

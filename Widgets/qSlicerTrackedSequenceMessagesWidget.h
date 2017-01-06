@@ -18,62 +18,59 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerTransformBufferWidget_h
-#define __qSlicerTransformBufferWidget_h
+#ifndef __qSlicerTrackedSequenceMessagesWidget_h
+#define __qSlicerTrackedSequenceMessagesWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
 
-#include "vtkSlicerModuleLogic.h"
+// FooBar Widgets includes
+#include "qSlicerTransformRecorderModuleWidgetsExport.h"
+#include "ui_qSlicerTrackedSequenceMessagesWidget.h"
+
 #include "vtkMRMLTransformBufferNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
-// FooBar Widgets includes
-#include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerTransformBufferWidget.h"
-
-class qSlicerTransformBufferWidgetPrivate;
+class qSlicerTrackedSequenceMessagesWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_TRANSFORMRECORDER_WIDGETS_EXPORT 
-qSlicerTransformBufferWidget : public qSlicerWidget
+qSlicerTrackedSequenceMessagesWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  typedef qSlicerWidget Superclass;
-  qSlicerTransformBufferWidget(QWidget *parent=0);
-  virtual ~qSlicerTransformBufferWidget();
+  qSlicerTrackedSequenceMessagesWidget(QWidget *parent=0);
+  virtual ~qSlicerTrackedSequenceMessagesWidget();
+
+public slots:
 
   virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
-  virtual vtkMRMLTransformBufferNode* getTransformBufferNode();
 
 protected slots:
 
-  void onImportButtonClicked();
-  void onExportButtonClicked();
+  virtual void onAddMessageButtonClicked();
+  virtual void onRemoveMessageButtonClicked();
+  virtual void onClearMessagesButtonClicked();
+  virtual void onAddBlankMessageClicked();
 
-  virtual void onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
-  void onTransformBufferNodeModified();
-
-  void updateWidget();
-
-signals:
-
-  void transformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
-  void transformBufferNodeModified();
+  virtual void onMessageEdited( int row, int column );
+  virtual void onMessageDoubleClicked( int row, int column );
+  
+  virtual void updateWidget();
 
 protected:
-
-  QScopedPointer<qSlicerTransformBufferWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerTrackedSequenceMessagesWidgetPrivate> d_ptr;
 
   vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
   vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
+  enum MessagesColumnsEnum{ MESSAGE_TIME_COLUMN, MESSAGE_NAME_COLUMN };
+
   virtual void setup();
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerTransformBufferWidget);
-  Q_DISABLE_COPY(qSlicerTransformBufferWidget);
+  Q_DECLARE_PRIVATE(qSlicerTrackedSequenceMessagesWidget);
+  Q_DISABLE_COPY(qSlicerTrackedSequenceMessagesWidget);
 
 };
 

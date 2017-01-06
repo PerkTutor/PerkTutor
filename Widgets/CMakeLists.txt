@@ -5,33 +5,35 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "Q_SLICER_MODULE_${MODULE_NAME_UPPER}_WIDGETS_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
+  ${SequencesModule_INCLUDE_DIRS}
+  ${SequenceBrowserModule_INCLUDE_DIRS}
   )
 
 set(${KIT}_SRCS
-  qSlicerMessagesWidget.h
-  qSlicerMessagesWidget.cxx
-  qSlicerRecorderControlsWidget.h
-  qSlicerRecorderControlsWidget.cxx
-  qSlicerTransformBufferWidget.h
-  qSlicerTransformBufferWidget.cxx
+  qSlicerTrackedSequenceMessagesWidget.h
+  qSlicerTrackedSequenceMessagesWidget.cxx
+  qSlicerTrackedSequenceRecorderControlsWidget.h
+  qSlicerTrackedSequenceRecorderControlsWidget.cxx
+  qSlicerTrackedSequenceBrowserWidget.h
+  qSlicerTrackedSequenceBrowserWidget.cxx
   )
 
 set(${KIT}_MOC_SRCS
-  qSlicerMessagesWidget.h
-  qSlicerRecorderControlsWidget.h
-  qSlicerTransformBufferWidget.h
+  qSlicerTrackedSequenceMessagesWidget.h
+  qSlicerTrackedSequenceRecorderControlsWidget.h
+  qSlicerTrackedSequenceBrowserWidget.h
   )
 
 set(${KIT}_UI_SRCS
-  Resources/UI/qSlicerMessagesWidget.ui
-  Resources/UI/qSlicerRecorderControlsWidget.ui
-  Resources/UI/qSlicerTransformBufferWidget.ui
+  Resources/UI/qSlicerTrackedSequenceMessagesWidget.ui
+  Resources/UI/qSlicerTrackedSequenceRecorderControlsWidget.ui
+  Resources/UI/qSlicerTrackedSequenceBrowserWidget.ui
   )
 
 set(${KIT}_RESOURCES
-  Resources/UI/qSlicerMessagesWidget.ui
-  Resources/UI/qSlicerRecorderControlsWidget.ui
-  Resources/UI/qSlicerTransformBufferWidget.ui
+  Resources/UI/qSlicerTrackedSequenceMessagesWidget.ui
+  Resources/UI/qSlicerTrackedSequenceRecorderControlsWidget.ui
+  Resources/UI/qSlicerTrackedSequenceBrowserWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES

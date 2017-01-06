@@ -19,7 +19,7 @@
 ==============================================================================*/
 
 // FooBar Widgets includes
-#include "qSlicerMessagesWidget.h"
+#include "qSlicerTrackedSequenceMessagesWidget.h"
 
 #include <QtGui>
 
@@ -27,44 +27,44 @@
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
-class qSlicerMessagesWidgetPrivate
-  : public Ui_qSlicerMessagesWidget
+class qSlicerTrackedSequenceMessagesWidgetPrivate
+  : public Ui_qSlicerTrackedSequenceMessagesWidget
 {
-  Q_DECLARE_PUBLIC(qSlicerMessagesWidget);
+  Q_DECLARE_PUBLIC(qSlicerTrackedSequenceMessagesWidget);
 protected:
-  qSlicerMessagesWidget* const q_ptr;
+  qSlicerTrackedSequenceMessagesWidget* const q_ptr;
 
 public:
-  qSlicerMessagesWidgetPrivate( qSlicerMessagesWidget& object);
-  ~qSlicerMessagesWidgetPrivate();
-  virtual void setupUi(qSlicerMessagesWidget*);
+  qSlicerTrackedSequenceMessagesWidgetPrivate( qSlicerTrackedSequenceMessagesWidget& object);
+  ~qSlicerTrackedSequenceMessagesWidgetPrivate();
+  virtual void setupUi(qSlicerTrackedSequenceMessagesWidget*);
 };
 
 // --------------------------------------------------------------------------
-qSlicerMessagesWidgetPrivate
-::qSlicerMessagesWidgetPrivate( qSlicerMessagesWidget& object) : q_ptr(&object)
+qSlicerTrackedSequenceMessagesWidgetPrivate
+::qSlicerTrackedSequenceMessagesWidgetPrivate( qSlicerTrackedSequenceMessagesWidget& object) : q_ptr(&object)
 {
 }
 
-qSlicerMessagesWidgetPrivate
-::~qSlicerMessagesWidgetPrivate()
+qSlicerTrackedSequenceMessagesWidgetPrivate
+::~qSlicerTrackedSequenceMessagesWidgetPrivate()
 {
 }
 
 
 // --------------------------------------------------------------------------
-void qSlicerMessagesWidgetPrivate
-::setupUi(qSlicerMessagesWidget* widget)
+void qSlicerTrackedSequenceMessagesWidgetPrivate
+::setupUi(qSlicerTrackedSequenceMessagesWidget* widget)
 {
-  this->Ui_qSlicerMessagesWidget::setupUi(widget);
+  this->Ui_qSlicerTrackedSequenceMessagesWidget::setupUi(widget);
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerMessagesWidget methods
+// qSlicerTrackedSequenceMessagesWidget methods
 
 //-----------------------------------------------------------------------------
-qSlicerMessagesWidget
-::qSlicerMessagesWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerMessagesWidgetPrivate(*this) )
+qSlicerTrackedSequenceMessagesWidget
+::qSlicerTrackedSequenceMessagesWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerTrackedSequenceMessagesWidgetPrivate(*this) )
 {
   this->TransformBufferNode = NULL;
   this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
@@ -72,16 +72,16 @@ qSlicerMessagesWidget
 }
 
 
-qSlicerMessagesWidget
-::~qSlicerMessagesWidget()
+qSlicerTrackedSequenceMessagesWidget
+::~qSlicerTrackedSequenceMessagesWidget()
 {
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::setup()
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   d->setupUi(this);
 
@@ -99,10 +99,10 @@ void qSlicerMessagesWidget
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   this->qvtkDisconnectAll();
 
@@ -118,10 +118,10 @@ void qSlicerMessagesWidget
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::onAddMessageButtonClicked()
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -144,10 +144,10 @@ void qSlicerMessagesWidget
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::onRemoveMessageButtonClicked()
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -160,10 +160,10 @@ void qSlicerMessagesWidget
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::onClearMessagesButtonClicked()
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -176,10 +176,10 @@ void qSlicerMessagesWidget
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::onAddBlankMessageClicked()
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -194,12 +194,12 @@ void qSlicerMessagesWidget
 
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::onMessageEdited( int row, int column )
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
-  if ( this->TransformBufferNode == NULL || column == qSlicerMessagesWidget::MESSAGE_TIME_COLUMN )
+  if ( this->TransformBufferNode == NULL || column == qSlicerTrackedSequenceMessagesWidget::MESSAGE_TIME_COLUMN )
   {
     return;
   }
@@ -214,17 +214,17 @@ void qSlicerMessagesWidget
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::onMessageDoubleClicked( int row, int column )
 {
   // Do nothing, with the understanding that sublasses can implement this slot
 }
 
 
-void qSlicerMessagesWidget
+void qSlicerTrackedSequenceMessagesWidget
 ::updateWidget()
 {
-  Q_D(qSlicerMessagesWidget);
+  Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   // Check what the current row and column are
   int currentRow = d->MessagesTableWidget->currentRow();
@@ -256,8 +256,8 @@ void qSlicerMessagesWidget
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
     timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
 	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAtIndex(i)->GetMessageString() ) );
-    d->MessagesTableWidget->setItem( i, qSlicerMessagesWidget::MESSAGE_TIME_COLUMN, timeItem );
-    d->MessagesTableWidget->setItem( i, qSlicerMessagesWidget::MESSAGE_NAME_COLUMN, messageItem ); 
+    d->MessagesTableWidget->setItem( i, qSlicerTrackedSequenceMessagesWidget::MESSAGE_TIME_COLUMN, timeItem );
+    d->MessagesTableWidget->setItem( i, qSlicerTrackedSequenceMessagesWidget::MESSAGE_NAME_COLUMN, messageItem ); 
   }
 
   // Reset the current row and column to what they were

@@ -19,50 +19,50 @@
 ==============================================================================*/
 
 // FooBar Widgets includes
-#include "qSlicerRecorderControlsWidget.h"
+#include "qSlicerTrackedSequenceRecorderControlsWidget.h"
 
 #include <QtGui>
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
-class qSlicerRecorderControlsWidgetPrivate
-  : public Ui_qSlicerRecorderControlsWidget
+class qSlicerTrackedSequenceRecorderControlsWidgetPrivate
+  : public Ui_qSlicerTrackedSequenceRecorderControlsWidget
 {
-  Q_DECLARE_PUBLIC(qSlicerRecorderControlsWidget);
+  Q_DECLARE_PUBLIC(qSlicerTrackedSequenceRecorderControlsWidget);
 protected:
-  qSlicerRecorderControlsWidget* const q_ptr;
+  qSlicerTrackedSequenceRecorderControlsWidget* const q_ptr;
 
 public:
-  qSlicerRecorderControlsWidgetPrivate( qSlicerRecorderControlsWidget& object);
-  ~qSlicerRecorderControlsWidgetPrivate();
-  virtual void setupUi(qSlicerRecorderControlsWidget*);
+  qSlicerTrackedSequenceRecorderControlsWidgetPrivate( qSlicerTrackedSequenceRecorderControlsWidget& object);
+  ~qSlicerTrackedSequenceRecorderControlsWidgetPrivate();
+  virtual void setupUi(qSlicerTrackedSequenceRecorderControlsWidget*);
 };
 
 // --------------------------------------------------------------------------
-qSlicerRecorderControlsWidgetPrivate
-::qSlicerRecorderControlsWidgetPrivate( qSlicerRecorderControlsWidget& object) : q_ptr(&object)
+qSlicerTrackedSequenceRecorderControlsWidgetPrivate
+::qSlicerTrackedSequenceRecorderControlsWidgetPrivate( qSlicerTrackedSequenceRecorderControlsWidget& object) : q_ptr(&object)
 {
 }
 
-qSlicerRecorderControlsWidgetPrivate
-::~qSlicerRecorderControlsWidgetPrivate()
+qSlicerTrackedSequenceRecorderControlsWidgetPrivate
+::~qSlicerTrackedSequenceRecorderControlsWidgetPrivate()
 {
 }
 
 
 // --------------------------------------------------------------------------
-void qSlicerRecorderControlsWidgetPrivate
-::setupUi(qSlicerRecorderControlsWidget* widget)
+void qSlicerTrackedSequenceRecorderControlsWidgetPrivate
+::setupUi(qSlicerTrackedSequenceRecorderControlsWidget* widget)
 {
-  this->Ui_qSlicerRecorderControlsWidget::setupUi(widget);
+  this->Ui_qSlicerTrackedSequenceRecorderControlsWidget::setupUi(widget);
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerRecorderControlsWidget methods
+// qSlicerTrackedSequenceRecorderControlsWidget methods
 
 //-----------------------------------------------------------------------------
-qSlicerRecorderControlsWidget
-::qSlicerRecorderControlsWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerRecorderControlsWidgetPrivate(*this) )
+qSlicerTrackedSequenceRecorderControlsWidget
+::qSlicerTrackedSequenceRecorderControlsWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerTrackedSequenceRecorderControlsWidgetPrivate(*this) )
 {
   this->TransformBufferNode = NULL;
   this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
@@ -70,16 +70,16 @@ qSlicerRecorderControlsWidget
 }
 
 
-qSlicerRecorderControlsWidget
-::~qSlicerRecorderControlsWidget()
+qSlicerTrackedSequenceRecorderControlsWidget
+::~qSlicerTrackedSequenceRecorderControlsWidget()
 {
 }
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::setup()
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   d->setupUi(this);
 
@@ -92,10 +92,10 @@ void qSlicerRecorderControlsWidget
 }
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   this->qvtkDisconnectAll();
 
@@ -109,10 +109,10 @@ void qSlicerRecorderControlsWidget
 }
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::onTransformBufferActiveTransformsChanged()
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   // Disable to the onCheckedChanged listener when initializing the selections
   // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
@@ -135,10 +135,10 @@ void qSlicerRecorderControlsWidget
 }
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::onCheckedTransformsChanged()
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -160,10 +160,10 @@ void qSlicerRecorderControlsWidget
 
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::onStartStopButtonClicked( bool state )
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -189,10 +189,10 @@ void qSlicerRecorderControlsWidget
 
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::onClearButtonClicked()
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -205,10 +205,10 @@ void qSlicerRecorderControlsWidget
 }
 
 
-void qSlicerRecorderControlsWidget
+void qSlicerTrackedSequenceRecorderControlsWidget
 ::updateWidget()
 {
-  Q_D(qSlicerRecorderControlsWidget);
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   if ( this->TransformBufferNode == NULL )
   {

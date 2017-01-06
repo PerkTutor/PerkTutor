@@ -38,6 +38,8 @@
 #include "qSlicerModuleManager.h"
 #include "qSlicerAbstractCoreModule.h"
 
+#include "vtkSlicerSequencesLogic.h"
+#include "vtkMRMLSequenceBrowserNode.h"
 
 
 // Helper Methods ------------------------------------------------------------

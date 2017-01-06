@@ -18,59 +18,62 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerMessagesWidget_h
-#define __qSlicerMessagesWidget_h
+#ifndef __qSlicerTrackedSequenceBrowserWidget_h
+#define __qSlicerTrackedSequenceBrowserWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
 
-// FooBar Widgets includes
-#include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerMessagesWidget.h"
-
+#include "vtkSlicerModuleLogic.h"
 #include "vtkMRMLTransformBufferNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
-class qSlicerMessagesWidgetPrivate;
+// FooBar Widgets includes
+#include "qSlicerTransformRecorderModuleWidgetsExport.h"
+#include "ui_qSlicerTrackedSequenceBrowserWidget.h"
+
+class qSlicerTrackedSequenceBrowserWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_TRANSFORMRECORDER_WIDGETS_EXPORT 
-qSlicerMessagesWidget : public qSlicerWidget
+qSlicerTrackedSequenceBrowserWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
-  qSlicerMessagesWidget(QWidget *parent=0);
-  virtual ~qSlicerMessagesWidget();
-
-public slots:
+  typedef qSlicerWidget Superclass;
+  qSlicerTrackedSequenceBrowserWidget(QWidget *parent=0);
+  virtual ~qSlicerTrackedSequenceBrowserWidget();
 
   virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
+  virtual vtkMRMLTransformBufferNode* getTransformBufferNode();
 
 protected slots:
 
-  virtual void onAddMessageButtonClicked();
-  virtual void onRemoveMessageButtonClicked();
-  virtual void onClearMessagesButtonClicked();
-  virtual void onAddBlankMessageClicked();
+  void onImportButtonClicked();
+  void onExportButtonClicked();
 
-  virtual void onMessageEdited( int row, int column );
-  virtual void onMessageDoubleClicked( int row, int column );
-  
-  virtual void updateWidget();
+  virtual void onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
+  void onTransformBufferNodeModified();
+
+  void updateWidget();
+
+signals:
+
+  void transformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
+  void transformBufferNodeModified();
 
 protected:
-  QScopedPointer<qSlicerMessagesWidgetPrivate> d_ptr;
+
+  QScopedPointer<qSlicerTrackedSequenceBrowserWidgetPrivate> d_ptr;
 
   vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
   vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
-  enum MessagesColumnsEnum{ MESSAGE_TIME_COLUMN, MESSAGE_NAME_COLUMN };
-
   virtual void setup();
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerMessagesWidget);
-  Q_DISABLE_COPY(qSlicerMessagesWidget);
+  Q_DECLARE_PRIVATE(qSlicerTrackedSequenceBrowserWidget);
+  Q_DISABLE_COPY(qSlicerTrackedSequenceBrowserWidget);
 
 };
 

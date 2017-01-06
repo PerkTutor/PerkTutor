@@ -18,8 +18,8 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerRecorderControlsWidget_h
-#define __qSlicerRecorderControlsWidget_h
+#ifndef __qSlicerTrackedSequenceRecorderControlsWidget_h
+#define __qSlicerTrackedSequenceRecorderControlsWidget_h
 
 // Qt includes
 #include "qSlicerWidget.h"
@@ -29,19 +29,19 @@
 
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerRecorderControlsWidget.h"
+#include "ui_qSlicerTrackedSequenceRecorderControlsWidget.h"
 
-class qSlicerRecorderControlsWidgetPrivate;
+class qSlicerTrackedSequenceRecorderControlsWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_TRANSFORMRECORDER_WIDGETS_EXPORT 
-qSlicerRecorderControlsWidget : public qSlicerWidget
+qSlicerTrackedSequenceRecorderControlsWidget : public qSlicerWidget
 {
   Q_OBJECT
 public:
 
-  qSlicerRecorderControlsWidget(QWidget *parent=0);
-  virtual ~qSlicerRecorderControlsWidget();
+  qSlicerTrackedSequenceRecorderControlsWidget(QWidget *parent=0);
+  virtual ~qSlicerTrackedSequenceRecorderControlsWidget();
 
 public slots:
 
@@ -59,7 +59,7 @@ protected slots:
   void updateWidget();
 
 protected:
-  QScopedPointer<qSlicerRecorderControlsWidgetPrivate> d_ptr;
+  QScopedPointer<qSlicerTrackedSequenceRecorderControlsWidgetPrivate> d_ptr;
 
   vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
   vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
@@ -67,8 +67,8 @@ protected:
   virtual void setup();
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerRecorderControlsWidget);
-  Q_DISABLE_COPY(qSlicerRecorderControlsWidget);
+  Q_DECLARE_PRIVATE(qSlicerTrackedSequenceRecorderControlsWidget);
+  Q_DISABLE_COPY(qSlicerTrackedSequenceRecorderControlsWidget);
 
 };
 

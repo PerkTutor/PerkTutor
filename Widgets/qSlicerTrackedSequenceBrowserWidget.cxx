@@ -19,7 +19,7 @@
 ==============================================================================*/
 
 // FooBar Widgets includes
-#include "qSlicerTransformBufferWidget.h"
+#include "qSlicerTrackedSequenceBrowserWidget.h"
 
 #include "qSlicerIOManager.h"
 
@@ -28,44 +28,44 @@
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
-class qSlicerTransformBufferWidgetPrivate
-  : public Ui_qSlicerTransformBufferWidget
+class qSlicerTrackedSequenceBrowserWidgetPrivate
+  : public Ui_qSlicerTrackedSequenceBrowserWidget
 {
-  Q_DECLARE_PUBLIC(qSlicerTransformBufferWidget);
+  Q_DECLARE_PUBLIC(qSlicerTrackedSequenceBrowserWidget);
 protected:
-  qSlicerTransformBufferWidget* const q_ptr;
+  qSlicerTrackedSequenceBrowserWidget* const q_ptr;
 
 public:
-  qSlicerTransformBufferWidgetPrivate( qSlicerTransformBufferWidget& object);
-  ~qSlicerTransformBufferWidgetPrivate();
-  virtual void setupUi(qSlicerTransformBufferWidget*);
+  qSlicerTrackedSequenceBrowserWidgetPrivate( qSlicerTrackedSequenceBrowserWidget& object);
+  ~qSlicerTrackedSequenceBrowserWidgetPrivate();
+  virtual void setupUi(qSlicerTrackedSequenceBrowserWidget*);
 };
 
 // --------------------------------------------------------------------------
-qSlicerTransformBufferWidgetPrivate
-::qSlicerTransformBufferWidgetPrivate( qSlicerTransformBufferWidget& object) : q_ptr(&object)
+qSlicerTrackedSequenceBrowserWidgetPrivate
+::qSlicerTrackedSequenceBrowserWidgetPrivate( qSlicerTrackedSequenceBrowserWidget& object) : q_ptr(&object)
 {
 }
 
-qSlicerTransformBufferWidgetPrivate
-::~qSlicerTransformBufferWidgetPrivate()
+qSlicerTrackedSequenceBrowserWidgetPrivate
+::~qSlicerTrackedSequenceBrowserWidgetPrivate()
 {
 }
 
 
 // --------------------------------------------------------------------------
-void qSlicerTransformBufferWidgetPrivate
-::setupUi(qSlicerTransformBufferWidget* widget)
+void qSlicerTrackedSequenceBrowserWidgetPrivate
+::setupUi(qSlicerTrackedSequenceBrowserWidget* widget)
 {
-  this->Ui_qSlicerTransformBufferWidget::setupUi(widget);
+  this->Ui_qSlicerTrackedSequenceBrowserWidget::setupUi(widget);
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerTransformBufferWidget methods
+// qSlicerTrackedSequenceBrowserWidget methods
 
 //-----------------------------------------------------------------------------
-qSlicerTransformBufferWidget
-::qSlicerTransformBufferWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTransformBufferWidgetPrivate(*this) )
+qSlicerTrackedSequenceBrowserWidget
+::qSlicerTrackedSequenceBrowserWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTrackedSequenceBrowserWidgetPrivate(*this) )
 {
   this->TransformBufferNode = NULL;
   this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
@@ -73,16 +73,16 @@ qSlicerTransformBufferWidget
 }
 
 
-qSlicerTransformBufferWidget
-::~qSlicerTransformBufferWidget()
+qSlicerTrackedSequenceBrowserWidget
+::~qSlicerTrackedSequenceBrowserWidget()
 {
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::setup()
 {
-  Q_D(qSlicerTransformBufferWidget);
+  Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   d->setupUi(this);
 
@@ -96,29 +96,29 @@ void qSlicerTransformBufferWidget
   this->updateWidget();  
 }
 
-vtkMRMLTransformBufferNode* qSlicerTransformBufferWidget
+vtkMRMLTransformBufferNode* qSlicerTrackedSequenceBrowserWidget
 ::getTransformBufferNode()
 {
-  Q_D(qSlicerTransformBufferWidget);
+  Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   return this->TransformBufferNode;
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
 {
-  Q_D(qSlicerTransformBufferWidget);
+  Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   d->BufferNodeComboBox->setCurrentNode( newTransformBufferNode );
   // If it is a new transform buffer, then the onTransformBufferNodeChanged will be called automatically
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode )
 {
-  Q_D(qSlicerTransformBufferWidget);
+  Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   this->qvtkDisconnectAll();
 
@@ -132,7 +132,7 @@ void qSlicerTransformBufferWidget
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::onTransformBufferNodeModified()
 {
   this->updateWidget();
@@ -140,10 +140,10 @@ void qSlicerTransformBufferWidget
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::onImportButtonClicked()
 {
-  Q_D(qSlicerTransformBufferWidget);
+  Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   // Use the generic Slicer dialog  
   vtkSmartPointer< vtkCollection > loadedNodes = vtkSmartPointer< vtkCollection >::New();
@@ -161,10 +161,10 @@ void qSlicerTransformBufferWidget
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::onExportButtonClicked()
 {
-  Q_D(qSlicerTransformBufferWidget);  
+  Q_D(qSlicerTrackedSequenceBrowserWidget);  
 
   if ( this->TransformBufferNode == NULL )
   {
@@ -183,10 +183,10 @@ void qSlicerTransformBufferWidget
 }
 
 
-void qSlicerTransformBufferWidget
+void qSlicerTrackedSequenceBrowserWidget
 ::updateWidget()
 {
-  Q_D(qSlicerTransformBufferWidget);
+  Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   d->BufferNodeComboBox->setCurrentNode( this->TransformBufferNode );
 }
