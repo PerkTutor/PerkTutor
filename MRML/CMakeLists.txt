@@ -13,8 +13,7 @@ set(module_mrml_export_directive "VTK_SLICER_TRANSFORMRECORDER_MODULE_MRML_EXPOR
 
 # Additional directories to include
 set(module_mrml_include_directories
-  ${SequencesModule_INCLUDE_DIRS}
-  ${SequenceBrowserModule_INCLUDE_DIRS}
+  ${Sequences_INCLUDE_DIRS}
   )
 
 # Source files
@@ -38,6 +37,7 @@ set(module_mrml_target_libraries
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
+  ${Sequences_LIBS}
   )
 
 SlicerMacroBuildModuleMRML(

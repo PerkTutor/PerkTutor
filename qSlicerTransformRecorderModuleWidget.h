@@ -6,9 +6,10 @@
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
 #include "qSlicerTransformRecorderModuleExport.h"
-#include "qSlicerTransformBufferWidget.h"
-#include "qSlicerMessagesWidget.h"
-#include "qSlicerRecorderControlsWidget.h"
+
+#include "qSlicerTrackedSequenceBrowserWidget.h"
+#include "qSlicerTrackedSequenceMessagesWidget.h"
+#include "qSlicerTrackedSequenceRecorderControlsWidget.h"
 
 
 class qSlicerTransformRecorderModuleWidgetPrivate;

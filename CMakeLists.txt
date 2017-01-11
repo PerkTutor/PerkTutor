@@ -30,8 +30,7 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_BINARY_DIR}/MRML
-  ${SequencesModule_INCLUDE_DIRS}
-  ${SequenceBrowserModule_INCLUDE_DIRS}
+  ${Sequences_INCLUDE_DIRS}
   )
 
 # Source files
@@ -55,7 +54,7 @@ set(MODULE_MOC_SRCS
 set(MODULE_UI_SRCS
   Resources/UI/qSlicer${MODULE_NAME}Module.ui
   )
-
+ 
 # Additional Target libraries
 set(MODULE_TARGET_LIBRARIES
   qSlicer${MODULE_NAME}ModuleWidgets
@@ -64,6 +63,7 @@ set(MODULE_TARGET_LIBRARIES
   ${MRML_LIBRARIES}
   ${QT_LIBRARIES}
   qSlicerBaseQTCore
+  ${Sequences_LIBS}
   )
 
 # Resources
@@ -84,6 +84,7 @@ slicerMacroBuildLoadableModule(
   RESOURCES ${MODULE_RESOURCES}
   )
 
+ 
 #-----------------------------------------------------------------------------
 if(BUILD_TESTING)
   add_subdirectory(Testing)

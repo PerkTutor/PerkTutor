@@ -12,8 +12,7 @@ set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_LOGIC_EXPORT
 
 # Additional directories to include
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${SequencesModule_INCLUDE_DIRS}
-  ${SequenceBrowserModule_INCLUDE_DIRS}
+  ${Sequences_INCLUDE_DIRS}
   )
 
 # Source files
@@ -28,6 +27,7 @@ set(${KIT}_TARGET_LIBRARIES
   ${MRML_LIBRARIES}
   SlicerBaseLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
+  ${Sequences_LIBS}
   )
 
 

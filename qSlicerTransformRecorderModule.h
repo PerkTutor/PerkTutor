@@ -46,6 +46,9 @@ public:
   /// Return acknowledgements
   virtual QString acknowledgementText()const;
   virtual QStringList contributors()const;
+
+  /// Dependencies on other Slicer modules
+  virtual QStringList dependencies()const;
   
   /// Return a custom icon for the module
   virtual QIcon icon()const;

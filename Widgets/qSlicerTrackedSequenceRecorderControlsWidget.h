@@ -25,6 +25,8 @@
 #include "qSlicerWidget.h"
 
 #include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLSequenceBrowserNode.h"
+#include "vtkSlicerSequenceBrowserLogic.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 // FooBar Widgets includes
@@ -45,24 +47,25 @@ public:
 
 public slots:
 
-  virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
+  virtual void setTrackedSequenceBrowserNode( vtkMRMLNode* newTrackedSequenceBrowserNode );
 
 protected slots:
 
-  virtual void onTransformBufferActiveTransformsChanged();
+  virtual void onTrackedSequenceBrowserProxyNodesChanged();
 
   virtual void onStartStopButtonClicked( bool );
   virtual void onClearButtonClicked();
 
   void onCheckedTransformsChanged();
+  void onCheckedImagesChanged();
 
   void updateWidget();
 
 protected:
   QScopedPointer<qSlicerTrackedSequenceRecorderControlsWidgetPrivate> d_ptr;
 
-  vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
-  vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
+  vtkWeakPointer< vtkMRMLSequenceBrowserNode > TrackedSequenceBrowserNode;
+  vtkWeakPointer< vtkSlicerSequenceBrowserLogic > SequenceBrowserLogic;
 
   virtual void setup();
 

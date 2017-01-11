@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qSlicerMessagesWidget</class>
- <widget class="qSlicerWidget" name="qSlicerMessagesWidget">
+ <class>qSlicerTrackedSequenceMessagesWidget</class>
+ <widget class="qSlicerWidget" name="qSlicerTrackedSequenceMessagesWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>598</width>
     <height>300</height>
    </rect>
   </property>

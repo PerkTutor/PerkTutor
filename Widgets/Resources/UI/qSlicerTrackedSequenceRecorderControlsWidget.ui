@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qSlicerRecorderControlsWidget</class>
- <widget class="qSlicerWidget" name="qSlicerRecorderControlsWidget">
+ <class>qSlicerTrackedSequenceRecorderControlsWidget</class>
+ <widget class="qSlicerWidget" name="qSlicerTrackedSequenceRecorderControlsWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -89,7 +89,7 @@
       </widget>
      </item>
      <item>
-      <widget class="qMRMLCheckableNodeComboBox" name="ImagesCheckableComboBox">
+      <widget class="qMRMLCheckableNodeComboBox" name="ImageCheckableComboBox">
        <property name="enabled">
         <bool>true</bool>
        </property>
@@ -200,7 +200,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>qSlicerRecorderControlsWidget</sender>
+   <sender>qSlicerTrackedSequenceRecorderControlsWidget</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>TransformCheckableComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
@@ -212,6 +212,22 @@
     <hint type="destinationlabel">
      <x>300</x>
      <y>123</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerTrackedSequenceRecorderControlsWidget</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>ImageCheckableComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>418</x>
+     <y>55</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>629</x>
+     <y>39</y>
     </hint>
    </hints>
   </connection>

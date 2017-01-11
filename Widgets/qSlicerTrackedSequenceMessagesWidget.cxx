@@ -66,7 +66,7 @@ void qSlicerTrackedSequenceMessagesWidgetPrivate
 qSlicerTrackedSequenceMessagesWidget
 ::qSlicerTrackedSequenceMessagesWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerTrackedSequenceMessagesWidgetPrivate(*this) )
 {
-  this->TransformBufferNode = NULL;
+  this->TrackedSequenceBrowserNode = NULL;
   this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
@@ -100,19 +100,15 @@ void qSlicerTrackedSequenceMessagesWidget
 
 
 void qSlicerTrackedSequenceMessagesWidget
-::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
+::setTrackedSequenceBrowserNode( vtkMRMLNode* newTrackedSequenceBrowserNode )
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
   this->qvtkDisconnectAll();
 
-  this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
+  this->TrackedSequenceBrowserNode = vtkMRMLTransformBufferNode::SafeDownCast( newTrackedSequenceBrowserNode );
 
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageAddedEvent, this, SLOT( updateWidget() ) );
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::MessageRemovedEvent, this, SLOT( updateWidget() ) );
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformAddedEvent, this, SLOT( updateWidget() ) );
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::TransformRemovedEvent, this, SLOT( updateWidget() ) );
-  // Have to listen to the transform add/remove events in case that changes the relative time of the messages
+  this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
@@ -123,6 +119,7 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
+  /*
   if ( this->TransformBufferNode == NULL )
   {
     return;
@@ -141,6 +138,7 @@ void qSlicerTrackedSequenceMessagesWidget
   this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, messageName.toStdString(), time );
   
   this->updateWidget();
+  */
 }
 
 
@@ -149,6 +147,7 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
+  /*
   if ( this->TransformBufferNode == NULL )
   {
     return;
@@ -157,6 +156,7 @@ void qSlicerTrackedSequenceMessagesWidget
   this->TransformRecorderLogic->RemoveMessage( this->TransformBufferNode, d->MessagesTableWidget->currentRow() );
 
   this->updateWidget();
+  */
 }
 
 
@@ -165,6 +165,7 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
+  /*
   if ( this->TransformBufferNode == NULL )
   {
     return;
@@ -173,6 +174,7 @@ void qSlicerTrackedSequenceMessagesWidget
   this->TransformRecorderLogic->ClearMessages( this->TransformBufferNode );
   
   this->updateWidget();
+  */
 }
 
 
@@ -181,6 +183,7 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
+  /*
   if ( this->TransformBufferNode == NULL )
   {
     return;
@@ -190,6 +193,7 @@ void qSlicerTrackedSequenceMessagesWidget
   this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, "", time );
   
   this->updateWidget();
+  */
 }
 
 
@@ -199,6 +203,7 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
+  /*
   if ( this->TransformBufferNode == NULL || column == qSlicerTrackedSequenceMessagesWidget::MESSAGE_TIME_COLUMN )
   {
     return;
@@ -211,6 +216,7 @@ void qSlicerTrackedSequenceMessagesWidget
   this->TransformBufferNode->GetMessageAtIndex( row )->SetMessageString( qText.toStdString() );
   
   this->updateWidget();
+  */
 }
 
 
@@ -240,6 +246,7 @@ void qSlicerTrackedSequenceMessagesWidget
   d->MessagesTableWidget->setHorizontalHeaderLabels( MessagesTableHeaders ); 
   d->MessagesTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
 
+  /*
   if ( this->TransformBufferNode == NULL )
   {
     return;
@@ -265,4 +272,5 @@ void qSlicerTrackedSequenceMessagesWidget
   d->MessagesTableWidget->verticalScrollBar()->setValue( scrollPosition );
 
   d->MessagesTableWidget->blockSignals( wasBlockedTableWidget );
+  */
 }

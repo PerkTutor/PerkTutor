@@ -73,6 +73,13 @@ QStringList qSlicerTransformRecorderModule::categories() const
 {
   return QStringList() << "Perk Tutor";
 }
+
+ //-----------------------------------------------------------------------------
+ QStringList qSlicerTransformRecorderModule::dependencies()const
+ {
+   return QStringList() << "Sequences" << "SequenceBrowser";
+ }
+
 //-----------------------------------------------------------------------------
 qSlicerTransformRecorderModule::~qSlicerTransformRecorderModule()
 {

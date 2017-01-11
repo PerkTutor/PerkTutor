@@ -20,6 +20,7 @@
 
 // FooBar Widgets includes
 #include "qSlicerTrackedSequenceRecorderControlsWidget.h"
+#include "vtkMRMLSequenceBrowserNode.h"
 
 #include <QtGui>
 
@@ -64,8 +65,8 @@ void qSlicerTrackedSequenceRecorderControlsWidgetPrivate
 qSlicerTrackedSequenceRecorderControlsWidget
 ::qSlicerTrackedSequenceRecorderControlsWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerTrackedSequenceRecorderControlsWidgetPrivate(*this) )
 {
-  this->TransformBufferNode = NULL;
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
+  this->TrackedSequenceBrowserNode = NULL;
+  this->SequenceBrowserLogic = vtkSlicerSequenceBrowserLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "SequenceBrowser" ) );
   this->setup();
 }
 
@@ -84,6 +85,7 @@ void qSlicerTrackedSequenceRecorderControlsWidget
   d->setupUi(this);
 
   connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
+  connect( d->ImageCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedImagesChanged() ) );
 
   connect( d->StartStopButton, SIGNAL( clicked( bool ) ), this, SLOT( onStartStopButtonClicked( bool ) ) );
   connect( d->ClearButton, SIGNAL( clicked() ), this, SLOT( onClearButtonClicked() ) );
@@ -93,35 +95,35 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 
 
 void qSlicerTrackedSequenceRecorderControlsWidget
-::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
+::setTrackedSequenceBrowserNode( vtkMRMLNode* newTrackedSequenceBrowserNode )
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   this->qvtkDisconnectAll();
 
-  this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
+  this->TrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( newTrackedSequenceBrowserNode );
 
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformAddedEvent, this, SLOT( onTransformBufferActiveTransformsChanged() ) );
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent, this, SLOT( onTransformBufferActiveTransformsChanged() ) );
-  this->qvtkConnect( this->TransformBufferNode, vtkMRMLTransformBufferNode::RecordingStateChangedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkCommand::ModifiedEvent, this, SLOT( onTrackedSequenceBrowserProxyNodesChanged() ) );
+  //this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkMRMLTransformBufferNode::RecordingStateChangedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
 
 
 void qSlicerTrackedSequenceRecorderControlsWidget
-::onTransformBufferActiveTransformsChanged()
+::onTrackedSequenceBrowserProxyNodesChanged()
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
   // Disable to the onCheckedChanged listener when initializing the selections
   // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
   disconnect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
+  disconnect( d->ImageCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedImagesChanged() ) );
 
   // Assume the default is not checked, and check all those that are observed
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    if ( this->TransformBufferNode != NULL && this->TransformBufferNode->IsActiveTransformID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
+    if ( this->TrackedSequenceBrowserNode != NULL && this->TrackedSequenceBrowserNode->IsProxyNodeID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
     {
 	    d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
     }
@@ -132,6 +134,7 @@ void qSlicerTrackedSequenceRecorderControlsWidget
   }
 
   connect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
+  connect( d->ImageCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedImagesChanged() ) );
 }
 
 
@@ -140,22 +143,58 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
-    
+  
+
   // Go through transform types (ie ProbeToReference, StylusTipToReference, etc)
-  std::vector< std::string > activeTransformIDs;
+  int modifyFlag = this->TrackedSequenceBrowserNode->StartModify();
+
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked  )
+    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked
+      && ! this->TrackedSequenceBrowserNode->IsProxyNodeID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
     {
-      activeTransformIDs.push_back( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() );
+      this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->TransformCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
     }
   }
 
-  this->TransformBufferNode->SetActiveTransformIDs( activeTransformIDs );
+  this->TrackedSequenceBrowserNode->SetRecording( NULL, true );
+  this->TrackedSequenceBrowserNode->SetOverwriteProxyName( NULL, false );
+  this->TrackedSequenceBrowserNode->SetSaveChanges( NULL, false );
+  this->TrackedSequenceBrowserNode->EndModify( modifyFlag );
+}
+
+
+void qSlicerTrackedSequenceRecorderControlsWidget
+::onCheckedImagesChanged()
+{
+  Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
+
+  if ( this->TrackedSequenceBrowserNode == NULL )
+  {
+    return;
+  }
+  
+
+  // Go through images (ie Image_Image, etc)
+  int modifyFlag = this->TrackedSequenceBrowserNode->StartModify();
+
+  for ( int i = 0; i < d->ImageCheckableComboBox->nodeCount(); i++ )
+  {
+    if( d->ImageCheckableComboBox->checkState( d->ImageCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked
+      && ! this->TrackedSequenceBrowserNode->IsProxyNodeID( d->ImageCheckableComboBox->nodeFromIndex(i)->GetID() ) )
+    {
+      this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->ImageCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
+    }
+  }
+
+  this->TrackedSequenceBrowserNode->SetRecording( NULL, true );
+  this->TrackedSequenceBrowserNode->SetOverwriteProxyName( NULL, false );
+  this->TrackedSequenceBrowserNode->SetSaveChanges( NULL, false );
+  this->TrackedSequenceBrowserNode->EndModify( modifyFlag );
 }
 
 
@@ -165,21 +204,20 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
   
   // If recording is started
+  this->TrackedSequenceBrowserNode->SetRecordingActive( state );
   if ( state == true )
   {
-    this->TransformBufferNode->StartRecording();
     d->StatusResultLabel->setText( "Recording" );
     d->StartStopButton->setText( "Stop" );
   }
   else
   {
-    this->TransformBufferNode->StopRecording();
     d->StatusResultLabel->setText( "Stopped" );
     d->StartStopButton->setText( "Start" );
   }
@@ -194,12 +232,12 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
-  this->TransformRecorderLogic->ClearTransforms( this->TransformBufferNode );
+  this->TrackedSequenceBrowserNode->RemoveAllSequenceNodes();
   
   this->updateWidget();
 }
@@ -210,24 +248,23 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
   // Set the text indicating recording
-  if ( this->TransformBufferNode->GetRecording() )
+  d->StartStopButton->setChecked( this->TrackedSequenceBrowserNode->GetRecordingActive() );
+  if ( this->TrackedSequenceBrowserNode->GetRecordingActive())
   {
     d->StatusResultLabel->setText( "Recording" );
-    d->StartStopButton->setChecked( true );
     d->StartStopButton->setText( "Stop" );
   }
   else
   {
     d->StatusResultLabel->setText( "Stopped" );
-    d->StartStopButton->setChecked( false );
     d->StartStopButton->setText( "Start" );
   }
 
-  this->onTransformBufferActiveTransformsChanged();
+  this->onTrackedSequenceBrowserProxyNodesChanged();
 }

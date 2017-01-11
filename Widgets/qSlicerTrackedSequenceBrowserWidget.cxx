@@ -67,7 +67,7 @@ void qSlicerTrackedSequenceBrowserWidgetPrivate
 qSlicerTrackedSequenceBrowserWidget
 ::qSlicerTrackedSequenceBrowserWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTrackedSequenceBrowserWidgetPrivate(*this) )
 {
-  this->TransformBufferNode = NULL;
+  this->TrackedSequenceBrowserNode = NULL;
   this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
@@ -86,7 +86,7 @@ void qSlicerTrackedSequenceBrowserWidget
 
   d->setupUi(this);
 
-  connect( d->BufferNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferNodeChanged( vtkMRMLNode* ) ) );
+  connect( d->TrackedSequenceBrowserNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ) );
 
   connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( onImportButtonClicked() ) );
   d->ImportButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogOpenButton ) );
@@ -96,47 +96,47 @@ void qSlicerTrackedSequenceBrowserWidget
   this->updateWidget();  
 }
 
-vtkMRMLTransformBufferNode* qSlicerTrackedSequenceBrowserWidget
-::getTransformBufferNode()
+vtkMRMLSequenceBrowserNode* qSlicerTrackedSequenceBrowserWidget
+::getTrackedSequenceBrowserNode()
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);
 
-  return this->TransformBufferNode;
+  return this->TrackedSequenceBrowserNode;
 }
 
 
 void qSlicerTrackedSequenceBrowserWidget
-::setTransformBufferNode( vtkMRMLNode* newTransformBufferNode )
+::setTrackedSequenceBrowserNode( vtkMRMLNode* newTrackedSequenceBrowserNode )
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);
 
-  d->BufferNodeComboBox->setCurrentNode( newTransformBufferNode );
-  // If it is a new transform buffer, then the onTransformBufferNodeChanged will be called automatically
+  d->TrackedSequenceBrowserNodeComboBox->setCurrentNode( newTrackedSequenceBrowserNode );
+  // If it is a new sequence browser node, then the onTrackedSequenceBrowserNodeChanged will be called automatically
 }
 
 
 void qSlicerTrackedSequenceBrowserWidget
-::onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode )
+::onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNode )
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   this->qvtkDisconnectAll();
 
-  this->TransformBufferNode = vtkMRMLTransformBufferNode::SafeDownCast( newTransformBufferNode );
+  this->TrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( newTrackedSequenceBrowserNode );
 
-  this->qvtkConnect( this->TransformBufferNode, vtkCommand::ModifiedEvent, this, SLOT( onTransformBufferNodeModified() ) );
+  this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkCommand::ModifiedEvent, this, SLOT( onTrackedSequenceBrowserNodeModified() ) );
 
   this->updateWidget();
 
-  emit transformBufferNodeChanged( this->TransformBufferNode );
+  emit trackedSequenceBrowserNodeChanged( this->TrackedSequenceBrowserNode );
 }
 
 
 void qSlicerTrackedSequenceBrowserWidget
-::onTransformBufferNodeModified()
+::onTrackedSequenceBrowserNodeModified()
 {
   this->updateWidget();
-  emit transformBufferNodeModified(); // This should allows parent widgets to update themselves
+  emit trackedSequenceBrowserNodeModified(); // This should allows parent widgets to update themselves
 }
 
 
@@ -148,16 +148,16 @@ void qSlicerTrackedSequenceBrowserWidget
   // Use the generic Slicer dialog  
   vtkSmartPointer< vtkCollection > loadedNodes = vtkSmartPointer< vtkCollection >::New();
   qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
-  ioManager->openDialog( QString( "Transform Buffer" ), qSlicerFileDialog::Read, qSlicerIO::IOProperties(), loadedNodes );
+  ioManager->openDialog( QString( "Sequence Metafile" ), qSlicerFileDialog::Read, qSlicerIO::IOProperties(), loadedNodes );
 
   // Set one of the loaded nodes to be selected in the combo box
   if ( loadedNodes->GetNumberOfItems() > 0 )
   {
-	  d->BufferNodeComboBox->setCurrentNode( vtkMRMLNode::SafeDownCast( loadedNodes->GetItemAsObject( 0 ) ) );
+	  d->TrackedSequenceBrowserNodeComboBox->setCurrentNode( vtkMRMLNode::SafeDownCast( loadedNodes->GetItemAsObject( 0 ) ) );
   }
 
   this->updateWidget();
-  emit transformBufferNodeChanged( this->TransformBufferNode );
+  emit trackedSequenceBrowserNodeChanged( this->TrackedSequenceBrowserNode );
 }
 
 
@@ -166,17 +166,17 @@ void qSlicerTrackedSequenceBrowserWidget
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);  
 
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
   // Use the generic Slicer dialog
   qSlicerIO::IOProperties fileParameters;
-  fileParameters[ "nodeID" ] = this->TransformBufferNode->GetID();
+  fileParameters[ "nodeID" ] = this->TrackedSequenceBrowserNode->GetID();
   
   qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
-  ioManager->openDialog( QString( "Transform Buffer" ), qSlicerFileDialog::Write, fileParameters );
+  ioManager->openDialog( QString( "Sequence Metafile" ), qSlicerFileDialog::Write, fileParameters );
 
   // No need to update the buffer - it is not changed
   this->updateWidget();
@@ -188,5 +188,5 @@ void qSlicerTrackedSequenceBrowserWidget
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);
 
-  d->BufferNodeComboBox->setCurrentNode( this->TransformBufferNode );
+  d->TrackedSequenceBrowserNodeComboBox->setCurrentNode( this->TrackedSequenceBrowserNode );
 }

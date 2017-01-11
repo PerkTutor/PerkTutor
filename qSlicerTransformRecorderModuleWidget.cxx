@@ -52,9 +52,9 @@ public:
   vtkSlicerTransformRecorderLogic* logic() const;
 
   // Add embedded widgets here
-  qSlicerTransformBufferWidget* TransformBufferWidget;
-  qSlicerRecorderControlsWidget* RecorderControlsWidget;
-  qSlicerMessagesWidget* MessagesWidget;
+  qSlicerTrackedSequenceBrowserWidget* BrowserWidget;
+  qSlicerTrackedSequenceRecorderControlsWidget* RecorderControlsWidget;
+  qSlicerTrackedSequenceMessagesWidget* MessagesWidget;
 };
 
 //-----------------------------------------------------------------------------
@@ -103,26 +103,26 @@ void qSlicerTransformRecorderModuleWidget
   Q_D(qSlicerTransformRecorderModuleWidget);
 
   // Adding embedded widgets
-  d->TransformBufferWidget = new qSlicerTransformBufferWidget();
-  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
-  d->TransformBufferWidget->setMRMLScene( NULL );
-  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
-  d->TransformBufferWidget->setTransformBufferNode( NULL ); // Do not automatically select a node on entering the widget
+  d->BrowserWidget = new qSlicerTrackedSequenceBrowserWidget();
+  d->BufferGroupBox->layout()->addWidget( d->BrowserWidget );
+  d->BrowserWidget->setMRMLScene( NULL );
+  d->BrowserWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  d->BrowserWidget->setTrackedSequenceBrowserNode( NULL ); // Do not automatically select a node on entering the widget
 
-  d->RecorderControlsWidget = new qSlicerRecorderControlsWidget();
+  d->RecorderControlsWidget = new qSlicerTrackedSequenceRecorderControlsWidget();
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
   d->RecorderControlsWidget->setMRMLScene( NULL );
   d->RecorderControlsWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
-  d->MessagesWidget = new qSlicerMessagesWidget();
+  d->MessagesWidget = new qSlicerTrackedSequenceMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
   d->MessagesWidget->setMRMLScene( NULL );
   d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTrackedSequenceBrowserNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTrackedSequenceBrowserNode( vtkMRMLNode* ) ) );
 }
 
 
@@ -137,8 +137,8 @@ void qSlicerTransformRecorderModuleWidget
   this->setupEmbeddedWidgets();
 
   // If the transform buffer node is changed, update everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( updateWidget() ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( updateWidget() ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
@@ -150,7 +150,7 @@ void qSlicerTransformRecorderModuleWidget
   Q_D( qSlicerTransformRecorderModuleWidget );
 
   // The statistics should be reset to zeros if no buffer is selected
-  if ( d->TransformBufferWidget->getTransformBufferNode() == NULL )
+  if ( d->BrowserWidget->getTrackedSequenceBrowserNode() == NULL )
   {
     d->TotalTimeResultLabel->setText( "0.00" );
     d->NumTransformsResultLabel->setText( "0" );
@@ -162,17 +162,17 @@ void qSlicerTransformRecorderModuleWidget
 
   ss.str( "" );
   ss.precision( 2 );
-  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetTotalTime();
-  d->TotalTimeResultLabel->setText( ss.str().c_str() );
+  // ss << std::fixed << d->BrowserWidget->getTrackedSequenceBrowserNode()->GetTotalTime();
+  // d->TotalTimeResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumTransforms();
-  d->NumTransformsResultLabel->setText( ss.str().c_str() );
+  // ss << std::fixed << d->BrowserWidget->getTrackedSequenceBrowserNode()->GetNumTransforms();
+  // d->NumTransformsResultLabel->setText( ss.str().c_str() );
   
   ss.str( "" );
   ss.precision( 0 );
-  ss << std::fixed << d->TransformBufferWidget->getTransformBufferNode()->GetNumMessages();
-  d->NumMessagesResultLabel->setText( ss.str().c_str() );
+  // ss << std::fixed << d->BrowserWidget->getTrackedSequenceBrowserNode()->GetNumMessages();
+  // d->NumMessagesResultLabel->setText( ss.str().c_str() );
    
 }

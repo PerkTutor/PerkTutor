@@ -26,6 +26,7 @@
 
 #include "vtkSlicerModuleLogic.h"
 #include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 // FooBar Widgets includes
@@ -44,29 +45,29 @@ public:
   qSlicerTrackedSequenceBrowserWidget(QWidget *parent=0);
   virtual ~qSlicerTrackedSequenceBrowserWidget();
 
-  virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
-  virtual vtkMRMLTransformBufferNode* getTransformBufferNode();
+  virtual void setTrackedSequenceBrowserNode( vtkMRMLNode* newTrackedSequenceBrowserNode );
+  virtual vtkMRMLSequenceBrowserNode* getTrackedSequenceBrowserNode();
 
 protected slots:
 
   void onImportButtonClicked();
   void onExportButtonClicked();
 
-  virtual void onTransformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
-  void onTransformBufferNodeModified();
+  virtual void onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNode );
+  void onTrackedSequenceBrowserNodeModified();
 
   void updateWidget();
 
 signals:
 
-  void transformBufferNodeChanged( vtkMRMLNode* newTransformBufferNode );
-  void transformBufferNodeModified();
+  void trackedSequenceBrowserNodeChanged( vtkMRMLNode* newTransformBufferNode );
+  void trackedSequenceBrowserNodeModified();
 
 protected:
 
   QScopedPointer<qSlicerTrackedSequenceBrowserWidgetPrivate> d_ptr;
 
-  vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
+  vtkWeakPointer< vtkMRMLSequenceBrowserNode > TrackedSequenceBrowserNode;
   vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
   virtual void setup();

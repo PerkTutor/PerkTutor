@@ -29,6 +29,7 @@
 #include "ui_qSlicerTrackedSequenceMessagesWidget.h"
 
 #include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 class qSlicerTrackedSequenceMessagesWidgetPrivate;
@@ -44,7 +45,7 @@ public:
 
 public slots:
 
-  virtual void setTransformBufferNode( vtkMRMLNode* newTransformBufferNode );
+  virtual void setTrackedSequenceBrowserNode( vtkMRMLNode* newTrackedSequenceBrowserNode );
 
 protected slots:
 
@@ -61,7 +62,7 @@ protected slots:
 protected:
   QScopedPointer<qSlicerTrackedSequenceMessagesWidgetPrivate> d_ptr;
 
-  vtkWeakPointer< vtkMRMLTransformBufferNode > TransformBufferNode;
+  vtkWeakPointer< vtkMRMLSequenceBrowserNode > TrackedSequenceBrowserNode;
   vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
   enum MessagesColumnsEnum{ MESSAGE_TIME_COLUMN, MESSAGE_NAME_COLUMN };

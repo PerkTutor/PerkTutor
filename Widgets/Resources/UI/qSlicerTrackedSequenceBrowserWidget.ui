@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qSlicerTransformBufferWidget</class>
- <widget class="qSlicerWidget" name="qSlicerTransformBufferWidget">
+ <class>qSlicerTrackedSequenceBrowserWidget</class>
+ <widget class="qSlicerWidget" name="qSlicerTrackedSequenceBrowserWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -26,7 +26,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="qMRMLNodeComboBox" name="BufferNodeComboBox">
+      <widget class="qMRMLNodeComboBox" name="TrackedSequenceBrowserNodeComboBox">
        <property name="enabled">
         <bool>true</bool>
        </property>
@@ -110,9 +110,9 @@
  <resources/>
  <connections>
   <connection>
-   <sender>qSlicerTransformBufferWidget</sender>
+   <sender>qSlicerTrackedSequenceBrowserWidget</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>BufferNodeComboBox</receiver>
+   <receiver>TrackedSequenceBrowserNodeComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
    <hints>
     <hint type="sourcelabel">
