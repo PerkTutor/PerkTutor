@@ -55,9 +55,9 @@ public:
   vtkSlicerWorkflowSegmentationLogic* logic() const;
 
   // Add embedded widgets here
-  qSlicerTransformBufferWidget* TransformBufferWidget;
+  qSlicerTrackedSequenceBrowserWidget* BrowserWidget;
   qSlicerWorkflowSegmentationRecorderControlsWidget* RecorderControlsWidget;
-  qSlicerMessagesWidget* MessagesWidget;
+  qSlicerTrackedSequenceMessagesWidget* MessagesWidget;
   qSlicerWorkflowToolWidget* ToolWidget;
   qSlicerWorkflowToolSummaryWidget* ToolSummaryWidget;
   std::vector< qSlicerWorkflowGuideDisplayWidget* > WorkflowDisplayWidgets;
@@ -109,18 +109,18 @@ void qSlicerWorkflowSegmentationModuleWidget
   Q_D(qSlicerWorkflowSegmentationModuleWidget);
 
   // Adding embedded widgets
-  d->TransformBufferWidget = new qSlicerTransformBufferWidget();
-  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
-  d->TransformBufferWidget->setMRMLScene( NULL );
-  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
-  d->TransformBufferWidget->setTransformBufferNode( NULL ); // Do not automatically select a node on entering the widget
+  d->BrowserWidget = new qSlicerTrackedSequenceBrowserWidget();
+  d->BufferGroupBox->layout()->addWidget( d->BrowserWidget );
+  d->BrowserWidget->setMRMLScene( NULL );
+  d->BrowserWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  d->BrowserWidget->setTrackedSequenceBrowserNode( NULL ); // Do not automatically select a node on entering the widget
 
   d->RecorderControlsWidget = new qSlicerWorkflowSegmentationRecorderControlsWidget();
   d->ControlsGroupBox->layout()->addWidget( d->RecorderControlsWidget );
   d->RecorderControlsWidget->setMRMLScene( NULL );
   d->RecorderControlsWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
-  d->MessagesWidget = new qSlicerMessagesWidget();
+  d->MessagesWidget = new qSlicerTrackedSequenceMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
   d->MessagesWidget->setMRMLScene( NULL );
   d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
@@ -155,12 +155,12 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) );
 
   // Transform buffer
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
 
   // Display
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   
   // Advanced
   connect( d->RefreshButton, SIGNAL( clicked() ), this, SLOT( createWorkflowDisplaysForExistingNodes() ) );
@@ -290,9 +290,9 @@ void qSlicerWorkflowSegmentationModuleWidget
     return;
   }
   
-  d->TransformBufferWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
-  d->RecorderControlsWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
-  d->MessagesWidget->setTransformBufferNode( wsNode->GetTransformBufferNode() );
+  // d->BrowserWidget->setTrackedSequenceBrowserNode( wsNode->GetTransformBufferNode() );
+  // d->RecorderControlsWidget->setTrackedSequenceBrowserNode( wsNode->GetTransformBufferNode() );
+  // d->MessagesWidget->setTrackedSequenceBrowserNode( wsNode->GetTransformBufferNode() );
 
   d->RecorderControlsWidget->setWorkflowSegmentationNode( wsNode );
   d->ToolSummaryWidget->setWorkflowSegmentationNode( wsNode ); // TODO: Is this necessary

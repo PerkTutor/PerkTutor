@@ -27,7 +27,7 @@
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
-  : public Ui_qSlicerRecorderControlsWidget
+  : public Ui_qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_DECLARE_PUBLIC(qSlicerWorkflowSegmentationRecorderControlsWidget);
 protected:
@@ -55,7 +55,7 @@ qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 ::setupUi(qSlicerWorkflowSegmentationRecorderControlsWidget* widget)
 {
-  this->Ui_qSlicerRecorderControlsWidget::setupUi(widget);
+  this->Ui_qSlicerTrackedSequenceRecorderControlsWidget::setupUi(widget);
 }
 
 //-----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ void qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerWorkflowSegmentationRecorderControlsWidget
-::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
+::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerTrackedSequenceRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
   this->WorkflowSegmentationNode = NULL;
   this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
@@ -96,7 +96,7 @@ void qSlicerWorkflowSegmentationRecorderControlsWidget
 {
   Q_D(qSlicerWorkflowSegmentationRecorderControlsWidget);
 
-  this->qSlicerRecorderControlsWidget::onStartStopButtonClicked( state );
+  this->qSlicerTrackedSequenceRecorderControlsWidget::onStartStopButtonClicked( state );
 
   if ( this->WorkflowSegmentationNode == NULL )
   {

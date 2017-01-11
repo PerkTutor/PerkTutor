@@ -36,6 +36,7 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
   ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
   ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
+  ${Sequences_INCLUDE_DIRS}
   )
 
 set(MODULE_SRCS

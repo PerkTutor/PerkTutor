@@ -7,8 +7,8 @@
 #include <QtGui>
 #include "qSlicerWorkflowSegmentationModuleExport.h"
 
-#include "qSlicerMessagesWidget.h"
-#include "qSlicerTransformBufferWidget.h"
+#include "qSlicerTrackedSequenceMessagesWidget.h"
+#include "qSlicerTrackedSequenceBrowserWidget.h"
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
 #include "qSlicerWorkflowToolSummaryWidget.h"
 #include "qSlicerWorkflowToolWidget.h"

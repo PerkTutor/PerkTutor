@@ -26,13 +26,13 @@
 #include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
 
 #include "vtkSlicerWorkflowSegmentationLogic.h"
-#include "qSlicerRecorderControlsWidget.h"
+#include "qSlicerTrackedSequenceRecorderControlsWidget.h"
 
 class qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_WORKFLOWSEGMENTATION_WIDGETS_EXPORT 
-qSlicerWorkflowSegmentationRecorderControlsWidget : public qSlicerRecorderControlsWidget
+qSlicerWorkflowSegmentationRecorderControlsWidget : public qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_OBJECT
 public:
