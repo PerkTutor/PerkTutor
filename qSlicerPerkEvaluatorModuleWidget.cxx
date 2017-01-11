@@ -53,7 +53,7 @@ public:
   vtkSlicerPerkEvaluatorLogic* logic() const;
 
   // Add embedded widgets here
-  qSlicerTransformBufferWidget* TransformBufferWidget;
+  qSlicerTrackedSequenceBrowserWidget* BrowserWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
   qSlicerMetricsTableWidget* MetricsTableWidget;
   qSlicerPerkEvaluatorRecorderControlsWidget* RecorderControlsWidget;
@@ -305,7 +305,7 @@ void qSlicerPerkEvaluatorModuleWidget
       peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->addNode() );
       peNode->Copy( originalPerkEvaluatorNode );
       d->MetricsTableWidget->addMetricsTableNode();
-      d->TransformBufferWidget->setTransformBufferNode( transformBuffer );
+      // d->BrowserWidget->setTrackedSequenceBrowserNode( transformBuffer );
     }
 
     std::stringstream labelText;
@@ -564,11 +564,11 @@ qSlicerPerkEvaluatorModuleWidget
   Q_D(qSlicerPerkEvaluatorModuleWidget);
 
   // Adding the embedded widgets
-  d->TransformBufferWidget = new qSlicerTransformBufferWidget();
-  d->BufferGroupBox->layout()->addWidget( d->TransformBufferWidget );
-  d->TransformBufferWidget->setMRMLScene( NULL );
-  d->TransformBufferWidget->setMRMLScene( d->logic()->GetMRMLScene() );
-  d->TransformBufferWidget->setTransformBufferNode( NULL ); // Do not automatically select a node on entering the widget
+  d->BrowserWidget = new qSlicerTrackedSequenceBrowserWidget();
+  d->BufferGroupBox->layout()->addWidget( d->BrowserWidget );
+  d->BrowserWidget->setMRMLScene( NULL );
+  d->BrowserWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+  d->BrowserWidget->setTrackedSequenceBrowserNode( NULL ); // Do not automatically select a node on entering the widget
 
   d->MessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
@@ -647,11 +647,11 @@ qSlicerPerkEvaluatorModuleWidget
   connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
 
   // If the transform buffer node is changed, update everything
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
   connect( d->MetricsTableWidget, SIGNAL( metricsTableNodeChanged( vtkMRMLNode* ) ), this, SLOT( onMetricsTableChanged( vtkMRMLNode* ) ) );
  
   // Update the messages widget when the transform buffer is changed
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 
@@ -673,7 +673,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->AnalysisStateDialog, SIGNAL( canceled() ), this, SLOT( OnAnalysisCanceled() ) );
 
   // Update the recorder controls widget when the transform buffer is changed
-  connect( d->TransformBufferWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 
@@ -804,7 +804,7 @@ void qSlicerPerkEvaluatorModuleWidget
   d->AnatomyRolesWidget->setMetricInstanceNode( miNode );
 
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
-  d->TransformBufferWidget->setTransformBufferNode( peNode->GetTransformBufferNode() );
+  // d->BrowserWidget->setTrackedSequenceBrowserNode( peNode->GetTransformBufferNode() );
 
   // Disconnect to the GUI from updating the MRML node with rounded values
   disconnect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );

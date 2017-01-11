@@ -5,7 +5,7 @@
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
 #include <QtGui>
-#include "qSlicerTransformBufferWidget.h"
+#include "qSlicerTrackedSequenceBrowserWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
 #include "qSlicerMetricsTableWidget.h"
 #include "qSlicerPerkEvaluatorRecorderControlsWidget.h"

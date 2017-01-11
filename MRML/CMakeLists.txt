@@ -13,6 +13,7 @@ set(module_mrml_export_directive "VTK_SLICER_PERKEVALUATOR_MODULE_MRML_EXPORT")
 
 # Additional directories to include
 set(module_mrml_include_directories
+  ${Sequences_INCLUDE_DIRS}
   )
 
 # Source files

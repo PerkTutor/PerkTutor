@@ -27,7 +27,7 @@
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerPerkEvaluatorMessagesWidgetPrivate
-  : public Ui_qSlicerMessagesWidget
+  : public Ui_qSlicerTrackedSequenceMessagesWidget
 {
   Q_DECLARE_PUBLIC(qSlicerPerkEvaluatorMessagesWidget);
 protected:
@@ -55,7 +55,7 @@ qSlicerPerkEvaluatorMessagesWidgetPrivate
 void qSlicerPerkEvaluatorMessagesWidgetPrivate
 ::setupUi(qSlicerPerkEvaluatorMessagesWidget* widget)
 {
-  this->Ui_qSlicerMessagesWidget::setupUi(widget);
+  this->Ui_qSlicerTrackedSequenceMessagesWidget::setupUi(widget);
 }
 
 //-----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ void qSlicerPerkEvaluatorMessagesWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorMessagesWidget
-::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
+::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerTrackedSequenceMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
 {
   this->PerkEvaluatorNode = NULL;
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
@@ -102,7 +102,7 @@ void qSlicerPerkEvaluatorMessagesWidget
 
   // Record the timestamp
   double time = this->PerkEvaluatorNode->GetPlaybackTime();
-  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, messageName.toStdString(), time );
+  // this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, messageName.toStdString(), time );
   
   this->updateWidget();  // Force this update widget
 }
@@ -115,7 +115,7 @@ void qSlicerPerkEvaluatorMessagesWidget
 
   // Record the timestamp
   double time = this->PerkEvaluatorNode->GetPlaybackTime();
-  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, "", time );
+  // this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, "", time );
   
   this->updateWidget();  // Force this update widget
 }
@@ -126,13 +126,13 @@ void qSlicerPerkEvaluatorMessagesWidget
 {
   Q_D(qSlicerPerkEvaluatorMessagesWidget);
 
-  if ( this->TransformBufferNode == NULL || column == qSlicerMessagesWidget::MESSAGE_NAME_COLUMN )
+  if ( this->TrackedSequenceBrowserNode == NULL || column == qSlicerTrackedSequenceMessagesWidget::MESSAGE_NAME_COLUMN )
   {
     return;
   }
 
-  double messageTime = this->TransformBufferNode->GetMessageAtIndex( row )->GetTime();
-  this->PerkEvaluatorNode->SetPlaybackTime( messageTime );
+  // double messageTime = this->TrackedSequenceBrowserNode->GetMessageAtIndex( row )->GetTime();
+  // this->PerkEvaluatorNode->SetPlaybackTime( messageTime );
 
   this->updateWidget();  // Force this update widget
 }

@@ -26,13 +26,13 @@
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
 
 #include "vtkSlicerPerkEvaluatorLogic.h"
-#include "qSlicerMessagesWidget.h"
+#include "qSlicerTrackedSequenceMessagesWidget.h"
 
 class qSlicerPerkEvaluatorMessagesWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_CreateModels
 class Q_SLICER_MODULE_PERKEVALUATOR_WIDGETS_EXPORT 
-qSlicerPerkEvaluatorMessagesWidget : public qSlicerMessagesWidget
+qSlicerPerkEvaluatorMessagesWidget : public qSlicerTrackedSequenceMessagesWidget
 {
   Q_OBJECT
 public:

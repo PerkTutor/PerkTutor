@@ -27,7 +27,7 @@
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
 class qSlicerPerkEvaluatorRecorderControlsWidgetPrivate
-  : public Ui_qSlicerRecorderControlsWidget
+  : public Ui_qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_DECLARE_PUBLIC(qSlicerPerkEvaluatorRecorderControlsWidget);
 protected:
@@ -55,7 +55,7 @@ qSlicerPerkEvaluatorRecorderControlsWidgetPrivate
 void qSlicerPerkEvaluatorRecorderControlsWidgetPrivate
 ::setupUi(qSlicerPerkEvaluatorRecorderControlsWidget* widget)
 {
-  this->Ui_qSlicerRecorderControlsWidget::setupUi(widget);
+  this->Ui_qSlicerTrackedSequenceRecorderControlsWidget::setupUi(widget);
 }
 
 //-----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ void qSlicerPerkEvaluatorRecorderControlsWidgetPrivate
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorRecorderControlsWidget
-::qSlicerPerkEvaluatorRecorderControlsWidget(QWidget* parentWidget) : qSlicerRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorRecorderControlsWidgetPrivate(*this) )
+::qSlicerPerkEvaluatorRecorderControlsWidget(QWidget* parentWidget) : qSlicerTrackedSequenceRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorRecorderControlsWidgetPrivate(*this) )
 {
   this->PerkEvaluatorNode = NULL;
   this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
@@ -92,7 +92,7 @@ void qSlicerPerkEvaluatorRecorderControlsWidget
 {
   Q_D(qSlicerPerkEvaluatorRecorderControlsWidget);
 
-  this->qSlicerRecorderControlsWidget::onStartStopButtonClicked( state );
+  this->qSlicerTrackedSequenceRecorderControlsWidget::onStartStopButtonClicked( state );
 
   if ( this->PerkEvaluatorNode == NULL )
   {
