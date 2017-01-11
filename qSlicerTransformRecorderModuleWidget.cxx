@@ -137,8 +137,8 @@ void qSlicerTransformRecorderModuleWidget
   this->setupEmbeddedWidgets();
 
   // If the transform buffer node is changed, update everything
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( updateWidget() ) );
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeModified() ), this, SLOT( updateWidget() ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), this, SLOT( updateWidget() ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeModified() ), this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
@@ -153,26 +153,26 @@ void qSlicerTransformRecorderModuleWidget
   if ( d->BrowserWidget->getTrackedSequenceBrowserNode() == NULL )
   {
     d->TotalTimeResultLabel->setText( "0.00" );
-    d->NumTransformsResultLabel->setText( "0" );
+    d->NumFramesResultLabel->setText( "0" );
     d->NumMessagesResultLabel->setText( "0" );
     return;
   }
   
   std::stringstream ss;
+  
+  ss.str( "" );
+  ss.precision( 0 );
+  ss << std::fixed << d->logic()->GetMaximumNumberOfDataNodes( d->BrowserWidget->getTrackedSequenceBrowserNode() );
+  d->NumFramesResultLabel->setText( ss.str().c_str() );
+  
+  ss.str( "" );
+  ss.precision( 0 );
+  ss << std::fixed << d->logic()->GetMessageSequenceNode( d->BrowserWidget->getTrackedSequenceBrowserNode() )->GetNumberOfDataNodes();
+  d->NumMessagesResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );
   ss.precision( 2 );
-  // ss << std::fixed << d->BrowserWidget->getTrackedSequenceBrowserNode()->GetTotalTime();
-  // d->TotalTimeResultLabel->setText( ss.str().c_str() );
-  
-  ss.str( "" );
-  ss.precision( 0 );
-  // ss << std::fixed << d->BrowserWidget->getTrackedSequenceBrowserNode()->GetNumTransforms();
-  // d->NumTransformsResultLabel->setText( ss.str().c_str() );
-  
-  ss.str( "" );
-  ss.precision( 0 );
-  // ss << std::fixed << d->BrowserWidget->getTrackedSequenceBrowserNode()->GetNumMessages();
-  // d->NumMessagesResultLabel->setText( ss.str().c_str() );
+  ss << std::fixed << d->logic()->GetMaximumIndexValue( d->BrowserWidget->getTrackedSequenceBrowserNode() );
+  d->TotalTimeResultLabel->setText( ss.str().c_str() );
    
 }

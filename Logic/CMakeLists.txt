@@ -28,6 +28,7 @@ set(${KIT}_TARGET_LIBRARIES
   SlicerBaseLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
   ${Sequences_LIBS}
+  vtkSlicerAnnotationsModuleMRML
   )
 
 

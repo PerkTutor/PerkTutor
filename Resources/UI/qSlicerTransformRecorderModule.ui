@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>345</width>
+    <width>563</width>
     <height>700</height>
    </rect>
   </property>
@@ -76,7 +76,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="0" colspan="2">
-          <widget class="QLabel" name="NumTransformsLabel">
+          <widget class="QLabel" name="NumFramesLabel">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -84,7 +84,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Number of Transforms:</string>
+            <string>Number of Frames:</string>
            </property>
           </widget>
          </item>
@@ -115,7 +115,7 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QLabel" name="NumTransformsResultLabel">
+          <widget class="QLabel" name="NumFramesResultLabel">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>

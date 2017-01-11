@@ -157,13 +157,13 @@ void qSlicerTrackedSequenceRecorderControlsWidget
     if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked
       && ! this->TrackedSequenceBrowserNode->IsProxyNodeID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
     {
-      this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->TransformCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
+      vtkMRMLSequenceNode* sequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->TransformCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
+      this->TrackedSequenceBrowserNode->SetRecording( sequenceNode, true );
+      this->TrackedSequenceBrowserNode->SetOverwriteProxyName( sequenceNode, false );
+      this->TrackedSequenceBrowserNode->SetSaveChanges( sequenceNode, false );
     }
   }
 
-  this->TrackedSequenceBrowserNode->SetRecording( NULL, true );
-  this->TrackedSequenceBrowserNode->SetOverwriteProxyName( NULL, false );
-  this->TrackedSequenceBrowserNode->SetSaveChanges( NULL, false );
   this->TrackedSequenceBrowserNode->EndModify( modifyFlag );
 }
 
@@ -187,13 +187,14 @@ void qSlicerTrackedSequenceRecorderControlsWidget
     if( d->ImageCheckableComboBox->checkState( d->ImageCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked
       && ! this->TrackedSequenceBrowserNode->IsProxyNodeID( d->ImageCheckableComboBox->nodeFromIndex(i)->GetID() ) )
     {
-      this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->ImageCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
+      vtkMRMLSequenceNode* sequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->ImageCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
+      this->TrackedSequenceBrowserNode->SetRecording( sequenceNode, true );
+      this->TrackedSequenceBrowserNode->SetOverwriteProxyName( sequenceNode, false );
+      this->TrackedSequenceBrowserNode->SetSaveChanges( sequenceNode, false );
     }
   }
 
-  this->TrackedSequenceBrowserNode->SetRecording( NULL, true );
-  this->TrackedSequenceBrowserNode->SetOverwriteProxyName( NULL, false );
-  this->TrackedSequenceBrowserNode->SetSaveChanges( NULL, false );
+
   this->TrackedSequenceBrowserNode->EndModify( modifyFlag );
 }
 

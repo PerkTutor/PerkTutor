@@ -23,6 +23,8 @@
 
 #include <QtGui>
 
+#include "vtkMRMLAnnotationTextNode.h"
+
 
 
 //-----------------------------------------------------------------------------
@@ -106,7 +108,7 @@ void qSlicerTrackedSequenceMessagesWidget
 
   this->qvtkDisconnectAll();
 
-  this->TrackedSequenceBrowserNode = vtkMRMLTransformBufferNode::SafeDownCast( newTrackedSequenceBrowserNode );
+  this->TrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( newTrackedSequenceBrowserNode );
 
   this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
@@ -119,26 +121,29 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
-  /*
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL 
+    || this->TrackedSequenceBrowserNode->GetMasterSequenceNode() == NULL )
   {
     return;
   }
 
-  double time = this->TransformBufferNode->GetCurrentTimestamp();
+  double time = this->TransformRecorderLogic->GetMaximumIndexValue( this->TrackedSequenceBrowserNode );
 
-  QString messageName = QInputDialog::getText( this, tr("Add Message"), tr("Input text for the new message:") );
-
+  QString messageName = QInputDialog::getText( this, tr( "Add Message" ), tr( "Input text for the new message:" ) );
   if ( messageName.isNull() )
   {
     return;
   }
 
+
   // Record the timestamp
-  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, messageName.toStdString(), time );
+  std::stringstream ss;
+  ss << time;
+  this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, messageName.toStdString(), ss.str() );
+
   
   this->updateWidget();
-  */
+
 }
 
 
@@ -147,16 +152,13 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
-  /*
-  if ( this->TransformBufferNode == NULL )
+  
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
-  this->TransformRecorderLogic->RemoveMessage( this->TransformBufferNode, d->MessagesTableWidget->currentRow() );
-
-  this->updateWidget();
-  */
+  this->TransformRecorderLogic->RemoveMessage( this->TrackedSequenceBrowserNode, d->MessagesTableWidget->currentRow() );
 }
 
 
@@ -165,16 +167,14 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
-  /*
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
-  this->TransformRecorderLogic->ClearMessages( this->TransformBufferNode );
+  this->TransformRecorderLogic->ClearMessages( this->TrackedSequenceBrowserNode );
   
   this->updateWidget();
-  */
 }
 
 
@@ -183,17 +183,17 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
-  /*
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
-  double time = this->TransformBufferNode->GetCurrentTimestamp();
-  this->TransformRecorderLogic->AddMessage( this->TransformBufferNode, "", time );
+  double time = this->TransformRecorderLogic->GetMaximumIndexValue( this->TrackedSequenceBrowserNode );
+  std::stringstream ss;
+  ss << time;
+  this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, "", ss.str() );
   
   this->updateWidget();
-  */
 }
 
 
@@ -203,8 +203,7 @@ void qSlicerTrackedSequenceMessagesWidget
 {
   Q_D(qSlicerTrackedSequenceMessagesWidget);
 
-  /*
-  if ( this->TransformBufferNode == NULL || column == qSlicerTrackedSequenceMessagesWidget::MESSAGE_TIME_COLUMN )
+  if ( this->TrackedSequenceBrowserNode == NULL || column != qSlicerTrackedSequenceMessagesWidget::MESSAGE_NAME_COLUMN )
   {
     return;
   }
@@ -213,10 +212,9 @@ void qSlicerTrackedSequenceMessagesWidget
   QTableWidgetItem* qItem = d->MessagesTableWidget->item( row, column );
   QString qText = qItem->text();
 
-  this->TransformBufferNode->GetMessageAtIndex( row )->SetMessageString( qText.toStdString() );
+  this->TransformRecorderLogic->UpdateMessage( this->TrackedSequenceBrowserNode, qText.toStdString(), row );
   
   this->updateWidget();
-  */
 }
 
 
@@ -246,8 +244,14 @@ void qSlicerTrackedSequenceMessagesWidget
   d->MessagesTableWidget->setHorizontalHeaderLabels( MessagesTableHeaders ); 
   d->MessagesTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
 
-  /*
-  if ( this->TransformBufferNode == NULL )
+  if ( this->TrackedSequenceBrowserNode == NULL )
+  {
+    return;
+  }
+
+  // Iterate over all the messages in the message sequence
+  vtkMRMLSequenceNode* messageSequenceNode = this->TransformRecorderLogic->GetMessageSequenceNode( this->TrackedSequenceBrowserNode );
+  if ( messageSequenceNode == NULL )
   {
     return;
   }
@@ -255,14 +259,20 @@ void qSlicerTrackedSequenceMessagesWidget
   // Block signals while updating
   bool wasBlockedTableWidget = d->MessagesTableWidget->blockSignals( true );
 
-  // Iterate over all the messages in the buffer and add them in order
-  d->MessagesTableWidget->setRowCount( this->TransformBufferNode->GetNumMessages() );
-  for ( int i = 0; i < this->TransformBufferNode->GetNumMessages(); i++ )
+  d->MessagesTableWidget->setRowCount( messageSequenceNode->GetNumberOfDataNodes() );
+  for ( int i = 0; i < messageSequenceNode->GetNumberOfDataNodes(); i++ )
   {
-    double messageTime = this->TransformBufferNode->GetMessageAtIndex(i)->GetTime() - this->TransformBufferNode->GetMinimumTime();
+    std::stringstream ss( messageSequenceNode->GetNthIndexValue( i ) );
+    double messageTime; ss >> messageTime;
     QTableWidgetItem* timeItem = new QTableWidgetItem( QString::number( messageTime, 'f', 2 ) );
     timeItem->setFlags( timeItem->flags() & ~Qt::ItemIsEditable );
-	  QTableWidgetItem* messageItem = new QTableWidgetItem( QString::fromStdString( this->TransformBufferNode->GetMessageAtIndex(i)->GetMessageString() ) );
+
+    vtkMRMLNode* messageNode = messageSequenceNode->GetNthDataNode( i );
+    if ( messageNode == NULL )
+    {
+      return;
+    }
+    QTableWidgetItem* messageItem = new QTableWidgetItem( messageNode->GetAttribute( "Message" ) );
     d->MessagesTableWidget->setItem( i, qSlicerTrackedSequenceMessagesWidget::MESSAGE_TIME_COLUMN, timeItem );
     d->MessagesTableWidget->setItem( i, qSlicerTrackedSequenceMessagesWidget::MESSAGE_NAME_COLUMN, messageItem ); 
   }
@@ -272,5 +282,4 @@ void qSlicerTrackedSequenceMessagesWidget
   d->MessagesTableWidget->verticalScrollBar()->setValue( scrollPosition );
 
   d->MessagesTableWidget->blockSignals( wasBlockedTableWidget );
-  */
 }

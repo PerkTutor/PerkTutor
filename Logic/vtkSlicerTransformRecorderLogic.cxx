@@ -20,6 +20,7 @@
 #include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLLinearTransformNode.h"
+
 #include "vtkMRMLNode.h"
 
 // MRML includes
@@ -28,10 +29,10 @@
 
 // VTK includes
 #include <vtkNew.h>
+#include <vtkCollectionIterator.h>
 
 // STD includes
 #include <cassert>
-
 
 // For getting the module logic
 #include "qSlicerApplication.h"
@@ -39,6 +40,7 @@
 #include "qSlicerAbstractCoreModule.h"
 
 #include "vtkSlicerSequencesLogic.h"
+#include "vtkSlicerSequenceBrowserLogic.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 
 
@@ -171,6 +173,219 @@ void vtkSlicerTransformRecorderLogic
 	  bufferNode->ClearMessages();
   }
 }
+
+
+vtkMRMLSequenceNode* vtkSlicerTransformRecorderLogic
+::GetMessageSequenceNode( vtkMRMLSequenceBrowserNode* browserNode )
+{
+  if ( browserNode == NULL )
+  {
+    return NULL;
+  }
+
+  // Check if there are any text annotation nodes
+  vtkNew< vtkCollection > proxyNodes;
+  browserNode->GetAllProxyNodes( proxyNodes.GetPointer() );
+  vtkNew< vtkCollectionIterator > proxyNodesIt;
+  proxyNodesIt->SetCollection( proxyNodes.GetPointer() );
+
+  for ( proxyNodesIt->InitTraversal(); ! proxyNodesIt->IsDoneWithTraversal(); proxyNodesIt->GoToNextItem() )
+  {
+    vtkMRMLNode* messageNode = vtkMRMLNode::SafeDownCast( proxyNodesIt->GetCurrentObject() );
+    if ( messageNode->GetAttribute( "Message" ) != NULL )
+    {
+      return browserNode->GetSequenceNode( messageNode );
+    }
+  }
+
+  // If not, create one and add it to the sequence browser
+  vtkSlicerSequenceBrowserLogic* sbLogic = vtkSlicerSequenceBrowserLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "SequenceBrowser" ) );
+  if ( sbLogic == NULL )
+  {
+    return NULL;
+  }
+
+
+  vtkSmartPointer< vtkMRMLNode > messageNode;
+  messageNode.TakeReference( vtkMRMLNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLScriptedModuleNode" ) ) );
+  messageNode->SetName( "Message" );
+  messageNode->SetAttribute( "Message", "" );
+  messageNode->SetScene( this->GetMRMLScene() );
+	this->GetMRMLScene()->AddNode( messageNode );
+
+  
+  int modifyFlag = browserNode->StartModify();
+  vtkMRMLSequenceNode* messageSequenceNode = sbLogic->AddSynchronizedNode( NULL, messageNode, browserNode );
+  browserNode->SetRecording( messageSequenceNode, false );
+  browserNode->SetOverwriteProxyName( NULL, false );
+  browserNode->SetSaveChanges( NULL, false );
+  browserNode->EndModify( modifyFlag );
+
+  return messageSequenceNode;
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::AddMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, std::string indexValue )
+{
+  if ( browserNode == NULL )
+  {
+    return;
+  }
+
+  // Record the timestamp
+  vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
+  if ( messageSequenceNode == NULL )
+  {
+    return;
+  }
+  vtkSmartPointer< vtkMRMLNode > messageNode;
+  messageNode.TakeReference( vtkMRMLNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLScriptedModuleNode" ) ) );
+  messageNode->SetName( "Message" );
+  messageNode->SetAttribute( "Message", messageString.c_str() );
+
+  messageSequenceNode->SetDataNodeAtValue( messageNode, indexValue );
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int index )
+{
+  if ( browserNode == NULL )
+  {
+    return;
+  }
+
+  // Record the timestamp
+  vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
+  if ( messageSequenceNode == NULL )
+  {
+    return;
+  }
+  std::string indexValue = messageSequenceNode->GetNthIndexValue( index );
+
+  vtkSmartPointer< vtkMRMLNode > messageNode;
+  messageNode.TakeReference( vtkMRMLNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLScriptedModuleNode" ) ) );
+  messageNode->SetName( "Message" );
+  messageNode->SetAttribute( "Message", messageString.c_str() );
+
+  messageSequenceNode->UpdateDataNodeAtValue( messageNode, indexValue );
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::RemoveMessage( vtkMRMLSequenceBrowserNode* browserNode, int index )
+{
+  if ( browserNode == NULL )
+  {
+    return;
+  }
+
+  vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
+  if ( messageSequenceNode == NULL )
+  {
+    return;
+  }
+  std::string value = messageSequenceNode->GetNthIndexValue( index );
+  messageSequenceNode->RemoveDataNodeAtValue( value );
+}
+
+
+void vtkSlicerTransformRecorderLogic
+::ClearMessages( vtkMRMLSequenceBrowserNode* browserNode )
+{
+  if ( browserNode == NULL )
+  {
+    return;
+  }
+
+  vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
+  if ( messageSequenceNode == NULL )
+  {
+    return;
+  }
+  browserNode->RemoveSynchronizedSequenceNode( messageSequenceNode->GetID() );
+}
+
+
+double vtkSlicerTransformRecorderLogic
+::GetMaximumIndexValue( vtkMRMLSequenceBrowserNode* browserNode )
+{
+  if ( browserNode == NULL )
+  {
+    return 0;
+  }
+
+  double maxTime = - std::numeric_limits< double >::max();
+
+  // Check over all 
+  vtkNew< vtkCollection > sequenceNodes;
+  browserNode->GetSynchronizedSequenceNodes( sequenceNodes.GetPointer(), true );
+  vtkNew< vtkCollectionIterator > sequenceNodesIt;
+  sequenceNodesIt->SetCollection( sequenceNodes.GetPointer() );
+
+  for ( sequenceNodesIt->InitTraversal(); ! sequenceNodesIt->IsDoneWithTraversal(); sequenceNodesIt->GoToNextItem() )
+  {
+    vtkMRMLSequenceNode* currSequenceNode = vtkMRMLSequenceNode::SafeDownCast( sequenceNodesIt->GetCurrentObject() );
+    if ( currSequenceNode == NULL
+      || currSequenceNode->GetNumberOfDataNodes() == 0
+      || currSequenceNode->GetIndexType() != vtkMRMLSequenceNode::NumericIndex )
+    {
+      continue;
+    }
+
+    int currNumFrames = currSequenceNode->GetNumberOfDataNodes();
+    std::stringstream ss( currSequenceNode->GetNthIndexValue( currNumFrames - 1 ) );
+    double currMaxTime; ss >> currMaxTime;
+    if ( currMaxTime > maxTime )
+    {
+      maxTime = currMaxTime;
+    }
+  }
+
+  if ( maxTime == - std::numeric_limits< double >::max() )
+  {
+    return 0; // Safe in case there are no recorded data nodes in the sequence
+  }
+
+  return maxTime;
+}
+
+
+int vtkSlicerTransformRecorderLogic
+::GetMaximumNumberOfDataNodes( vtkMRMLSequenceBrowserNode* browserNode )
+{
+  if ( browserNode == NULL )
+  {
+    return 0;
+  }
+
+  int maxDataNodes = 0;
+
+  // Check over all 
+  vtkNew< vtkCollection > sequenceNodes;
+  browserNode->GetSynchronizedSequenceNodes( sequenceNodes.GetPointer(), true );
+  vtkNew< vtkCollectionIterator > sequenceNodesIt;
+  sequenceNodesIt->SetCollection( sequenceNodes.GetPointer() );
+
+  for ( sequenceNodesIt->InitTraversal(); ! sequenceNodesIt->IsDoneWithTraversal(); sequenceNodesIt->GoToNextItem() )
+  {
+    vtkMRMLSequenceNode* currSequenceNode = vtkMRMLSequenceNode::SafeDownCast( sequenceNodesIt->GetCurrentObject() );
+    if ( currSequenceNode == NULL )
+    {
+      continue;
+    }
+
+    int currNumDataNodes = currSequenceNode->GetNumberOfDataNodes();
+    if ( currNumDataNodes > maxDataNodes )
+    {
+      maxDataNodes = currNumDataNodes;
+    }
+  }
+
+  return maxDataNodes;
+}
+
 
 
 void vtkSlicerTransformRecorderLogic

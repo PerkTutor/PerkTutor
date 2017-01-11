@@ -30,6 +30,7 @@
 
 #include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLSequenceBrowserNode.h"
+#include "vtkMRMLSequenceNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 class qSlicerTrackedSequenceMessagesWidgetPrivate;

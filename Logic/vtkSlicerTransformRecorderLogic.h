@@ -35,6 +35,9 @@
 
 // MRML includes
 #include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLSequenceNode.h"
+#include "vtkMRMLSequenceBrowserNode.h"
+
 // STD includes
 #include <cstdlib>
 
@@ -73,6 +76,15 @@ public:
   void AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string messageString, double time );
   void RemoveMessage( vtkMRMLTransformBufferNode* bufferNode, int index );
   void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
+
+  vtkMRMLSequenceNode* GetMessageSequenceNode( vtkMRMLSequenceBrowserNode* browserNode );
+  void AddMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, std::string indexValue );
+  void UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int index );
+  void RemoveMessage( vtkMRMLSequenceBrowserNode* browserNode, int index );
+  void ClearMessages( vtkMRMLSequenceBrowserNode* browserNode );
+
+  double GetMaximumIndexValue( vtkMRMLSequenceBrowserNode* browserNode );
+  int GetMaximumNumberOfDataNodes( vtkMRMLSequenceBrowserNode* browserNode );
 
   void ObserveAllRecordedTransforms( vtkMRMLTransformBufferNode* bufferNode );
   void AddAllRecordedTransformsToScene( vtkMRMLTransformBufferNode* bufferNode );

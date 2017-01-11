@@ -64,6 +64,7 @@ set(MODULE_TARGET_LIBRARIES
   ${QT_LIBRARIES}
   qSlicerBaseQTCore
   ${Sequences_LIBS}
+  vtkSlicerAnnotationsModuleMRML
   )
 
 # Resources
