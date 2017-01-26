@@ -581,10 +581,10 @@ class PythonMetricsCalculatorLogic:
       
     self.realTimeMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
     self.realTimeMetricsTable = peNode.GetMetricsTableNode()
-    peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodeS( self.realTimeProxyNodeCollection )
+    peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodes( self.realTimeProxyNodeCollection )
     
     
-  def UpdateRealTimeMetrics( self, transformName, time ):
+  def UpdateRealTimeMetrics( self, time ):
     PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time, self.realTimeMetricsTable )
     
 
