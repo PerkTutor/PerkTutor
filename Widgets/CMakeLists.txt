@@ -46,6 +46,7 @@ set(${KIT}_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
   qSlicerTransformRecorderModuleWidgets
   vtkSlicerTransformRecorderModuleLogic
+  ${Sequences_LIBS}
   )
 
 #-----------------------------------------------------------------------------

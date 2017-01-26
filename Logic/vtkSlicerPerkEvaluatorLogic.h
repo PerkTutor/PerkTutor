@@ -69,9 +69,6 @@ public:
   
   bool IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child );
 
-  void GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkLogRecordBuffer* selfParentRecordBuffer );
-  void GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transform, vtkDoubleArray* timesArray );
-
   std::string GetMetricName( std::string msNodeID );
   std::string GetMetricUnit( std::string msNodeID );
   bool GetMetricShared( std::string msNodeID );
@@ -85,11 +82,11 @@ public:
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
 
-  void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, std::string transformName = "" );
+  void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double playbackTime );
 
-  double GetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
-  void SetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double time );
-  double GetMaximumRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode );
+  // convenince methods for working with sequences
+  double GetSelectedTime( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode );
+
 
   void ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode );
   std::string GetMetricValue( vtkMRMLMetricInstanceNode* miNode, vtkMRMLPerkEvaluatorNode* peNode );

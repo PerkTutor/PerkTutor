@@ -42,7 +42,7 @@
 
 
 // Includes from other modules
-#include "vtkMRMLTransformBufferNode.h"
+#include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkMRMLTableNode.h"
 
 
@@ -73,7 +73,7 @@ protected:
   
 public:
 
-  // Whether to update the parameters when the transform buffer node is changed
+  // Whether to update the parameters when the sequence browser node is changed
   bool GetAutoUpdateMeasurementRange();
   void SetAutoUpdateMeasurementRange( bool update );
 
@@ -98,10 +98,6 @@ public:
   bool IsMetricInstanceID( std::string metricInstanceID );
   void SetMetricInstanceIDs( std::vector< std::string > metricInstanceIDs );
 
-  // Playback time
-  double GetPlaybackTime();
-  void SetPlaybackTime( double newPlaybackTime, bool analysis = false );
-
   bool GetRealTimeProcessing();
   void SetRealTimeProcessing( bool newRealTimeProcessing );
 
@@ -112,18 +108,18 @@ public:
   void SetAnalysisState( int newAnalysisState );
 
 
-  // Reference to transform buffer and to metrics node
+  // Reference to sequence browser node and to metrics node
   std::string GetNodeReferenceIDString( std::string referenceRole );
 
-  vtkMRMLTransformBufferNode* GetTransformBufferNode();
-  std::string GetTransformBufferID();
-  void SetTransformBufferID( std::string newTransformBufferID );
+  vtkMRMLSequenceBrowserNode* GetTrackedSequenceBrowserNode();
+  std::string GetTrackedSequenceBrowserNodeID();
+  void SetTrackedSequenceBrowserNodeID( std::string newTrackedSequenceBrowserNodeID );
 
   vtkMRMLTableNode* GetMetricsTableNode();
   std::string GetMetricsTableID();
   void SetMetricsTableID( std::string newMetricsTableID );
 
-  // Pass along transform buffer events
+  // Pass along sequence browser node events
   void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
   enum
   {
@@ -148,8 +144,6 @@ protected:
   double MarkEnd;
   
   NeedleOrientationEnum NeedleOrientation;
-
-  double PlaybackTime;
 
   int AnalysisState;
 

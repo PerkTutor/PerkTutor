@@ -11,6 +11,8 @@
 #include "qSlicerPerkEvaluatorRecorderControlsWidget.h"
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
 #include "qSlicerPerkEvaluatorAnatomyRolesWidget.h"
+#include "qMRMLSequenceBrowserPlayWidget.h"
+#include "qMRMLSequenceBrowserSeekWidget.h"
 
 #include "qSlicerPerkEvaluatorModuleExport.h"
 
@@ -30,16 +32,6 @@ public:
   virtual ~qSlicerPerkEvaluatorModuleWidget();
 
 public slots:
-
-  void OnPlaybackSliderChanged( double value );
-  void OnPlaybackNextClicked();
-  void OnPlaybackPrevClicked();
-  void OnPlaybackBeginClicked();
-  void OnPlaybackEndClicked();
-  void OnPlaybackPlayClicked();
-  void OnPlaybackStopClicked();
-
-  void OnTimeout();
 
   void OnAnalyzeClicked();
 
@@ -66,10 +58,9 @@ public slots:
   void onNeedleTransformChanged( vtkMRMLNode* node );
   void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
-  void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
+  void onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTransformBuffer );
   void onMetricsTableChanged( vtkMRMLNode* newMetricsTable );
   void mrmlNodeChanged( vtkMRMLNode* peNode );
-  void onPerkEvaluatorNodeCreated( vtkMRMLNode* peNode );
   void updateWidgetFromMRMLNode();
 
 protected:

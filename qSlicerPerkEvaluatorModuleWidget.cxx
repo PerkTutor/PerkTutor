@@ -54,6 +54,8 @@ public:
 
   // Add embedded widgets here
   qSlicerTrackedSequenceBrowserWidget* BrowserWidget;
+  qMRMLSequenceBrowserPlayWidget* PlayWidget;
+  qMRMLSequenceBrowserSeekWidget* SeekWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
   qSlicerMetricsTableWidget* MetricsTableWidget;
   qSlicerPerkEvaluatorRecorderControlsWidget* RecorderControlsWidget;
@@ -99,9 +101,7 @@ qSlicerPerkEvaluatorModuleWidget::qSlicerPerkEvaluatorModuleWidget(QWidget* _par
   : Superclass( _parent )
   , d_ptr( new qSlicerPerkEvaluatorModuleWidgetPrivate( *this ) )
 {
-  this->PlaybackTimer = new QTimer( this );
-  this->PlaybackTimerIntervalSec = 0.1; // seconds
-  this->FrameStepSec = 0.1; // seconds
+  // Nothing to do
 }
 
 
@@ -111,111 +111,6 @@ qSlicerPerkEvaluatorModuleWidget::~qSlicerPerkEvaluatorModuleWidget()
   delete this->PlaybackTimer;
 }
 
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackSliderChanged( double value )
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-
-  d->logic()->SetRelativePlaybackTime( peNode, value );
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackNextClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-
-  d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetRelativePlaybackTime( peNode ) + this->FrameStepSec );
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackPrevClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-
-  d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetRelativePlaybackTime( peNode ) - this->FrameStepSec );
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackBeginClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-
-  d->logic()->SetRelativePlaybackTime( peNode, 0 );
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackEndClicked()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-
-  d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackPlayClicked()
-{
-  this->PlaybackTimer->start( int( this->PlaybackTimerIntervalSec * 1000 ) ); // convert to milliseconds
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnPlaybackStopClicked()
-{
-  this->PlaybackTimer->stop();
-}
-
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnTimeout()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
-
-  double newRelativePlaybackTime = d->logic()->GetRelativePlaybackTime( peNode ) + this->PlaybackTimerIntervalSec;
-
-  if ( newRelativePlaybackTime >= d->logic()->GetMaximumRelativePlaybackTime( peNode ) )
-  {
-    if ( d->PlaybackRepeatCheckBox->checkState() == Qt::Checked )
-    {
-      d->logic()->SetRelativePlaybackTime( peNode, 0 );
-    }
-    else
-    {
-      d->logic()->SetRelativePlaybackTime( peNode, d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
-      this->PlaybackTimer->stop();
-    }
-  }
-  else
-  {
-    d->logic()->SetRelativePlaybackTime( peNode, newRelativePlaybackTime );
-  }
-
-}
 
 void qSlicerPerkEvaluatorModuleWidget
 ::OnAnalyzeClicked()
@@ -351,7 +246,7 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  peNode->SetMarkBegin( d->logic()->GetRelativePlaybackTime( peNode ) );
+  peNode->SetMarkBegin( d->logic()->GetSelectedTime( peNode->GetTrackedSequenceBrowserNode() ) );
 }
 
 
@@ -381,7 +276,7 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  peNode->SetMarkEnd( d->logic()->GetRelativePlaybackTime( peNode ) );
+  peNode->SetMarkEnd( d->logic()->GetSelectedTime( peNode->GetTrackedSequenceBrowserNode() ) );
 }
 
 
@@ -570,6 +465,16 @@ qSlicerPerkEvaluatorModuleWidget
   d->BrowserWidget->setMRMLScene( d->logic()->GetMRMLScene() );
   d->BrowserWidget->setTrackedSequenceBrowserNode( NULL ); // Do not automatically select a node on entering the widget
 
+  d->PlayWidget = new qMRMLSequenceBrowserPlayWidget();
+  d->PlaybackGroupbox->layout()->addWidget( d->PlayWidget );
+  d->PlayWidget->setMRMLScene( NULL ); 
+  d->PlayWidget->setMRMLScene( d->logic()->GetMRMLScene() ); 
+
+  d->SeekWidget = new qMRMLSequenceBrowserSeekWidget();
+  d->PlaybackGroupbox->layout()->addWidget( d->SeekWidget );
+  d->SeekWidget->setMRMLScene( NULL ); 
+  d->SeekWidget->setMRMLScene( d->logic()->GetMRMLScene() ); 
+
   d->MessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
   d->MessagesWidget->setMRMLScene( NULL ); 
@@ -621,42 +526,18 @@ qSlicerPerkEvaluatorModuleWidget
   // Perk Evaluator Node
 
   // Connect the Perk Evaluator node to the update
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( nodeAddedByUser( vtkMRMLNode* ) ), this, SLOT( onPerkEvaluatorNodeCreated( vtkMRMLNode* ) ) ); // If the node is changed connect it to update 
+  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) );
   // NOTE: The roles widgets will be updated with the other components of the widget
 
 
   // Display tab
 
-  connect( d->PlaybackSlider, SIGNAL( valueChanged( double ) ), this, SLOT( OnPlaybackSliderChanged( double ) ) );
-  
-  connect( d->BeginButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackBeginClicked() ) );
-  d->BeginButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSkipBackward ) );
-  connect( d->PrevButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPrevClicked() ) );
-  d->PrevButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSeekBackward ) );
-  connect( d->PlayButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackPlayClicked() ) ); 
-  d->PlayButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaPlay ) ); 
-  connect( d->StopButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackStopClicked() ) );
-  d->StopButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaPause ) );
-  connect( d->NextButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackNextClicked() ) );
-  d->NextButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSeekForward ) );
-  connect( d->EndButton, SIGNAL( clicked() ), this, SLOT( OnPlaybackEndClicked() ) );
-  d->EndButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_MediaSkipForward ) );
-
-
-  connect( this->PlaybackTimer, SIGNAL( timeout() ), this, SLOT( OnTimeout() ) );
-
   // If the transform buffer node is changed, update everything
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTransformBufferChanged( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ) );
   connect( d->MetricsTableWidget, SIGNAL( metricsTableNodeChanged( vtkMRMLNode* ) ), this, SLOT( onMetricsTableChanged( vtkMRMLNode* ) ) );
- 
-  // Update the messages widget when the transform buffer is changed
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
-  connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 
   // Analysis tab
-
   connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
   connect( d->MarkBeginButton, SIGNAL( clicked() ), this, SLOT( OnMarkBeginClicked() ) );
   connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
@@ -717,7 +598,7 @@ qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::onTransformBufferChanged( vtkMRMLNode* newTransformBuffer )
+::onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNode )
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
@@ -727,13 +608,13 @@ void qSlicerPerkEvaluatorModuleWidget
     return;
   }
 
-  if ( newTransformBuffer == NULL )
+  if ( newTrackedSequenceBrowserNode == NULL )
   {
-    peNode->SetTransformBufferID( "" );
+    peNode->SetTrackedSequenceBrowserNodeID( "" );
     return;
   }
 
-  peNode->SetTransformBufferID( newTransformBuffer->GetID() );
+  peNode->SetTrackedSequenceBrowserNodeID( newTrackedSequenceBrowserNode->GetID() );
   // The Perk Evaluator node automatically call the "updateWidgetFromMRML" function to deal with the widget
 }
 
@@ -771,22 +652,6 @@ void qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::onPerkEvaluatorNodeCreated( vtkMRMLNode* node )
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-
-  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( node );
-  if ( peNode == NULL )
-  {
-    return;
-  }
-  
-  // d->logic()->CreateLocalMetrics( peNode );
-  // Everything else is taken care of by the mrmlNodeChanged function
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
 ::updateWidgetFromMRMLNode()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
@@ -803,8 +668,11 @@ void qSlicerPerkEvaluatorModuleWidget
   d->TransformRolesWidget->setMetricInstanceNode( miNode );
   d->AnatomyRolesWidget->setMetricInstanceNode( miNode );
 
+  d->BrowserWidget->setTrackedSequenceBrowserNode( peNode->GetTrackedSequenceBrowserNode() );
+  d->MessagesWidget->setTrackedSequenceBrowserNode( peNode->GetTrackedSequenceBrowserNode() );
   d->MetricsTableWidget->setMetricsTableNode( peNode->GetMetricsTableNode() );
-  // d->BrowserWidget->setTrackedSequenceBrowserNode( peNode->GetTransformBufferNode() );
+  d->PlayWidget->setMRMLSequenceBrowserNode( peNode->GetTrackedSequenceBrowserNode() );
+  d->SeekWidget->setMRMLSequenceBrowserNode( peNode->GetTrackedSequenceBrowserNode() );
 
   // Disconnect to the GUI from updating the MRML node with rounded values
   disconnect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
@@ -813,11 +681,6 @@ void qSlicerPerkEvaluatorModuleWidget
   d->EndSpinBox->setValue( peNode->GetMarkEnd() );
   connect( d->BeginSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkBeginChanged() ) );
   connect( d->EndSpinBox, SIGNAL( valueChanged( double ) ), this, SLOT( OnMarkEndChanged() ) );
-
-  d->PlaybackSlider->setMinimum( 0 );
-  d->PlaybackSlider->setMaximum( d->logic()->GetMaximumRelativePlaybackTime( peNode ) );
-  d->PlaybackSlider->setValue( d->logic()->GetRelativePlaybackTime( peNode ) );
-
 
   // For the metric scripts
   // Disable to the onCheckedChanged listener when initializing the selections
@@ -864,5 +727,5 @@ void qSlicerPerkEvaluatorModuleWidget
     d->MinusZRadioButton->setChecked( Qt::Checked );
   }
 
-  d->logic()->UpdateSceneToPlaybackTime( peNode );  
+  d->logic()->UpdateSceneToPlaybackTime( peNode, d->logic()->GetSelectedTime( peNode->GetTrackedSequenceBrowserNode() ) );  
 }

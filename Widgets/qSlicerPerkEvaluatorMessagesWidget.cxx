@@ -100,9 +100,12 @@ void qSlicerPerkEvaluatorMessagesWidget
     return;
   }
 
+  double time = this->PerkEvaluatorLogic->GetSelectedTime( this->TrackedSequenceBrowserNode );
+  
   // Record the timestamp
-  double time = this->PerkEvaluatorNode->GetPlaybackTime();
-  // this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, messageName.toStdString(), time );
+  std::stringstream ss;
+  ss << time;
+  this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, messageName.toStdString(), ss.str() );
   
   this->updateWidget();  // Force this update widget
 }
@@ -113,9 +116,12 @@ void qSlicerPerkEvaluatorMessagesWidget
 {
   Q_D(qSlicerPerkEvaluatorMessagesWidget);  
 
+  double time = this->PerkEvaluatorLogic->GetSelectedTime( this->TrackedSequenceBrowserNode );
+  
   // Record the timestamp
-  double time = this->PerkEvaluatorNode->GetPlaybackTime();
-  // this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, "", time );
+  std::stringstream ss;
+  ss << time;
+  this->TransformRecorderLogic->AddMessage( this->TrackedSequenceBrowserNode, "", ss.str() );
   
   this->updateWidget();  // Force this update widget
 }
@@ -131,8 +137,16 @@ void qSlicerPerkEvaluatorMessagesWidget
     return;
   }
 
-  // double messageTime = this->TrackedSequenceBrowserNode->GetMessageAtIndex( row )->GetTime();
-  // this->PerkEvaluatorNode->SetPlaybackTime( messageTime );
+  vtkMRMLSequenceNode* messagesSequenceNode = this->TransformRecorderLogic->GetMessageSequenceNode( this->TrackedSequenceBrowserNode );
+  vtkMRMLSequenceNode* masterSequenceNode = this->TrackedSequenceBrowserNode->GetMasterSequenceNode();
+  if ( messagesSequenceNode == NULL || masterSequenceNode == NULL )
+  {
+    return;
+  }
+
+  std::string messageTimeString = messagesSequenceNode->GetNthIndexValue( row );
+  int masterItemNumber = masterSequenceNode->GetItemNumberFromIndexValue( messageTimeString );
+  this->TrackedSequenceBrowserNode->SetSelectedItemNumber( masterItemNumber );
 
   this->updateWidget();  // Force this update widget
 }

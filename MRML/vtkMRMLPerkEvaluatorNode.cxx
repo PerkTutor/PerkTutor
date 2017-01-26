@@ -2,8 +2,10 @@
 
 #include "vtkMRMLPerkEvaluatorNode.h"
 
+#include "vtkMRMLSequenceNode.h"
+
 // Constants ------------------------------------------------------------------
-static const char* TRANSFORM_BUFFER_REFERENCE_ROLE = "TransformBuffer";
+static const char* TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE = "TrackedSequenceBrowser";
 static const char* METRICS_TABLE_REFERENCE_ROLE = "MetricsTable";
 static const char* METRIC_INSTANCE_REFERENCE_ROLE = "MetricInstance";
 
@@ -57,7 +59,6 @@ void vtkMRMLPerkEvaluatorNode
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
   of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
-  of << indent << "PlaybackTime=\"" << this->PlaybackTime << "\"";
   of << indent << "RealTimeProcessing=\"" << this->RealTimeProcessing << "\"";
 }
 
@@ -95,10 +96,6 @@ void vtkMRMLPerkEvaluatorNode
     if ( ! strcmp( attName, "NeedleOrientation" ) )
     {
       this->NeedleOrientation = ( NeedleOrientationEnum ) atoi( attValue );
-    }
-    if ( ! strcmp( attName, "PlaybackTime" ) )
-    {
-      this->PlaybackTime = atof( attValue );
     }
     if ( ! strcmp( attName, "RealTimeProcessing" ) )
     {
@@ -141,7 +138,6 @@ void vtkMRMLPerkEvaluatorNode
   this->MarkBegin = node->MarkBegin;
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
-  this->PlaybackTime = node->PlaybackTime;
   this->AnalysisState = node->AnalysisState;
   this->RealTimeProcessing = node->RealTimeProcessing;
 }
@@ -160,12 +156,11 @@ vtkMRMLPerkEvaluatorNode
   
   this->NeedleOrientation = vtkMRMLPerkEvaluatorNode::PlusZ; // Default needle orientation protocol
 
-  this->PlaybackTime = 0.0;
   this->AnalysisState = -1;
 
   this->RealTimeProcessing = false;
 
-  this->AddNodeReferenceRole( TRANSFORM_BUFFER_REFERENCE_ROLE );
+  this->AddNodeReferenceRole( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRICS_TABLE_REFERENCE_ROLE );
   this->AddNodeReferenceRole( METRIC_INSTANCE_REFERENCE_ROLE );
 
@@ -288,27 +283,6 @@ void vtkMRMLPerkEvaluatorNode
 }
 
 
-double vtkMRMLPerkEvaluatorNode
-::GetPlaybackTime()
-{
-  return this->PlaybackTime;
-}
-
-
-void vtkMRMLPerkEvaluatorNode
-::SetPlaybackTime( double newPlaybackTime, bool analysis )
-{
-  if ( newPlaybackTime != this->PlaybackTime )
-  {
-    this->PlaybackTime = newPlaybackTime;
-    if ( ! analysis )
-    {
-      this->Modified();
-    }
-  }
-}
-
-
 int vtkMRMLPerkEvaluatorNode
 ::GetAnalysisState()
 {
@@ -421,7 +395,7 @@ bool vtkMRMLPerkEvaluatorNode
 }
 
 
-// Transform buffer/metrics table References ----------------------------------------------------------------------
+// Tracked sequence browser/metrics table References ----------------------------------------------------------------------
 
 std::string vtkMRMLPerkEvaluatorNode
 ::GetNodeReferenceIDString( std::string referenceRole )
@@ -442,45 +416,63 @@ std::string vtkMRMLPerkEvaluatorNode
 }
 
 
-vtkMRMLTransformBufferNode* vtkMRMLPerkEvaluatorNode
-::GetTransformBufferNode()
+vtkMRMLSequenceBrowserNode* vtkMRMLPerkEvaluatorNode
+::GetTrackedSequenceBrowserNode()
 {
-  return vtkMRMLTransformBufferNode::SafeDownCast( this->GetNodeReference( TRANSFORM_BUFFER_REFERENCE_ROLE ) );
+  return vtkMRMLSequenceBrowserNode::SafeDownCast( this->GetNodeReference( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE ) );
 }
 
 
 std::string vtkMRMLPerkEvaluatorNode
-::GetTransformBufferID()
+::GetTrackedSequenceBrowserNodeID()
 {
-  return this->GetNodeReferenceIDString( TRANSFORM_BUFFER_REFERENCE_ROLE );
+  return this->GetNodeReferenceIDString( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE );
 }
 
 
 void vtkMRMLPerkEvaluatorNode
-::SetTransformBufferID( std::string newTransformBufferID )
+::SetTrackedSequenceBrowserNodeID( std::string newTrackedSequenceBrowserNodeID )
 {
   vtkNew< vtkIntArray > events;
-  events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
-  events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
-  events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformAddedEvent );
-  events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent );
-  this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
+  // TODO: See which events we need to observe on the sequence browser node
+  // events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
+  // events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
+  // events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformAddedEvent );
+  // events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent );
+  this->SetAndObserveNodeReferenceID( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE, newTrackedSequenceBrowserNodeID.c_str(), events.GetPointer() );
 
   // Auto-update as necessary
-  if ( this->GetTransformBufferNode() == NULL )
+  if ( this->GetTrackedSequenceBrowserNode() == NULL )
   {
     return;
   }
 
-  // Playback time
-  this->SetPlaybackTime( this->GetTransformBufferNode()->GetMinimumTime() ); // Set to minimum for convenience
+  // Reset the playback to the beginning
+  this->GetTrackedSequenceBrowserNode()->SelectFirstItem(); // Set to the beginning
 
   // Measurement range
-  if ( this->GetAutoUpdateMeasurementRange() )
+  if ( this->GetAutoUpdateMeasurementRange() && this->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode() != NULL )
   {
     this->SetMarkBegin( 0.0 );
-    this->SetMarkEnd( this->GetTransformBufferNode()->GetTotalTime() );
+    this->SetMarkEnd( 0.0 );
+
+    vtkMRMLSequenceNode* masterSequenceNode = this->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode();
+    if ( masterSequenceNode != NULL && masterSequenceNode->GetNumberOfDataNodes() > 0 )
+    {
+      std::stringstream markBeginTimeString;
+      markBeginTimeString << masterSequenceNode->GetNthIndexValue( 0 );
+      double markBeginTime; markBeginTimeString >> markBeginTime;
+
+      std::stringstream markEndTimeString;
+      markEndTimeString << masterSequenceNode->GetNthIndexValue( masterSequenceNode->GetNumberOfDataNodes() - 1 );
+      double markEndTime; markEndTimeString >> markEndTime;
+
+      this->SetMarkBegin( markBeginTime );
+      this->SetMarkEnd( markEndTime );
+    }
+
   }
+
 }
 
 
@@ -513,30 +505,23 @@ void vtkMRMLPerkEvaluatorNode
   this->vtkMRMLTransformableNode::ProcessMRMLEvents( caller, event, callData );
 
   // The caller will be the node that was modified
-  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( caller );
-  if ( transformBuffer == NULL )
+  vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( caller );
+  if ( trackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
   // Recording state of buffer changed
-  if ( event == vtkMRMLTransformBufferNode::RecordingStateChangedEvent )
-  { 
-    bool* eventData = reinterpret_cast< bool* >( callData );
-    if ( *eventData == false )
-    {
-      this->SetRealTimeProcessing( false ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
-    }
+  if ( ! trackedSequenceBrowserNode->GetRecordingActive() && this->GetRealTimeProcessing() )
+  {
+    this->SetRealTimeProcessing( false ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
   }
 
-  // Transform added to buffer
-  if ( event == vtkMRMLTransformBufferNode::TransformAddedEvent && this->RealTimeProcessing )
+  // Transform added to tracked sequence browser
+  // TODO: Only monitor for node recorded into sequence events
+  if ( event == vtkCommand::ModifiedEvent && this->GetRealTimeProcessing() )
   { 
-    vtkMRMLTransformBufferNode::TransformEventDataType* eventData = reinterpret_cast< vtkMRMLTransformBufferNode::TransformEventDataType* >( callData );
-    if ( transformBuffer->GetTransformRecordBuffer( eventData->first )->GetNumRecords() == eventData->second + 1 )
-    {
-      this->InvokeEvent( TransformRealTimeAddedEvent, &eventData->first );
-    }
+    this->InvokeEvent( TransformRealTimeAddedEvent );
   }
 
 }

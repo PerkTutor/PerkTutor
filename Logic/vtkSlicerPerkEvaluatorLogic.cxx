@@ -482,58 +482,6 @@ bool vtkSlicerPerkEvaluatorLogic
 }
 
 
-void vtkSlicerPerkEvaluatorLogic
-::GetSelfAndParentRecordBuffer( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode, vtkLogRecordBuffer* selfParentRecordBuffer )
-{
-  // TODO: We only care about this for times. Is there a more efficient way to do this?
-  selfParentRecordBuffer->Clear();
-
-  // Iterate through the parents and add to temporary transform buffer if in the selected transform buffer for analysis
-  if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
-  {
-    return;
-  }
-
-  std::vector< std::string > recordedTransformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
-
-  vtkMRMLLinearTransformNode* parent = transformNode;
-  while( parent != NULL )
-  {
-
-    // Check if the parent's name matches one of the trajectory names
-    for ( int i = 0; i < recordedTransformNames.size(); i++ )
-    {
-      if ( recordedTransformNames.at( i ).compare( parent->GetName() ) == 0 )
-	    {
-        // Concatenate into the record buffer if so. Note: No need to deep copy - the times are really all we need
-        selfParentRecordBuffer->Concatenate( peNode->GetTransformBufferNode()->GetTransformRecordBuffer( recordedTransformNames.at( i ) ) );
-	    }
-    }
-
-	  parent = vtkMRMLLinearTransformNode::SafeDownCast( parent->GetParentTransformNode() );
-  }
-
-}
-
-
-void vtkSlicerPerkEvaluatorLogic
-::GetSelfAndParentTimes( vtkMRMLPerkEvaluatorNode* peNode, vtkMRMLLinearTransformNode* transformNode, vtkDoubleArray* timesArray )
-{
-  // TODO: We only care about this for times. Is there a more efficient way to do this?
-  vtkSmartPointer< vtkLogRecordBuffer > selfParentRecordBuffer = vtkSmartPointer< vtkLogRecordBuffer >::New();
-  this->GetSelfAndParentRecordBuffer( peNode, transformNode, selfParentRecordBuffer );
-
-  // Now, just grab the times
-  timesArray->SetNumberOfComponents( 1 );
-  timesArray->SetNumberOfTuples( selfParentRecordBuffer->GetNumRecords() );
-  
-  for ( int i = 0; i < selfParentRecordBuffer->GetNumRecords(); i++ )
-  {
-    timesArray->SetValue( i, selfParentRecordBuffer->GetRecord( i )->GetTime() );
-  }
-}
-
-
 std::string vtkSlicerPerkEvaluatorLogic
 ::GetMetricName( std::string msNodeID )
 {
@@ -664,94 +612,50 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 void vtkSlicerPerkEvaluatorLogic
-::UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, std::string transformName )
+::UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double playbackTime )
 {
-  if ( peNode == NULL || peNode->GetTransformBufferNode() == NULL )
+  if ( peNode == NULL || peNode->GetTrackedSequenceBrowserNode() == NULL )
   {
     return;
   }
-  
-  std::vector< std::string > transformNames;
-  if ( transformName.compare( "" ) == 0 )
+
+  // Set the correct item number for the master node
+  vtkMRMLSequenceNode* masterSequenceNode = peNode->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode();
+  if ( masterSequenceNode == NULL )
   {
-    transformNames = peNode->GetTransformBufferNode()->GetAllRecordedTransformNames();
-  }
-  else
-  {
-    transformNames = std::vector< std::string >( 1, transformName );
+    return;
   }
 
-  for ( int i = 0; i < transformNames.size(); i++ )
-  {	
-    // Find the linear transform node assicated with the transform name
-    vtkMRMLLinearTransformNode* linearTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->GetMRMLScene()->GetFirstNode( transformNames.at( i ).c_str(), "vtkMRMLLinearTransformNode" ) );
-    if ( linearTransformNode == NULL )
-    {
-      continue;
-    }
+  std::stringstream ss;
+  ss << playbackTime;
+  int itemNumber = masterSequenceNode->GetItemNumberFromIndexValue( ss.str(), false ); // Accept the closest numerical value
 
-    vtkTransformRecord* currentRecord = peNode->GetTransformBufferNode()->GetTransformAtTime( peNode->GetPlaybackTime(), transformNames.at( i ) );
-    if ( currentRecord == NULL )
-    {
-      continue;
-    }
-
-    vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-    currentRecord->GetTransformMatrix( transformMatrix );
-    linearTransformNode->SetMatrixTransformToParent( transformMatrix );
-  }
-
+  peNode->GetTrackedSequenceBrowserNode()->SetSelectedItemNumber( itemNumber );
 }
 
 
-// Get/Set playback for node -----------------------------------------------------------------------
-
+// Convenience methods for working with sequences --------------------------------
 double vtkSlicerPerkEvaluatorLogic
-::GetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode )
+::GetSelectedTime( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode )
 {
-  if ( peNode == NULL )
+  if ( trackedSequenceBrowserNode == NULL )
   {
     return 0.0;
   }
-  if ( peNode->GetTransformBufferNode() == NULL )
-  {
-    return peNode->GetPlaybackTime();
-  }
-
-  return peNode->GetPlaybackTime() - peNode->GetTransformBufferNode()->GetMinimumTime();
-}
-
-void vtkSlicerPerkEvaluatorLogic
-::SetRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double time )
-{
-  if ( peNode == NULL )
-  {
-    return;
-  }
-  if ( peNode->GetTransformBufferNode() == NULL )
-  {
-    peNode->SetPlaybackTime( time );
-    return;
-  }
-
-  peNode->SetPlaybackTime( time + peNode->GetTransformBufferNode()->GetMinimumTime() );
-}
-
-
-double vtkSlicerPerkEvaluatorLogic
-::GetMaximumRelativePlaybackTime( vtkMRMLPerkEvaluatorNode* peNode )
-{
-  if ( peNode == NULL )
-  {
-    return 0.0;
-  }
-  if ( peNode->GetTransformBufferNode() == NULL )
+  vtkMRMLSequenceNode* masterSequenceNode = trackedSequenceBrowserNode->GetMasterSequenceNode();
+  if ( masterSequenceNode == NULL )
   {
     return 0.0;
   }
 
-  return peNode->GetTransformBufferNode()->GetTotalTime();
+  std::string timeString = masterSequenceNode->GetNthIndexValue( trackedSequenceBrowserNode->GetSelectedItemNumber() );
+  std::stringstream timeStream( timeString );
+  double time = 0.0; // Default to zero in case conversion goes wrong
+  timeStream >> time;
+
+  return time;
 }
+
 
 
 // Node update methods ----------------------------------------------------------
@@ -773,12 +677,13 @@ void vtkSlicerPerkEvaluatorLogic
   // Handle an event in the real-time processing
   if ( peNode != NULL && peNode->GetRealTimeProcessing() && event == vtkMRMLPerkEvaluatorNode::TransformRealTimeAddedEvent )
   {
-    // The transform name
-    std::string* transformName = reinterpret_cast< std::string* >( callData );
-    // The time
-    double absTime = peNode->GetTransformBufferNode()->GetTransformRecordBuffer( *transformName )->GetCurrentRecord()->GetTime();
+    vtkMRMLSequenceNode* masterSequenceNode = peNode->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode();
+    if ( masterSequenceNode == NULL )
+    {
+      return;
+    }
     // Call the metrics update function
-    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics( '%1', %2 )" ).arg( transformName->c_str() ).arg( absTime ) );
+    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics()" ) );
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }
