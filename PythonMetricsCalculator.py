@@ -1,4 +1,4 @@
-import os, imp, glob, sys
+import os, imp, glob, sys, logging
 import urllib, zipfile
 import unittest
 from __main__ import vtk, qt, ctk, slicer
@@ -12,7 +12,7 @@ class PythonMetricsCalculator:
     parent.title = "Python Metrics Calculator" # TODO make this more human readable by adding spaces
     parent.categories = [ "Perk Tutor" ]
     parent.dependencies = [ "TransformRecorder", "PerkEvaluator" ]
-    parent.contributors = [ "Matthew Holden (Queen's University), Tamas Ungi (Queen's University)" ] # replace with "Firstname Lastname (Org)"
+    parent.contributors = [ "Matthew S. Holden (Queen's University), Tamas Ungi (Queen's University)" ] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
     The Python Metric Calculator module is a hidden module for calculating metrics for transform buffers. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/PythonMetricsCalculator/wiki'>Python Metric Calculator</a>.
     """
@@ -168,6 +168,7 @@ class PythonMetricsCalculatorLogic:
   def __init__( self ):    
     self.realTimeMetrics = dict()
     self.realTimeMetricsTable = None
+    self.realTimeProxyNodeCollection = vtk.vtkCollection()
     
     
   @staticmethod
@@ -467,72 +468,82 @@ class PythonMetricsCalculatorLogic:
       return
       
     peNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( peNodeID )
-    if ( peNode == None or peNode.GetTransformBufferNode() == None ):
+    if ( peNode == None or peNode.GetTrackedSequenceBrowserNode() == None ):
       return dict()
-  
-    allMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
-  
-    # Start at the beginning (but remember where we were)
-    originalPlaybackTime = peNode.GetPlaybackTime()
-    
-    # Now iterate over all of the trajectories
-    combinedTransformBuffer = slicer.vtkLogRecordBuffer()
-    peNode.GetTransformBufferNode().GetCombinedTransformRecordBuffer( combinedTransformBuffer )
-    
-    if ( combinedTransformBuffer.GetNumRecords() == 0 ):
+      
+    # Note that with the tracked sequence browser node, all of the frames should be synced.
+    # So, we just need to iterate through the master sequence node
+    masterSequenceNode = peNode.GetTrackedSequenceBrowserNode().GetMasterSequenceNode()
+    if ( masterSequenceNode is None ):
+      logging.warning( "Sequence browser has no associated sequence nodes." )
+      return
+    if ( masterSequenceNode.GetIndexType() != slicer.vtkMRMLSequenceNode.NumericIndex ):
+      logging.warning( "Cannot analyze sequence with non-numeric index type." )
+      return    
+    if ( masterSequenceNode.GetNumberOfDataNodes() == 0 ):
       return
       
-    peNode.SetPlaybackTime( combinedTransformBuffer.GetRecord( 0 ).GetTime(), True )
-    peNode.SetAnalysisState( 0 )
-    minTime = peNode.GetTransformBufferNode().GetMinimumTime()
+    proxyNodeCollection = vtk.vtkCollection()
+    peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodes( proxyNodeCollection )
   
-    for i in range( combinedTransformBuffer.GetNumRecords() ):
+    allMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )   
+
+    # Start at the beginning (but remember where we were)
+    originalItemNumber = peNode.GetTrackedSequenceBrowserNode().GetSelectedItemNumber()
     
-      absTime = combinedTransformBuffer.GetRecord( i ).GetTime()
-      relTime = absTime - minTime # Can't just take the 0th record of the combined buffer, because this doesn't account for the messages
-      if ( relTime < peNode.GetMarkBegin() or relTime > peNode.GetMarkEnd() ):
+    peNode.GetTrackedSequenceBrowserNode().SetSelectedItemNumber( 0 )
+    peNode.SetAnalysisState( 0 )
+  
+    for i in range( masterSequenceNode.GetNumberOfDataNodes() ):
+    
+      try:
+        time = float( masterSequenceNode.GetNthIndexValue( i ) )
+      except:
+        logging.warning( "Index:" + i + "has non-numeric index type." )
         continue
         
-      peNode.SetPlaybackTime( absTime, True )
-      PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().UpdateSceneToPlaybackTime( peNode, combinedTransformBuffer.GetRecord( i ).GetDeviceName() )
-      PythonMetricsCalculatorLogic.UpdateSelfAndChildMetrics( allMetrics, combinedTransformBuffer.GetRecord( i ).GetDeviceName(), absTime, None )
+      if ( time < peNode.GetMarkBegin() or time > peNode.GetMarkEnd() ):
+        continue
+        
+      # Update the scene so that all proxy nodes are at the appropriate frame
+      peNode.GetTrackedSequenceBrowserNode().SetSelectedItemNumber( i )
+      PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics, proxyNodeCollection, time, None )
       
       # Update the progress
-      progressPercent = 100 * ( relTime - peNode.GetMarkBegin() ) / ( peNode.GetMarkEnd() - peNode.GetMarkBegin() )
+      progressPercent = 100 * ( time - peNode.GetMarkBegin() ) / ( peNode.GetMarkEnd() - peNode.GetMarkBegin() )
       peNode.SetAnalysisState( int( progressPercent ) )
       
-      if ( peNode.GetAnalysisState() < 0 ):
+      if ( peNode.GetAnalysisState() < 0 ): # If the user hits cancel
         break
 
     
-    if ( peNode.GetAnalysisState() >= 0 ):
+    if ( peNode.GetAnalysisState() >= 0 ): # If the user has not hit cancel
       PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( peNode.GetMetricsTableNode(), allMetrics )
       
-    peNode.SetPlaybackTime( originalPlaybackTime, False ) # Scene automatically updated
+    peNode.GetTrackedSequenceBrowserNode().SetSelectedItemNumber( originalItemNumber ) # Scene automatically updated
     peNode.SetAnalysisState( 0 )
 
   
   @staticmethod  
-  def UpdateSelfAndChildMetrics( allMetrics, transformName, absTime, metricsTable ):
+  def UpdateProxyNodeMetrics( allMetrics, proxyNodeCollection, time, metricsTable ):
     if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None or PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic() == None ):
       return
-  
-    # Get the recorded transform node
-    updatedTransformNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetFirstNode( transformName, "vtkMRMLLinearTransformNode", [ False ] ) # TODO: Is there an error in this function?
     
     # Get all transforms in the scene
     transformCollection = vtk.vtkCollection()
     PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().GetSceneVisibleTransformNodes( transformCollection )
     
     # Update all metrics associated with children of the recorded transform
-    for i in range( transformCollection.GetNumberOfItems() ):
-      currentTransformNode = transformCollection.GetItemAsObject( i )
-      if ( PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().IsSelfOrDescendentTransformNode( updatedTransformNode, currentTransformNode ) ):
-        PythonMetricsCalculatorLogic.UpdateMetrics( allMetrics, currentTransformNode, absTime, metricsTable )
+    for i in range( proxyNodeCollection.GetNumberOfItems() ):
+      currentProxyNode = proxyNodeCollection.GetItemAsObject( i )
+      for j in range( transformCollection.GetNumberOfItems() ):
+        currentTransformNode = transformCollection.GetItemAsObject( j )
+        if ( PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().IsSelfOrDescendentNode( currentProxyNode, currentTransformNode ) ):
+          PythonMetricsCalculatorLogic.UpdateMetrics( allMetrics, currentTransformNode, time, metricsTable )
 
   
   @staticmethod  
-  def UpdateMetrics( allMetrics, transformNode, absTime, metricsTable ):
+  def UpdateMetrics( allMetrics, transformNode, time, metricsTable ):
     if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
       return
       
@@ -549,9 +560,9 @@ class PythonMetricsCalculatorLogic:
       for role in metric.GetAcceptedTransformRoles():
         if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == transformNode.GetID() ):
           try:
-            metric.AddTimestamp( absTime, matrix, point, role )
+            metric.AddTimestamp( time, matrix, point, role )
           except TypeError: # Only look if there is an issue with the number of arguments
-            metric.AddTimestamp( absTime, matrix, point ) # TODO: Keep this for backwards compatibility with Python Metrics?
+            metric.AddTimestamp( time, matrix, point ) # TODO: Keep this for backwards compatibility with Python Metrics?
       
     # Output the results to the metrics table node
     # TODO: Do we have to clear it all and re-write it all?
@@ -565,15 +576,16 @@ class PythonMetricsCalculatorLogic:
       return
       
     peNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( peNodeID )
-    if ( peNode == None or peNode.GetMetricsTableNode() == None ):
-      return dict()
+    if ( peNode == None or peNode.GetMetricsTableNode() == None or peNode.GetTrackedSequenceBrowserNode() == None ):
+      return
       
     self.realTimeMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
     self.realTimeMetricsTable = peNode.GetMetricsTableNode()
+    peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodeS( self.realTimeProxyNodeCollection )
     
     
-  def UpdateRealTimeMetrics( self, transformName, absTime ):
-    PythonMetricsCalculatorLogic.UpdateSelfAndChildMetrics( self.realTimeMetrics, transformName, absTime, self.realTimeMetricsTable )
+  def UpdateRealTimeMetrics( self, transformName, time ):
+    PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time, self.realTimeMetricsTable )
     
 
 
