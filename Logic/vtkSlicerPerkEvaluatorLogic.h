@@ -67,7 +67,7 @@ protected:
 
 public:
   
-  bool IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child );
+  bool IsSelfOrDescendentNode( vtkMRMLNode* parent, vtkMRMLNode* child );
 
   std::string GetMetricName( std::string msNodeID );
   std::string GetMetricUnit( std::string msNodeID );

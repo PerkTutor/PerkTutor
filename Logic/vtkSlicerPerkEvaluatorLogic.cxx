@@ -467,7 +467,7 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 bool vtkSlicerPerkEvaluatorLogic
-::IsSelfOrDescendentTransformNode( vtkMRMLLinearTransformNode* parent, vtkMRMLLinearTransformNode* child )
+::IsSelfOrDescendentNode( vtkMRMLNode* parent, vtkMRMLNode* child )
 {
   while( child != NULL )
   {
@@ -475,7 +475,14 @@ bool vtkSlicerPerkEvaluatorLogic
     {
       return true;
     }
-    child = vtkMRMLLinearTransformNode::SafeDownCast( child->GetParentTransformNode() );
+
+    vtkMRMLTransformableNode* childTransformable = vtkMRMLTransformableNode::SafeDownCast( child );
+    if ( childTransformable == NULL )
+    {
+      return false;
+    }
+
+    child = childTransformable->GetParentTransformNode();
   }
 
   return false;
