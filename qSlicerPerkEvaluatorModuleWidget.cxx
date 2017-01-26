@@ -189,8 +189,8 @@ void qSlicerPerkEvaluatorModuleWidget
     vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( peNodeBatch.at( i ) );
     if ( peNode == NULL )
     {
-      vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( peNodeBatch.at( i ) );
-      if ( transformBuffer == NULL )
+      vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( peNodeBatch.at( i ) );
+      if ( trackedSequenceBrowserNode == NULL )
       {
         continue;
       }
@@ -200,7 +200,7 @@ void qSlicerPerkEvaluatorModuleWidget
       peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->addNode() );
       peNode->Copy( originalPerkEvaluatorNode );
       d->MetricsTableWidget->addMetricsTableNode();
-      // d->BrowserWidget->setTrackedSequenceBrowserNode( transformBuffer );
+      d->BrowserWidget->setTrackedSequenceBrowserNode( trackedSequenceBrowserNode );
     }
 
     std::stringstream labelText;
@@ -554,7 +554,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->AnalysisStateDialog, SIGNAL( canceled() ), this, SLOT( OnAnalysisCanceled() ) );
 
   // Update the recorder controls widget when the transform buffer is changed
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTrackedSequenceBrowserNode( vtkMRMLNode* ) ) );
   connect( d->PerkEvaluatorNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setPerkEvaluatorNode( vtkMRMLNode* ) ) );
 
 

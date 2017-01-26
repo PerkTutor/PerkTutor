@@ -115,6 +115,8 @@ public:
   std::string GetTrackedSequenceBrowserNodeID();
   void SetTrackedSequenceBrowserNodeID( std::string newTrackedSequenceBrowserNodeID );
 
+  void UpdateMeasurementRange();
+
   vtkMRMLTableNode* GetMetricsTableNode();
   std::string GetMetricsTableID();
   void SetMetricsTableID( std::string newMetricsTableID );

@@ -319,6 +319,10 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->InvokeEvent( RealTimeProcessingStartedEvent );
     }
+    else if ( this->GetAutoUpdateMeasurementRange() )
+    {
+      this->UpdateMeasurementRange();
+    }
   }
 }
 
@@ -431,10 +435,36 @@ std::string vtkMRMLPerkEvaluatorNode
 
 
 void vtkMRMLPerkEvaluatorNode
+::UpdateMeasurementRange()
+{
+  this->SetMarkBegin( 0.0 );
+  this->SetMarkEnd( 0.0 );
+
+  vtkMRMLSequenceNode* masterSequenceNode = this->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode();
+  if ( masterSequenceNode == NULL || masterSequenceNode->GetNumberOfDataNodes() == 0 )
+  {
+    return;
+  }
+
+  std::stringstream markBeginTimeString;
+  markBeginTimeString << masterSequenceNode->GetNthIndexValue( 0 );
+  double markBeginTime; markBeginTimeString >> markBeginTime;
+
+  std::stringstream markEndTimeString;
+  markEndTimeString << masterSequenceNode->GetNthIndexValue( masterSequenceNode->GetNumberOfDataNodes() - 1 );
+  double markEndTime; markEndTimeString >> markEndTime;
+
+  this->SetMarkBegin( markBeginTime );
+  this->SetMarkEnd( markEndTime );
+}
+
+
+void vtkMRMLPerkEvaluatorNode
 ::SetTrackedSequenceBrowserNodeID( std::string newTrackedSequenceBrowserNodeID )
 {
   vtkNew< vtkIntArray > events;
   // TODO: See which events we need to observe on the sequence browser node
+   events->InsertNextValue( vtkCommand::ModifiedEvent );
   // events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
   // events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
   // events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformAddedEvent );
@@ -451,26 +481,9 @@ void vtkMRMLPerkEvaluatorNode
   this->GetTrackedSequenceBrowserNode()->SelectFirstItem(); // Set to the beginning
 
   // Measurement range
-  if ( this->GetAutoUpdateMeasurementRange() && this->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode() != NULL )
+  if ( this->GetAutoUpdateMeasurementRange()  )
   {
-    this->SetMarkBegin( 0.0 );
-    this->SetMarkEnd( 0.0 );
-
-    vtkMRMLSequenceNode* masterSequenceNode = this->GetTrackedSequenceBrowserNode()->GetMasterSequenceNode();
-    if ( masterSequenceNode != NULL && masterSequenceNode->GetNumberOfDataNodes() > 0 )
-    {
-      std::stringstream markBeginTimeString;
-      markBeginTimeString << masterSequenceNode->GetNthIndexValue( 0 );
-      double markBeginTime; markBeginTimeString >> markBeginTime;
-
-      std::stringstream markEndTimeString;
-      markEndTimeString << masterSequenceNode->GetNthIndexValue( masterSequenceNode->GetNumberOfDataNodes() - 1 );
-      double markEndTime; markEndTimeString >> markEndTime;
-
-      this->SetMarkBegin( markBeginTime );
-      this->SetMarkEnd( markEndTime );
-    }
-
+    this->UpdateMeasurementRange();
   }
 
 }

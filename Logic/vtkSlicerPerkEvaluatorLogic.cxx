@@ -690,7 +690,8 @@ void vtkSlicerPerkEvaluatorLogic
       return;
     }
     // Call the metrics update function
-    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics()" ) );
+    std::string timeString = masterSequenceNode->GetNthIndexValue( masterSequenceNode->GetNumberOfDataNodes() - 1 );
+    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics( %1 )" ).arg( timeString.c_str() ) );
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }
