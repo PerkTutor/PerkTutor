@@ -164,15 +164,20 @@ void qSlicerTransformRecorderModuleWidget
   ss.precision( 0 );
   ss << std::fixed << d->logic()->GetMaximumNumberOfDataNodes( d->BrowserWidget->getTrackedSequenceBrowserNode() );
   d->NumFramesResultLabel->setText( ss.str().c_str() );
-  
-  ss.str( "" );
-  ss.precision( 0 );
-  ss << std::fixed << d->logic()->GetMessageSequenceNode( d->BrowserWidget->getTrackedSequenceBrowserNode() )->GetNumberOfDataNodes();
-  d->NumMessagesResultLabel->setText( ss.str().c_str() );
 
   ss.str( "" );
   ss.precision( 2 );
   ss << std::fixed << d->logic()->GetMaximumIndexValue( d->BrowserWidget->getTrackedSequenceBrowserNode() );
   d->TotalTimeResultLabel->setText( ss.str().c_str() );
-   
+
+    
+  vtkMRMLSequenceNode* messagesSequenceNode = d->logic()->GetMessageSequenceNode( d->BrowserWidget->getTrackedSequenceBrowserNode() );
+  if ( messagesSequenceNode != NULL )
+  {
+    ss.str( "" );
+    ss.precision( 0 );
+    ss << std::fixed << messagesSequenceNode->GetNumberOfDataNodes();
+    d->NumMessagesResultLabel->setText( ss.str().c_str() );   
+  }  
+  
 }

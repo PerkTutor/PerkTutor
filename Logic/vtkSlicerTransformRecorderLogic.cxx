@@ -178,7 +178,8 @@ void vtkSlicerTransformRecorderLogic
 vtkMRMLSequenceNode* vtkSlicerTransformRecorderLogic
 ::GetMessageSequenceNode( vtkMRMLSequenceBrowserNode* browserNode )
 {
-  if ( browserNode == NULL )
+  // Do not make the messages sequence the master
+  if ( browserNode == NULL || browserNode->GetMasterSequenceNode() == NULL )
   {
     return NULL;
   }

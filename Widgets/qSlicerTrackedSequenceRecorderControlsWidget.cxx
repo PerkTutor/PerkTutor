@@ -115,6 +115,11 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 {
   Q_D(qSlicerTrackedSequenceRecorderControlsWidget);
 
+  if ( this->TrackedSequenceBrowserNode == NULL )
+  {
+    return;
+  }
+
   // Disable to the onCheckedChanged listener when initializing the selections
   // We don't want to simultaneously update the observed nodes from selections and selections from observed nodes
   disconnect( d->TransformCheckableComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onCheckedTransformsChanged() ) );
@@ -123,13 +128,32 @@ void qSlicerTrackedSequenceRecorderControlsWidget
   // Assume the default is not checked, and check all those that are observed
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    if ( this->TrackedSequenceBrowserNode != NULL && this->TrackedSequenceBrowserNode->IsProxyNodeID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
+    vtkMRMLNode* currProxyNode = d->TransformCheckableComboBox->nodeFromIndex( i );
+    vtkMRMLSequenceNode* currSequenceNode = this->TrackedSequenceBrowserNode->GetSequenceNode( currProxyNode );
+
+    if ( this->TrackedSequenceBrowserNode->GetRecording( currSequenceNode ) ) // If the proxy node isn't synced, then this will certainly be false
     {
-	    d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Checked );
+	    d->TransformCheckableComboBox->setCheckState( currProxyNode, Qt::Checked );
     }
     else
     {
-      d->TransformCheckableComboBox->setCheckState( d->TransformCheckableComboBox->nodeFromIndex(i), Qt::Unchecked );
+      d->TransformCheckableComboBox->setCheckState( currProxyNode, Qt::Unchecked );
+    }
+  }
+
+  // Assume the default is not checked, and check all those that are observed
+  for ( int i = 0; i < d->ImageCheckableComboBox->nodeCount(); i++ )
+  {
+    vtkMRMLNode* currProxyNode = d->ImageCheckableComboBox->nodeFromIndex( i );
+    vtkMRMLSequenceNode* currSequenceNode = this->TrackedSequenceBrowserNode->GetSequenceNode( currProxyNode );
+
+    if ( this->TrackedSequenceBrowserNode->GetRecording( currSequenceNode ) ) // If the proxy node isn't synced, then this will certainly be false
+    {
+	    d->ImageCheckableComboBox->setCheckState( currProxyNode, Qt::Checked );
+    }
+    else
+    {
+      d->ImageCheckableComboBox->setCheckState( currProxyNode, Qt::Unchecked );
     }
   }
 
@@ -154,13 +178,20 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 
   for ( int i = 0; i < d->TransformCheckableComboBox->nodeCount(); i++ )
   {
-    if( d->TransformCheckableComboBox->checkState( d->TransformCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked
-      && ! this->TrackedSequenceBrowserNode->IsProxyNodeID( d->TransformCheckableComboBox->nodeFromIndex(i)->GetID() ) )
+    vtkMRMLNode* currProxyNode = d->TransformCheckableComboBox->nodeFromIndex( i );
+    vtkMRMLSequenceNode* currSequenceNode = this->TrackedSequenceBrowserNode->GetSequenceNode( currProxyNode );
+    bool currProxyNodeChecked = d->TransformCheckableComboBox->checkState( currProxyNode ) == Qt::Checked;
+
+    if( currProxyNodeChecked && currSequenceNode == NULL )
     {
-      vtkMRMLSequenceNode* sequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->TransformCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
-      this->TrackedSequenceBrowserNode->SetRecording( sequenceNode, true );
-      this->TrackedSequenceBrowserNode->SetOverwriteProxyName( sequenceNode, false );
-      this->TrackedSequenceBrowserNode->SetSaveChanges( sequenceNode, false );
+      currSequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, currProxyNode, this->TrackedSequenceBrowserNode );
+      this->TrackedSequenceBrowserNode->SetOverwriteProxyName( currSequenceNode, false );
+      this->TrackedSequenceBrowserNode->SetSaveChanges( currSequenceNode, false );
+    }
+
+    if ( currSequenceNode != NULL )
+    {
+      this->TrackedSequenceBrowserNode->SetRecording( currSequenceNode, currProxyNodeChecked );
     }
   }
 
@@ -184,13 +215,20 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 
   for ( int i = 0; i < d->ImageCheckableComboBox->nodeCount(); i++ )
   {
-    if( d->ImageCheckableComboBox->checkState( d->ImageCheckableComboBox->nodeFromIndex(i) ) == Qt::Checked
-      && ! this->TrackedSequenceBrowserNode->IsProxyNodeID( d->ImageCheckableComboBox->nodeFromIndex(i)->GetID() ) )
+    vtkMRMLNode* currProxyNode = d->ImageCheckableComboBox->nodeFromIndex( i );
+    vtkMRMLSequenceNode* currSequenceNode = this->TrackedSequenceBrowserNode->GetSequenceNode( currProxyNode );
+    bool currProxyNodeChecked = d->ImageCheckableComboBox->checkState( currProxyNode ) == Qt::Checked;
+
+    if( currProxyNodeChecked && currSequenceNode == NULL )
     {
-      vtkMRMLSequenceNode* sequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, d->ImageCheckableComboBox->nodeFromIndex(i), this->TrackedSequenceBrowserNode );
-      this->TrackedSequenceBrowserNode->SetRecording( sequenceNode, true );
-      this->TrackedSequenceBrowserNode->SetOverwriteProxyName( sequenceNode, false );
-      this->TrackedSequenceBrowserNode->SetSaveChanges( sequenceNode, false );
+      currSequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, currProxyNode, this->TrackedSequenceBrowserNode );
+      this->TrackedSequenceBrowserNode->SetOverwriteProxyName( currSequenceNode, false );
+      this->TrackedSequenceBrowserNode->SetSaveChanges( currSequenceNode, false );
+    }
+
+    if ( currSequenceNode != NULL )
+    {
+      this->TrackedSequenceBrowserNode->SetRecording( currSequenceNode, currProxyNodeChecked );
     }
   }
 
