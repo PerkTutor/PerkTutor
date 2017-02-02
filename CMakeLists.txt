@@ -2,18 +2,27 @@ cmake_minimum_required( VERSION 2.8.7 )
 
 set( EXTENSION_NAME PerkTutor )
 
-set( EXTENSION_HOMEPAGE "http://www.perktutor.org/" )
+set( EXTENSION_HOMEPAGE "https://github.com/PerkTutor/PerkTutor/wiki" )
 set( EXTENSION_CATEGORY "Training" )
 set( EXTENSION_CONTRIBUTORS "Tamas Ungi, Matthew S. Holden (Queen's University)" )
 set( EXTENSION_DESCRIPTION "This extension holds modules for training of needle interventions and analysis of operator performance." )
 set( EXTENSION_ICONURL "http://www.slicer.org/slicerWiki/images/2/21/PerkTutorLogo.png" )
 set( EXTENSION_SCREENSHOTURLS "http://www.slicer.org/slicerWiki/images/2/28/PerkTutorScreenshot.png" )
-set( EXTENSION_DEPENDS "NA") # Specified as a space separated list or 'NA' if any
+set( EXTENSION_DEPENDS "Sequences" ) # Specified as a space separated list or 'NA' if any
 set( EXTENSION_BUILD_SUBDIRECTORY inner-build )
 
 project( PerkTutor )
+
 find_package( Slicer REQUIRED )
 include( ${Slicer_USE_FILE} )
+
+find_package( Sequences REQUIRED )
+include( "${CMAKE_CURRENT_SOURCE_DIR}/SequencesInclude.cmake" )
+# To use the sequences in a module, add:
+# Sequences_INCLUDE_DIRS to the INCLUDE_DIRECTORIES
+# Sequences_LIBS to the TARGET_LIBRARIES
+
+
 
 # Option to enable the experimental modules
 OPTION(PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES "Enable the building of work-in-progress, experimental modules." OFF)
