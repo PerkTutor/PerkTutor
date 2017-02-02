@@ -59,7 +59,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="ImportButton">
+      <widget class="QPushButton" name="OpenButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -67,7 +67,7 @@
         </sizepolicy>
        </property>
        <property name="toolTip">
-        <string>Import a new transform buffer from file.</string>
+        <string>Open a new tracked sequence browser from file.</string>
        </property>
        <property name="text">
         <string/>
@@ -75,7 +75,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="ExportButton">
+      <widget class="QPushButton" name="SaveButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -83,7 +83,7 @@
         </sizepolicy>
        </property>
        <property name="toolTip">
-        <string>Export the current transform buffer to file.</string>
+        <string>Save the currently selected tracked sequence browser to file.</string>
        </property>
        <property name="text">
         <string/>

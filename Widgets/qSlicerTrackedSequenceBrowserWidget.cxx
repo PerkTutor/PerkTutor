@@ -88,10 +88,10 @@ void qSlicerTrackedSequenceBrowserWidget
 
   connect( d->TrackedSequenceBrowserNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ) );
 
-  connect( d->ImportButton, SIGNAL( clicked() ), this, SLOT( onImportButtonClicked() ) );
-  d->ImportButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogOpenButton ) );
-  connect( d->ExportButton, SIGNAL( clicked() ), this, SLOT( onExportButtonClicked() ) );
-  d->ExportButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogSaveButton ) );
+  connect( d->OpenButton, SIGNAL( clicked() ), this, SLOT( onOpenButtonClicked() ) );
+  d->OpenButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogOpenButton ) );
+  connect( d->SaveButton, SIGNAL( clicked() ), this, SLOT( onSaveButtonClicked() ) );
+  d->SaveButton->setIcon( QApplication::style()->standardIcon( QStyle::SP_DialogSaveButton ) );
 
   this->updateWidget();  
 }
@@ -141,14 +141,14 @@ void qSlicerTrackedSequenceBrowserWidget
 
 
 void qSlicerTrackedSequenceBrowserWidget
-::onImportButtonClicked()
+::onOpenButtonClicked()
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);
 
   // Use the generic Slicer dialog  
   vtkSmartPointer< vtkCollection > loadedNodes = vtkSmartPointer< vtkCollection >::New();
   qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
-  ioManager->openDialog( QString( "Sequence Metafile" ), qSlicerFileDialog::Read, qSlicerIO::IOProperties(), loadedNodes );
+  ioManager->openDialog( QString( "Tracked Sequence Browser" ), qSlicerFileDialog::Read, qSlicerIO::IOProperties(), loadedNodes );
 
   // Set one of the loaded nodes to be selected in the combo box
   if ( loadedNodes->GetNumberOfItems() > 0 )
@@ -162,7 +162,7 @@ void qSlicerTrackedSequenceBrowserWidget
 
 
 void qSlicerTrackedSequenceBrowserWidget
-::onExportButtonClicked()
+::onSaveButtonClicked()
 {
   Q_D(qSlicerTrackedSequenceBrowserWidget);  
 
@@ -176,7 +176,7 @@ void qSlicerTrackedSequenceBrowserWidget
   fileParameters[ "nodeID" ] = this->TrackedSequenceBrowserNode->GetID();
   
   qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
-  ioManager->openDialog( QString( "Sequence Metafile" ), qSlicerFileDialog::Write, fileParameters );
+  ioManager->openDialog( QString( "Tracked Sequence Browser" ), qSlicerFileDialog::Write, fileParameters );
 
   // No need to update the buffer - it is not changed
   this->updateWidget();

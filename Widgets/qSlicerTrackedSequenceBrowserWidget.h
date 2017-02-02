@@ -50,8 +50,8 @@ public:
 
 protected slots:
 
-  void onImportButtonClicked();
-  void onExportButtonClicked();
+  void onOpenButtonClicked();
+  void onSaveButtonClicked();
 
   virtual void onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNode );
   void onTrackedSequenceBrowserNodeModified();
