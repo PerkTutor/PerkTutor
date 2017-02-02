@@ -15,11 +15,13 @@
 #include "vtkObjectBase.h"
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
+#include "vtkSmartPointer.h"
+#include "vtkDoubleArray.h"
+#include "vtkNew.h"
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkLabelRecord.h"
-#include "vtkMarkovVector.h"
+#include "vtkMRMLSequenceNode.h"
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
@@ -56,29 +58,32 @@ public:
   int GetNumStates();
   int GetNumSymbols();
 
-  void SetA( std::vector< vtkSmartPointer< vtkLabelVector > > newA );
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetA();
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetZeroA();
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetLogA();
+  void SetPi( vtkDoubleArray* newPi );
+  vtkDoubleArray* GetPi();
+  void GetZeroPi( vtkDoubleArray* zeroPi );
+  void GetLogPi( vtkDoubleArray* logPi );
 
-  void SetB( std::vector< vtkSmartPointer< vtkLabelVector > > newB );
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetB();
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetZeroB();
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetLogB();
+  void SetA( vtkDoubleArray* newA );
+  vtkDoubleArray* GetA();
+  void GetZeroA( vtkDoubleArray* zeroA );
+  void GetLogA( vtkDoubleArray* logA );
 
-  void SetPi( vtkLabelVector* newPi );
-  void GetPi( vtkLabelVector* piPi );
-  void GetZeroPi( vtkLabelVector* zeroPi );
-  void GetLogPi( vtkLabelVector* logPi );
+  void SetB( vtkDoubleArray* newB );
+  vtkDoubleArray* GetB();
+  void GetZeroB( vtkDoubleArray* zeroB );
+  void GetLogB( vtkDoubleArray* logB );
 
   void InitializeEstimation();
-  void AddEstimationData( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );
-  void AddPseudoData( vtkLabelVector* pseudoPi, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoA, std::vector< vtkSmartPointer< vtkLabelVector > > pseudoB );
+  void AddEstimationData( vtkMRMLSequenceNode* sequence );
+  void AddPseudoData( vtkDoubleArray* pseudoPi, vtkDoubleArray* pseudoA, vtkDoubleArray* pseudoB );
   void EstimateParameters();
-  void CalculateStates( std::vector< vtkSmartPointer< vtkMarkovVector > > sequence );
+  void CalculateStates( vtkMRMLSequenceNode* sequence );
 
   std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
+
+  static std::string MarkovMatrixToXMLString( vtkDoubleArray* markovMatrix, std::string name, vtkIndent indent );
+  static void MarkovMatrixFromXMLElement( vtkXMLDataElement* element, std::string name, vtkDoubleArray* markovMatrix );  
 
 private:
 
@@ -87,9 +92,11 @@ private:
 
 protected:
 
-  std::vector< vtkSmartPointer< vtkLabelVector > > A; // State transition matrix
-  std::vector< vtkSmartPointer< vtkLabelVector > > B; // Observation matrix
-  vtkSmartPointer< vtkLabelVector > Pi;	// Initial state vector
+  vtkSmartPointer< vtkDoubleArray > Pi;	// Initial state vector
+  vtkSmartPointer< vtkDoubleArray > A; // State transition matrix
+  vtkSmartPointer< vtkDoubleArray > B; // Observation matrix
+
+  // The assumption is that the Pi, A, B arrays are always in the same order as the StateNames and SymbolNames
 
   std::vector< std::string > StateNames;
   std::vector< std::string > SymbolNames;

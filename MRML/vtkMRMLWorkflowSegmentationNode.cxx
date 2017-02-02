@@ -4,7 +4,7 @@
 
 // Constants ------------------------------------------------------------------
 static const char* TOOL_REFERENCE_ROLE = "Tool";
-static const char* TRANSFORM_BUFFER_REFERENCE_ROLE = "TransformBuffer";
+static const char* TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE = "TrackedSequenceBrowser";
 
 
 // Constructors and Destructors
@@ -108,30 +108,32 @@ std::string vtkMRMLWorkflowSegmentationNode
 }
 
 
-// Transform buffer node
+// Tracked sequence browser node
 // ----------------------------------------------------------------------------
 
-vtkMRMLTransformBufferNode* vtkMRMLWorkflowSegmentationNode
-::GetTransformBufferNode()
+vtkMRMLSequenceBrowserNode* vtkMRMLWorkflowSegmentationNode
+::GetTrackedSequenceBrowserNode()
 {
-  return vtkMRMLTransformBufferNode::SafeDownCast( this->GetNodeReference( TRANSFORM_BUFFER_REFERENCE_ROLE ) );
+  return vtkMRMLSequenceBrowserNode::SafeDownCast( this->GetNodeReference( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE ) );
 }
 
 
 std::string vtkMRMLWorkflowSegmentationNode
-::GetTransformBufferID()
+::GetTrackedSequenceBrowserNodeID()
 {
-  return this->GetNodeReferenceIDString( TRANSFORM_BUFFER_REFERENCE_ROLE );
+  return this->GetNodeReferenceIDString( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE );
 }
 
 
 void vtkMRMLWorkflowSegmentationNode
-::SetTransformBufferID( std::string newTransformBufferID )
+::SetTrackedSequenceBrowserNodeID( std::string newTrackedSequenceBrowserNodeID )
 {
   vtkNew< vtkIntArray > events;
-  events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
-  events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
-  this->SetAndObserveNodeReferenceID( TRANSFORM_BUFFER_REFERENCE_ROLE, newTransformBufferID.c_str(), events.GetPointer() );
+  // TODO: Which events to add for sequence browser
+  events->InsertNextValue( vtkCommand::ModifiedEvent );
+  // events->InsertNextValue( vtkMRMLSequenceBrowserNode::TransformAddedEvent );
+  // events->InsertNextValue( vtkMRMLSequenceBrowserNode::RecordingStateChangedEvent );
+  this->SetAndObserveNodeReferenceID( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE, newTrackedSequenceBrowserNodeID.c_str(), events.GetPointer() );
   // TODO: Reset all tools
 }
 
@@ -253,31 +255,24 @@ void vtkMRMLWorkflowSegmentationNode
   }
 
   // The caller will be the node that was modified
-  vtkMRMLTransformBufferNode* transformBuffer = vtkMRMLTransformBufferNode::SafeDownCast( caller );
-  if ( transformBuffer == NULL )
+  vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( caller );
+  if ( trackedSequenceBrowserNode == NULL )
   {
     return;
   }
 
-  // Recording state of buffer changed
-  if ( event == vtkMRMLTransformBufferNode::RecordingStateChangedEvent )
-  { 
-    bool* eventData = reinterpret_cast< bool* >( callData );
-    if ( *eventData == false )
-    {
-      this->SetRealTimeProcessing( eventData ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
-    }
+  // Recording state of sequence browser changed
+  if ( ! trackedSequenceBrowserNode->GetRecordingActive() && this->GetRealTimeProcessing() )
+  {
+    this->SetRealTimeProcessing( false ); // Stop real-time processing if recording has stopped (note: real-time processing should not necessarily be started whenever recording is started)
   }
 
 
-  // Transform added to buffer
-  if ( event == vtkMRMLTransformBufferNode::TransformAddedEvent && this->RealTimeProcessing )
+  // Transform added to tracked sequence browser
+  // TODO: Only monitor for node recorded into sequence events
+  if ( event == vtkCommand::ModifiedEvent && this->GetRealTimeProcessing() )
   { 
-    vtkMRMLTransformBufferNode::TransformEventDataType* eventData = reinterpret_cast< vtkMRMLTransformBufferNode::TransformEventDataType* >( callData );
-    if ( transformBuffer->GetTransformRecordBuffer( eventData->first )->GetNumRecords() == eventData->second + 1 )
-    {
-      this->InvokeEvent( TransformRealTimeAddedEvent, &eventData->first );
-    }
+    this->InvokeEvent( TransformRealTimeAddedEvent );
   }
 
 }

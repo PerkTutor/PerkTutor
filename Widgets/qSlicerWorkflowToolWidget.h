@@ -52,6 +52,7 @@ protected slots:
   virtual void onWorkflowToolNodeChanged( vtkMRMLNode* newWorkflowToolNode );
   void onWorkflowToolNodeModified();
   
+  void onToolTransformChanged( vtkMRMLNode* newToolTransformNode );
   void onWorkflowProcedureChanged( vtkMRMLNode* newWorkflowProcedureNode );
   void onWorkflowInputChanged( vtkMRMLNode* newWorkflowInputNode );
   void onWorkflowTrainingChanged( vtkMRMLNode* newWorkflowTrainingNode );

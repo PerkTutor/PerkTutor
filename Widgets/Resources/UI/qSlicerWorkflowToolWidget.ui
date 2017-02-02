@@ -45,6 +45,44 @@
     </widget>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QLabel" name="ToolTransformLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Tool transform</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="qMRMLNodeComboBox" name="ToolTransformComboBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="nodeTypes">
+        <stringlist>
+         <string>vtkMRMLLinearTransformNode</string>
+        </stringlist>
+       </property>
+       <property name="noneEnabled">
+        <bool>true</bool>
+       </property>
+       <property name="renameEnabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
       <widget class="QLabel" name="ProcdureDefinitionLabel">
@@ -55,7 +93,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Procedure Definition</string>
+        <string>Procedure definition</string>
        </property>
       </widget>
      </item>
@@ -93,7 +131,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Input Parameters</string>
+        <string>Input parameters</string>
        </property>
       </widget>
      </item>
@@ -131,7 +169,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Training Parameters</string>
+        <string>Training parameters</string>
        </property>
       </widget>
      </item>
@@ -236,6 +274,22 @@
     <hint type="destinationlabel">
      <x>300</x>
      <y>342</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>qSlicerWorkflowToolWidget</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>ToolTransformComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>194</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>300</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>

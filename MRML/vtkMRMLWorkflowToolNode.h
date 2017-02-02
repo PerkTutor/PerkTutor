@@ -14,13 +14,17 @@
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
 #include "vtkMRMLNode.h"
+#include "vtkCommand.h"
+#include "vtkCollection.h"
+#include "vtkCollectionIterator.h"
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 #include "vtkMRMLWorkflowProcedureNode.h"
 #include "vtkMRMLWorkflowInputNode.h"
 #include "vtkMRMLWorkflowTrainingNode.h"
-#include "vtkWorkflowLogRecordBufferRT.h"
+#include "vtkMRMLWorkflowSequenceNode.h"
+#include "vtkMRMLWorkflowSequenceOnlineNode.h"
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
@@ -53,11 +57,15 @@ public:
   vtkGetMacro( ToolName, std::string );
   vtkSetMacro( ToolName, std::string );
   
-  bool GetDefined();
-  bool GetInputted();
-  bool GetTrained();
+  bool IsWorkflowProcedureSet();
+  bool IsWorkflowInputSet();
+  bool IsWorkflowTrainingSet();
   
   std::string GetNodeReferenceIDString( std::string referenceRole );
+
+  vtkMRMLLinearTransformNode* GetToolTransformNode();
+  std::string GetToolTransformID();
+  void SetToolTransformID( std::string newToolTransformID );
 
   vtkMRMLWorkflowProcedureNode* GetWorkflowProcedureNode();
   std::string GetWorkflowProcedureID();
@@ -76,11 +84,11 @@ public:
   
   
   // Computation
-  void ResetBuffers();
+  void ResetWorkflowSequences();
   
-  bool Train( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
+  bool Train( vtkCollection* trainingWorkflowSequences );
   
-  void AddAndSegmentRecord( vtkLabelRecord* newRecord );
+  void AddAndSegmentTransform( vtkMRMLLinearTransformNode* newTransform, std::string newTimeString );
   
 
   // Propagate the modified event from any of the tools
@@ -97,16 +105,16 @@ protected:
 
   std::string ToolName;
   
-  // This will also hold the real-time buffers
-  vtkSmartPointer< vtkWorkflowLogRecordBufferRT > RawBuffer, FilterBuffer, DerivativeBuffer, OrthogonalBuffer, PcaBuffer, CentroidBuffer;
+  // This will also hold the real-time workflow sequences
+  vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode > RawWorkflowSequence, FilterWorkflowSequence, DerivativeWorkflowSequence, OrthogonalWorkflowSequence, PcaWorkflowSequence, CentroidWorkflowSequence;
   vtkSmartPointer< vtkWorkflowTask > CurrentTask;
 
   bool CurrentTaskNew;
   
   // Internal helpers for computation
-  std::map< std::string, double > CalculateTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
-  std::map< std::string, double > EqualizeTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
-  std::map< std::string, int > CalculateTaskNumCentroids( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers );
+  std::map< std::string, double > CalculateTaskProportions( vtkCollection* trainingWorkflowSequences );
+  std::map< std::string, double > EqualizeTaskProportions( vtkCollection* trainingWorkflowSequences );
+  std::map< std::string, int > CalculateTaskNumCentroids( vtkCollection* trainingWorkflowSequences );
 };
 
 #endif

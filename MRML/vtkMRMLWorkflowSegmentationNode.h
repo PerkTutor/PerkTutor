@@ -25,6 +25,9 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
+#include "vtkCommand.h"
+
+#include "vtkMRMLSequenceBrowserNode.h"
 
 // WorkflowSegmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
@@ -61,9 +64,9 @@ public:
   std::string GetNodeReferenceIDString( std::string referenceRole );
 
   // Reference to selected transform buffer
-  vtkMRMLTransformBufferNode* GetTransformBufferNode();
-  std::string GetTransformBufferID();
-  void SetTransformBufferID( std::string newTransformBufferID );
+  vtkMRMLSequenceBrowserNode* GetTrackedSequenceBrowserNode();
+  std::string GetTrackedSequenceBrowserNodeID();
+  void SetTrackedSequenceBrowserNodeID( std::string newTrackedSequenceBrowserNodeID );
 
   bool GetRealTimeProcessing();
   void SetRealTimeProcessing( bool newRealTimeProcessing );

@@ -85,6 +85,7 @@ void qSlicerWorkflowToolWidget
 
   connect( d->WorkflowToolComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onWorkflowToolNodeChanged( vtkMRMLNode* ) ) );
   
+  connect( d->ToolTransformComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onToolTransformChanged( vtkMRMLNode* ) ) );
   connect( d->WorkflowProcedureComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onWorkflowProcedureChanged( vtkMRMLNode* ) ) );
   connect( d->WorkflowInputComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onWorkflowInputChanged( vtkMRMLNode* ) ) );
   connect( d->WorkflowTrainingComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( onWorkflowTrainingChanged( vtkMRMLNode* ) ) );
@@ -108,7 +109,6 @@ void qSlicerWorkflowToolWidget
   Q_D(qSlicerWorkflowToolWidget);
 
   d->WorkflowToolComboBox->setCurrentNode( newWorkflowToolNode );
-  // If it is a new table node, then the onTransformBufferNodeChanged will be called automatically
 }
 
 
@@ -134,6 +134,25 @@ void qSlicerWorkflowToolWidget
 {
   this->updateWidgetFromMRML();
   emit WorkflowToolNodeModified(); // This should allows parent widgets to update themselves
+}
+
+
+void qSlicerWorkflowToolWidget
+::onToolTransformChanged( vtkMRMLNode* newToolTransformNode )
+{
+  if ( this->WorkflowToolNode == NULL )
+  {
+    return;
+  }
+  if ( newToolTransformNode == NULL )
+  {
+    this->WorkflowToolNode->SetToolTransformID( "" );
+  }
+  else
+  {
+    this->WorkflowToolNode->SetToolTransformID( newToolTransformNode->GetID() );
+  }
+  this->updateWidgetFromMRML();
 }
 
 
@@ -206,6 +225,7 @@ void qSlicerWorkflowToolWidget
     return;
   }
   
+  d->ToolTransformComboBox->setCurrentNode( this->WorkflowToolNode->GetToolTransformNode() );
   d->WorkflowProcedureComboBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowProcedureNode() );
   d->WorkflowInputComboBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowInputNode() );
   d->WorkflowTrainingComboBox->setCurrentNode( this->WorkflowToolNode->GetWorkflowTrainingNode() );

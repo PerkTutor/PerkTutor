@@ -128,7 +128,6 @@ void qSlicerWorkflowToolSummaryWidget
   }
   
   this->WorkflowSegmentationNode->SetToolIDs( selectedToolIDs );
-
 }
 
 
@@ -142,16 +141,16 @@ void qSlicerWorkflowToolSummaryWidget
     return;
   }
 
-  std::vector< std::string > trainingBufferIDs;
+  vtkNew< vtkCollection > trainingTrackedSequenceBrowserNodeCollection;
   
-  QList< vtkMRMLNode* > trainingBuffers = d->TrainingBufferComboBox->checkedNodes();
+  QList< vtkMRMLNode* > trainingTrackedSequenceBrowserNodeItr = d->TrackedSequenceBrowserComboBox->checkedNodes();
   QList< vtkMRMLNode* >::iterator itr;
-  for ( itr = trainingBuffers.begin(); itr != trainingBuffers.end(); itr++ )
+  for ( itr = trainingTrackedSequenceBrowserNodeItr.begin(); itr != trainingTrackedSequenceBrowserNodeItr.end(); itr++ )
   {
-    trainingBufferIDs.push_back( (*itr)->GetID() );
+    trainingTrackedSequenceBrowserNodeCollection->AddItem( *itr );
   }
 
-  this->WorkflowSegmentationLogic->TrainAllTools( this->WorkflowSegmentationNode, trainingBufferIDs );
+  this->WorkflowSegmentationLogic->TrainAllTools( this->WorkflowSegmentationNode, trainingTrackedSequenceBrowserNodeCollection.GetPointer() );
 }
 
 

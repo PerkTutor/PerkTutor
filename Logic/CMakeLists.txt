@@ -24,7 +24,8 @@ set(${KIT}_TARGET_LIBRARIES
   qSlicerBaseQTCore
   vtkSlicerTransformRecorderModuleMRML
   vtkSlicerTransformRecorderModuleLogic  
-  vtkSlicerWorkflowSegmentationModuleMRML  
+  vtkSlicerWorkflowSegmentationModuleMRML
+  ${Sequences_LIBS}
   )
 
 #-----------------------------------------------------------------------------

@@ -41,7 +41,7 @@ protected:
 
 protected slots:
 
-  void onTransformBufferChanged( vtkMRMLNode* newTransformBuffer );
+  void onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNode );
   void mrmlNodeChanged( vtkMRMLNode* wsNode );
 
   void onNodeAdded( vtkObject* caller, vtkObject* node );

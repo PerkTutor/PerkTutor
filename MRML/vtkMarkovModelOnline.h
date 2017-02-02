@@ -1,6 +1,6 @@
 
-#ifndef __vtkMarkovModelRT_h
-#define __vtkMarkovModelRT_h
+#ifndef __vtkMarkovModelOnline_h
+#define __vtkMarkovModelOnline_h
 
 // Standard includes
 #include <ctime>
@@ -21,32 +21,32 @@
 
 
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
-vtkMarkovModelRT : public vtkMarkovModel
+vtkMarkovModelOnline : public vtkMarkovModel
 {
 public:
-  vtkTypeMacro( vtkMarkovModelRT, vtkObject );
+  vtkTypeMacro( vtkMarkovModelOnline, vtkObject );
 
   // Standard MRML methods
-  static vtkMarkovModelRT* New();
+  static vtkMarkovModelOnline* New();
 
 protected:
 
   // Constructo/destructor
-  vtkMarkovModelRT();
-  virtual ~vtkMarkovModelRT();
+  vtkMarkovModelOnline();
+  virtual ~vtkMarkovModelOnline();
 
 public:
 
   //
-  void Copy( vtkMarkovModelRT* otherMarkov );
+  void Copy( vtkMarkovModelOnline* otherMarkov );
 
-  void CalculateStateRT( vtkMarkovVector* element );
+  void CalculateStateOnline( vtkMRMLNode* node, std::string indexValue );
 
 protected:
 
-  std::vector< vtkSmartPointer< vtkMarkovVector > > sequence;
-  vtkSmartPointer< vtkLabelVector > currDelta;
-  vtkSmartPointer< vtkLabelVector > currPsi;
+  vtkMRMLSequenceNode* Sequence;
+  vtkSmartPointer< vtkDoubleArray > CurrDelta;
+  vtkSmartPointer< vtkDoubleArray > CurrPsi;
 
 };
 

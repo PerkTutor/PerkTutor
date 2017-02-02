@@ -81,10 +81,10 @@ private:
   // These are methods specific to the Workflow Segmentation logic -------------------------------------------------------
 public:
 
-  vtkMRMLWorkflowToolNode* GetToolByName( vtkMRMLWorkflowSegmentationNode* workflowNode, std::string toolName );
+  vtkMRMLWorkflowToolNode* GetToolByProxyNodeID( vtkMRMLWorkflowSegmentationNode* workflowNode, std::string proxyNodeID );
  
   void ResetAllToolBuffers( vtkMRMLWorkflowSegmentationNode* workflowNode );
-  void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, std::vector< std::string > trainingBufferIDs );
+  void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, vtkCollection* trainingTrackedSequenceBrowserNodes );
  
   bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );
   bool GetAllToolsTrained( vtkMRMLWorkflowSegmentationNode* workflowNode );

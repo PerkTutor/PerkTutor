@@ -71,6 +71,7 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicerTransformRecorderModuleMRML
   vtkSlicerTransformRecorderModuleLogic
   qSlicerTransformRecorderModuleWidgets
+  ${Sequences_LIBS}
   )
   
 set(MODULE_RESOURCES

@@ -2,6 +2,7 @@
 #include "vtkMRMLWorkflowToolNode.h"
 
 // Constants ------------------------------------------------------------------
+static const char* TOOL_TRANSFORM_REFERENCE_ROLE = "ToolTransform";
 static const char* WORKFLOW_PROCEDURE_REFERENCE_ROLE = "ProcedureDefinition";
 static const char* WORKFLOW_INPUT_REFERENCE_ROLE = "ProcedureInput";
 static const char* WORKFLOW_TRAINING_REFERENCE_ROLE = "ProcedureTraining";
@@ -99,7 +100,7 @@ vtkMRMLWorkflowToolNode
 {
   this->CurrentTaskNew = false;
   this->ToolName = "";
-  this->ResetBuffers();
+  this->ResetWorkflowSequences();
 
   vtkNew< vtkIntArray > events;
   events->InsertNextValue( vtkCommand::ModifiedEvent );
@@ -116,35 +117,35 @@ vtkMRMLWorkflowToolNode
 
 
 void vtkMRMLWorkflowToolNode
-::ResetBuffers()
+::ResetWorkflowSequences()
 {
-  this->RawBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->FilterBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->DerivativeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->OrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->PcaBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
-  this->CentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBufferRT >::New();
+  this->RawWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode >::New();
+  this->FilterWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode >::New();
+  this->DerivativeWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode >::New();
+  this->OrthogonalWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode >::New();
+  this->PcaWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode >::New();
+  this->CentroidWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceOnlineNode >::New();
   
   this->CurrentTask = vtkSmartPointer< vtkWorkflowTask >::New();
 }
 
 
 bool vtkMRMLWorkflowToolNode
-::GetDefined()
+::IsWorkflowProcedureSet()
 {
   return ( this->GetWorkflowProcedureNode() != NULL );
 }
 
 
 bool vtkMRMLWorkflowToolNode
-::GetInputted()
+::IsWorkflowInputSet()
 {
   return ( this->GetWorkflowInputNode() != NULL );
 }
 
 
 bool vtkMRMLWorkflowToolNode
-::GetTrained()
+::IsWorkflowTrainingSet()
 {
   return ( this->GetWorkflowTrainingNode() != NULL );
 }
@@ -166,6 +167,28 @@ std::string vtkMRMLWorkflowToolNode
 
   return refIDString;
 }
+
+
+vtkMRMLLinearTransformNode* vtkMRMLWorkflowToolNode
+::GetToolTransformNode()
+{
+  return vtkMRMLLinearTransformNode::SafeDownCast( this->GetNodeReference( TOOL_TRANSFORM_REFERENCE_ROLE ) );
+}
+
+
+std::string vtkMRMLWorkflowToolNode
+::GetToolTransformID()
+{
+  return this->GetNodeReferenceIDString( TOOL_TRANSFORM_REFERENCE_ROLE );
+}
+
+
+void vtkMRMLWorkflowToolNode
+::SetToolTransformID( std::string newToolTransformID )
+{
+  this->SetAndObserveNodeReferenceID( TOOL_TRANSFORM_REFERENCE_ROLE, newToolTransformID.c_str() );
+}
+
 
 
 vtkMRMLWorkflowProcedureNode* vtkMRMLWorkflowToolNode
@@ -244,18 +267,12 @@ void vtkMRMLWorkflowToolNode
 // Computational methods
 // Return whether or not training was successful
 bool vtkMRMLWorkflowToolNode
-::Train( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers )
+::Train( vtkCollection* trainingWorkflowSequences )
 {
-  // There must exist procedures
-  if ( trainingBuffers.empty() )
-  {
-    return false;
-  }
-
   // Calculate the number of centroids for each task  
   std::vector< std::string > taskNames = this->GetWorkflowProcedureNode()->GetAllTaskNames();
   
-  std::map< std::string, int > taskNumCentroids = this->CalculateTaskNumCentroids( trainingBuffers );
+  std::map< std::string, int > taskNumCentroids = this->CalculateTaskNumCentroids( trainingWorkflowSequences );
   std::map< std::string, int > taskCumCentroids;
   int currSum = 0;
 
@@ -275,136 +292,180 @@ bool vtkMRMLWorkflowToolNode
   }
 
   // Apply Gaussian filtering to each record log
-  std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > filterBuffers;
-  for ( int i = 0; i < trainingBuffers.size(); i++ )
+  vtkNew< vtkCollection > filterWorkflowSequences;
+  vtkNew< vtkCollectionIterator > workflowSequencesIt; workflowSequencesIt->SetCollection( trainingWorkflowSequences );
+  for ( workflowSequencesIt->InitTraversal(); ! workflowSequencesIt->IsDoneWithTraversal(); workflowSequencesIt->GoToNextItem() )
   {
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currFilterBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-    currFilterBuffer->Copy( trainingBuffers.at( i ) );
-    currFilterBuffer->GaussianFilter( this->GetWorkflowInputNode()->GetFilterWidth() );
-    filterBuffers.push_back( currFilterBuffer );
+    vtkMRMLWorkflowSequenceNode* currWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( workflowSequencesIt->GetCurrentObject() );
+    if ( currWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currFilterWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+    currFilterWorkflowSequence->Copy( currWorkflowSequence );
+    currFilterWorkflowSequence->GaussianFilter( this->GetWorkflowInputNode()->GetFilterWidth() );
+    filterWorkflowSequences->AddItem( currFilterWorkflowSequence );
   }
 
 
   // Use velocity and higher order derivatives also
-  std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > derivativeBuffers;
-  for ( int i = 0; i < filterBuffers.size(); i++ )
+  vtkNew< vtkCollection > derivativeWorkflowSequences;
+  vtkNew< vtkCollectionIterator > filterWorkflowSequencesIt; filterWorkflowSequencesIt->SetCollection( filterWorkflowSequences.GetPointer() );
+  for ( filterWorkflowSequencesIt->InitTraversal(); ! filterWorkflowSequencesIt->IsDoneWithTraversal(); filterWorkflowSequencesIt->GoToNextItem() )
   {
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currDerivativeBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-    currDerivativeBuffer->Copy( filterBuffers.at( i ) );
+    vtkMRMLWorkflowSequenceNode* currFilterWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( filterWorkflowSequencesIt->GetCurrentObject() );
+    if ( currFilterWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currDerivativeWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+    currDerivativeWorkflowSequence->Copy( currFilterWorkflowSequence );
     
     for ( int d = 1; d <= this->GetWorkflowInputNode()->GetDerivative(); d++ )
 	  {
-	    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currOrderBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-      currOrderBuffer->Copy( filterBuffers.at( i )  );
-      currOrderBuffer->Differentiate( d );
+	    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currOrderWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+      currOrderWorkflowSequence->Copy( currFilterWorkflowSequence );
+      currOrderWorkflowSequence->Differentiate( d );
       
-      currDerivativeBuffer->ConcatenateValues( currOrderBuffer );
+      currDerivativeWorkflowSequence->ConcatenateValues( currOrderWorkflowSequence );
 	  }
     
-    derivativeBuffers.push_back( currDerivativeBuffer );
+    derivativeWorkflowSequences->AddItem( currDerivativeWorkflowSequence );
   }
 
 
   // Apply orthogonal transformation
-  std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > orthogonalBuffers;
-  for ( int i = 0; i < derivativeBuffers.size(); i++ )
+  vtkNew< vtkCollection > orthogonalWorkflowSequences;
+  vtkNew< vtkCollectionIterator > derivativeWorkflowSequencesIt; derivativeWorkflowSequencesIt->SetCollection( derivativeWorkflowSequences.GetPointer() );
+  for ( derivativeWorkflowSequencesIt->InitTraversal(); ! derivativeWorkflowSequencesIt->IsDoneWithTraversal(); derivativeWorkflowSequencesIt->GoToNextItem() )
   {
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currOrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-    currOrthogonalBuffer->Copy( derivativeBuffers.at( i ) );
-    currOrthogonalBuffer->OrthogonalTransformation( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder() );
-    orthogonalBuffers.push_back( currOrthogonalBuffer );
+    vtkMRMLWorkflowSequenceNode* currDerivativeWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( derivativeWorkflowSequencesIt->GetCurrentObject() );
+    if ( currDerivativeWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currOrthogonalWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+    currOrthogonalWorkflowSequence->Copy( currDerivativeWorkflowSequence );
+    currOrthogonalWorkflowSequence->OrthogonalTransformation( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder() );
+    orthogonalWorkflowSequences->AddItem( currOrthogonalWorkflowSequence );
   }
 
   // Concatenate all of the record logs into one record log
   // Observe that the concatenated buffers are sorted by time stamp - its order is not maintained by procedure, but this is ok
-  vtkSmartPointer< vtkWorkflowLogRecordBuffer > concatenatedOrthogonalBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-  for ( int i = 0; i < orthogonalBuffers.size(); i++ )
+  vtkNew< vtkMRMLWorkflowSequenceNode > concatenatedOrthogonalWorkflowSequence;
+  vtkNew< vtkCollectionIterator > orthogonalWorkflowSequencesIt; orthogonalWorkflowSequencesIt->SetCollection( orthogonalWorkflowSequences.GetPointer() );
+  for ( orthogonalWorkflowSequencesIt->InitTraversal(); ! orthogonalWorkflowSequencesIt->IsDoneWithTraversal(); orthogonalWorkflowSequencesIt->GoToNextItem() )
   {
-    concatenatedOrthogonalBuffer->Concatenate( orthogonalBuffers.at( i ) );
+    vtkMRMLWorkflowSequenceNode* currOrthogonalWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( orthogonalWorkflowSequencesIt->GetCurrentObject() );
+    if ( currOrthogonalWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    concatenatedOrthogonalWorkflowSequence->Concatenate( currOrthogonalWorkflowSequence );
+
   }
 
   // Calculate PCA transform
-  vtkSmartPointer< vtkLabelVector > meanVector = vtkSmartPointer< vtkLabelVector >::New();
-  concatenatedOrthogonalBuffer->Mean( meanVector );
-  this->GetWorkflowTrainingNode()->SetMean( meanVector );
+  vtkSmartPointer< vtkDoubleArray > mean = vtkSmartPointer< vtkDoubleArray >::New();
+  concatenatedOrthogonalWorkflowSequence->Mean( mean );
+  this->GetWorkflowTrainingNode()->SetMean( mean );
 
-  std::vector< vtkSmartPointer< vtkLabelVector > > prinComps;
-  prinComps = concatenatedOrthogonalBuffer->CalculatePCA( this->GetWorkflowInputNode()->GetNumPrinComps() );
+  vtkSmartPointer< vtkDoubleArray > prinComps = vtkSmartPointer< vtkDoubleArray >::New();
+  concatenatedOrthogonalWorkflowSequence->CalculatePrincipalComponents( this->GetWorkflowInputNode()->GetNumPrinComps(), prinComps );
   this->GetWorkflowTrainingNode()->SetPrinComps( prinComps );
 
   // Apply PCA transformation
-  std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > pcaBuffers;
-  for ( int i = 0; i < orthogonalBuffers.size(); i++ )
+  vtkNew< vtkCollection > pcaWorkflowSequences;
+  for ( orthogonalWorkflowSequencesIt->InitTraversal(); ! orthogonalWorkflowSequencesIt->IsDoneWithTraversal(); orthogonalWorkflowSequencesIt->GoToNextItem() )
   {
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currPCABuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-    currPCABuffer->Copy( orthogonalBuffers.at( i ) );
-    currPCABuffer->TransformPCA( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean() );
-    pcaBuffers.push_back( currPCABuffer );
+    vtkMRMLWorkflowSequenceNode* currOrthogonalWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( orthogonalWorkflowSequencesIt->GetCurrentObject() );
+    if ( currOrthogonalWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currPCAWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+    currPCAWorkflowSequence->Copy( currOrthogonalWorkflowSequence );
+    currPCAWorkflowSequence->TransformByPrincipalComponents( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean() );
+    pcaWorkflowSequences->AddItem( currPCAWorkflowSequence );
   }
-  vtkSmartPointer< vtkWorkflowLogRecordBuffer > concatenatedPCABuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-  concatenatedPCABuffer->Copy( concatenatedOrthogonalBuffer );
-  concatenatedPCABuffer->TransformPCA( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean() );
+  vtkSmartPointer< vtkMRMLWorkflowSequenceNode > concatenatedPCAWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+  concatenatedPCAWorkflowSequence->Copy( concatenatedOrthogonalWorkflowSequence.GetPointer() );
+  concatenatedPCAWorkflowSequence->TransformByPrincipalComponents( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean() );
 
   // Put together all the tasks together for task by task clustering
-  std::map< std::string, vtkSmartPointer< vtkWorkflowLogRecordBuffer > > taskwiseBuffers;
+  std::map< std::string, vtkSmartPointer< vtkMRMLWorkflowSequenceNode > > taskwiseWorkflowSequences;
   for ( int i = 0; i < taskNames.size(); i++ )
   {
     std::vector< std::string > currTask;
     currTask.push_back( taskNames.at( i ) );
 
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currTaskwiseBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-    concatenatedPCABuffer->GetLabelledRange( currTask, currTaskwiseBuffer );
-    taskwiseBuffers[ taskNames.at( i ) ] = currTaskwiseBuffer;
+    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currTaskwiseWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+    concatenatedPCAWorkflowSequence->GetLabelledSubsequence( currTask, currTaskwiseWorkflowSequence );
+    taskwiseWorkflowSequences[ taskNames.at( i ) ] = currTaskwiseWorkflowSequence;
   }
 
   // Calculate and add the centroids from each task
-  std::vector< vtkSmartPointer< vtkLabelVector > > allCentroids;
-  std::map< std::string, vtkSmartPointer< vtkWorkflowLogRecordBuffer > >::iterator itrBuffer;
-  for ( itrBuffer = taskwiseBuffers.begin(); itrBuffer != taskwiseBuffers.end(); itrBuffer++ )
+  vtkSmartPointer< vtkDoubleArray > allCentroids = vtkSmartPointer< vtkDoubleArray >::New();
+  allCentroids->SetNumberOfComponents( 0 );
+  allCentroids->SetNumberOfTuples( 0 ); // We will append tuples
+
+  std::map< std::string, vtkSmartPointer< vtkMRMLWorkflowSequenceNode > >::iterator taskwiseWorfklowSequencesIt;
+  for ( taskwiseWorfklowSequencesIt = taskwiseWorkflowSequences.begin(); taskwiseWorfklowSequencesIt != taskwiseWorkflowSequences.end(); taskwiseWorfklowSequencesIt++ )
   {
-	  std::vector< vtkSmartPointer< vtkLabelVector > > currTaskCentroids = itrBuffer->second->fwdkmeans( taskNumCentroids[ itrBuffer->first ] );
-    
-	  for ( int j = 0; j < currTaskCentroids.size(); j++ )
-	  {
-      // Make the centroid numbering continuous over all centroids
-      currTaskCentroids.at( j )->SetLabel( atoi( currTaskCentroids.at( j )->GetLabel().c_str() ) + cumulativeCentroids[ itrBuffer->first ] );
-      allCentroids.push_back( currTaskCentroids.at( j ) );
-	  }    
+    vtkNew< vtkDoubleArray > currTaskCentroids;
+	  taskwiseWorfklowSequencesIt->second->fwdkmeans( taskNumCentroids[ taskwiseWorfklowSequencesIt->first ], currTaskCentroids.GetPointer() ); // Second is the workflow sequence node
+
+    allCentroids->InsertTuples( allCentroids->GetNumberOfTuples(), currTaskCentroids->GetNumberOfTuples(), 0, currTaskCentroids.GetPointer() );
   }
   this->GetWorkflowTrainingNode()->SetCentroids( allCentroids );
 
   // Calculate the sequence of centroids for each procedure
-  std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > centroidBuffers;
-  for ( int i = 0; i < pcaBuffers.size(); i++ )
+  vtkNew< vtkCollection > centroidWorkflowSequences;
+  vtkNew< vtkCollectionIterator > pcaWorkflowSequencesIt; pcaWorkflowSequencesIt->SetCollection( pcaWorkflowSequences.GetPointer() );
+  for ( pcaWorkflowSequencesIt->InitTraversal(); ! pcaWorkflowSequencesIt->IsDoneWithTraversal(); pcaWorkflowSequencesIt->GoToNextItem() )
   {
-    vtkSmartPointer< vtkWorkflowLogRecordBuffer > currCentroidBuffer = vtkSmartPointer< vtkWorkflowLogRecordBuffer >::New();
-    currCentroidBuffer->Copy( pcaBuffers.at( i ) );
-    currCentroidBuffer->fwdkmeansTransform( this->GetWorkflowTrainingNode()->GetCentroids() );
-    centroidBuffers.push_back( currCentroidBuffer );
+    vtkMRMLWorkflowSequenceNode* currPCAWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( pcaWorkflowSequencesIt->GetCurrentObject() );
+    if ( currPCAWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currCentroidWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
+    currCentroidWorkflowSequence->Copy( currPCAWorkflowSequence );
+    currCentroidWorkflowSequence->fwdkmeansTransform( this->GetWorkflowTrainingNode()->GetCentroids() );
+    centroidWorkflowSequences->AddItem( currCentroidWorkflowSequence );
   }
 
   // Assume that all the estimation matrices are associated with the pseudo scales
-  vtkSmartPointer< vtkLabelVector > PseudoPi = vtkSmartPointer< vtkLabelVector >::New();
-  PseudoPi->FillElements( this->GetWorkflowProcedureNode()->GetNumTasks(), this->GetWorkflowInputNode()->GetMarkovPseudoScalePi() );
-  PseudoPi->SetLabel( "Pi" );
-
-  std::vector< vtkSmartPointer< vtkLabelVector > > PseudoA;
-  for ( int i = 0; i < taskNames.size(); i++ ) // Observe that we still have the task names
+  vtkSmartPointer< vtkDoubleArray > PseudoPi = vtkSmartPointer< vtkDoubleArray >::New();
+  PseudoPi->SetNumberOfComponents( this->GetWorkflowProcedureNode()->GetNumTasks() );
+  PseudoPi->SetNumberOfTuples( 1 );
+  for ( int j = 0; j < PseudoPi->GetNumberOfComponents(); j++ )
   {
-	  vtkSmartPointer< vtkLabelVector > currPseudoA = vtkSmartPointer< vtkLabelVector >::New();
-	  currPseudoA->FillElements( this->GetWorkflowProcedureNode()->GetNumTasks(), this->GetWorkflowInputNode()->GetMarkovPseudoScaleA() );
-	  currPseudoA->SetLabel( taskNames.at( i ) );
-	  PseudoA.push_back( currPseudoA );
+    PseudoPi->FillComponent( j, this->GetWorkflowInputNode()->GetMarkovPseudoScalePi() ); // TODO: We want to call the "Fill" function, but it is not yet available in Slicer's VTK
   }
 
-  std::vector< vtkSmartPointer< vtkLabelVector > > PseudoB;
-  for ( int i = 0; i < taskNames.size(); i++ )
+  vtkSmartPointer< vtkDoubleArray > PseudoA = vtkSmartPointer< vtkDoubleArray >::New();
+  PseudoA->SetNumberOfComponents( this->GetWorkflowProcedureNode()->GetNumTasks() );
+  PseudoA->SetNumberOfTuples( this->GetWorkflowProcedureNode()->GetNumTasks() );
+  for ( int j = 0; j < PseudoA->GetNumberOfComponents(); j++ )
   {
-    vtkSmartPointer< vtkLabelVector > currPseudoB = vtkSmartPointer< vtkLabelVector >::New();
-	  currPseudoB->FillElements( this->GetWorkflowInputNode()->GetNumCentroids(), this->GetWorkflowInputNode()->GetMarkovPseudoScaleB() );
-	  currPseudoB->SetLabel( taskNames.at( i ) );
-	  PseudoB.push_back( currPseudoB );
+    PseudoA->FillComponent( j, this->GetWorkflowInputNode()->GetMarkovPseudoScaleA() ); // TODO: We want to call the "Fill" function, but it is not yet available in Slicer's VTK
   }
+
+  vtkSmartPointer< vtkDoubleArray > PseudoB = vtkSmartPointer< vtkDoubleArray >::New();
+  PseudoB->SetNumberOfComponents( this->GetWorkflowProcedureNode()->GetNumTasks() );
+  PseudoB->SetNumberOfTuples( this->GetWorkflowProcedureNode()->GetNumTasks() );
+  for ( int j = 0; j < PseudoB->GetNumberOfComponents(); j++ )
+  {
+    PseudoB->FillComponent( j, this->GetWorkflowInputNode()->GetMarkovPseudoScaleB() ); // TODO: We want to call the "Fill" function, but it is not yet available in Slicer's VTK
+  }
+
 
   // Create a new Markov Model, and estimate its parameters
   vtkSmartPointer< vtkMarkovModel > Markov = vtkSmartPointer< vtkMarkovModel >::New();
@@ -412,10 +473,18 @@ bool vtkMRMLWorkflowToolNode
   Markov->SetSymbols( this->GetWorkflowInputNode()->GetNumCentroids() );
   Markov->InitializeEstimation();
   Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
-  for ( int i = 0; i < centroidBuffers.size(); i++ )
+
+  vtkNew< vtkCollectionIterator > centroidWorkflowSequencesIt; pcaWorkflowSequencesIt->SetCollection( centroidWorkflowSequences.GetPointer() );
+  for ( centroidWorkflowSequencesIt->InitTraversal(); ! centroidWorkflowSequencesIt->IsDoneWithTraversal(); centroidWorkflowSequencesIt->GoToNextItem() )
   {
-    std::vector< vtkSmartPointer< vtkMarkovVector > > markovVectors = centroidBuffers.at(i)->ToMarkovVectors();
-    Markov->AddEstimationData( markovVectors );
+    vtkMRMLWorkflowSequenceNode* currCentroidWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( centroidWorkflowSequencesIt->GetCurrentObject() );
+    if ( currCentroidWorkflowSequence == NULL )
+    {
+      continue;
+    }
+
+    currCentroidWorkflowSequence->AddMarkovModelAttributes();
+    Markov->AddEstimationData( currCentroidWorkflowSequence );
   }
   Markov->EstimateParameters();
 
@@ -426,52 +495,52 @@ bool vtkMRMLWorkflowToolNode
 
 
 void vtkMRMLWorkflowToolNode
-::AddAndSegmentRecord( vtkLabelRecord* newRecord )
+::AddAndSegmentTransform( vtkMRMLLinearTransformNode* newTransformNode, std::string newTimeString )
 {
-  this->RawBuffer->AddRecord( newRecord );
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > rawDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkMRMLWorkflowSequenceNode::LinearTransformToDoubleArray( newTransformNode, rawDoubleArrayNode, vtkMRMLWorkflowSequenceNode::QUATERNION_ARRAY );
+  this->RawWorkflowSequence->SetDataNodeAtValue( rawDoubleArrayNode, newTimeString );
 
   // Apply Gaussian filtering to each previous records
-  vtkSmartPointer< vtkLabelRecord > gaussRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  this->RawBuffer->GaussianFilterRT( this->GetWorkflowInputNode()->GetFilterWidth(), gaussRecord );
-  this->FilterBuffer->AddRecord( gaussRecord );
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > gaussDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  this->RawWorkflowSequence->GaussianFilterOnline( this->GetWorkflowInputNode()->GetFilterWidth(), gaussDoubleArrayNode->GetArray() );
+  this->FilterWorkflowSequence->SetDataNodeAtValue( gaussDoubleArrayNode, newTimeString );
   
   // Concatenate with derivative (velocity, acceleration, etc...)
-  vtkSmartPointer< vtkLabelRecord > derivativeRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  derivativeRecord->Copy( vtkLabelRecord::SafeDownCast( this->FilterBuffer->GetCurrentRecord() ) );
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > derivativeDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkDoubleArray* derivativeDoubleArray = derivativeDoubleArrayNode->GetArray();
+  derivativeDoubleArray->DeepCopy( this->FilterWorkflowSequence->GetNthDoubleArray( this->FilterWorkflowSequence->GetNumberOfDataNodes() - 1 ) );
   for ( int d = 1; d <= this->GetWorkflowInputNode()->GetDerivative(); d++ )
   {
-    vtkSmartPointer< vtkLabelRecord > currDerivativeRecord = vtkSmartPointer< vtkLabelRecord >::New();
-    this->FilterBuffer->DifferentiateRT( d, currDerivativeRecord );
-    derivativeRecord->GetVector()->Concatenate( currDerivativeRecord->GetVector() );
+    vtkSmartPointer< vtkDoubleArray > currDerivativeDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
+    this->FilterWorkflowSequence->DifferentiateOnline( d, currDerivativeDoubleArray );
+    derivativeDoubleArray->InsertTuples( derivativeDoubleArray->GetNumberOfTuples(), currDerivativeDoubleArray->GetNumberOfTuples(), 0, currDerivativeDoubleArray );
   }
-  this->DerivativeBuffer->AddRecord( derivativeRecord );
+  this->DerivativeWorkflowSequence->SetDataNodeAtValue( derivativeDoubleArrayNode, newTimeString );
 
   // Apply orthogonal transformation
-  vtkSmartPointer< vtkLabelRecord > orthogonalRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  this->DerivativeBuffer->OrthogonalTransformationRT( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder(), orthogonalRecord );
-  this->OrthogonalBuffer->AddRecord( orthogonalRecord );
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > orthogonalDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  this->DerivativeWorkflowSequence->OrthogonalTransformationOnline( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder(), orthogonalDoubleArrayNode->GetArray() );
+  this->OrthogonalWorkflowSequence->SetDataNodeAtValue( orthogonalDoubleArrayNode, newTimeString );
 
   // Apply PCA transformation
-  vtkSmartPointer< vtkLabelRecord > pcaTransformRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  this->OrthogonalBuffer->TransformPCART( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean(), pcaTransformRecord );
-  this->PcaBuffer->AddRecord( pcaTransformRecord );
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > pcaDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  this->OrthogonalWorkflowSequence->TransformByPrincipalComponentsOnline( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean(), pcaDoubleArrayNode->GetArray() );
+  this->PcaWorkflowSequence->SetDataNodeAtValue( pcaDoubleArrayNode, newTimeString );
 
   // Apply centroid transformation
-  vtkSmartPointer< vtkLabelRecord > fwdkmeansRecord = vtkSmartPointer< vtkLabelRecord >::New();
-  this->PcaBuffer->fwdkmeansTransformRT( this->GetWorkflowTrainingNode()->GetCentroids(), fwdkmeansRecord );
-  this->CentroidBuffer->AddRecord( fwdkmeansRecord );
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > fwdkmeansDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  this->PcaWorkflowSequence->fwdkmeansTransformOnline( this->GetWorkflowTrainingNode()->GetCentroids(), fwdkmeansDoubleArrayNode->GetArray() );
+  this->CentroidWorkflowSequence->SetDataNodeAtValue( fwdkmeansDoubleArrayNode, newTimeString );
 
   // Use Markov Model calculate states to come up with the current most likely state...
-  vtkSmartPointer< vtkMarkovVector > markovVector = vtkSmartPointer< vtkMarkovVector >::New();
-  this->CentroidBuffer->ToMarkovVectorRT( markovVector );
-  this->GetWorkflowTrainingNode()->GetMarkov()->CalculateStateRT( markovVector );
+  // Now, we will keep a recording of the workflow segmentation
+  vtkMRMLNode* currWorkflowSequenceNode = vtkMRMLNode::SafeDownCast( this->RawWorkflowSequence->GetNthDataNode( this->RawWorkflowSequence->GetNumberOfDataNodes() - 1 ) );
+  this->CentroidWorkflowSequence->AddMarkovModelAttributesOnline( currWorkflowSequenceNode );
+  this->GetWorkflowTrainingNode()->GetMarkov()->CalculateStateOnline( currWorkflowSequenceNode, newTimeString );
+  currWorkflowSequenceNode->SetAttribute( "Message", currWorkflowSequenceNode->GetAttribute( "MarkovState" ) );
 
-  // Now, we will keep a recording of the workflow segmentation in RawBuffer - add the label
-  vtkLabelRecord* currLabelRecord = vtkLabelRecord::SafeDownCast( this->RawBuffer->GetCurrentRecord() );
-  currLabelRecord->GetVector()->SetLabel( markovVector->GetState() );
-
-
-  this->SetCurrentTask( this->GetWorkflowProcedureNode()->GetTask( markovVector->GetState() ) );
+  this->SetCurrentTask( this->GetWorkflowProcedureNode()->GetTask( currWorkflowSequenceNode->GetAttribute( "Message" ) ) );
 }
 
 
@@ -500,7 +569,7 @@ void vtkMRMLWorkflowToolNode
 // -----------------------------------------------------------------------------------------
 
 std::map< std::string, double > vtkMRMLWorkflowToolNode
-::CalculateTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers )
+::CalculateTaskProportions( vtkCollection* trainingWorkflowSequenceNodes )
 {
   // Create a vector of counts for each label
   std::map< std::string, double > taskProportions;
@@ -512,12 +581,24 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
 
   int totalRecords = 0;
   // Iterate over all record logs and count label (task) instances
-  for ( int i = 0; i < trainingBuffers.size(); i++ )
+  vtkNew< vtkCollectionIterator > workflowSequencesIt; workflowSequencesIt->SetCollection( trainingWorkflowSequenceNodes );
+  for ( workflowSequencesIt->InitTraversal(); ! workflowSequencesIt->IsDoneWithTraversal(); workflowSequencesIt->GoToNextItem() )
   {
-    for ( int j = 0; j < trainingBuffers.at(i)->GetNumRecords(); j++ )
+    vtkMRMLWorkflowSequenceNode* currWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( workflowSequencesIt->GetCurrentObject() );
+    if ( currWorkflowSequence == NULL )
+    {
+      continue;
+    }
+    
+    for ( int j = 0; j < currWorkflowSequence->GetNumberOfDataNodes(); j++ )
 	  {
-      vtkSmartPointer< vtkLabelRecord > currRecord = vtkLabelRecord::SafeDownCast( trainingBuffers.at( i )->GetRecord( j ) );
-      std::string currTaskName = currRecord->GetVector()->GetLabel();
+      vtkMRMLDoubleArrayNode* currDoubleArrayNode = vtkMRMLDoubleArrayNode::SafeDownCast( currWorkflowSequence->GetNthDataNode( j ) );
+      if ( currDoubleArrayNode == NULL )
+      {
+        continue;
+      }
+
+      std::string currTaskName = currDoubleArrayNode->GetAttribute( "Message" );
       for ( int k = 0; k < taskNames.size(); k++ )
       {
         if ( currTaskName.compare( taskNames.at( k ) ) == 0 )
@@ -526,6 +607,7 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
 	        totalRecords++;
 	      }
       }
+
 	  }
   }
 
@@ -542,10 +624,10 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
 
 
 std::map< std::string, double > vtkMRMLWorkflowToolNode
-::EqualizeTaskProportions( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers )
+::EqualizeTaskProportions( vtkCollection* trainingWorkflowSequenceNodes )
 {
   //Find the mean and standard deviation of the task centroids
-  std::map< std::string, double > taskProportions = this->CalculateTaskProportions( trainingBuffers );
+  std::map< std::string, double > taskProportions = this->CalculateTaskProportions( trainingWorkflowSequenceNodes );
 
   double mean = 0;
   std::map< std::string, double >::iterator itrDouble;
@@ -568,10 +650,10 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
 
 
 std::map< std::string, int > vtkMRMLWorkflowToolNode
-::CalculateTaskNumCentroids( std::vector< vtkSmartPointer< vtkWorkflowLogRecordBuffer > > trainingBuffers )
+::CalculateTaskNumCentroids( vtkCollection* trainingWorkflowSequenceNodes )
 {
   // Create a vector of counts for each label
-  std::map< std::string, double > taskProportions = this->EqualizeTaskProportions( trainingBuffers );
+  std::map< std::string, double > taskProportions = this->EqualizeTaskProportions( trainingWorkflowSequenceNodes );
   std::map< std::string, double > taskRawCentroids;
 
   std::map< std::string, double >::iterator itrDouble;

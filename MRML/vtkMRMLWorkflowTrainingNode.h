@@ -22,7 +22,7 @@
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
 #include "vtkLabelVector.h"
-#include "vtkMarkovModelRT.h"
+#include "vtkMarkovModelOnline.h"
 
 // This class stores a vector of values and a string label
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT 
@@ -56,17 +56,17 @@ protected:
 public:
 
   // Getters/setters for properties
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetPrinComps();
-  void SetPrinComps( std::vector< vtkSmartPointer< vtkLabelVector > > newPrinComps );
+  vtkDoubleArray* GetMean();
+  void SetMean( vtkDoubleArray* newMean );
 
-  std::vector< vtkSmartPointer< vtkLabelVector > > GetCentroids();
-  void SetCentroids( std::vector< vtkSmartPointer< vtkLabelVector > > newCentroids );
+  vtkDoubleArray* GetPrinComps();
+  void SetPrinComps( vtkDoubleArray* newPrinComps );
 
-  vtkLabelVector* GetMean();
-  void SetMean( vtkLabelVector* newMean );
+  vtkDoubleArray* GetCentroids();
+  void SetCentroids( vtkDoubleArray* newCentroids );
 
-  vtkMarkovModelRT* GetMarkov();
-  void SetMarkov( vtkMarkovModelRT* newMarkov );
+  vtkMarkovModelOnline* GetMarkov();
+  void SetMarkov( vtkMarkovModelOnline* newMarkov );
   
   // Read/Write from/to file
   std::string ToXMLString( vtkIndent indent );
@@ -74,12 +74,12 @@ public:
 
 protected:
 
-  std::vector< vtkSmartPointer< vtkLabelVector > > PrinComps;
-  std::vector< vtkSmartPointer< vtkLabelVector > > Centroids;
-  
-  vtkSmartPointer< vtkLabelVector > Mean;
-  vtkSmartPointer< vtkMarkovModelRT > Markov;
+  vtkSmartPointer< vtkDoubleArray > Mean;
 
+  vtkSmartPointer< vtkDoubleArray > PrinComps;
+  vtkSmartPointer< vtkDoubleArray > Centroids;  
+  
+  vtkSmartPointer< vtkMarkovModelOnline > Markov;
 };
 
 #endif
