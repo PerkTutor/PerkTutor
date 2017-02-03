@@ -178,11 +178,11 @@ void vtkMRMLWorkflowSequenceNode
   }
 
   // Add the transform nodes to this workflow sequence as double array nodes
-  vtkNew< vtkMRMLDoubleArrayNode > doubleArrayNode;
   for ( int i = 0; i < sequenceNode->GetNumberOfDataNodes(); i++ )
   {
-    this->LinearTransformToDoubleArray( vtkMRMLLinearTransformNode::SafeDownCast( sequenceNode->GetNthDataNode( i ) ), doubleArrayNode.GetPointer(), QUATERNION_ARRAY ); // Use quaternions
-    this->SetDataNodeAtValue( doubleArrayNode.GetPointer(), sequenceNode->GetNthIndexValue( i ) );
+    vtkMRMLDoubleArrayNode* doubleArrayNode = vtkMRMLDoubleArrayNode::New();
+    this->LinearTransformToDoubleArray( vtkMRMLLinearTransformNode::SafeDownCast( sequenceNode->GetNthDataNode( i ) ), doubleArrayNode, QUATERNION_ARRAY ); // Use quaternions
+    this->SetDataNodeAtValue( doubleArrayNode, sequenceNode->GetNthIndexValue( i ) );
   }
 
   // We need to convert the transforms into vtkDoubleArrays
@@ -221,7 +221,7 @@ void vtkMRMLWorkflowSequenceNode
 	  {
       double doubleArrayTime = this->GetNthIndexValueAsDouble( j );
 
-      if ( doubleArrayTime > messageTime )
+      if ( doubleArrayTime >= messageTime )
 	    {
         this->GetNthDataNode( j )->SetAttribute( "Message", messageValue.c_str() );
 	    }
@@ -436,6 +436,7 @@ void vtkMRMLWorkflowSequenceNode
   // The record log will only hold one record at the end
   int arrayNumberOfComponents = initialDoubleArray->GetNumberOfComponents();
   meanArray->SetNumberOfComponents( arrayNumberOfComponents );
+  meanArray->SetNumberOfTuples( 1 );
 
   // For each time
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
@@ -468,8 +469,8 @@ void vtkMRMLWorkflowSequenceNode
 {
   // Put the other sequence into a double array
   vtkSmartPointer< vtkDoubleArray > doubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-  doubleArray->SetNumberOfTuples( sequence->GetNumberOfDataNodes() );
   doubleArray->SetNumberOfComponents( sequence->GetNthNumberOfComponents() );
+  doubleArray->SetNumberOfTuples( sequence->GetNumberOfDataNodes() );  
     
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
@@ -492,8 +493,9 @@ void vtkMRMLWorkflowSequenceNode
 {
   // Create a vector of vectors
   distances->Initialize();
-  distances->SetNumberOfTuples( this->GetNumberOfDataNodes() );
   distances->SetNumberOfComponents( testPoints->GetNumberOfTuples() );
+  distances->SetNumberOfTuples( this->GetNumberOfDataNodes() );
+  
 
   // Otherwise, calculate the vectors based on distances from this's records
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
@@ -579,13 +581,14 @@ void vtkMRMLWorkflowSequenceNode
   {
     int lowerItemNumber = std::max( i - 1, 0 );
     int middleItemNumber = i;
-    int upperItemNumber = std::min( i + 1, this->GetNumberOfDataNodes() );
+    int upperItemNumber = std::min( i + 1, this->GetNumberOfDataNodes() - 1 );
 
     vtkDoubleArray* lowerDoubleArray = this->GetNthDoubleArray( lowerItemNumber );
     vtkDoubleArray* upperDoubleArray = this->GetNthDoubleArray( upperItemNumber );
     if ( lowerDoubleArray == NULL || upperDoubleArray == NULL || lowerDoubleArray->GetNumberOfComponents() != upperDoubleArray->GetNumberOfComponents() )
     {
-      vtkWarningMacro( "vtkMRMLWorkflowSequenceNode::Differentiate: Cannot perform computation - sequence data nodes are incompatible.")
+      vtkWarningMacro( "vtkMRMLWorkflowSequenceNode::Differentiate: Cannot perform computation - sequence data nodes are incompatible.");
+      continue;
     }
 
     vtkSmartPointer< vtkDoubleArray > derivativeDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
@@ -595,7 +598,7 @@ void vtkMRMLWorkflowSequenceNode
     double deltaTime = this->GetNthIndexValueAsDouble( upperItemNumber ) - this->GetNthIndexValueAsDouble( lowerItemNumber );
     for( int d = 0; d < lowerDoubleArray->GetNumberOfComponents(); d++ )
     {
-      derivativeDoubleArray->SetComponent( 0, d, ( lowerDoubleArray->GetComponent( 0, d )- upperDoubleArray->GetComponent( 0, d ) ) / deltaTime );
+      derivativeDoubleArray->SetComponent( 0, d, ( lowerDoubleArray->GetComponent( 0, d ) - upperDoubleArray->GetComponent( 0, d ) ) / deltaTime );
     }
 
     vtkMRMLDoubleArrayNode* derivativeDataNode = vtkMRMLDoubleArrayNode::SafeDownCast( derivativeSequenceNode->GetNthDataNode( i ) );
@@ -841,10 +844,6 @@ void vtkMRMLWorkflowSequenceNode
   // Iterate over all data, and calculate Legendre expansion coefficients
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
-    vtkSmartPointer< vtkDoubleArray > currLegendreDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-    currLegendreDoubleArray->SetNumberOfComponents( this->GetNthNumberOfComponents( i ) );
-    currLegendreDoubleArray->SetNumberOfTuples( 1 );
-
     // Get a subsequence of the padded sequence
     vtkSmartPointer< vtkMRMLWorkflowSequenceNode > subsequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
     paddedSequenceNode->GetSubsequence( i, i + window, subsequence );
@@ -852,13 +851,17 @@ void vtkMRMLWorkflowSequenceNode
     vtkSmartPointer< vtkDoubleArray > legendreCoefficients = vtkSmartPointer< vtkDoubleArray >::New();
     subsequence->LegendreTransformation( order, legendreCoefficients );
 
+    vtkDoubleArray* currLegendreDoubleArray = vtkDoubleArray::New(); // To be passed to double array node
+    currLegendreDoubleArray->SetNumberOfComponents( legendreCoefficients->GetNumberOfTuples() * legendreCoefficients->GetNumberOfComponents() );
+    currLegendreDoubleArray->SetNumberOfTuples( 1 );
+
 	  // Calculate the Legendre coefficients: 2D -> 1D
 	  int count = 0;
 	  for ( int o = 0; o <= legendreCoefficients->GetNumberOfTuples(); o++ )
     {
       for ( int d = 0; d < legendreCoefficients->GetNumberOfComponents(); d++ )
 	    {
-        currLegendreDoubleArray->SetComponent( 0, count, legendreCoefficients->GetComponent( o,d ) );
+        currLegendreDoubleArray->SetComponent( 0, count, legendreCoefficients->GetComponent( o, d ) );
 		    count++;
 	    }
     }
@@ -994,8 +997,9 @@ void vtkMRMLWorkflowSequenceNode
 ::fwdkmeans( int numClusters, vtkDoubleArray* centroids )
 {
   centroids->Initialize();
-  centroids->SetNumberOfTuples( 0 );
   centroids->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
+  centroids->SetNumberOfTuples( 0 );
+  
 
   // A vector of cluster memberships
   std::vector< int > membership( this->GetNumberOfDataNodes(), 0 );
@@ -1058,8 +1062,9 @@ void vtkMRMLWorkflowSequenceNode
 {
   // Initialize
   nextCentroid->Initialize();
-  nextCentroid->SetNumberOfTuples( 1 );
   nextCentroid->SetNumberOfComponents( centroids->GetNumberOfComponents() );
+  nextCentroid->SetNumberOfTuples( 1 );
+
 
   // Find the record farthest from any centroid
   vtkSmartPointer< vtkDoubleArray > centroidDistances = vtkSmartPointer< vtkDoubleArray >::New();
@@ -1175,7 +1180,7 @@ std::vector< int > vtkMRMLWorkflowSequenceNode
     double currMinDist = std::numeric_limits< double >::max();
 	  int currMinCentroid = 0;
     // Minimum for each point
-    for ( int c = 0; c < centroids->GetNumberOfComponents(); c++ )
+    for ( int c = 0; c < centroidDistances->GetNumberOfComponents(); c++ )
 	  {
       if ( centroidDistances->GetComponent( i, c ) < currMinDist )
 	    {
@@ -1197,8 +1202,9 @@ void vtkMRMLWorkflowSequenceNode
 {
   // Initialize (we need to reset everything anyway)
   centroids->Initialize();
-  centroids->SetNumberOfTuples( numClusters );
   centroids->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
+  centroids->SetNumberOfTuples( numClusters );
+
 
   std::vector< int > memberCount( numClusters, 0 );
 
@@ -1250,8 +1256,8 @@ void vtkMRMLWorkflowSequenceNode
     }
     
     currDoubleArray->Initialize();
-    currDoubleArray->SetNumberOfTuples( 1 );
     currDoubleArray->SetNumberOfComponents( 1 );
+    currDoubleArray->SetNumberOfTuples( 1 );    
     currDoubleArray->SetComponent( 0, 0, membership.at( i ) );
   }
 
@@ -1292,7 +1298,7 @@ void vtkMRMLWorkflowSequenceNode
 ::LinearTransformFromDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type )
 {
   vtkDoubleArray* doubleArray = doubleArrayNode->GetArray();
-  if ( doubleArray == NULL || doubleArray->GetNumberOfComponents() != 1 )
+  if ( doubleArray == NULL || doubleArray->GetNumberOfTuples() != 1 )
   {
     return;
   }
@@ -1342,10 +1348,6 @@ void vtkMRMLWorkflowSequenceNode
     transformMatrix->SetElement( 3, 2, doubleArray->GetComponent( 0, 14 ) );
     transformMatrix->SetElement( 3, 3, doubleArray->GetComponent( 0, 15 ) );
   }
-  else
-  {
-    return;
-  }
   
   transformNode->SetMatrixTransformToParent( transformMatrix );
 }
@@ -1354,11 +1356,10 @@ void vtkMRMLWorkflowSequenceNode
 void vtkMRMLWorkflowSequenceNode
 ::LinearTransformToDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type )
 {
-  vtkSmartPointer< vtkDoubleArray > doubleArray = vtkSmartPointer< vtkDoubleArray>::New();
-  doubleArray->SetNumberOfTuples( 1 );
+  vtkDoubleArray* doubleArray = doubleArrayNode->GetArray();
 
-  vtkSmartPointer< vtkMatrix4x4 > transformMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  transformNode->GetMatrixTransformToParent( transformMatrix );
+  vtkNew< vtkMatrix4x4 > transformMatrix;
+  transformNode->GetMatrixTransformToParent( transformMatrix.GetPointer() );
 
   if ( type == QUATERNION_ARRAY ) // If it is in quaternion format
   {
@@ -1377,6 +1378,8 @@ void vtkMRMLWorkflowSequenceNode
     vtkMath::Matrix3x3ToQuaternion( matrix, quaternion );
     
     doubleArray->SetNumberOfComponents( QUATERNION_ARRAY );
+    doubleArray->SetNumberOfTuples( 1 );
+
     doubleArray->SetComponent( 0, 0, transformMatrix->GetElement( 0, 3 ) );
     doubleArray->SetComponent( 0, 1, transformMatrix->GetElement( 1, 3 ) );
     doubleArray->SetComponent( 0, 2, transformMatrix->GetElement( 2, 3 ) );
@@ -1387,7 +1390,9 @@ void vtkMRMLWorkflowSequenceNode
   }
   else if ( type == MATRIX_ARRAY ) // If it is in matrix format
   {
-    doubleArray->SetNumberOfComponents( QUATERNION_ARRAY );
+    doubleArray->SetNumberOfComponents( MATRIX_ARRAY );
+    doubleArray->SetNumberOfTuples( 1 );
+
     doubleArray->SetComponent( 0, 0, transformMatrix->GetElement( 0, 0 ) );
     doubleArray->SetComponent( 0, 1, transformMatrix->GetElement( 0, 1 ) );
     doubleArray->SetComponent( 0, 2, transformMatrix->GetElement( 0, 2 ) );
@@ -1405,10 +1410,5 @@ void vtkMRMLWorkflowSequenceNode
     doubleArray->SetComponent( 0, 14, transformMatrix->GetElement( 3, 2 ) );
     doubleArray->SetComponent( 0, 15, transformMatrix->GetElement( 3, 3 ) );
   }
-  else
-  {
-    return;
-  }
-  
-  doubleArrayNode->SetArray( doubleArray );
+
 }

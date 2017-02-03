@@ -173,8 +173,8 @@ void vtkMarkovModel
 ::GetLogPi( vtkDoubleArray* logPi )
 {
   logPi->Initialize();
-  logPi->SetNumberOfTuples( this->Pi->GetNumberOfTuples() );
   logPi->SetNumberOfComponents( this->Pi->GetNumberOfComponents() );
+  logPi->SetNumberOfTuples( this->Pi->GetNumberOfTuples() );  
 
   for ( int i = 0; i < this->Pi->GetNumberOfTuples(); i++ )
   {
@@ -190,8 +190,8 @@ void vtkMarkovModel
 ::GetZeroPi( vtkDoubleArray* zeroPi )
 {
   zeroPi->Initialize();
-  zeroPi->SetNumberOfTuples( 1 );
   zeroPi->SetNumberOfComponents( this->GetNumStates() );
+  zeroPi->SetNumberOfTuples( 1 );  
 }
 
 
@@ -217,8 +217,8 @@ void vtkMarkovModel
 ::GetLogA( vtkDoubleArray* logA )
 {
   logA->Initialize();
-  logA->SetNumberOfTuples( this->A->GetNumberOfTuples() );
   logA->SetNumberOfComponents( this->A->GetNumberOfComponents() );
+  logA->SetNumberOfTuples( this->A->GetNumberOfTuples() );  
 
   for ( int i = 0; i < this->A->GetNumberOfTuples(); i++ )
   {
@@ -234,8 +234,8 @@ void vtkMarkovModel
 ::GetZeroA( vtkDoubleArray* zeroA )
 {
   zeroA->Initialize();
-  zeroA->SetNumberOfTuples( this->GetNumStates() );
   zeroA->SetNumberOfComponents( this->GetNumStates() );
+  zeroA->SetNumberOfTuples( this->GetNumStates() );  
 }
 
 
@@ -261,8 +261,8 @@ void vtkMarkovModel
 ::GetLogB( vtkDoubleArray* logB )
 {
   logB->Initialize();
-  logB->SetNumberOfTuples( this->B->GetNumberOfTuples() );
   logB->SetNumberOfComponents( this->B->GetNumberOfComponents() );
+  logB->SetNumberOfTuples( this->B->GetNumberOfTuples() );  
 
   for ( int i = 0; i < this->B->GetNumberOfTuples(); i++ )
   {
@@ -278,8 +278,8 @@ void vtkMarkovModel
 ::GetZeroB( vtkDoubleArray* zeroB )
 {
   zeroB->Initialize();
-  zeroB->SetNumberOfTuples( this->GetNumStates() );
   zeroB->SetNumberOfComponents( this->GetNumSymbols() );
+  zeroB->SetNumberOfTuples( this->GetNumStates() );  
 }
 
 
@@ -546,11 +546,13 @@ void vtkMarkovModel
 
   // Initialize delta and psi using the initial state distributions
   vtkNew< vtkDoubleArray > delta;
-  delta->SetNumberOfTuples( sequence->GetNumberOfDataNodes() );
   delta->SetNumberOfComponents( this->GetNumStates() );
+  delta->SetNumberOfTuples( sequence->GetNumberOfDataNodes() );
+  
   vtkNew< vtkDoubleArray > psi;
-  psi->SetNumberOfTuples( sequence->GetNumberOfDataNodes() );
   psi->SetNumberOfComponents( this->GetNumStates() );
+  psi->SetNumberOfTuples( sequence->GetNumberOfDataNodes() );
+  
 
   // Initializing for the first symbol
   vtkMRMLNode* currDataNode = sequence->GetNthDataNode( 0 );
@@ -691,14 +693,14 @@ void vtkMarkovModel
   markovMatrix->Initialize();
   
   xmlStream.clear();
-  xmlStream << element->GetAttribute( "NumberOfTuples" );
-  double numberOfTuples; xmlStream >> numberOfTuples;
-  markovMatrix->SetNumberOfTuples( numberOfTuples );
-
-  xmlStream.clear();
   xmlStream << element->GetAttribute( "NumberOfComponents" );
   double numberOfComponents; xmlStream >> numberOfComponents;
   markovMatrix->SetNumberOfComponents( numberOfComponents );
+
+  xmlStream.clear();
+  xmlStream << element->GetAttribute( "NumberOfTuples" );
+  double numberOfTuples; xmlStream >> numberOfTuples;
+  markovMatrix->SetNumberOfTuples( numberOfTuples );
 
   xmlStream.clear();
   xmlStream << element->GetAttribute( "MatrixValues" );

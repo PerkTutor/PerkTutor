@@ -304,6 +304,11 @@ bool vtkMRMLWorkflowToolNode
 
     vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currFilterWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
     currFilterWorkflowSequence->Copy( currWorkflowSequence );
+
+    //DEBUGGING
+    vtkDoubleArray* currDoubleArray = currWorkflowSequence->GetNthDoubleArray( 0 );
+    vtkDoubleArray* currFilterDoubleArray = currFilterWorkflowSequence->GetNthDoubleArray( 0 );
+
     currFilterWorkflowSequence->GaussianFilter( this->GetWorkflowInputNode()->GetFilterWidth() );
     filterWorkflowSequences->AddItem( currFilterWorkflowSequence );
   }
@@ -411,7 +416,7 @@ bool vtkMRMLWorkflowToolNode
 
   // Calculate and add the centroids from each task
   vtkSmartPointer< vtkDoubleArray > allCentroids = vtkSmartPointer< vtkDoubleArray >::New();
-  allCentroids->SetNumberOfComponents( 0 );
+  allCentroids->SetNumberOfComponents( this->GetWorkflowInputNode()->GetNumPrinComps() );
   allCentroids->SetNumberOfTuples( 0 ); // We will append tuples
 
   std::map< std::string, vtkSmartPointer< vtkMRMLWorkflowSequenceNode > >::iterator taskwiseWorfklowSequencesIt;
@@ -459,22 +464,25 @@ bool vtkMRMLWorkflowToolNode
   }
 
   vtkSmartPointer< vtkDoubleArray > PseudoB = vtkSmartPointer< vtkDoubleArray >::New();
-  PseudoB->SetNumberOfComponents( this->GetWorkflowProcedureNode()->GetNumTasks() );
+  PseudoB->SetNumberOfComponents( this->GetWorkflowInputNode()->GetNumCentroids() );
   PseudoB->SetNumberOfTuples( this->GetWorkflowProcedureNode()->GetNumTasks() );
   for ( int j = 0; j < PseudoB->GetNumberOfComponents(); j++ )
   {
     PseudoB->FillComponent( j, this->GetWorkflowInputNode()->GetMarkovPseudoScaleB() ); // TODO: We want to call the "Fill" function, but it is not yet available in Slicer's VTK
   }
 
-
   // Create a new Markov Model, and estimate its parameters
   vtkSmartPointer< vtkMarkovModel > Markov = vtkSmartPointer< vtkMarkovModel >::New();
   Markov->SetStates( taskNames );
   Markov->SetSymbols( this->GetWorkflowInputNode()->GetNumCentroids() );
   Markov->InitializeEstimation();
+
+  vtkNew< vtkCollectionIterator > centroidWorkflowSequencesIt;
+
   Markov->AddPseudoData( PseudoPi, PseudoA, PseudoB );
 
-  vtkNew< vtkCollectionIterator > centroidWorkflowSequencesIt; pcaWorkflowSequencesIt->SetCollection( centroidWorkflowSequences.GetPointer() );
+  // TODO: Dedugging
+  centroidWorkflowSequencesIt->SetCollection( centroidWorkflowSequences.GetPointer() );
   for ( centroidWorkflowSequencesIt->InitTraversal(); ! centroidWorkflowSequencesIt->IsDoneWithTraversal(); centroidWorkflowSequencesIt->GoToNextItem() )
   {
     vtkMRMLWorkflowSequenceNode* currCentroidWorkflowSequence = vtkMRMLWorkflowSequenceNode::SafeDownCast( centroidWorkflowSequencesIt->GetCurrentObject() );
@@ -598,12 +606,11 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
         continue;
       }
 
-      std::string currTaskName = currDoubleArrayNode->GetAttribute( "Message" );
       for ( int k = 0; k < taskNames.size(); k++ )
       {
-        if ( currTaskName.compare( taskNames.at( k ) ) == 0 )
+        if ( taskNames.at( k ).compare( currDoubleArrayNode->GetAttribute( "Message" ) ) == 0 )
 	      {
-	        taskProportions[ currTaskName ]++;
+	        taskProportions[ taskNames.at( k ) ]++;
 	        totalRecords++;
 	      }
       }
@@ -611,7 +618,13 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
 	  }
   }
 
-    // Calculate the proportion of each task
+  // If all of the record were unlabelled then do not divide, just return
+  if ( totalRecords == 0 )
+  {
+    return taskProportions;
+  }
+
+  // Calculate the proportion of each task
   std::map< std::string, double >::iterator itr;
   for ( itr = taskProportions.begin(); itr != taskProportions.end(); itr++ )
   {
@@ -680,6 +693,12 @@ std::map< std::string, int > vtkMRMLWorkflowToolNode
         priority = itrDouble->first;
         priorityFraction = currFracPart;
 	    }
+    }
+
+    // Could not find anything to ceil (probably because there are no labelled records)
+    if ( taskRawCentroids.find( priority ) == taskRawCentroids.end() )
+    {
+      break;
     }
 
 	  taskRawCentroids[ priority ] = ceil( taskRawCentroids[ priority ] );

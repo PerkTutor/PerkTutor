@@ -15,6 +15,7 @@
 #include "vtkXMLDataElement.h"
 #include "vtkMRMLNode.h"
 #include "vtkCommand.h"
+#include "vtkNew.h"
 #include "vtkCollection.h"
 #include "vtkCollectionIterator.h"
 

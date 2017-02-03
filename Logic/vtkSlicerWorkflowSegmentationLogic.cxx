@@ -200,9 +200,8 @@ void vtkSlicerWorkflowSegmentationLogic
       continue;
     }
     
-    // Grab only the relevant components of the transform buffers
+    // Add each recorded tracked sequence
     vtkNew< vtkCollection > trainingWorkflowSequences;
-
     vtkNew< vtkCollectionIterator > trainingTrackedSequenceBrowserNodesIt;
     trainingTrackedSequenceBrowserNodesIt->SetCollection( trainingTrackedSequenceBrowserNodes );
     
@@ -215,12 +214,21 @@ void vtkSlicerWorkflowSegmentationLogic
       }
 
       // Determine the IDs for the relevant tool and messages nodes
-
+      vtkSlicerTransformRecorderLogic* trLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) ); // TODO: Can we just create an instance of the logic?
+      vtkMRMLSequenceNode* messageSequenceNode = trLogic->GetMessageSequenceNode( currTrainingTrackedSequenceBrowserNode ); // Guaranteed to always output a valid message
+      vtkMRMLNode* messageProxyNode = currTrainingTrackedSequenceBrowserNode->GetProxyNode( messageSequenceNode );
+      if ( messageProxyNode == NULL )
+      {
+        continue;
+      }
+      
       vtkNew< vtkMRMLWorkflowSequenceNode > currWorkflowSequence;
-      currWorkflowSequence->FromTrackedSequenceBrowserNode( vtkMRMLSequenceBrowserNode::SafeDownCast( trainingTrackedSequenceBrowserNodesIt->GetCurrentObject() ), "Tool node ID", "Message node ID", toolNode->GetWorkflowProcedureNode()->GetAllTaskNames() );
+      currWorkflowSequence->FromTrackedSequenceBrowserNode( currTrainingTrackedSequenceBrowserNode, toolNode->GetToolTransformID(), messageProxyNode->GetID(), toolNode->GetWorkflowProcedureNode()->GetAllTaskNames() );
       trainingWorkflowSequences->AddItem( currWorkflowSequence.GetPointer() );
     }
     
+    
+
     toolNode->Train( trainingWorkflowSequences.GetPointer() );
   }
   
