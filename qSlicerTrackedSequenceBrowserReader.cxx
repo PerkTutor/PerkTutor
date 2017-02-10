@@ -19,9 +19,13 @@
 ==============================================================================*/
 
 // Qt includes
+#include <QDir>
+#include <QDebug>
 #include <QFileInfo>
 
 // SlicerQt includes
+#include "qSlicerCoreApplication.h"
+#include "vtkSlicerApplicationLogic.h"
 #include "qSlicerTrackedSequenceBrowserReader.h"
 
 // Logic includes
@@ -31,6 +35,8 @@
 
 // VTK includes
 #include <vtkSmartPointer.h>
+#include <vtkCollectionIterator.h>
+#include <vtksys/SystemTools.hxx>
 
 //-----------------------------------------------------------------------------
 class qSlicerTrackedSequenceBrowserReaderPrivate
@@ -81,7 +87,7 @@ qSlicerIO::IOFileType qSlicerTrackedSequenceBrowserReader::fileType() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerTrackedSequenceBrowserReader::extensions() const
 {
-  return QStringList() << "Tracked Sequence Browser (*.xml)" << "Tracked Sequence Browser (*)";
+  return QStringList() << "Tracked Sequence Browser (*.sqbr)" << "Tracked Sequence Browser (*.xml)" << "Tracked Sequence Browser (*)";
 }
 
 //-----------------------------------------------------------------------------
@@ -102,7 +108,15 @@ bool qSlicerTrackedSequenceBrowserReader::load(const IOProperties& properties)
   this->mrmlScene()->AddNode( trackedSequenceBrowserNode );
 
   int modifyFlag = trackedSequenceBrowserNode->StartModify();
-  bool loadSuccess = this->loadXML( trackedSequenceBrowserNode, fileName.toStdString() );
+  bool loadSuccess = false;
+  if ( extension.compare( "xml" ) == 0 )
+  {
+    loadSuccess = this->loadXML( trackedSequenceBrowserNode, fileName.toStdString() );
+  }
+  else
+  {
+    loadSuccess = this->loadSQBR( trackedSequenceBrowserNode, fileName.toStdString() );
+  }
   trackedSequenceBrowserNode->EndModify( modifyFlag );
 
   // Indicate if the node was successfully loaded
@@ -245,4 +259,119 @@ std::string qSlicerTrackedSequenceBrowserReader
   timeStream << time;
 
   return timeStream.str();
+}
+
+
+
+//-----------------------------------------------------------------------------
+bool qSlicerTrackedSequenceBrowserReader
+::loadSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName )
+{
+  Q_D(qSlicerTrackedSequenceBrowserReader);
+
+  // Create a new scene to house the tracked sequence browser node in 
+  vtkNew< vtkMRMLScene > tempScene;
+  this->mrmlScene()->CopyRegisteredNodesToScene( tempScene.GetPointer() ); // This registers node classes into the sequence browser scene
+  tempScene->Clear( true );
+
+  // Load into the temp scene
+  vtkNew< vtkMRMLApplicationLogic > appLogic;
+  appLogic->SetAndObserveMRMLScene( tempScene.GetPointer() );
+
+  // TODO: Use QTemporaryDir from Qt5 when available
+  QFileInfo fileInfo( QString( fileName.c_str() ) );
+  QString tempPath = qSlicerCoreApplication::application()->temporaryPath() + "/" + fileInfo.baseName();
+
+  // Need to try to create a temporary directory to facilitate saving
+  if ( ! vtksys::SystemTools::MakeDirectory( tempPath.toStdString() ) )
+  {
+    qWarning() << "Could not make a temporary directory for unpacking the sequence browser.";
+    return false;
+  }
+
+  // Unpack into temp and open
+  if ( ! appLogic->OpenSlicerDataBundle( fileName.c_str(), tempPath.toStdString().c_str() ) ) // This adds the saved scene file into Slicer (does not overwrite existing nodes)
+  {
+    qWarning() << "Could not open file from the temporary directory.";
+    return false;
+  }
+
+  // Delete the temporary directory
+  if ( ! vtksys::SystemTools::RemoveADirectory( tempPath.toStdString() ) )
+  {
+    qWarning() << "Could not remove the temporary directory for unpacking the sequence browser.";
+    return false;
+  }
+
+
+  vtkMRMLSequenceBrowserNode* tempTrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( tempScene->GetFirstNode( NULL, "vtkMRMLSequenceBrowserNode" ) );
+  if ( tempTrackedSequenceBrowserNode == NULL )
+  {
+    qWarning() << "Could not find sequence browser node in temporary scene.";
+    return false;
+  }
+  trackedSequenceBrowserNode->Copy( tempTrackedSequenceBrowserNode );
+  trackedSequenceBrowserNode->SetScene( tempScene.GetPointer() ); // Allows removing node references properly
+  trackedSequenceBrowserNode->RemoveAllSequenceNodes(); // Deletes references to sequences from temp scene. We will re-add references to sequence nodes in the main scene.
+  trackedSequenceBrowserNode->SetScene( this->mrmlScene() ); // Will allow proxy nodes to be added to the scene
+  
+
+  // Now copy and add the sequence and proxy nodes to the main scene
+  vtkNew< vtkCollection > tempSequenceNodes;
+  tempTrackedSequenceBrowserNode->GetSynchronizedSequenceNodes( tempSequenceNodes.GetPointer(), true );
+  vtkNew< vtkCollection > tempProxyNodes;
+  tempTrackedSequenceBrowserNode->GetAllProxyNodes( tempProxyNodes.GetPointer() );
+  vtkNew< vtkCollectionIterator > tempSequenceNodesIt; tempSequenceNodesIt->SetCollection( tempSequenceNodes.GetPointer() );
+  for ( tempSequenceNodesIt->InitTraversal(); ! tempSequenceNodesIt->IsDoneWithTraversal(); tempSequenceNodesIt->GoToNextItem() )
+  {
+    vtkMRMLSequenceNode* currTempSequenceNode = vtkMRMLSequenceNode::SafeDownCast( tempSequenceNodesIt->GetCurrentObject() );
+    if ( currTempSequenceNode == NULL )
+    {
+      continue;
+    }
+    vtkSmartPointer< vtkMRMLSequenceNode > currSequenceNode = vtkSmartPointer< vtkMRMLSequenceNode >::New();
+    currSequenceNode->Copy( currTempSequenceNode );
+    currSequenceNode->SetScene( this->mrmlScene() );
+    this->mrmlScene()->AddNode( currSequenceNode );
+    trackedSequenceBrowserNode->AddSynchronizedSequenceNode( currSequenceNode );
+
+    trackedSequenceBrowserNode->SetPlayback( currSequenceNode, tempTrackedSequenceBrowserNode->GetPlayback( currTempSequenceNode ) );
+    trackedSequenceBrowserNode->SetRecording( currSequenceNode, tempTrackedSequenceBrowserNode->GetRecording( currTempSequenceNode ) );
+    trackedSequenceBrowserNode->SetOverwriteProxyName( currSequenceNode, tempTrackedSequenceBrowserNode->GetOverwriteProxyName( currTempSequenceNode ) );
+    trackedSequenceBrowserNode->SetSaveChanges( currSequenceNode, tempTrackedSequenceBrowserNode->GetSaveChanges( currTempSequenceNode ) );
+
+    // Note that if the proxy nodes were copies, they will be removed above, but will be regenerated automatically
+    vtkMRMLNode* currTempProxyNode = tempTrackedSequenceBrowserNode->GetProxyNode( currTempSequenceNode );
+    if ( currTempProxyNode == NULL )
+    {
+      continue;
+    }
+    vtkSmartPointer< vtkMRMLNode > currProxyNode = currTempProxyNode->CreateNodeInstance();
+    currProxyNode->Copy( currTempProxyNode );
+    currProxyNode->SetScene( this->mrmlScene() );
+    this->mrmlScene()->AddNode( currProxyNode );
+    trackedSequenceBrowserNode->AddProxyNode( currProxyNode, currSequenceNode, false );
+
+    this->copyNodeAttributes( currTempProxyNode, currProxyNode );
+  }
+
+}
+
+
+//----------------------------------------------------------------------------
+void qSlicerTrackedSequenceBrowserReader
+::copyNodeAttributes( vtkMRMLNode* sourceNode, vtkMRMLNode* targetNode )
+{
+  std::vector< std::string > attributeNames = sourceNode->GetAttributeNames();
+  std::vector< std::string >::iterator attributeNamesIt;
+  for ( attributeNamesIt = attributeNames.begin(); attributeNamesIt != attributeNames.end(); attributeNamesIt++ )
+  {
+    const char* currAttributeName = ( *attributeNamesIt ).c_str();
+    const char* currAttributeValue = sourceNode->GetAttribute( ( *attributeNamesIt ).c_str() );
+    if ( currAttributeValue == NULL )
+    {
+      continue;
+    }
+    targetNode->SetAttribute( currAttributeName, currAttributeValue );
+  }
 }

@@ -58,6 +58,10 @@ protected:
   virtual bool loadXML( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName );
   virtual std::string getTimeStringFromXMLElement( vtkXMLDataElement* element );
 
+  virtual bool loadSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName );
+
+  void copyNodeAttributes( vtkMRMLNode* sourceNode, vtkMRMLNode* targetNode );
+
 private:
   Q_DECLARE_PRIVATE( qSlicerTrackedSequenceBrowserReader );
   Q_DISABLE_COPY( qSlicerTrackedSequenceBrowserReader );

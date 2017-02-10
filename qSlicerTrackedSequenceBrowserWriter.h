@@ -66,7 +66,14 @@ protected:
 
   /// Write the node to an XML file
   virtual bool writeXML( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName );
+
   virtual std::string getXMLStringFromTimeString( std::string timeString );
+
+  /// Write the node to an SQBR file (sequence browser file)
+  /// This is just a slicer scene bundle with all irrelevant nodes removed and a fancy extension
+  virtual bool writeSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName );
+
+  void copyNodeAttributes( vtkMRMLNode* sourceNode, vtkMRMLNode* targetNode );
 
 private:
   Q_DECLARE_PRIVATE( qSlicerTrackedSequenceBrowserWriter );

@@ -38,6 +38,7 @@
 // MRML includes
 #include <vtkMRMLScene.h>
 #include <vtkMRMLStorageNode.h>
+#include <vtkMRMLNode.h>
 
 // VTK includes
 #include <vtkCollection.h>
@@ -101,7 +102,7 @@ bool qSlicerTrackedSequenceBrowserWriter::canWriteObject(vtkObject* object)const
 QStringList qSlicerTrackedSequenceBrowserWriter::extensions(vtkObject* object)const
 {
   Q_UNUSED(object);
-  return QStringList() << "Tracked Sequence Browser (*.xml)" << "Tracked Sequence Browser (*)";
+  return QStringList() << "Tracked Sequence Browser (*.sqbr)" << "Tracked Sequence Browser (*.xml)" << "Tracked Sequence Browser (*)";
 }
 
 //----------------------------------------------------------------------------
@@ -124,7 +125,15 @@ bool qSlicerTrackedSequenceBrowserWriter::write(const qSlicerIO::IOProperties& p
     return false;
   }
 
-  bool writeSuccess = this->writeXML( trackedSequenceBrowserNode, fileName.toStdString() );
+  bool writeSuccess = false;
+  if ( extension.compare( "xml" ) == 0 )
+  {
+    writeSuccess = this->writeXML( trackedSequenceBrowserNode, fileName.toStdString() );
+  }
+  else
+  {
+    writeSuccess = this->writeSQBR( trackedSequenceBrowserNode, fileName.toStdString() );
+  }
 
   // Indicate if the node was successfully written
   if ( writeSuccess )
@@ -246,4 +255,125 @@ std::string qSlicerTrackedSequenceBrowserWriter
   timeXMLStream << " TimeStampNSec=\"" << timestampNSec << "\"";
 
   return timeXMLStream.str();
+}
+
+
+
+//----------------------------------------------------------------------------
+bool qSlicerTrackedSequenceBrowserWriter
+::writeSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName )
+{
+  Q_D(qSlicerTrackedSequenceBrowserWriter);
+
+  // The idea is to create a new empty scene, put the sequence browser (and associated sequence and proxy nodes in it)
+  // This can be saved and reloaded
+
+  // Create a new scene to house the tracked sequence browser node in 
+  vtkNew< vtkMRMLScene > tempScene;
+  this->mrmlScene()->CopyRegisteredNodesToScene( tempScene.GetPointer() ); // This registers node classes into the sequence browser scene
+  tempScene->Clear( true );
+  
+  vtkMRMLSequenceBrowserNode* tempTrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( tempScene->CopyNode( trackedSequenceBrowserNode ) );
+  if ( tempTrackedSequenceBrowserNode == NULL )
+  {
+    qWarning() << "Could not copy node to temporary scene.";
+    return false;
+  }
+  tempTrackedSequenceBrowserNode->SetScene( this->mrmlScene() ); // Allows removing node references properly
+  tempTrackedSequenceBrowserNode->RemoveAllSequenceNodes(); // Deletes references to sequence from main scene. We will re-add references to nodes in the saving scene.
+  tempTrackedSequenceBrowserNode->SetScene( tempScene.GetPointer() ); // Will allow proxy nodes to be added to the scene
+  
+
+  // Now copy and add the sequence and proxy nodes to the new scene
+  vtkNew< vtkCollection > sequenceNodes;
+  trackedSequenceBrowserNode->GetSynchronizedSequenceNodes( sequenceNodes.GetPointer(), true );
+  vtkNew< vtkCollectionIterator > sequenceNodesIt; sequenceNodesIt->SetCollection( sequenceNodes.GetPointer() );
+  for ( sequenceNodesIt->InitTraversal(); ! sequenceNodesIt->IsDoneWithTraversal(); sequenceNodesIt->GoToNextItem() )
+  {
+    vtkMRMLSequenceNode* currSequenceNode = vtkMRMLSequenceNode::SafeDownCast( sequenceNodesIt->GetCurrentObject() );
+    if ( currSequenceNode == NULL )
+    {
+      continue;
+    }
+    vtkSmartPointer< vtkMRMLSequenceNode > currTempSequenceNode = vtkSmartPointer< vtkMRMLSequenceNode >::New();
+    currTempSequenceNode->Copy( currSequenceNode );
+    currTempSequenceNode->SetScene( tempScene.GetPointer() );
+    tempScene->AddNode( currTempSequenceNode );
+    tempTrackedSequenceBrowserNode->AddSynchronizedSequenceNode( currTempSequenceNode );
+
+    tempTrackedSequenceBrowserNode->SetPlayback( currTempSequenceNode, trackedSequenceBrowserNode->GetPlayback( currSequenceNode ) );
+    tempTrackedSequenceBrowserNode->SetRecording( currTempSequenceNode, trackedSequenceBrowserNode->GetRecording( currSequenceNode ) );
+    tempTrackedSequenceBrowserNode->SetOverwriteProxyName( currTempSequenceNode, trackedSequenceBrowserNode->GetOverwriteProxyName( currSequenceNode ) );
+    tempTrackedSequenceBrowserNode->SetSaveChanges( currTempSequenceNode, trackedSequenceBrowserNode->GetSaveChanges( currSequenceNode ) );
+
+    // Note that if the proxy nodes were copies, they will be removed above, but will be regenerated automatically
+    vtkMRMLNode* currProxyNode = trackedSequenceBrowserNode->GetProxyNode( currSequenceNode );
+    if ( currProxyNode == NULL )
+    {
+      continue;
+    }
+    vtkSmartPointer< vtkMRMLNode > currTempProxyNode = currProxyNode->CreateNodeInstance();
+    currTempProxyNode->Copy( currProxyNode );
+    currTempProxyNode->SetScene( tempScene.GetPointer() );
+    tempScene->AddNode( currTempProxyNode );
+    tempTrackedSequenceBrowserNode->AddProxyNode( currTempProxyNode, currTempSequenceNode, false );
+
+    this->copyNodeAttributes( currProxyNode, currTempProxyNode );
+  }
+
+  // Save the newly created scene into a scene bundle
+  vtkNew< vtkMRMLApplicationLogic > appLogic;
+  appLogic->SetAndObserveMRMLScene( tempScene.GetPointer() );
+
+  // TODO: Use QTemporaryDir from Qt5 when available
+  QFileInfo fileInfo( QString( fileName.c_str() ) );
+  QString tempPath = qSlicerCoreApplication::application()->temporaryPath() + "/" + fileInfo.baseName();
+
+
+  // Need to try to create a temporary directory to facilitate saving
+  if ( ! QDir().mkpath( tempPath ) )
+  {
+    qWarning() << "Could not make a temporary directory for storing the sequence browser.";
+    return false;
+  }
+
+  // Saving to temp and zipping
+  if ( ! appLogic->SaveSceneToSlicerDataBundleDirectory( tempPath.toStdString().c_str() ) )
+  {
+    qWarning() << "Could not write the file to the temporary directory.";
+    return false;
+  }
+  if ( ! appLogic->Zip( fileName.c_str(), tempPath.toStdString().c_str() ) )
+  {
+    qWarning() << "Unable to write the data from the temporary directory to the compressed file.";
+    return false;
+  }
+
+  // Delete the temporary directory
+  if ( ! QDir().rmdir( tempPath ) )
+  {
+    qWarning() << "Could not remove the temporary directory for storing the sequence browser.";
+    return false;
+  }
+
+  return true;
+}
+
+
+//----------------------------------------------------------------------------
+void qSlicerTrackedSequenceBrowserWriter
+::copyNodeAttributes( vtkMRMLNode* sourceNode, vtkMRMLNode* targetNode )
+{
+  std::vector< std::string > attributeNames = sourceNode->GetAttributeNames();
+  std::vector< std::string >::iterator attributeNamesIt;
+  for ( attributeNamesIt = attributeNames.begin(); attributeNamesIt != attributeNames.end(); attributeNamesIt++ )
+  {
+    const char* currAttributeName = ( *attributeNamesIt ).c_str();
+    const char* currAttributeValue = sourceNode->GetAttribute( ( *attributeNamesIt ).c_str() );
+    if ( currAttributeValue == NULL )
+    {
+      continue;
+    }
+    targetNode->SetAttribute( currAttributeName, currAttributeValue );
+  }
 }

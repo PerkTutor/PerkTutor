@@ -210,6 +210,7 @@ vtkMRMLSequenceNode* vtkSlicerTransformRecorderLogic
   vtkSmartPointer< vtkMRMLNode > messageNode;
   messageNode.TakeReference( vtkMRMLNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLScriptedModuleNode" ) ) );
   messageNode->SetName( "Message" );
+  messageNode->SetHideFromEditors( false );
   messageNode->SetAttribute( "Message", "" );
   messageNode->SetScene( this->GetMRMLScene() );
 	this->GetMRMLScene()->AddNode( messageNode );

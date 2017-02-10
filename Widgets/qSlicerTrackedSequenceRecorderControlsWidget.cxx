@@ -131,7 +131,7 @@ void qSlicerTrackedSequenceRecorderControlsWidget
     vtkMRMLNode* currProxyNode = d->TransformCheckableComboBox->nodeFromIndex( i );
     vtkMRMLSequenceNode* currSequenceNode = this->TrackedSequenceBrowserNode->GetSequenceNode( currProxyNode );
 
-    if ( this->TrackedSequenceBrowserNode->GetRecording( currSequenceNode ) ) // If the proxy node isn't synced, then this will certainly be false
+    if ( currSequenceNode != NULL && this->TrackedSequenceBrowserNode->GetRecording( currSequenceNode ) ) // If the proxy node isn't synced, then this will certainly be false
     {
 	    d->TransformCheckableComboBox->setCheckState( currProxyNode, Qt::Checked );
     }
@@ -147,7 +147,7 @@ void qSlicerTrackedSequenceRecorderControlsWidget
     vtkMRMLNode* currProxyNode = d->ImageCheckableComboBox->nodeFromIndex( i );
     vtkMRMLSequenceNode* currSequenceNode = this->TrackedSequenceBrowserNode->GetSequenceNode( currProxyNode );
 
-    if ( this->TrackedSequenceBrowserNode->GetRecording( currSequenceNode ) ) // If the proxy node isn't synced, then this will certainly be false
+    if ( currSequenceNode != NULL && this->TrackedSequenceBrowserNode->GetRecording( currSequenceNode ) ) // If the proxy node isn't synced, then this will certainly be false
     {
 	    d->ImageCheckableComboBox->setCheckState( currProxyNode, Qt::Checked );
     }
