@@ -28,6 +28,7 @@ class couchUpload(ScriptedLoadableModule):
 class couchUploadWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
+
     #
     # Metadata Area
     #
@@ -38,27 +39,38 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     # Layout within the dummy collapsible button
     metadataFormLayout = qt.QFormLayout(metadataCollapsibleButton)
 
-    #
-    # skill level selector
-    #
+    # Name input
+    self.nameField = qt.QLineEdit()
+    metadataFormLayout.addRow("Participant Name: ", self.nameField)
 
+    # userID input
+    self.userIDField = qt.QLineEdit()
+    metadataFormLayout.addRow("userID: ", self.userIDField)
+
+    # studyID input
+    self.studyIDField = qt.QLineEdit()
+    metadataFormLayout.addRow("studyID: ", self.studyIDField)
+
+    # trialID input
+    self.trialIDField = qt.QLineEdit()
+    metadataFormLayout.addRow("trialID: ", self.trialIDField)
+
+    # skill level selector
     self.skillOptions = ("Novice", "Trainee", "Expert")
     self.skillSelector = qt.QComboBox()
     self.skillSelector.addItems(self.skillOptions)
     metadataFormLayout.addRow("Select skill level: ", self.skillSelector)
-    #remove this later
-    self.inputSelector = slicer.qMRMLNodeComboBox()
 
-    #
+    # procedure input -- should this be replaced as a combobox?
+    self.procedureField = qt.QLineEdit()
+    metadataFormLayout.addRow("Procedure: ", self.procedureField)
+
     # session completed selector
-    #
     self.completedCheckBox = qt.QCheckBox("Session completed")
     self.incompletedCheckBox = qt.QCheckBox("Session incomplete")
     metadataFormLayout.addRow(self.completedCheckBox, self.incompletedCheckBox)
 
-    #
     # Save Button
-    #
     self.saveButton = qt.QPushButton("Save session")
     self.saveButton.toolTip = "Uploading data to database."
     self.saveButton.enabled = False
