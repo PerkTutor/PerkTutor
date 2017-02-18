@@ -5,6 +5,7 @@ from slicer.ScriptedLoadableModule import *
 import logging
 import time
 import sys
+import couchdb
 
 #
 # couchUpload
@@ -26,9 +27,9 @@ class couchUpload(ScriptedLoadableModule):
 #
 
 class couchUploadWidget(ScriptedLoadableModuleWidget):
+
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-
     #
     # Metadata Area
     #
@@ -73,133 +74,37 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     # Save Button
     self.saveButton = qt.QPushButton("Save session")
     self.saveButton.toolTip = "Uploading data to database."
-    self.saveButton.enabled = False
+    self.saveButton.enabled = True
     metadataFormLayout.addRow(self.saveButton)
 
-    # connections
+    # Connections
     self.saveButton.connect('clicked(bool)', self.onSaveButton)
-    #self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     # Add vertical spacer
     self.layout.addStretch(1)
 
-    # Refresh Save button state
-    self.onSelect()
-
-  def cleanup(self):
-    pass
-
-  def onSelect(self):
-    pass
-    #self.saveButton.enabled = self.inputSelector.currentNode() and self.outputSelector.currentNode()
-
   def onSaveButton(self):
     logic = couchUploadLogic()
-    enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
-    imageThreshold = self.imageThresholdSliderWidget.value
-    logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
+    name = ('name', str(self.nameField.text))
+    userID = ('userID', str(self.userIDField.text))
+    studyID = ('studyID', str(self.studyIDField.text))
+    procedure = ('procedure', str(self.procedureField.text))
+    dataFields = dict([name, userID, studyID, procedure])
+    logic.uploadSession(dataFields)
 
-#
-# couchUploadLogic
-#
-
+#couchUploadLogic
 class couchUploadLogic(ScriptedLoadableModuleLogic):
-  """This class should implement all the actual
-  computation done by your module.  The interface
-  should be such that other python code can import
-  this class and make use of the functionality without
-  requiring an instance of the Widget.
-  Uses ScriptedLoadableModuleLogic base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
 
-  def hasImageData(self,volumeNode):
-    """This is an example logic method that
-    returns true if the passed in volume
-    node has valid image data
-    """
-    if not volumeNode:
-      logging.debug('hasImageData failed: no volume node')
-      return False
-    if volumeNode.GetImageData() is None:
-      logging.debug('hasImageData failed: no image data in volume node')
-      return False
-    return True
+  def uploadSession(self, dataFields):
+    couch = couchdb.Server() #uploads to localhost, replace with hostname
+    db = couch['test'] #replace test with name of db in the host
+    db.save(dataFields)
 
-  def isValidInputOutputData(self, inputVolumeNode, outputVolumeNode):
-    """Validates if the output is not the same as input
-    """
-    if not inputVolumeNode:
-      logging.debug('isValidInputOutputData failed: no input volume node defined')
-      return False
-    if not outputVolumeNode:
-      logging.debug('isValidInputOutputData failed: no output volume node defined')
-      return False
-    if inputVolumeNode.GetID()==outputVolumeNode.GetID():
-      logging.debug('isValidInputOutputData failed: input and output volume is the same. Create a new volume for output to avoid this error.')
-      return False
-    return True
-
-  def takeScreenshot(self,name,description,type=-1):
-    # show the message even if not taking a screen shot
-    slicer.util.delayDisplay('Take screenshot: '+description+'.\nResult is available in the Annotations module.', 3000)
-
-    lm = slicer.app.layoutManager()
-    # switch on the type to get the requested window
-    widget = 0
-    if type == slicer.qMRMLScreenShotDialog.FullLayout:
-      # full layout
-      widget = lm.viewport()
-    elif type == slicer.qMRMLScreenShotDialog.ThreeD:
-      # just the 3D window
-      widget = lm.threeDWidget(0).threeDView()
-    elif type == slicer.qMRMLScreenShotDialog.Red:
-      # red slice window
-      widget = lm.sliceWidget("Red")
-    elif type == slicer.qMRMLScreenShotDialog.Yellow:
-      # yellow slice window
-      widget = lm.sliceWidget("Yellow")
-    elif type == slicer.qMRMLScreenShotDialog.Green:
-      # green slice window
-      widget = lm.sliceWidget("Green")
-    else:
-      # default to using the full window
-      widget = slicer.util.mainWindow()
-      # reset the type so that the node is set correctly
-      type = slicer.qMRMLScreenShotDialog.FullLayout
-
-    # grab and convert to vtk image data
-    qpixMap = qt.QPixmap().grabWidget(widget)
-    qimage = qpixMap.toImage()
-    imageData = vtk.vtkImageData()
-    slicer.qMRMLUtils().qImageToVtkImageData(qimage,imageData)
-
-    annotationLogic = slicer.modules.annotations.logic()
-    annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
-
-  def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
+  def run(self):
     """
     Run the actual algorithm
     """
-
-    if not self.isValidInputOutputData(inputVolume, outputVolume):
-      slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
-      return False
-
-    logging.info('Processing started')
-
-    # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
-    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
-
-    # Capture screenshot
-    if enableScreenshots:
-      self.takeScreenshot('couchUploadTest-Start','MyScreenshot',-1)
-
-    logging.info('Processing completed')
-
-    return True
+    pass
 
 
 class couchUploadTest(ScriptedLoadableModuleTest):
