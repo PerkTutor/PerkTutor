@@ -89,7 +89,9 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     userID = ('userID', str(self.userIDField.text))
     studyID = ('studyID', str(self.studyIDField.text))
     procedure = ('procedure', str(self.procedureField.text))
-    dataFields = dict([name, userID, studyID, procedure])
+    date = ('date', time.strftime("%m/%d/%Y %H:%M:%S"))
+    metricsComputed = ('metrics computed', False)
+    dataFields = dict([name, userID, studyID, procedure, date, metricsComputed]) #creates dict from list of tuples, format for saving
     logic.uploadSession(dataFields)
 
 #couchUploadLogic
