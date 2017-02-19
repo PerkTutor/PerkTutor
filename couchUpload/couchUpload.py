@@ -7,10 +7,6 @@ import time
 import sys
 import couchdb
 
-#
-# couchUpload
-#
-
 class couchUpload(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
@@ -30,9 +26,8 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-    #
+
     # Metadata Area
-    #
     metadataCollapsibleButton = ctk.ctkCollapsibleButton()
     metadataCollapsibleButton.text = "Metadata"
     self.layout.addWidget(metadataCollapsibleButton)
@@ -89,7 +84,7 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     userID = ('userID', str(self.userIDField.text))
     studyID = ('studyID', str(self.studyIDField.text))
     procedure = ('procedure', str(self.procedureField.text))
-    date = ('date', time.strftime("%m/%d/%Y %H:%M:%S"))
+    date = ('date', time.strftime("%m/%d/%Y-%H:%M:%S"))
     metricsComputed = ('metrics computed', False)
     dataFields = dict([name, userID, studyID, procedure, date, metricsComputed]) #creates dict from list of tuples, format for saving
     logic.uploadSession(dataFields)
@@ -99,15 +94,15 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
 
   def uploadSession(self, dataFields):
     couch = couchdb.Server() #uploads to localhost, replace with hostname
-    db = couch['test'] #replace test with name of db in the host
+    db = couch['pt'] #replace test with name of db in the host
     db.save(dataFields)
 
-  def run(self):
-    """
-    Run the actual algorithm
-    """
-    pass
-
+    # save scene to db
+    sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S")
+    sceneSaveFilename = slicer.app.temporaryPath + "/" + sceneName + ".mrb"
+    slicer.util.saveScene(sceneSaveFilename)
+    with open(sceneSaveFilename,'rb') as f:
+      db.put_attachment(dataFields, f)
 
 class couchUploadTest(ScriptedLoadableModuleTest):
   """
