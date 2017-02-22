@@ -178,9 +178,9 @@ void vtkMRMLWorkflowSequenceNode
   }
 
   // Add the transform nodes to this workflow sequence as double array nodes
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > doubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
   for ( int i = 0; i < sequenceNode->GetNumberOfDataNodes(); i++ )
-  {
-    vtkMRMLDoubleArrayNode* doubleArrayNode = vtkMRMLDoubleArrayNode::New();
+  {    
     this->LinearTransformToDoubleArray( vtkMRMLLinearTransformNode::SafeDownCast( sequenceNode->GetNthDataNode( i ) ), doubleArrayNode, QUATERNION_ARRAY ); // Use quaternions
     this->SetDataNodeAtValue( doubleArrayNode, sequenceNode->GetNthIndexValue( i ) );
   }
@@ -330,15 +330,16 @@ void vtkMRMLWorkflowSequenceNode
     int concatenationIndex = 0;
     for ( int j = 0; j < thisDoubleArray->GetNumberOfComponents(); j++ )
     {
-      concatenatedDoubleArray->InsertComponent( 0, concatenationIndex, thisDoubleArray->GetComponent( 0, j ) );
+      concatenatedDoubleArray->SetComponent( 0, concatenationIndex, thisDoubleArray->GetComponent( 0, j ) );
       concatenationIndex++;
     }
     for ( int j = 0; j < sequenceDoubleArray->GetNumberOfComponents(); j++ )
     {
-      concatenatedDoubleArray->InsertComponent( 0, concatenationIndex, sequenceDoubleArray->GetComponent( 0, j ) );
+      concatenatedDoubleArray->SetComponent( 0, concatenationIndex, sequenceDoubleArray->GetComponent( 0, j ) );
       concatenationIndex++;
     }
 
+    thisDoubleArray->DeepCopy( concatenatedDoubleArray );
   }
   
 }
@@ -355,12 +356,7 @@ void vtkMRMLWorkflowSequenceNode
   // Iterate over all nodes in this sequence and stick the array onto each
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
-    vtkMRMLDoubleArrayNode* thisDoubleArrayNode = vtkMRMLDoubleArrayNode::SafeDownCast( this->GetNthDataNode( i ) );
-    if ( thisDoubleArrayNode == NULL )
-    {
-      continue;
-    }
-    vtkDoubleArray* thisDoubleArray = thisDoubleArrayNode->GetArray();
+    vtkDoubleArray* thisDoubleArray = this->GetNthDoubleArray( i );
     if ( thisDoubleArray == NULL )
     {
       continue;
@@ -373,15 +369,16 @@ void vtkMRMLWorkflowSequenceNode
     int concatenationIndex = 0;
     for ( int j = 0; j < thisDoubleArray->GetNumberOfComponents(); j++ )
     {
-      concatenatedDoubleArray->InsertComponent( 0, concatenationIndex, thisDoubleArray->GetComponent( 0, j ) );
+      concatenatedDoubleArray->SetComponent( 0, concatenationIndex, thisDoubleArray->GetComponent( 0, j ) );
       concatenationIndex++;
     }
     for ( int j = 0; j < doubleArray->GetNumberOfComponents(); j++ )
     {
-      concatenatedDoubleArray->InsertComponent( 0, concatenationIndex, doubleArray->GetComponent( 0, j ) );
+      concatenatedDoubleArray->SetComponent( 0, concatenationIndex, doubleArray->GetComponent( 0, j ) );
       concatenationIndex++;
     }
 
+    thisDoubleArray->DeepCopy( concatenatedDoubleArray );
   }
 
 }
@@ -426,31 +423,25 @@ void vtkMRMLWorkflowSequenceNode
   {
     return;
   }
-  meanArray->Initialize();
-  vtkDoubleArray* initialDoubleArray = this->GetNthDoubleArray( 0 ); 
-  if ( initialDoubleArray == NULL  )
-  {
-    return;
-  }
 
-  // The record log will only hold one record at the end
-  int arrayNumberOfComponents = initialDoubleArray->GetNumberOfComponents();
-  meanArray->SetNumberOfComponents( arrayNumberOfComponents );
+  meanArray->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
   meanArray->SetNumberOfTuples( 1 );
+  this->FillDoubleArray( meanArray, 0 );
 
   // For each time
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
     vtkDoubleArray* currDoubleArray = this->GetNthDoubleArray( i );
-    if ( currDoubleArray == NULL || currDoubleArray->GetNumberOfComponents() != arrayNumberOfComponents )
+    if ( currDoubleArray == NULL || currDoubleArray->GetNumberOfComponents() != meanArray->GetNumberOfComponents() )
     {
       continue;
     }
 
 	  // Iterate over all dimensions
-	  for ( int d = 0; d < arrayNumberOfComponents; d++ )
+	  for ( int d = 0; d < meanArray->GetNumberOfComponents(); d++ )
 	  {
       meanArray->SetComponent( 0, d, meanArray->GetComponent( 0, d ) + currDoubleArray->GetComponent( 0, d ) );
+      vtkWarningMacro( << currDoubleArray->GetComponent( 0, d ) << ", " );
 	  }
 
   }
@@ -492,7 +483,6 @@ void vtkMRMLWorkflowSequenceNode
 ::Distances( vtkDoubleArray* testPoints, vtkDoubleArray* distances )
 {
   // Create a vector of vectors
-  distances->Initialize();
   distances->SetNumberOfComponents( testPoints->GetNumberOfTuples() );
   distances->SetNumberOfTuples( this->GetNumberOfDataNodes() );
   
@@ -530,7 +520,6 @@ void vtkMRMLWorkflowSequenceNode
 ::ClosestRecords( vtkDoubleArray* testPoints, vtkDoubleArray* closest )
 {
   // Initialize the output
-  closest->Initialize();
   closest->SetNumberOfComponents( testPoints->GetNumberOfComponents() );
   closest->SetNumberOfTuples( testPoints->GetNumberOfTuples() );
 
@@ -591,22 +580,22 @@ void vtkMRMLWorkflowSequenceNode
       continue;
     }
 
-    vtkSmartPointer< vtkDoubleArray > derivativeDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-    derivativeDoubleArray->SetNumberOfComponents( lowerDoubleArray->GetNumberOfComponents() );
-    derivativeDoubleArray->SetNumberOfTuples( 1 );
+    vtkSmartPointer< vtkDoubleArray > tempDerivativeDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
+    tempDerivativeDoubleArray->SetNumberOfComponents( lowerDoubleArray->GetNumberOfComponents() );
+    tempDerivativeDoubleArray->SetNumberOfTuples( 1 );
 
     double deltaTime = this->GetNthIndexValueAsDouble( upperItemNumber ) - this->GetNthIndexValueAsDouble( lowerItemNumber );
     for( int d = 0; d < lowerDoubleArray->GetNumberOfComponents(); d++ )
     {
-      derivativeDoubleArray->SetComponent( 0, d, ( lowerDoubleArray->GetComponent( 0, d ) - upperDoubleArray->GetComponent( 0, d ) ) / deltaTime );
+      tempDerivativeDoubleArray->SetComponent( 0, d, ( upperDoubleArray->GetComponent( 0, d ) - lowerDoubleArray->GetComponent( 0, d ) ) / deltaTime );
     }
 
-    vtkMRMLDoubleArrayNode* derivativeDataNode = vtkMRMLDoubleArrayNode::SafeDownCast( derivativeSequenceNode->GetNthDataNode( i ) );
-    if ( derivativeDataNode == NULL )
+    vtkDoubleArray* derivativeDoubleArray = derivativeSequenceNode->GetNthDoubleArray( i );
+    if ( derivativeDoubleArray == NULL )
     {
       continue; 
     }
-    derivativeDataNode->SetArray( derivativeDoubleArray );
+    derivativeDoubleArray->DeepCopy( tempDerivativeDoubleArray );
   }
   
   // Set this to be the differentiated buffer
@@ -620,10 +609,9 @@ void vtkMRMLWorkflowSequenceNode
 ::Integrate( vtkDoubleArray* integration )
 {
   // Initialize the output
-  integration->Initialize();
   integration->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
   integration->SetNumberOfTuples( 1 );
-
+  this->FillDoubleArray( integration, 0 );
 
   // Use the trapezoidal rule
   for ( int i = 1; i < this->GetNumberOfDataNodes(); i++ )
@@ -636,7 +624,7 @@ void vtkMRMLWorkflowSequenceNode
       vtkWarningMacro( "vtkMRMLWorkflowSequenceNode::Differentiate: Cannot perform computation - sequence data nodes are incompatible.")
     }
 
-    double deltaTime = this->GetNthIndexValueAsDouble( i ) - this->GetNthIndexValueAsDouble( i );
+    double deltaTime = this->GetNthIndexValueAsDouble( i ) - this->GetNthIndexValueAsDouble( i - 1 );
 	  for ( int d = 0; d < lowerDoubleArray->GetNumberOfComponents(); d++ )
 	  {
 	    integration->SetComponent( 0, d, integration->GetComponent( 0, d ) + deltaTime * ( lowerDoubleArray->GetComponent( 0, d ) + upperDoubleArray->GetComponent( 0, d ) ) / 2 );
@@ -649,7 +637,6 @@ void vtkMRMLWorkflowSequenceNode
 void vtkMRMLWorkflowSequenceNode
 ::LegendreTransformation( int order, vtkDoubleArray* legendreCoefficients )
 {
-  legendreCoefficients->Initialize();
   legendreCoefficients->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
   legendreCoefficients->SetNumberOfTuples( order + 1 );
 
@@ -674,18 +661,23 @@ void vtkMRMLWorkflowSequenceNode
       double adjustedTime = 2 * ( this->GetNthIndexValueAsDouble( i ) - startTime ) / timeRange - 1;
       double legendrePolynomial = this->LegendrePolynomial( adjustedTime, o );
 
-	    vtkSmartPointer< vtkDoubleArray > currentUnintegratedDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-      currentUnintegratedDoubleArray->SetNumberOfComponents( this->GetNthNumberOfComponents( i ) );
-      currentUnintegratedDoubleArray->SetNumberOfTuples( 1 );
+	    vtkSmartPointer< vtkDoubleArray > tempUnintegratedDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
+      tempUnintegratedDoubleArray->SetNumberOfComponents( this->GetNthNumberOfComponents( i ) );
+      tempUnintegratedDoubleArray->SetNumberOfTuples( 1 );
 
       vtkDoubleArray* currentDoubleArray = this->GetNthDoubleArray( i );
       for ( int d = 0; d < this->GetNthNumberOfComponents( i ); d++ )
 	    {	    
-        currentUnintegratedDoubleArray->SetComponent( 0, d, currentDoubleArray->GetComponent( 0, d ) * legendrePolynomial );
+        tempUnintegratedDoubleArray->SetComponent( 0, d, currentDoubleArray->GetComponent( 0, d ) * legendrePolynomial );
 	    }
 
       vtkSmartPointer< vtkMRMLDoubleArrayNode > unintegratedDataNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
-      unintegratedDataNode->SetArray( currentUnintegratedDoubleArray );
+      vtkDoubleArray* unintegratedDoubleArray = unintegratedDataNode->GetArray();
+      if ( unintegratedDoubleArray == NULL )
+      {
+        continue;
+      }
+      unintegratedDoubleArray->DeepCopy( tempUnintegratedDoubleArray );
 
       std::stringstream adjustedTimeString; adjustedTimeString << adjustedTime;
       unintegratedSequenceNode->SetDataNodeAtValue( unintegratedDataNode, adjustedTimeString.str() );
@@ -749,9 +741,9 @@ void vtkMRMLWorkflowSequenceNode
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
     // Get the current record
-    vtkSmartPointer< vtkDoubleArray > gaussDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-    gaussDoubleArray->SetNumberOfComponents( this->GetNthNumberOfComponents( i ) );
-    gaussDoubleArray->SetNumberOfTuples( 1 );
+    vtkSmartPointer< vtkDoubleArray > tempGaussDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
+    tempGaussDoubleArray->SetNumberOfComponents( this->GetNthNumberOfComponents( i ) );
+    tempGaussDoubleArray->SetNumberOfTuples( 1 );
 
     // Iterate over all dimensions
 	  for ( int d = 0; d < this->GetNthNumberOfComponents( i ); d++ )
@@ -812,16 +804,16 @@ void vtkMRMLWorkflowSequenceNode
       }
 
 	    // Add to the new values
-	    gaussDoubleArray->SetComponent( 0, d, weightSum / normSum );
+	    tempGaussDoubleArray->SetComponent( 0, d, weightSum / normSum );
 	  }
 
 	  // Add the new record vector to the record log
-    vtkMRMLDoubleArrayNode* gaussDataNode = vtkMRMLDoubleArrayNode::SafeDownCast( gaussSequenceNode->GetNthDataNode( i ) );
-    if ( gaussDataNode == NULL )
+    vtkDoubleArray* gaussDoubleArray = gaussSequenceNode->GetNthDoubleArray( i );
+    if ( gaussDoubleArray == NULL )
     {
       continue; 
     }
-    gaussDataNode->SetArray( gaussDoubleArray );
+    gaussDoubleArray->DeepCopy( tempGaussDoubleArray );
   }
 
   this->Copy( gaussSequenceNode );
@@ -851,13 +843,13 @@ void vtkMRMLWorkflowSequenceNode
     vtkSmartPointer< vtkDoubleArray > legendreCoefficients = vtkSmartPointer< vtkDoubleArray >::New();
     subsequence->LegendreTransformation( order, legendreCoefficients );
 
-    vtkDoubleArray* currLegendreDoubleArray = vtkDoubleArray::New(); // To be passed to double array node
+    vtkSmartPointer< vtkDoubleArray > currLegendreDoubleArray = vtkSmartPointer< vtkDoubleArray >::New(); // To be passed to double array node
     currLegendreDoubleArray->SetNumberOfComponents( legendreCoefficients->GetNumberOfTuples() * legendreCoefficients->GetNumberOfComponents() );
     currLegendreDoubleArray->SetNumberOfTuples( 1 );
 
 	  // Calculate the Legendre coefficients: 2D -> 1D
 	  int count = 0;
-	  for ( int o = 0; o <= legendreCoefficients->GetNumberOfTuples(); o++ )
+	  for ( int o = 0; o < legendreCoefficients->GetNumberOfTuples(); o++ )
     {
       for ( int d = 0; d < legendreCoefficients->GetNumberOfComponents(); d++ )
 	    {
@@ -867,12 +859,12 @@ void vtkMRMLWorkflowSequenceNode
     }
 
 	  // Add the computed values to the sequence
-    vtkMRMLDoubleArrayNode* orthogonalDataNode = vtkMRMLDoubleArrayNode::SafeDownCast( orthogonalSequenceNode->GetNthDataNode( i ) );
-    if ( orthogonalDataNode == NULL )
+    vtkDoubleArray* orthogonalDoubleArray = orthogonalSequenceNode->GetNthDoubleArray( i );
+    if ( orthogonalDoubleArray == NULL )
     {
       continue; 
     }
-    orthogonalDataNode->SetArray( currLegendreDoubleArray );
+    orthogonalDoubleArray->DeepCopy( currLegendreDoubleArray );
   }
 
   this->Copy( orthogonalSequenceNode );
@@ -926,7 +918,6 @@ void vtkMRMLWorkflowSequenceNode
   // Calculate the covariance matrix
   vnl_matrix< double >* covariance = this->CovarianceMatrix();
 
-  prinComps->Initialize();
   prinComps->SetNumberOfComponents( covariance->rows() );
   prinComps->SetNumberOfTuples( numComp );
 
@@ -966,9 +957,10 @@ void vtkMRMLWorkflowSequenceNode
       return;
     }
 
-    vtkSmartPointer< vtkDoubleArray > transformedDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-    transformedDoubleArray->SetNumberOfComponents( prinComps->GetNumberOfTuples() );
-    transformedDoubleArray->SetNumberOfTuples( 1 );
+    vtkSmartPointer< vtkDoubleArray > tempTransformedDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
+    tempTransformedDoubleArray->SetNumberOfComponents( prinComps->GetNumberOfTuples() );
+    tempTransformedDoubleArray->SetNumberOfTuples( 1 );
+    this->FillDoubleArray( tempTransformedDoubleArray, 0 );
     
     // Initialize the components of the transformed time record to be zero
 	  for ( int o = 0; o < prinComps->GetNumberOfTuples(); o++ )
@@ -976,17 +968,17 @@ void vtkMRMLWorkflowSequenceNode
 	    // Iterate over all dimensions, and perform the transformation (i.e. vector multiplication)
       for ( int d = 0; d < currDoubleArray->GetNumberOfComponents(); d++ )
 	    {
-        transformedDoubleArray->SetComponent( 0, o, transformedDoubleArray->GetComponent( 0, o ) + ( currDoubleArray->GetComponent( 0, d ) - meanArray->GetComponent( 0, d ) ) * prinComps->GetComponent( o, d ) );
+        tempTransformedDoubleArray->SetComponent( 0, o, tempTransformedDoubleArray->GetComponent( 0, o ) + ( currDoubleArray->GetComponent( 0, d ) - meanArray->GetComponent( 0, d ) ) * prinComps->GetComponent( o, d ) );
 	    }
 	  }
 
 	  // Add the computed values to the sequence
-    vtkMRMLDoubleArrayNode* transformedDataNode = vtkMRMLDoubleArrayNode::SafeDownCast( this->GetNthDataNode( i ) );
-    if ( transformedDataNode == NULL )
+    vtkDoubleArray* transformedDoubleArray = this->GetNthDoubleArray( i );
+    if ( transformedDoubleArray == NULL )
     {
       continue; 
     }
-    transformedDataNode->SetArray( transformedDoubleArray );
+    transformedDoubleArray->DeepCopy( tempTransformedDoubleArray );
   }
 
 }
@@ -996,7 +988,6 @@ void vtkMRMLWorkflowSequenceNode
 void vtkMRMLWorkflowSequenceNode
 ::fwdkmeans( int numClusters, vtkDoubleArray* centroids )
 {
-  centroids->Initialize();
   centroids->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
   centroids->SetNumberOfTuples( 0 );
   
@@ -1061,7 +1052,6 @@ void vtkMRMLWorkflowSequenceNode
 ::FindNextCentroid( vtkDoubleArray* centroids, vtkDoubleArray* nextCentroid )
 {
   // Initialize
-  nextCentroid->Initialize();
   nextCentroid->SetNumberOfComponents( centroids->GetNumberOfComponents() );
   nextCentroid->SetNumberOfTuples( 1 );
 
@@ -1201,17 +1191,16 @@ void vtkMRMLWorkflowSequenceNode
 ::RecalculateCentroids( std::vector< int > membership, int numClusters, vtkDoubleArray* centroids )
 {
   // Initialize (we need to reset everything anyway)
-  centroids->Initialize();
   centroids->SetNumberOfComponents( this->GetNthNumberOfComponents( 0 ) );
   centroids->SetNumberOfTuples( numClusters );
-
+  this->FillDoubleArray( centroids, 0 );
 
   std::vector< int > memberCount( numClusters, 0 );
 
   // Iterate over all time
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
-    vtkDoubleArray* currDoubleArray = this->GetNthDoubleArray();
+    vtkDoubleArray* currDoubleArray = this->GetNthDoubleArray( i );
     if ( currDoubleArray == NULL )
     {
       return;
@@ -1255,7 +1244,6 @@ void vtkMRMLWorkflowSequenceNode
       continue;
     }
     
-    currDoubleArray->Initialize();
     currDoubleArray->SetNumberOfComponents( 1 );
     currDoubleArray->SetNumberOfTuples( 1 );    
     currDoubleArray->SetComponent( 0, 0, membership.at( i ) );
@@ -1411,4 +1399,20 @@ void vtkMRMLWorkflowSequenceNode
     doubleArray->SetComponent( 0, 15, transformMatrix->GetElement( 3, 3 ) );
   }
 
+}
+
+
+// Helper method (since this isn't implemented in the version of VTK that Slicer uses)
+void vtkMRMLWorkflowSequenceNode
+::FillDoubleArray( vtkDoubleArray* doubleArray, double fillValue )
+{
+  if ( doubleArray == NULL )
+  {
+    return;
+  }
+
+  for ( int i = 0; i < doubleArray->GetNumberOfComponents(); i++ )
+  {
+    doubleArray->FillComponent( i, fillValue );
+  }
 }

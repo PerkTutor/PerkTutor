@@ -116,6 +116,9 @@ public:
   static void LinearTransformFromDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type );
   static void LinearTransformToDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type );
 
+  // Helper method (since this isn't implemented in the version of VTK that Slicer uses)
+  static void FillDoubleArray( vtkDoubleArray* doubleArray, double fillValue );
+
 
 protected:
 

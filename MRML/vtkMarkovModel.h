@@ -82,6 +82,7 @@ public:
   std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
+  // TODO: these methods belong in a different class?
   static std::string MarkovMatrixToXMLString( vtkDoubleArray* markovMatrix, std::string name, vtkIndent indent );
   static void MarkovMatrixFromXMLElement( vtkXMLDataElement* element, std::string name, vtkDoubleArray* markovMatrix );  
 

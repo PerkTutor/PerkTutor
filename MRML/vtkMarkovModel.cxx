@@ -1,6 +1,7 @@
 
 #include "vtkMarkovModel.h"
 #include "vtkObjectFactory.h"
+#include "vtkMRMLWorkflowSequenceNode.h"
 
 #include <string>
 #include <sstream>
@@ -191,7 +192,8 @@ void vtkMarkovModel
 {
   zeroPi->Initialize();
   zeroPi->SetNumberOfComponents( this->GetNumStates() );
-  zeroPi->SetNumberOfTuples( 1 );  
+  zeroPi->SetNumberOfTuples( 1 );
+  vtkMRMLWorkflowSequenceNode::FillDoubleArray( zeroPi, 0 );
 }
 
 
@@ -235,7 +237,8 @@ void vtkMarkovModel
 {
   zeroA->Initialize();
   zeroA->SetNumberOfComponents( this->GetNumStates() );
-  zeroA->SetNumberOfTuples( this->GetNumStates() );  
+  zeroA->SetNumberOfTuples( this->GetNumStates() );
+  vtkMRMLWorkflowSequenceNode::FillDoubleArray( zeroA, 0 );
 }
 
 
@@ -279,7 +282,8 @@ void vtkMarkovModel
 {
   zeroB->Initialize();
   zeroB->SetNumberOfComponents( this->GetNumSymbols() );
-  zeroB->SetNumberOfTuples( this->GetNumStates() );  
+  zeroB->SetNumberOfTuples( this->GetNumStates() );
+  vtkMRMLWorkflowSequenceNode::FillDoubleArray( zeroB, 0 );
 }
 
 
@@ -490,7 +494,8 @@ void vtkMarkovModel
     if ( i == 0 ) // Initial observation
     {
       this->Pi->SetComponent( 0, stateIndex, this->Pi->GetComponent( 0, stateIndex ) + 1 );
-    } else if ( prevStateIndex >= 0 ) // Subsequent observations
+    }
+    else if ( prevStateIndex >= 0 ) // Subsequent observations
     {
       this->A->SetComponent( prevStateIndex, stateIndex, this->A->GetComponent( prevStateIndex, stateIndex ) + 1 );
     }
@@ -662,7 +667,7 @@ std::string vtkMarkovModel
   xmlStream << indent << "<Matrix Type=\"" << name << "\" ";
   xmlStream << "NumberOfTuples=\"" << markovMatrix->GetNumberOfTuples() << "\" ";
   xmlStream << "NumberOfComponents=\"" << markovMatrix->GetNumberOfComponents() << "\" " << std::endl;
-  xmlStream << "MatrixValues=\"" << std::endl;
+  xmlStream << indent.GetNextIndent() << "MatrixValues=\"" << std::endl;
   
   for ( int i = 0; i < markovMatrix->GetNumberOfTuples(); i++ )
   {
@@ -672,12 +677,13 @@ std::string vtkMarkovModel
     }
     xmlStream << std::endl;
   }
-  xmlStream << "\" >" << std::endl;
+  xmlStream << indent.GetNextIndent() << "\" >" << std::endl;
 
   xmlStream << indent << "</Matrix>" << std::endl;
 
   return xmlStream.str();
 }
+
 
 void vtkMarkovModel
 ::MarkovMatrixFromXMLElement( vtkXMLDataElement* element, std::string name, vtkDoubleArray* markovMatrix )
