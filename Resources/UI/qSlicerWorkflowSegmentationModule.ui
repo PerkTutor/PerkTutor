@@ -36,7 +36,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QGroupBox" name="BufferGroupBox">
+       <widget class="QGroupBox" name="TrackedSequenceBrowserGroupBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -44,7 +44,7 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Buffer</string>
+         <string>Recording</string>
         </property>
         <property name="checkable">
          <bool>false</bool>

@@ -72,6 +72,10 @@ public:
   std::string ToXMLString( vtkIndent indent );
   void FromXMLElement( vtkXMLDataElement* element );
 
+  // Static methods to read/write double arrays
+  static std::string DoubleArrayToXMLString( vtkDoubleArray* matrix, std::string name, vtkIndent indent );
+  static void DoubleArrayFromXMLElement( vtkXMLDataElement* element, std::string name, vtkDoubleArray* matrix );  
+
 protected:
 
   vtkSmartPointer< vtkDoubleArray > Mean;

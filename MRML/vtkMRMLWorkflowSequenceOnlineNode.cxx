@@ -93,9 +93,7 @@ vtkMRMLWorkflowSequenceOnlineNode
 
 void vtkMRMLWorkflowSequenceOnlineNode
 ::DistancesOnline( vtkDoubleArray* testPoints, vtkDoubleArray* distances )
-{ 
-  // Initialize the distances
-  distances->Initialize();
+{
   distances->SetNumberOfComponents( testPoints->GetNumberOfTuples() );
   distances->SetNumberOfTuples( 1 );
   
@@ -134,7 +132,6 @@ void vtkMRMLWorkflowSequenceOnlineNode
 void vtkMRMLWorkflowSequenceOnlineNode
 ::DifferentiateOnline( int order, vtkDoubleArray* derivative )
 {
-  derivative->Initialize();
   derivative->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
   derivative->SetNumberOfTuples( 1 );
 
@@ -170,7 +167,6 @@ void vtkMRMLWorkflowSequenceOnlineNode
 void vtkMRMLWorkflowSequenceOnlineNode
 ::GaussianFilterOnline( double width, vtkDoubleArray* gauss )
 {
-  gauss->Initialize();
   gauss->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
   gauss->SetNumberOfTuples( 1 );
 
@@ -219,10 +215,6 @@ void vtkMRMLWorkflowSequenceOnlineNode
 void vtkMRMLWorkflowSequenceOnlineNode
 ::OrthogonalTransformationOnline( int window, int order, vtkDoubleArray* orthogonal )
 {
-  orthogonal->Initialize();
-  orthogonal->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
-  orthogonal->SetNumberOfTuples( 1 );
-
   // Pad the recordlog with values at the beginning only if necessary
   vtkSmartPointer< vtkMRMLWorkflowSequenceNode > subsequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
   
@@ -242,9 +234,12 @@ void vtkMRMLWorkflowSequenceOnlineNode
   vtkNew< vtkDoubleArray > legendreCoefficients;
   subsequence->LegendreTransformation( order, legendreCoefficients.GetPointer() );
 
+  orthogonal->SetNumberOfComponents( legendreCoefficients->GetNumberOfTuples() * legendreCoefficients->GetNumberOfComponents() );
+  orthogonal->SetNumberOfTuples( 1 );
+
   // Calculate the Legendre coefficients: 2D -> 1D
   int count = 0;
-  for ( int o = 0; o <= legendreCoefficients->GetNumberOfTuples(); o++ )
+  for ( int o = 0; o < legendreCoefficients->GetNumberOfTuples(); o++ )
   {
     for ( int d = 0; d < legendreCoefficients->GetNumberOfComponents(); d++ )
     {
@@ -259,7 +254,6 @@ void vtkMRMLWorkflowSequenceOnlineNode
 void vtkMRMLWorkflowSequenceOnlineNode
 ::TransformByPrincipalComponentsOnline( vtkDoubleArray* prinComps, vtkDoubleArray* meanArray, vtkDoubleArray* transformed )
 {
-  transformed->Initialize();
   transformed->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
   transformed->SetNumberOfTuples( 1 );
 
@@ -287,7 +281,6 @@ void vtkMRMLWorkflowSequenceOnlineNode
 void vtkMRMLWorkflowSequenceOnlineNode
 ::fwdkmeansTransformOnline( vtkDoubleArray* centroids, vtkDoubleArray* cluster )
 {
-  cluster->Initialize();
   cluster->SetNumberOfComponents( 1 );
   cluster->SetNumberOfTuples( 1 );
 

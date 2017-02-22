@@ -2,6 +2,7 @@
 #include "vtkMarkovModel.h"
 #include "vtkObjectFactory.h"
 #include "vtkMRMLWorkflowSequenceNode.h"
+#include "vtkMRMLWorkflowTrainingNode.h"
 
 #include <string>
 #include <sstream>
@@ -173,7 +174,6 @@ vtkDoubleArray* vtkMarkovModel
 void vtkMarkovModel
 ::GetLogPi( vtkDoubleArray* logPi )
 {
-  logPi->Initialize();
   logPi->SetNumberOfComponents( this->Pi->GetNumberOfComponents() );
   logPi->SetNumberOfTuples( this->Pi->GetNumberOfTuples() );  
 
@@ -190,7 +190,6 @@ void vtkMarkovModel
 void vtkMarkovModel
 ::GetZeroPi( vtkDoubleArray* zeroPi )
 {
-  zeroPi->Initialize();
   zeroPi->SetNumberOfComponents( this->GetNumStates() );
   zeroPi->SetNumberOfTuples( 1 );
   vtkMRMLWorkflowSequenceNode::FillDoubleArray( zeroPi, 0 );
@@ -202,7 +201,7 @@ void vtkMarkovModel
 {
   if ( newA->GetNumberOfComponents() != this->GetNumStates() || newA->GetNumberOfTuples() != this->GetNumStates() )
   {
-    vtkWarningMacro( "Initial state vector A not set. Input dimensions not consistent with number of states and symbols." );
+    vtkWarningMacro( "Transition matrix A not set. Input dimensions not consistent with number of states and symbols." );
     return;
   }
   this->A = newA;
@@ -218,7 +217,6 @@ vtkDoubleArray* vtkMarkovModel
 void vtkMarkovModel
 ::GetLogA( vtkDoubleArray* logA )
 {
-  logA->Initialize();
   logA->SetNumberOfComponents( this->A->GetNumberOfComponents() );
   logA->SetNumberOfTuples( this->A->GetNumberOfTuples() );  
 
@@ -235,7 +233,6 @@ void vtkMarkovModel
 void vtkMarkovModel
 ::GetZeroA( vtkDoubleArray* zeroA )
 {
-  zeroA->Initialize();
   zeroA->SetNumberOfComponents( this->GetNumStates() );
   zeroA->SetNumberOfTuples( this->GetNumStates() );
   vtkMRMLWorkflowSequenceNode::FillDoubleArray( zeroA, 0 );
@@ -247,7 +244,7 @@ void vtkMarkovModel
 {
   if ( newB->GetNumberOfTuples() != this->GetNumStates() || newB->GetNumberOfComponents() != this->GetNumSymbols() )
   {
-    vtkWarningMacro( "Initial state vector B not set. Input dimensions not consistent with number of states and symbols." );
+    vtkWarningMacro( "Observation matrix B not set. Input dimensions not consistent with number of states and symbols." );
     return;
   }
   this->B = newB;
@@ -263,7 +260,6 @@ vtkDoubleArray* vtkMarkovModel
 void vtkMarkovModel
 ::GetLogB( vtkDoubleArray* logB )
 {
-  logB->Initialize();
   logB->SetNumberOfComponents( this->B->GetNumberOfComponents() );
   logB->SetNumberOfTuples( this->B->GetNumberOfTuples() );  
 
@@ -280,7 +276,6 @@ void vtkMarkovModel
 void vtkMarkovModel
 ::GetZeroB( vtkDoubleArray* zeroB )
 {
-  zeroB->Initialize();
   zeroB->SetNumberOfComponents( this->GetNumSymbols() );
   zeroB->SetNumberOfTuples( this->GetNumStates() );
   vtkMRMLWorkflowSequenceNode::FillDoubleArray( zeroB, 0 );
@@ -299,7 +294,7 @@ std::string vtkMarkovModel
 
   std::stringstream xmlstring;
 
-  xmlstring << indent << "<MarkovModel Type=\"Markov\" >" << std::endl;
+  xmlstring << indent << "<MarkovModel>" << std::endl;
 
   // State names
   xmlstring << indent.GetNextIndent() << "<States";
@@ -322,13 +317,13 @@ std::string vtkMarkovModel
   xmlstring << "\" />" << std::endl;
 
   // Pi
-  xmlstring << this->MarkovMatrixToXMLString( this->Pi, "MarkovPi", indent.GetNextIndent() );
+  xmlstring << vtkMRMLWorkflowTrainingNode::DoubleArrayToXMLString( this->Pi, "MarkovPi", indent.GetNextIndent() );
 
   // A
-  xmlstring << this->MarkovMatrixToXMLString( this->A, "MarkovA", indent.GetNextIndent() );
+  xmlstring << vtkMRMLWorkflowTrainingNode::DoubleArrayToXMLString( this->A, "MarkovA", indent.GetNextIndent() );
 
   // B
-  xmlstring << this->MarkovMatrixToXMLString( this->B, "MarkovB", indent.GetNextIndent() );
+  xmlstring << vtkMRMLWorkflowTrainingNode::DoubleArrayToXMLString( this->B, "MarkovB", indent.GetNextIndent() );
   
   xmlstring << indent << "</MarkovModel>" << std::endl;
 
@@ -340,7 +335,7 @@ void vtkMarkovModel
 ::FromXMLElement( vtkXMLDataElement* element )
 {
 
-  if ( strcmp( element->GetName(), "MarkovModel" ) != 0 || element->GetAttribute( "Type" ) == NULL || strcmp( element->GetAttribute( "Type" ), "Markov" ) != 0 )
+  if ( strcmp( element->GetName(), "MarkovModel" ) != 0 )
   {
     return;  // If it's not a "MarkovModel"
   }
@@ -381,25 +376,19 @@ void vtkMarkovModel
 	    }
 	  }
 
-    if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovPi" ) == 0 )
+    if ( strcmp( childElement->GetName(), "Matrix" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovPi" ) == 0 )
 	  {
-      vtkNew< vtkDoubleArray > pi;
-      this->MarkovMatrixFromXMLElement( childElement, "MarkovPi", pi.GetPointer() );
-      this->SetPi( pi.GetPointer() );
+      vtkMRMLWorkflowTrainingNode::DoubleArrayFromXMLElement( childElement, "MarkovPi", this->Pi );
 	  }
 
-	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovA" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Matrix" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovA" ) == 0 )
 	  {
-      vtkNew< vtkDoubleArray > a;
-      this->MarkovMatrixFromXMLElement( childElement, "MarkovA", a.GetPointer() );
-      this->SetA( a.GetPointer() );
+      vtkMRMLWorkflowTrainingNode::DoubleArrayFromXMLElement( childElement, "MarkovA", this->A );
 	  }
 
-	  if ( strcmp( childElement->GetName(), "Vectors" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovB" ) == 0 )
+	  if ( strcmp( childElement->GetName(), "Matrix" ) == 0 && childElement->GetAttribute( "Type" ) != NULL && strcmp( childElement->GetAttribute( "Type" ), "MarkovB" ) == 0 )
 	  {
-      vtkNew< vtkDoubleArray > b;
-      this->MarkovMatrixFromXMLElement( childElement, "MarkovB", b.GetPointer() );
-      this->SetB( b.GetPointer() );
+      vtkMRMLWorkflowTrainingNode::DoubleArrayFromXMLElement( childElement, "MarkovB", this->B );
 	  }
 
   }
@@ -655,68 +644,4 @@ void vtkMarkovModel
   }
 
   // The states are set in the original nodes in the original sequence
-}
-
-
-
-std::string vtkMarkovModel
-::MarkovMatrixToXMLString( vtkDoubleArray* markovMatrix, std::string name, vtkIndent indent )
-{
-  std::stringstream xmlStream;
-
-  xmlStream << indent << "<Matrix Type=\"" << name << "\" ";
-  xmlStream << "NumberOfTuples=\"" << markovMatrix->GetNumberOfTuples() << "\" ";
-  xmlStream << "NumberOfComponents=\"" << markovMatrix->GetNumberOfComponents() << "\" " << std::endl;
-  xmlStream << indent.GetNextIndent() << "MatrixValues=\"" << std::endl;
-  
-  for ( int i = 0; i < markovMatrix->GetNumberOfTuples(); i++ )
-  {
-    for ( int j = 0; j < markovMatrix->GetNumberOfComponents(); j++ )
-    {
-      xmlStream << indent.GetNextIndent() << markovMatrix->GetComponent( i, j ) << " ";
-    }
-    xmlStream << std::endl;
-  }
-  xmlStream << indent.GetNextIndent() << "\" >" << std::endl;
-
-  xmlStream << indent << "</Matrix>" << std::endl;
-
-  return xmlStream.str();
-}
-
-
-void vtkMarkovModel
-::MarkovMatrixFromXMLElement( vtkXMLDataElement* element, std::string name, vtkDoubleArray* markovMatrix )
-{
-  if ( element == NULL || element->GetAttribute( "Type" ) == NULL || name.compare( element->GetAttribute( "Type" ) ) != 0 )
-  {
-    return; // Make sure we match the type of matrix (Pi/A/B) that we are trying to read
-  }
-  
-  // Add each element
-  std::stringstream xmlStream;
-
-  markovMatrix->Initialize();
-  
-  xmlStream.clear();
-  xmlStream << element->GetAttribute( "NumberOfComponents" );
-  double numberOfComponents; xmlStream >> numberOfComponents;
-  markovMatrix->SetNumberOfComponents( numberOfComponents );
-
-  xmlStream.clear();
-  xmlStream << element->GetAttribute( "NumberOfTuples" );
-  double numberOfTuples; xmlStream >> numberOfTuples;
-  markovMatrix->SetNumberOfTuples( numberOfTuples );
-
-  xmlStream.clear();
-  xmlStream << element->GetAttribute( "MatrixValues" );
-
-  for ( int i = 0; i < markovMatrix->GetNumberOfTuples(); i++ )
-  {
-    for ( int j = 0; j < markovMatrix->GetNumberOfComponents(); j++ )
-    {
-      double currMatrixValue; xmlStream >> currMatrixValue;
-      markovMatrix->SetComponent( i, j, currMatrixValue );
-    }
-  }
 }

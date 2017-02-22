@@ -161,9 +161,9 @@ std::string vtkMRMLWorkflowTrainingNode
   
   xmlstring << indent << "<WorkflowTraining>" << std::endl;
     
-  xmlstring << vtkMarkovModel::MarkovMatrixToXMLString( this->PrinComps, "PrinComps", indent.GetNextIndent() ); // TODO: Better way to re-use writing vtkDoubleArray to file?
-  xmlstring << vtkMarkovModel::MarkovMatrixToXMLString( this->Mean, "Mean", indent.GetNextIndent() );
-  xmlstring << vtkMarkovModel::MarkovMatrixToXMLString( this->Centroids, "Centroids", indent.GetNextIndent() );
+  xmlstring << vtkMRMLWorkflowTrainingNode::DoubleArrayToXMLString( this->PrinComps, "PrinComps", indent.GetNextIndent() ); // TODO: Better way to re-use writing vtkDoubleArray to file?
+  xmlstring << vtkMRMLWorkflowTrainingNode::DoubleArrayToXMLString( this->Mean, "Mean", indent.GetNextIndent() );
+  xmlstring << vtkMRMLWorkflowTrainingNode::DoubleArrayToXMLString( this->Centroids, "Centroids", indent.GetNextIndent() );
   xmlstring << this->Markov->ToXMLString( indent.GetNextIndent() );
   
   xmlstring << indent << "</WorkflowTraining>" << std::endl;
@@ -189,32 +189,24 @@ void vtkMRMLWorkflowTrainingNode
   {
 
     vtkXMLDataElement* noteElement = element->GetNestedElement( i );
-    if ( strcmp( noteElement->GetName(), "Vectors" ) != 0 && strcmp( noteElement->GetName(), "MarkovModel" ) != 0 || noteElement->GetAttribute( "Type" ) == NULL )
-    {
-      continue;  // If it's not a "Parameter" or "MarkovModel", jump to the next.
-    }
-
     const char* elementType = noteElement->GetAttribute( "Type" );
+    if ( strcmp( noteElement->GetName(), "Matrix" ) == 0 && noteElement->GetAttribute( "Type" ) != NULL )
+    {
+      if ( strcmp( elementType, "Mean" ) == 0 )
+      {
+        vtkMRMLWorkflowTrainingNode::DoubleArrayFromXMLElement( noteElement, "Mean", this->Mean );
+      }
+	    if ( strcmp( elementType, "PrinComps" ) == 0 )
+      {
+        vtkMRMLWorkflowTrainingNode::DoubleArrayFromXMLElement( noteElement, "PrinComps", this->PrinComps );
+      }
+      if ( strcmp( elementType, "Centroids" ) == 0 )
+      {
+        vtkMRMLWorkflowTrainingNode::DoubleArrayFromXMLElement( noteElement, "Centroids", this->Centroids );
+      }
+    }
 
-    if ( strcmp( elementType, "Mean" ) == 0 )
-    {
-      vtkNew< vtkDoubleArray > mean;
-      vtkMarkovModel::MarkovMatrixFromXMLElement( noteElement, "Mean", mean.GetPointer() );
-      this->SetMean( mean.GetPointer() );
-    }
-	  if ( strcmp( elementType, "PrinComps" ) == 0 )
-    {
-      vtkNew< vtkDoubleArray > prinComps;
-      vtkMarkovModel::MarkovMatrixFromXMLElement( noteElement, "PrinComps", prinComps.GetPointer() );
-      this->SetPrinComps( prinComps.GetPointer() );
-    }
-    if ( strcmp( elementType, "Centroids" ) == 0 )
-    {
-      vtkNew< vtkDoubleArray > centroids;
-      vtkMarkovModel::MarkovMatrixFromXMLElement( noteElement, "Centroids", centroids.GetPointer() );
-      this->SetCentroids( centroids.GetPointer() );
-    }
-	  if ( strcmp( elementType, "Markov" ) == 0 )
+	  if ( strcmp( noteElement->GetName(), "MarkovModel" ) == 0 )
     {
 	    this->Markov->FromXMLElement( noteElement );
 	  }
@@ -223,4 +215,67 @@ void vtkMRMLWorkflowTrainingNode
 
   this->EndModify( startModifyState );
 
+}
+
+
+std::string vtkMRMLWorkflowTrainingNode
+::DoubleArrayToXMLString( vtkDoubleArray* matrix, std::string name, vtkIndent indent )
+{
+  std::stringstream xmlStream;
+
+  xmlStream << indent << "<Matrix Type=\"" << name << "\" ";
+  xmlStream << "NumberOfTuples=\"" << matrix->GetNumberOfTuples() << "\" ";
+  xmlStream << "NumberOfComponents=\"" << matrix->GetNumberOfComponents() << "\" " << std::endl;
+  xmlStream << indent.GetNextIndent() << "MatrixValues=\"" << std::endl;
+  
+  for ( int i = 0; i < matrix->GetNumberOfTuples(); i++ )
+  {
+    for ( int j = 0; j < matrix->GetNumberOfComponents(); j++ )
+    {
+      xmlStream << indent.GetNextIndent() << matrix->GetComponent( i, j ) << " ";
+    }
+    xmlStream << std::endl;
+  }
+  xmlStream << indent.GetNextIndent() << "\" >" << std::endl;
+
+  xmlStream << indent << "</Matrix>" << std::endl;
+
+  return xmlStream.str();
+}
+
+
+void vtkMRMLWorkflowTrainingNode
+::DoubleArrayFromXMLElement( vtkXMLDataElement* element, std::string name, vtkDoubleArray* matrix )
+{
+  if ( element == NULL || element->GetAttribute( "Type" ) == NULL || name.compare( element->GetAttribute( "Type" ) ) != 0 )
+  {
+    return; // Make sure we match the type of matrix (Pi/A/B) that we are trying to read
+  }
+  
+  // Add each element
+  std::stringstream xmlStream;
+
+  matrix->Initialize();
+  
+  xmlStream.clear();
+  xmlStream << element->GetAttribute( "NumberOfComponents" );
+  double numberOfComponents; xmlStream >> numberOfComponents;
+  matrix->SetNumberOfComponents( numberOfComponents );
+
+  xmlStream.clear();
+  xmlStream << element->GetAttribute( "NumberOfTuples" );
+  double numberOfTuples; xmlStream >> numberOfTuples;
+  matrix->SetNumberOfTuples( numberOfTuples );
+
+  xmlStream.clear();
+  xmlStream << element->GetAttribute( "MatrixValues" );
+
+  for ( int i = 0; i < matrix->GetNumberOfTuples(); i++ )
+  {
+    for ( int j = 0; j < matrix->GetNumberOfComponents(); j++ )
+    {
+      double currMatrixValue; xmlStream >> currMatrixValue;
+      matrix->SetComponent( i, j, currMatrixValue );
+    }
+  }
 }

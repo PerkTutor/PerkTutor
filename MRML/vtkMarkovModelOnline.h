@@ -44,7 +44,7 @@ public:
 
 protected:
 
-  vtkMRMLSequenceNode* Sequence;
+  vtkSmartPointer< vtkMRMLSequenceNode > Sequence;
   vtkSmartPointer< vtkDoubleArray > CurrDelta;
   vtkSmartPointer< vtkDoubleArray > CurrPsi;
 

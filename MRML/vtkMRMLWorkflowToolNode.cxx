@@ -539,12 +539,12 @@ void vtkMRMLWorkflowToolNode
 
   // Use Markov Model calculate states to come up with the current most likely state...
   // Now, we will keep a recording of the workflow segmentation
-  vtkMRMLNode* currWorkflowSequenceNode = vtkMRMLNode::SafeDownCast( this->RawWorkflowSequence->GetNthDataNode( this->RawWorkflowSequence->GetNumberOfDataNodes() - 1 ) );
-  this->CentroidWorkflowSequence->AddMarkovModelAttributesOnline( currWorkflowSequenceNode );
-  this->GetWorkflowTrainingNode()->GetMarkov()->CalculateStateOnline( currWorkflowSequenceNode, newTimeString );
-  currWorkflowSequenceNode->SetAttribute( "Message", currWorkflowSequenceNode->GetAttribute( "MarkovState" ) );
+  vtkMRMLNode* currCentroidWorkflowSequenceNode = vtkMRMLNode::SafeDownCast( this->CentroidWorkflowSequence->GetNthDataNode( this->RawWorkflowSequence->GetNumberOfDataNodes() - 1 ) );
+  this->CentroidWorkflowSequence->AddMarkovModelAttributesOnline( currCentroidWorkflowSequenceNode );
+  this->GetWorkflowTrainingNode()->GetMarkov()->CalculateStateOnline( currCentroidWorkflowSequenceNode, newTimeString );
+  currCentroidWorkflowSequenceNode->SetAttribute( "Message", currCentroidWorkflowSequenceNode->GetAttribute( "MarkovState" ) );
 
-  this->SetCurrentTask( this->GetWorkflowProcedureNode()->GetTask( currWorkflowSequenceNode->GetAttribute( "Message" ) ) );
+  this->SetCurrentTask( this->GetWorkflowProcedureNode()->GetTask( currCentroidWorkflowSequenceNode->GetAttribute( "Message" ) ) );
 }
 
 

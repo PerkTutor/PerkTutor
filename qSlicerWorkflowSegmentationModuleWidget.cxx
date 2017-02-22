@@ -110,7 +110,7 @@ void qSlicerWorkflowSegmentationModuleWidget
 
   // Adding embedded widgets
   d->BrowserWidget = new qSlicerTrackedSequenceBrowserWidget();
-  d->BufferGroupBox->layout()->addWidget( d->BrowserWidget );
+  d->TrackedSequenceBrowserGroupBox->layout()->addWidget( d->BrowserWidget );
   d->BrowserWidget->setMRMLScene( NULL );
   d->BrowserWidget->setMRMLScene( d->logic()->GetMRMLScene() );
   d->BrowserWidget->setTrackedSequenceBrowserNode( NULL ); // Do not automatically select a node on entering the widget
@@ -136,9 +136,6 @@ void qSlicerWorkflowSegmentationModuleWidget
   d->ToolSummaryWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
   // Setting up connections for embedded widgets
-  // Connect the child widget to the transform buffer node change event (they already observe the modified event)
-
-
 }
 
 
@@ -154,13 +151,13 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   // Module node selection
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( mrmlNodeChanged( vtkMRMLNode* ) ) );
 
-  // Transform buffer
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ) );
+  // Tracked sequence browser
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), this, SLOT( onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ) );
 
   // Display
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTrackedSequenceBrowserNode( vtkMRMLNode* ) ) );
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
-  connect( d->BrowserWidget, SIGNAL( transformBufferNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTransformBufferNode( vtkMRMLNode* ) ) );
+  connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), d->MessagesWidget, SLOT( setTrackedSequenceBrowserNode( vtkMRMLNode* ) ) );
   
   // Advanced
   connect( d->RefreshButton, SIGNAL( clicked() ), this, SLOT( createWorkflowDisplaysForExistingNodes() ) );

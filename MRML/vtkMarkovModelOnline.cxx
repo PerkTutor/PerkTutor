@@ -66,8 +66,8 @@ void vtkMarkovModelOnline
   if ( this->Sequence->GetNumberOfDataNodes() == 0 )
   {
     this->CurrDelta = vtkSmartPointer< vtkDoubleArray >::New();
-    this->CurrDelta->SetNumberOfTuples( 1 );
     this->CurrDelta->SetNumberOfComponents( this->GetNumStates() );
+    this->CurrDelta->SetNumberOfTuples( 1 );    
 
     for ( int j = 0; j < this->GetNumStates(); j++ )
 	  {
