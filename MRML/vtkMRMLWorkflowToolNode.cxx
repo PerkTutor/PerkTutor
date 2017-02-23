@@ -304,7 +304,6 @@ bool vtkMRMLWorkflowToolNode
 
     vtkSmartPointer< vtkMRMLWorkflowSequenceNode > currFilterWorkflowSequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
     currFilterWorkflowSequence->Copy( currWorkflowSequence );
-
     currFilterWorkflowSequence->GaussianFilter( this->GetWorkflowInputNode()->GetFilterWidth() );
     filterWorkflowSequences->AddItem( currFilterWorkflowSequence );
   }

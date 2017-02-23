@@ -141,6 +141,16 @@ void qSlicerWorkflowToolSummaryWidget
     return;
   }
 
+  // Add dummy progress dialog to indicate that training takes a long time
+  QProgressDialog* trainingProgressDialog = new QProgressDialog( this );
+  trainingProgressDialog->setModal( true );
+  trainingProgressDialog->setLabelText( "Please wait while training (this may take several minutes)..." );
+  trainingProgressDialog->setRange( 0, 0 );
+  trainingProgressDialog->setCancelButton( NULL );
+  trainingProgressDialog->show();
+  trainingProgressDialog->setValue( 1 );
+  
+
   vtkNew< vtkCollection > trainingTrackedSequenceBrowserNodeCollection;
   
   QList< vtkMRMLNode* > trainingTrackedSequenceBrowserNodeItr = d->TrackedSequenceBrowserComboBox->checkedNodes();
@@ -151,6 +161,8 @@ void qSlicerWorkflowToolSummaryWidget
   }
 
   this->WorkflowSegmentationLogic->TrainAllTools( this->WorkflowSegmentationNode, trainingTrackedSequenceBrowserNodeCollection.GetPointer() );
+
+  trainingProgressDialog->close(); // automatically deleted
 }
 
 

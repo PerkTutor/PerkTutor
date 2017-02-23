@@ -441,7 +441,6 @@ void vtkMRMLWorkflowSequenceNode
 	  for ( int d = 0; d < meanArray->GetNumberOfComponents(); d++ )
 	  {
       meanArray->SetComponent( 0, d, meanArray->GetComponent( 0, d ) + currDoubleArray->GetComponent( 0, d ) );
-      vtkWarningMacro( << currDoubleArray->GetComponent( 0, d ) << ", " );
 	  }
 
   }

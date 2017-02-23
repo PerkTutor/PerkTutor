@@ -50,12 +50,10 @@ public slots:
 
 protected slots:
 
-  virtual void onToolSelectionsChanged();
-  
+  virtual void onToolSelectionsChanged();  
   void onTrainButtonClicked();
 
   void updateWidgetFromMRML();
-
 
 protected:
 

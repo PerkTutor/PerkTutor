@@ -178,7 +178,7 @@ void qSlicerWorkflowGuideDisplayWidget
     vtkWorkflowTask* checkTask = this->WorkflowToolNode->GetWorkflowProcedureNode()->GetTask( orderedTaskStrings.at( i ) );
 
     std::stringstream taskString;
-    taskString << checkTask->GetName() << ": " << checkTask->GetInstruction() << "."; 
+    taskString << checkTask->GetName() << ": " << checkTask->GetInstruction(); 
     QTableWidgetItem* taskItem = new QTableWidgetItem( QString::fromStdString( taskString.str() ) );
 
     QFont taskFont;
