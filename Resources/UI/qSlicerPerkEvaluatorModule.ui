@@ -66,7 +66,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_8">
        <item>
-        <widget class="QGroupBox" name="BufferGroupBox">
+        <widget class="QGroupBox" name="TrackedSequenceBrowserGroupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -80,7 +80,7 @@
           </size>
          </property>
          <property name="title">
-          <string>Buffer</string>
+          <string>Recording</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_10"/>
         </widget>
@@ -146,8 +146,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
-        <height>735</height>
+        <width>318</width>
+        <height>181</height>
        </rect>
       </property>
       <attribute name="label">
@@ -490,8 +490,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
-        <height>735</height>
+        <width>357</width>
+        <height>143</height>
        </rect>
       </property>
       <attribute name="label">

@@ -460,7 +460,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   // Adding the embedded widgets
   d->BrowserWidget = new qSlicerTrackedSequenceBrowserWidget();
-  d->BufferGroupBox->layout()->addWidget( d->BrowserWidget );
+  d->TrackedSequenceBrowserGroupBox->layout()->addWidget( d->BrowserWidget );
   d->BrowserWidget->setMRMLScene( NULL );
   d->BrowserWidget->setMRMLScene( d->logic()->GetMRMLScene() );
   d->BrowserWidget->setTrackedSequenceBrowserNode( NULL ); // Do not automatically select a node on entering the widget
