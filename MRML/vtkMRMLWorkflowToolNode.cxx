@@ -603,7 +603,8 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
 
       for ( int k = 0; k < taskNames.size(); k++ )
       {
-        if ( taskNames.at( k ).compare( currDoubleArrayNode->GetAttribute( "Message" ) ) == 0 )
+        if ( currDoubleArrayNode->GetAttribute( "Message" ) != NULL
+          && taskNames.at( k ).compare( currDoubleArrayNode->GetAttribute( "Message" ) ) == 0 )
 	      {
 	        taskProportions[ taskNames.at( k ) ]++;
 	        totalRecords++;

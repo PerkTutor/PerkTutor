@@ -229,6 +229,10 @@ void vtkMRMLWorkflowSequenceNode
 
   }
 
+  // Only get the subsequence that actually has relevant messages
+  vtkNew< vtkMRMLWorkflowSequenceNode > relevantSubsequence;
+  this->GetLabelledSubsequence( relevantMessages, relevantSubsequence.GetPointer() );
+  this->Copy( relevantSubsequence.GetPointer() );
 }
 
 
@@ -256,7 +260,9 @@ void vtkMRMLWorkflowSequenceNode
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {
     vtkMRMLNode* currentDataNode = this->GetNthDataNode( i );
-    if ( currentDataNode == NULL || strcmp( currentDataNode->GetAttribute( "Message" ), "" ) == 0 )
+    if ( currentDataNode == NULL
+      || currentDataNode->GetAttribute( "Message" ) == NULL
+      || strcmp( currentDataNode->GetAttribute( "Message" ), "" ) == 0 )
     {
       continue;
     }
