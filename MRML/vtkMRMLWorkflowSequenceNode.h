@@ -75,7 +75,7 @@ public:
   void GetSubsequence( int startItemNumber, int endItemNumber, vtkMRMLWorkflowSequenceNode* subsequence );
   void GetLabelledSubsequence( std::vector< std::string > labels, vtkMRMLWorkflowSequenceNode* subsequence );
   
-  void Concatenate( vtkMRMLWorkflowSequenceNode* sequence );
+  void Concatenate( vtkMRMLWorkflowSequenceNode* sequence, bool enforceUniqueIndexValues = false );
   void ConcatenateValues( vtkMRMLWorkflowSequenceNode* sequence );
   void ConcatenateValues( vtkDoubleArray* doubleArray );
   void PadStart( int window );

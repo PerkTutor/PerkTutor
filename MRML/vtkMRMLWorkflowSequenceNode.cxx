@@ -283,8 +283,10 @@ void vtkMRMLWorkflowSequenceNode
 
 
 void vtkMRMLWorkflowSequenceNode
-::Concatenate( vtkMRMLWorkflowSequenceNode* sequence )
+::Concatenate( vtkMRMLWorkflowSequenceNode* sequence, bool enforceUniqueIndexValues /* = false */ )
 {
+  // Note: If there are identical indices in the two sequences, there will only be one instance of it in the resulting concatenated sequence.
+  // It will be the other sequence's node at that index
   // Handle some edge cases, ensuring that both sequences have at least one item
   if ( sequence->GetNumberOfDataNodes() == 0 )
   {
@@ -303,10 +305,35 @@ void vtkMRMLWorkflowSequenceNode
     return;
   }
 
+  // Create a copy for grabbing indices from
+  vtkNew< vtkMRMLWorkflowSequenceNode > tempConcatenatedSequence;
+
+  // Note: This works if the index is numeric or text
+  int uniqueIndexInt = 0;
+  for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
+  {
+    std::string indexValue = this->GetNthIndexValue( i );
+    if ( enforceUniqueIndexValues )
+    {
+      std::stringstream uniqueIndexStream; uniqueIndexStream << uniqueIndexInt;
+      indexValue = uniqueIndexStream.str();
+      uniqueIndexInt++;
+    }
+    tempConcatenatedSequence->SetDataNodeAtValue( this->GetNthDataNode( i ), indexValue ); // OK because the data node is always deep copied
+  }
   for ( int i = 0; i < sequence->GetNumberOfDataNodes(); i++ )
   {
-    this->SetDataNodeAtValue( sequence->GetNthDataNode( i ), sequence->GetNthIndexValue( i ) ); // OK because the data node is always deep copied
+    std::string indexValue = sequence->GetNthIndexValue( i );
+    if ( enforceUniqueIndexValues )
+    {
+      std::stringstream uniqueIndexStream; uniqueIndexStream << uniqueIndexInt;
+      indexValue = uniqueIndexStream.str();
+      uniqueIndexInt++;
+    }
+    tempConcatenatedSequence->SetDataNodeAtValue( sequence->GetNthDataNode( i ), indexValue ); // OK because the data node is always deep copied
   }
+
+  this->Copy( tempConcatenatedSequence.GetPointer() );
 }
 
 
@@ -412,10 +439,11 @@ void vtkMRMLWorkflowSequenceNode
   
   // It will be sorted automatically
   // But complexity will be better if we are always adding to the front
+  double initialTime = this->GetNthIndexValueAsDouble( 0 ); // Need this out front because the initial time will keep changing as we add preceding items
   for ( int i = 1; i <= window; i++ )
   {
     std::stringstream timeStream;
-    timeStream << ( this->GetNthIndexValueAsDouble( 0 ) - i * deltaTime );
+    timeStream << ( initialTime - i * deltaTime );
 
     this->SetDataNodeAtValue( initialNode, timeStream.str() ); // Automatically deep copies
   }
@@ -907,10 +935,20 @@ vnl_matrix< double >* vtkMRMLWorkflowSequenceNode
 	    {                
         double meanSubtractedDimension1 = currDoubleArray->GetComponent( 0, d1 ) - meanArray->GetComponent( 0, d1 );
         double meanSubtractedDimension2 = currDoubleArray->GetComponent( 0, d2 ) - meanArray->GetComponent( 0, d2 );
-	      covariance->put( d1, d2, covariance->get( d1, d2 ) + meanSubtractedDimension1 * meanSubtractedDimension2 / this->GetNumberOfDataNodes() ); // Division by number of records is distributed
+	      covariance->put( d1, d2, covariance->get( d1, d2 ) + meanSubtractedDimension1 * meanSubtractedDimension2 );
 	    }
 	  }
   }
+
+  // Divide by the number of data nodes
+  for ( int d1 = 0; d1 < covariance->rows(); d1++ )
+  {
+    for ( int d2 = 0; d2 < covariance->columns(); d2++ )
+	  {                
+	    covariance->put( d1, d2, covariance->get( d1, d2 ) / this->GetNumberOfDataNodes() );
+	  }
+	}
+
 
   return covariance;
 }

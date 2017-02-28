@@ -365,8 +365,7 @@ bool vtkMRMLWorkflowToolNode
       continue;
     }
 
-    concatenatedOrthogonalWorkflowSequence->Concatenate( currOrthogonalWorkflowSequence );
-
+    concatenatedOrthogonalWorkflowSequence->Concatenate( currOrthogonalWorkflowSequence, true );
   }
 
   // Calculate PCA transform
