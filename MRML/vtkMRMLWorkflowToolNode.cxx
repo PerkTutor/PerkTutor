@@ -509,15 +509,21 @@ void vtkMRMLWorkflowToolNode
   this->FilterWorkflowSequence->SetDataNodeAtValue( gaussDoubleArrayNode, newTimeString );
   
   // Concatenate with derivative (velocity, acceleration, etc...)
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > derivativeDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
-  vtkDoubleArray* derivativeDoubleArray = derivativeDoubleArrayNode->GetArray();
+  
+  vtkNew< vtkDoubleArray > derivativeDoubleArray;
   derivativeDoubleArray->DeepCopy( this->FilterWorkflowSequence->GetNthDoubleArray( this->FilterWorkflowSequence->GetNumberOfDataNodes() - 1 ) );
   for ( int d = 1; d <= this->GetWorkflowInputNode()->GetDerivative(); d++ )
-  {
+  {    
+    vtkSmartPointer< vtkDoubleArray > tempDerivativeDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
+    tempDerivativeDoubleArray->DeepCopy( derivativeDoubleArray.GetPointer() );
+
     vtkSmartPointer< vtkDoubleArray > currDerivativeDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
     this->FilterWorkflowSequence->DifferentiateOnline( d, currDerivativeDoubleArray );
-    derivativeDoubleArray->InsertTuples( derivativeDoubleArray->GetNumberOfTuples(), currDerivativeDoubleArray->GetNumberOfTuples(), 0, currDerivativeDoubleArray );
+
+    vtkMRMLWorkflowSequenceNode::ConcatenateDoubleArrays( tempDerivativeDoubleArray, currDerivativeDoubleArray, derivativeDoubleArray.GetPointer() );
   }
+  vtkSmartPointer< vtkMRMLDoubleArrayNode > derivativeDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  derivativeDoubleArrayNode->GetArray()->DeepCopy( derivativeDoubleArray.GetPointer() );
   this->DerivativeWorkflowSequence->SetDataNodeAtValue( derivativeDoubleArrayNode, newTimeString );
 
   // Apply orthogonal transformation

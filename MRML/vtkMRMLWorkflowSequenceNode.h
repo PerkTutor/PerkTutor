@@ -118,6 +118,7 @@ public:
 
   // Helper method (since this isn't implemented in the version of VTK that Slicer uses)
   static void FillDoubleArray( vtkDoubleArray* doubleArray, double fillValue );
+  static void ConcatenateDoubleArrays( vtkDoubleArray* inArray1, vtkDoubleArray* inArray2, vtkDoubleArray* outArray );
 
 
 protected:

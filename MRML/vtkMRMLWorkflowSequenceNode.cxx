@@ -357,20 +357,7 @@ void vtkMRMLWorkflowSequenceNode
     }
 
     vtkSmartPointer< vtkDoubleArray > concatenatedDoubleArray = vtkSmartPointer< vtkDoubleArray >::New();
-    concatenatedDoubleArray->SetNumberOfComponents( thisDoubleArray->GetNumberOfComponents() + sequenceDoubleArray->GetNumberOfComponents() );
-    concatenatedDoubleArray->SetNumberOfTuples( 1 );
-
-    int concatenationIndex = 0;
-    for ( int j = 0; j < thisDoubleArray->GetNumberOfComponents(); j++ )
-    {
-      concatenatedDoubleArray->SetComponent( 0, concatenationIndex, thisDoubleArray->GetComponent( 0, j ) );
-      concatenationIndex++;
-    }
-    for ( int j = 0; j < sequenceDoubleArray->GetNumberOfComponents(); j++ )
-    {
-      concatenatedDoubleArray->SetComponent( 0, concatenationIndex, sequenceDoubleArray->GetComponent( 0, j ) );
-      concatenationIndex++;
-    }
+    vtkMRMLWorkflowSequenceNode::ConcatenateDoubleArrays( thisDoubleArray, sequenceDoubleArray, concatenatedDoubleArray );
 
     thisDoubleArray->DeepCopy( concatenatedDoubleArray );
   }
@@ -1457,5 +1444,30 @@ void vtkMRMLWorkflowSequenceNode
   for ( int i = 0; i < doubleArray->GetNumberOfComponents(); i++ )
   {
     doubleArray->FillComponent( i, fillValue );
+  }
+}
+
+
+void vtkMRMLWorkflowSequenceNode
+::ConcatenateDoubleArrays( vtkDoubleArray* inArray1, vtkDoubleArray* inArray2, vtkDoubleArray* outArray )
+{
+  if ( inArray1 == NULL || inArray2 == NULL || outArray == NULL )
+  {
+    return;
+  }
+
+  outArray->SetNumberOfComponents( inArray1->GetNumberOfComponents() + inArray2->GetNumberOfComponents() );
+  outArray->SetNumberOfTuples( 1 );
+
+  int concatenationIndex = 0;
+  for ( int j = 0; j < inArray1->GetNumberOfComponents(); j++ )
+  {
+    outArray->SetComponent( 0, concatenationIndex, inArray1->GetComponent( 0, j ) );
+    concatenationIndex++;
+  }
+  for ( int j = 0; j < inArray2->GetNumberOfComponents(); j++ )
+  {
+    outArray->SetComponent( 0, concatenationIndex, inArray2->GetComponent( 0, j ) );
+    concatenationIndex++;
   }
 }

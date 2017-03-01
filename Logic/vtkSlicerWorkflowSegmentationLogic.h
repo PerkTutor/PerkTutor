@@ -83,7 +83,7 @@ public:
 
   vtkMRMLWorkflowToolNode* GetToolByProxyNodeID( vtkMRMLWorkflowSegmentationNode* workflowNode, std::string proxyNodeID );
  
-  void ResetAllToolBuffers( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  void ResetAllToolSequences( vtkMRMLWorkflowSegmentationNode* workflowNode );
   void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, vtkCollection* trainingTrackedSequenceBrowserNodes );
  
   bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );

@@ -162,7 +162,7 @@ vtkMRMLWorkflowToolNode* vtkSlicerWorkflowSegmentationLogic
 
 
 void vtkSlicerWorkflowSegmentationLogic
-::ResetAllToolBuffers( vtkMRMLWorkflowSegmentationNode* workflowNode )
+::ResetAllToolSequences( vtkMRMLWorkflowSegmentationNode* workflowNode )
 {
   if ( workflowNode == NULL )
   {
@@ -443,7 +443,7 @@ void vtkSlicerWorkflowSegmentationLogic
   }
 
   // Use the python metrics calculator module
-  this->ResetAllToolBuffers( wsNode );
+  this->ResetAllToolSequences( wsNode );
 }
 
 

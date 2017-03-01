@@ -254,8 +254,9 @@ void vtkMRMLWorkflowSequenceOnlineNode
 void vtkMRMLWorkflowSequenceOnlineNode
 ::TransformByPrincipalComponentsOnline( vtkDoubleArray* prinComps, vtkDoubleArray* meanArray, vtkDoubleArray* transformed )
 {
-  transformed->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
+  transformed->SetNumberOfComponents( prinComps->GetNumberOfTuples() );
   transformed->SetNumberOfTuples( 1 );
+  vtkMRMLWorkflowSequenceNode::FillDoubleArray( transformed, 0 );
 
   // Create a vtkLabelRecord* for the transformed record log
   vtkDoubleArray* currDoubleArray = this->GetNthDoubleArray( this->GetNumberOfDataNodes() - 1 );
@@ -284,7 +285,6 @@ void vtkMRMLWorkflowSequenceOnlineNode
   cluster->SetNumberOfComponents( 1 );
   cluster->SetNumberOfTuples( 1 );
 
-
   // Calculate closest cluster centroid to last
   // Find the record farthest from any centroid
   vtkSmartPointer< vtkDoubleArray > centroidDistances = vtkSmartPointer< vtkDoubleArray >::New();
@@ -293,7 +293,7 @@ void vtkMRMLWorkflowSequenceOnlineNode
   double currMinDist = std::numeric_limits< double >::max();
   int currMinCentroid = 0;
   // Minimum for each point
-  for ( int c = 0; c < centroidDistances->GetNumberOfTuples(); c++ )
+  for ( int c = 0; c < centroidDistances->GetNumberOfComponents(); c++ )
   {
     if ( centroidDistances->GetComponent( 0, c ) < currMinDist )
 	  {

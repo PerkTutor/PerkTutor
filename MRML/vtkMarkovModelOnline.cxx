@@ -89,7 +89,7 @@ void vtkMarkovModelOnline
 	    for ( int k = 0; k < this->GetNumStates(); k++ )
 	    {
         double currProb = this->CurrDelta->GetComponent( 0, k ) + logA->GetComponent( k, j );
-        if ( currProb > maxProb ) // Note: A[k].get(j) == A[k][j]
+        if ( currProb > maxProb )
 		    {
           maxProb = currProb;
 		      maxIndex = k;
