@@ -62,9 +62,10 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     metadataFormLayout.addRow("Procedure: ", self.procedureField)
 
     # session completed selector
-    self.completedCheckBox = qt.QCheckBox("Session completed")
-    self.incompletedCheckBox = qt.QCheckBox("Session incomplete")
-    metadataFormLayout.addRow(self.completedCheckBox, self.incompletedCheckBox)
+    self.sessionCompletionOptions = ("Complete", "Incomplete")
+    self.sessionCompletionSelector = qt.QComboBox()
+    self.sessionCompletionSelector.addItems(self.sessionCompletionOptions)
+    metadataFormLayout.addRow("Session status: ", self.sessionCompletionSelector)
 
     # Save Button
     self.saveButton = qt.QPushButton("Save session")
@@ -83,10 +84,13 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     name = ('name', str(self.nameField.text))
     userID = ('userID', str(self.userIDField.text))
     studyID = ('studyID', str(self.studyIDField.text))
+    trialID = ('trialID', str(self.trialIDField.text))
+    skillLevel = ('skill level', str(self.skillSelector.currentText))
     procedure = ('procedure', str(self.procedureField.text))
+    status = ('status', str(self.sessionCompletionSelector.currentText))
     date = ('date', time.strftime("%m/%d/%Y-%H:%M:%S"))
     metricsComputed = ('metrics computed', False)
-    dataFields = dict([name, userID, studyID, procedure, date, metricsComputed]) #creates dict from list of tuples, format for saving
+    dataFields = dict([name, userID, studyID, trialID, skillLevel, procedure, status, date, metricsComputed]) #creates dict from list of tuples, format for saving
     logic.uploadSession(dataFields)
 
 #couchUploadLogic
@@ -94,7 +98,7 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
 
   def uploadSession(self, dataFields):
     couch = couchdb.Server() #uploads to localhost, replace with hostname
-    db = couch['pt'] #replace test with name of db in the host
+    db = couch['perk_tutor_test'] #replace perk_tutor_test with name of db in the host
     db.save(dataFields)
 
     # save scene to db
@@ -103,6 +107,8 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     slicer.util.saveScene(sceneSaveFilename)
     with open(sceneSaveFilename,'rb') as f:
       db.put_attachment(dataFields, f)
+
+    logging.debug("Session successfully uploaded to couchDB.")
 
 class couchUploadTest(ScriptedLoadableModuleTest):
   """
