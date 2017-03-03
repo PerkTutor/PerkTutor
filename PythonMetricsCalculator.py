@@ -14,7 +14,7 @@ class PythonMetricsCalculator:
     parent.dependencies = [ "TransformRecorder", "PerkEvaluator" ]
     parent.contributors = [ "Matthew S. Holden (Queen's University), Tamas Ungi (Queen's University)" ] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
-    The Python Metric Calculator module is a hidden module for calculating metrics for transform buffers. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/PythonMetricsCalculator/wiki'>Python Metric Calculator</a>.
+    The Python Metric Calculator module is a hidden module for calculating metrics from sequences of transforms. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/PythonMetricsCalculator/wiki'>Python Metric Calculator</a>.
     """
     parent.acknowledgementText = """
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
@@ -36,6 +36,7 @@ class PythonMetricsCalculator:
     tester = PythonMetricsCalculatorTest()
     tester.runTest()
 
+    
 #
 # qPythonMetricsCalculatorWidget
 #
@@ -218,7 +219,8 @@ class PythonMetricsCalculatorLogic:
   
   @staticmethod
   def GetMRMLScene():
-    if ( PythonMetricsCalculatorLogic.mrmlScene != None ):
+    if ( hasattr( PythonMetricsCalculatorLogic, "mrmlScene" )
+      and PythonMetricsCalculatorLogic.mrmlScene != None ):
       return PythonMetricsCalculatorLogic.mrmlScene # Try to return the set scene
       
     try:
@@ -234,7 +236,8 @@ class PythonMetricsCalculatorLogic:
   
   @staticmethod
   def GetPerkEvaluatorLogic():
-    if ( PythonMetricsCalculatorLogic.peLogic != None ):
+    if ( hasattr( PythonMetricsCalculatorLogic, "peLogic" )
+      and PythonMetricsCalculatorLogic.peLogic != None ):
       return PythonMetricsCalculatorLogic.peLogic # Try to return the set logic
       
     try:
@@ -586,7 +589,6 @@ class PythonMetricsCalculatorLogic:
     
   def UpdateRealTimeMetrics( self, time ):
     PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time, self.realTimeMetricsTable )
-    
 
 
 class PythonMetricsCalculatorTest(unittest.TestCase):
@@ -631,43 +633,41 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     print( "CTEST_FULL_OUTPUT" )
     
     # These are the IDs of the relevant nodes
-    transformBufferID = "vtkMRMLTransformBufferNode1"
     tissueModelID = "vtkMRMLModelNode4"
-    needleTransformID = "vtkMRMLLinearTransformNode4"
+    stylusTransformID = "vtkMRMLLinearTransformNode5"
     trueTableID = "vtkMRMLTableNode1"
     
-    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
-    
     # Load the scene
+    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
     if ( activeScene.Import() != 1 ):
-      raise Exception( "Scene import failed. Scene file: " + sceneFile )   
-    
-    # Manually add the metric scripts (since they are not saved with the scene, and will be clear with the scene clear)
-    coreMetricScriptFiles = glob.glob( os.path.join( os.path.dirname( __file__ ), "PythonMetrics", "[a-z]*.py" ) )
-    for script in coreMetricScriptFiles:
-      slicer.util.loadNodeFromFile( script, "Python Metric Script" ) # This will load into activeScene, since activeScene == slicer.mrmlScene
-    
-    transformBufferNode = activeScene.GetNodeByID( transformBufferID )
-    if ( transformBufferNode == None ):
-      raise Exception( "Bad transform buffer." )
+      raise Exception( "Scene import failed. Scene file: " + sceneFile )
+
       
+    # Manually load the sequence browser node from the transform buffer xml file
+    transformBufferFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "TransformBuffer_Lumbar_Anonymous.xml" )
+    success, trackedSequenceBrowserNode = slicer.util.loadNodeFromFile( transformBufferFile, "Tracked Sequence Browser", {}, True ) # This will load into activeScene, since activeScene == slicer.mrmlScene
+    if ( not success or trackedSequenceBrowserNode is None ):
+      raise Exception( "Could not load tracked sequence browser from: " + transformBufferFile )
+      
+    # Grab the relevant nodes from the scene
     tissueModelNode = activeScene.GetNodeByID( tissueModelID )
-    if ( tissueModelNode == None ):
+    if ( tissueModelNode is None ):
       raise Exception( "Bad tissue model." )
       
-    needleTransformNode = activeScene.GetNodeByID( needleTransformID )
-    if ( needleTransformNode == None ):
-      raise Exception( "Bad needle transform." )
+    stylusTransformNode = activeScene.GetNodeByID( stylusTransformID )
+    if ( stylusTransformNode is None ):
+      raise Exception( "Bad stylus transform." )
       
     trueTableNode = activeScene.GetNodeByID( trueTableID )
-    if ( trueTableNode == None ):
+    if ( trueTableNode is None ):
       raise Exception( "Bad true metrics table." )
     
     # Setup the analysis
     peLogic = slicer.modules.perkevaluator.logic()
+    PythonMetricsCalculatorLogic.Initialize()
 
     # Setup the parameters
     peNode = activeScene.CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" )
@@ -678,19 +678,18 @@ class PythonMetricsCalculatorTest(unittest.TestCase):
     mtNode.SetScene( activeScene )
     activeScene.AddNode( mtNode )
     
-    peNode.SetTransformBufferID( transformBufferNode.GetID() )
+    peNode.SetTrackedSequenceBrowserNodeID( trackedSequenceBrowserNode.GetID() )
     peNode.SetMetricsTableID( mtNode.GetID() )
 
     # Now propagate the roles
-    peLogic.SetMetricInstancesRolesToID( peNode, needleTransformNode.GetID(), "Needle", slicer.vtkMRMLMetricInstanceNode.TransformRole )
+    peLogic.SetMetricInstancesRolesToID( peNode, stylusTransformNode.GetID(), "Needle", slicer.vtkMRMLMetricInstanceNode.TransformRole )
     peLogic.SetMetricInstancesRolesToID( peNode, tissueModelNode.GetID(), "Tissue", slicer.vtkMRMLMetricInstanceNode.AnatomyRole )
 
     # Set the analysis begin and end times
-    peNode.SetMarkBegin( 0 )
-    peNode.SetMarkEnd( peLogic.GetMaximumRelativePlaybackTime( peNode ) )
+    peNode.UpdateMeasurementRange()
     
     # Calculate the metrics
-    peLogic.ComputeMetrics( peNode )
+    PythonMetricsCalculatorLogic.CalculateAllMetrics( peNode.GetID() )
     
     # Check both tables to make sure they have the same number of rows    
     if ( trueTableNode.GetTable().GetNumberOfRows() != mtNode.GetTable().GetNumberOfRows() ):

@@ -31,7 +31,7 @@ set(MODULE_PYTHON_SCRIPTS
 #-----------------------------------------------------------------------------
 set(SCENE_TEST_RESOURCES
   Data/Lumbar/BodyModel.stl
-  Data/Lumbar/NeedleRotation.tfm
+  Data/Lumbar/StylusTipRotation.tfm
   Data/Lumbar/ProbeToRAS.tfm
   Data/Lumbar/StylusTipToRAS.tfm
   Data/Lumbar/TransformBuffer_Lumbar_Anonymous.xml
@@ -67,11 +67,6 @@ if(BUILD_TESTING)
   # Note that the test will also be available at runtime.
   slicer_add_python_unittest(
     SCRIPT ${MODULE_NAME}.py
-    SLICER_ARGS --additional-module-paths
-                ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}
-                ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Debug
-                ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Release
-                ${CMAKE_BINARY_DIR}/${Slicer_QTSCRIPTEDMODULES_LIB_DIR}
     )
 
   # Additional build-time testing
