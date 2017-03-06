@@ -1,22 +1,19 @@
 set(KIT qSlicer${MODULE_NAME}Module)
 
-set(KIT_TEST_SRCS)
-set(KIT_TEST_NAMES)
-set(KIT_TEST_NAMES_CXX)
-SlicerMacroConfigureGenericCxxModuleTests(${MODULE_NAME} KIT_TEST_SRCS KIT_TEST_NAMES KIT_TEST_NAMES_CXX)
+#-----------------------------------------------------------------------------
+set(KIT_TEST_SRCS
+  #qSlicer${MODULE_NAME}ModuleTest.cxx
+  )
+  
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-set(CMAKE_TESTDRIVER_BEFORE_TESTMAIN "DEBUG_LEAKS_ENABLE_EXIT_ERROR();" )
-create_test_sourcelist(Tests ${KIT}CxxTests.cxx
-  ${KIT_TEST_NAMES_CXX}
-  EXTRA_INCLUDE vtkMRMLDebugLeaksMacro.h
+#-----------------------------------------------------------------------------
+slicerMacroConfigureModuleCxxTestDriver(
+  NAME ${KIT}
+  SOURCES ${KIT_TEST_SRCS}
+  WITH_VTK_DEBUG_LEAKS_CHECK
+  WITH_VTK_ERROR_OUTPUT_CHECK
   )
 
-list(REMOVE_ITEM Tests ${KIT_TEST_NAMES_CXX})
-list(APPEND Tests ${KIT_TEST_SRCS})
-
-add_executable(${KIT}CxxTests ${Tests})
-target_link_libraries(${KIT}CxxTests ${KIT})
-
-foreach(testname ${KIT_TEST_NAMES})
-  SIMPLE_TEST( ${testname} )
-endforeach()
+#-----------------------------------------------------------------------------
+#simple_test(qSlicer${MODULE_NAME}ModuleTest)
