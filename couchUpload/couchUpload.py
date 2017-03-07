@@ -35,31 +35,23 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     # Layout within the dummy collapsible button
     metadataFormLayout = qt.QFormLayout(metadataCollapsibleButton)
 
-    # Name input
-    self.nameField = qt.QLineEdit()
-    metadataFormLayout.addRow("Participant Name: ", self.nameField)
-
     # userID input
     self.userIDField = qt.QLineEdit()
-    metadataFormLayout.addRow("userID: ", self.userIDField)
+    metadataFormLayout.addRow("UserID: ", self.userIDField)
 
     # studyID input
     self.studyIDField = qt.QLineEdit()
-    metadataFormLayout.addRow("studyID: ", self.studyIDField)
+    metadataFormLayout.addRow("StudyID: ", self.studyIDField)
 
     # trialID input
     self.trialIDField = qt.QLineEdit()
-    metadataFormLayout.addRow("trialID: ", self.trialIDField)
+    metadataFormLayout.addRow("TrialID: ", self.trialIDField)
 
     # skill level selector
     self.skillOptions = ("Novice", "Trainee", "Expert")
     self.skillSelector = qt.QComboBox()
     self.skillSelector.addItems(self.skillOptions)
     metadataFormLayout.addRow("Select skill level: ", self.skillSelector)
-
-    # procedure input -- should this be replaced as a combobox?
-    self.procedureField = qt.QLineEdit()
-    metadataFormLayout.addRow("Procedure: ", self.procedureField)
 
     # session completed selector
     self.sessionCompletionOptions = ("Complete", "Incomplete")
@@ -81,16 +73,14 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
 
   def onSaveButton(self):
     logic = couchUploadLogic()
-    name = ('name', str(self.nameField.text))
     userID = ('userID', str(self.userIDField.text))
     studyID = ('studyID', str(self.studyIDField.text))
     trialID = ('trialID', str(self.trialIDField.text))
     skillLevel = ('skill level', str(self.skillSelector.currentText))
-    procedure = ('procedure', str(self.procedureField.text))
     status = ('status', str(self.sessionCompletionSelector.currentText))
     date = ('date', time.strftime("%m/%d/%Y-%H:%M:%S"))
     metricsComputed = ('metrics computed', False)
-    dataFields = dict([name, userID, studyID, trialID, skillLevel, procedure, status, date, metricsComputed]) #creates dict from list of tuples, format for saving
+    dataFields = dict([userID, studyID, trialID, skillLevel, status, date, metricsComputed]) #creates dict from list of tuples, format for saving
     logic.uploadSession(dataFields)
 
 #couchUploadLogic
@@ -98,8 +88,15 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
 
   def uploadSession(self, dataFields):
     couch = couchdb.Server() #uploads to localhost, replace with hostname
-    db = couch['perk_tutor_test'] #replace perk_tutor_test with name of db in the host
+    dbName = 'perk_tutor_test'
+    try:
+      db = couch[dbName]
+    except:
+      db = couch.create(dbName)
+    #replace perk_tutor_test with name of db in the host
+    testhost = couch['host_test']
     db.save(dataFields)
+    #db.replicate('http://127.0.0.1:5984/perk_tutor_test/', 'http://127.0.0.1:5984/host_test/', continuous=True)
 
     # save scene to db
     sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S")
@@ -108,7 +105,6 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     with open(sceneSaveFilename,'rb') as f:
       db.put_attachment(dataFields, f)
 
-    logging.debug("Session successfully uploaded to couchDB.")
 
 class couchUploadTest(ScriptedLoadableModuleTest):
   """
