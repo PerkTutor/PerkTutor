@@ -57,7 +57,7 @@ slicerMacroBuildScriptedModule(
   NAME ${MODULE_NAME}
   SCRIPTS ${MODULE_PYTHON_SCRIPTS}
   RESOURCES ${MODULE_PYTHON_RESOURCES}
-  WITH_GENERIC_TESTS
+  WITH_GENERIC_TESTS # Note: The generic test always fails because the scripted module cannot find the loadable modules it depends on. This is expected.
   )
 
 #-----------------------------------------------------------------------------
@@ -67,7 +67,14 @@ if(BUILD_TESTING)
   # Note that the test will also be available at runtime.
   slicer_add_python_unittest(
     SCRIPT ${MODULE_NAME}.py
+    SLICER_ARGS --additional-module-paths
+      ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}
+      ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Debug
+      ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Release
+      ${CMAKE_BINARY_DIR}/${Slicer_QTSCRIPTEDMODULES_LIB_DIR}
+	  ${Sequences_LIB_DIR}
     )
+  # We need to add these additional module paths, because they are not otherwise found correctly
 
   # Additional build-time testing
   add_subdirectory(Testing)

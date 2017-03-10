@@ -11,7 +11,7 @@ class PythonMetricsCalculator:
   def __init__(self, parent):
     parent.title = "Python Metrics Calculator" # TODO make this more human readable by adding spaces
     parent.categories = [ "Perk Tutor" ]
-    parent.dependencies = [ "TransformRecorder", "PerkEvaluator" ]
+    parent.dependencies = [ "PerkEvaluator" ]
     parent.contributors = [ "Matthew S. Holden (Queen's University), Tamas Ungi (Queen's University)" ] # replace with "Firstname Lastname (Org)"
     parent.helpText = """
     The Python Metric Calculator module is a hidden module for calculating metrics from sequences of transforms. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/PythonMetricsCalculator/wiki'>Python Metric Calculator</a>.
