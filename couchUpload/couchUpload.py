@@ -65,14 +65,51 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.saveButton.enabled = True
     metadataFormLayout.addRow(self.saveButton)
 
-    # Connections
-    self.saveButton.connect('clicked(bool)', self.onSaveButton)
-
     # Add vertical spacer
     self.layout.addStretch(1)
 
+     # Load Scene Area
+    loadSceneCollapsibleButton = ctk.ctkCollapsibleButton()
+    loadSceneCollapsibleButton.text = "Load Scene"
+    self.layout.addWidget(loadSceneCollapsibleButton)
+
+    # Layout within the dummy collapsible button
+    loadSceneFormLayout = qt.QFormLayout(loadSceneCollapsibleButton)
+
+    # search fields text
+    self.searchText = qt.QLabel()
+    self.searchText.text = "Search by fields:"
+    loadSceneFormLayout.addRow(self.searchText)
+    self.layout.addStretch(1)
+
+    # Search user ID field
+    self.searchUserID = qt.QLineEdit()
+    loadSceneFormLayout.addRow("UserID: ", self.searchUserID)
+
+    # Search study ID field
+    self.searchStudyID = qt.QLineEdit()
+    loadSceneFormLayout.addRow("StudyID: ", self.searchStudyID)
+
+    # Search trial ID field
+    self.searchTrialID = qt.QLineEdit()
+    loadSceneFormLayout.addRow("TrialID: ", self.searchTrialID)
+
+    # Search skill level field
+    self.skillOptions = ("All", "Novice", "Trainee", "Expert")
+    self.searchSkill = qt.QComboBox()
+    self.searchSkill.addItems(self.skillOptions)
+    loadSceneFormLayout.addRow("Select skill level: ", self.searchSkill)
+
+    # Search Button
+    self.searchButton = qt.QPushButton("Search for session")
+    self.searchButton.enabled = True
+    loadSceneFormLayout.addRow(self.searchButton)
+
+    # Connections
+    self.saveButton.connect('clicked(bool)', self.onSaveButton)
+    self.searchButton.connect('clicked(bool)', self.onSearchButton)
+
   def onSaveButton(self):
-    logic = couchUploadLogic()
     userID = ('userID', str(self.userIDField.text))
     studyID = ('studyID', str(self.studyIDField.text))
     trialID = ('trialID', str(self.trialIDField.text))
@@ -81,29 +118,44 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     date = ('date', time.strftime("%m/%d/%Y-%H:%M:%S"))
     metricsComputed = ('metrics computed', False)
     dataFields = dict([userID, studyID, trialID, skillLevel, status, date, metricsComputed]) #creates dict from list of tuples, format for saving
+    logic = couchUploadLogic()
     logic.uploadSession(dataFields)
+
+  def onSearchButton(self):
+    userID = ('userID', str(self.searchUserID.text))
+    studyID = ('studyID', str(self.searchStudyID.text))
+    trialID = ('trialID', str(self.searchTrialID.text))
+    skillLevel = ('skill level', str(self.searchSkill.currentText))
+    logic = couchUploadLogic()
+    logic.loadSession([userID, studyID, trialID, skillLevel])
 
 #couchUploadLogic
 class couchUploadLogic(ScriptedLoadableModuleLogic):
 
-  def uploadSession(self, dataFields):
+  def initializeDB(self, dbName):
     couch = couchdb.Server() #uploads to localhost, replace with hostname
-    dbName = 'perk_tutor_test'
     try:
-      db = couch[dbName]
+      self.db = couch[dbName]
     except:
-      db = couch.create(dbName)
-    #replace perk_tutor_test with name of db in the host
-    testhost = couch['host_test']
-    db.save(dataFields)
-    #db.replicate('http://127.0.0.1:5984/perk_tutor_test/', 'http://127.0.0.1:5984/host_test/', continuous=True)
+      self.db = couch.create(dbName)
 
+  def uploadSession(self, dataFields):
+    self.initializeDB('perk_tutor_test')
+    print 'db now', self.db
+    #replace perk_tutor_test with name of db in the host
+    #testhost = couch['host_test']
+    self.db.save(dataFields)
+    #db.replicate('http://127.0.0.1:5984/perk_tutor_test/', 'http://127.0.0.1:5984/host_test/', continuous=True)
     # save scene to db
-    sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S")
-    sceneSaveFilename = slicer.app.temporaryPath + "/" + sceneName + ".mrb"
-    slicer.util.saveScene(sceneSaveFilename)
-    with open(sceneSaveFilename,'rb') as f:
-      db.put_attachment(dataFields, f)
+    self.sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S")
+    self.sceneSaveFilename = slicer.app.temporaryPath + "/" + self.sceneName + ".mrb"
+    slicer.util.saveScene(self.sceneSaveFilename)
+    with open(self.sceneSaveFilename,'rb') as f:
+      self.db.put_attachment(dataFields, f)
+    self.delayDisplay("Session saved.")
+
+  def loadSession(self, searchInputs):
+    pass #logic to be implemented
 
 
 class couchUploadTest(ScriptedLoadableModuleTest):
