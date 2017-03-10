@@ -164,7 +164,6 @@ void qSlicerWorkflowSegmentationModuleWidget::setup()
   connect( d->WorkflowSegmentationNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), d->ToolSummaryWidget, SLOT( setWorkflowSegmentationNode( vtkMRMLNode* ) ) );
   
   // Workflows
-  this->createWorkflowDisplaysForExistingNodes();
   this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeAddedEvent, this, SLOT( onNodeAdded( vtkObject*, vtkObject* ) ) );
   this->qvtkConnect( d->logic()->GetMRMLScene(), vtkMRMLScene::NodeRemovedEvent, this, SLOT( onNodeRemoved( vtkObject*, vtkObject* ) ) );
 

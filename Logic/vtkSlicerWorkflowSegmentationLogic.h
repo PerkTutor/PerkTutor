@@ -86,12 +86,12 @@ public:
   void ResetAllToolSequences( vtkMRMLWorkflowSegmentationNode* workflowNode );
   void TrainAllTools( vtkMRMLWorkflowSegmentationNode* workflowNode, vtkCollection* trainingTrackedSequenceBrowserNodes );
  
-  bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );
-  bool GetAllToolsTrained( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  static bool GetAllToolsInputted( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  static bool GetAllToolsTrained( vtkMRMLWorkflowSegmentationNode* workflowNode );
   
-  std::vector< std::string > GetToolStatusStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
-  std::vector< std::string > GetInstructionStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
-  std::vector< std::string > GetOrderedWorkflowTaskStrings( vtkMRMLWorkflowToolNode* toolNode );
+  static std::vector< std::string > GetToolStatusStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  static std::vector< std::string > GetInstructionStrings( vtkMRMLWorkflowSegmentationNode* workflowNode );
+  static std::vector< std::string > GetOrderedWorkflowTaskStrings( vtkMRMLWorkflowToolNode* toolNode );
 
   void SetupRealTimeProcessing( vtkMRMLWorkflowSegmentationNode* wsNode );
 

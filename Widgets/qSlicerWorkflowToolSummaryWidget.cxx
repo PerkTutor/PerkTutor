@@ -198,7 +198,7 @@ void qSlicerWorkflowToolSummaryWidget
   connect( d->WorkflowToolsComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( onToolSelectionsChanged() ) );
   
   // Set up the table
-  std::vector< std::string > toolStatusStrings = this->WorkflowSegmentationLogic->GetToolStatusStrings( this->WorkflowSegmentationNode );
+  std::vector< std::string > toolStatusStrings = vtkSlicerWorkflowSegmentationLogic::GetToolStatusStrings( this->WorkflowSegmentationNode );
   
   QStringList WorkflowToolsTableHeaders;
   WorkflowToolsTableHeaders << "Tool";

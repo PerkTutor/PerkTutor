@@ -251,7 +251,7 @@ bool vtkSlicerWorkflowSegmentationLogic
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   for ( int i = 0; i < toolIDs.size(); i++ )
   {
-    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );
+    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( workflowNode->GetScene() );
     if ( toolNode == NULL || ! toolNode->IsWorkflowInputSet() )
     {
       return false;
@@ -273,7 +273,7 @@ bool vtkSlicerWorkflowSegmentationLogic
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   for ( int i = 0; i < toolIDs.size(); i++ )
   {
-    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );
+    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( workflowNode->GetScene() );
     if ( toolNode == NULL || ! toolNode->IsWorkflowTrainingSet() )
     {
       return false;
@@ -297,7 +297,7 @@ std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   for ( int i = 0; i < toolIDs.size(); i++ )
   {
-    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );    
+    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( workflowNode->GetScene() );    
     if ( toolNode == NULL || ! toolNode->IsWorkflowProcedureSet() )
     {
       continue;
@@ -344,7 +344,7 @@ std::vector< std::string > vtkSlicerWorkflowSegmentationLogic
   std::vector< std::string > toolIDs = workflowNode->GetToolIDs();
   for ( int i = 0; i < toolIDs.size(); i++ )
   {
-    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( this->GetMRMLScene()->GetNodeByID( toolIDs.at( i ) ) );    
+    vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::SafeDownCast( workflowNode->GetScene() );    
     if ( toolNode == NULL )
     {
       continue;

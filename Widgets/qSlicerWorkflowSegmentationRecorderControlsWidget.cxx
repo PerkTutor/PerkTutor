@@ -66,7 +66,6 @@ qSlicerWorkflowSegmentationRecorderControlsWidget
 ::qSlicerWorkflowSegmentationRecorderControlsWidget(QWidget* parentWidget) : qSlicerTrackedSequenceRecorderControlsWidget( parentWidget ) , d_ptr( new qSlicerWorkflowSegmentationRecorderControlsWidgetPrivate(*this) )
 {
   this->WorkflowSegmentationNode = NULL;
-  this->WorkflowSegmentationLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
 }
 
 

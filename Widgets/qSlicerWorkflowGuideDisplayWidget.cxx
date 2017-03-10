@@ -162,8 +162,7 @@ void qSlicerWorkflowGuideDisplayWidget
   d->ToolName->setText( QString::fromStdString( columnText.str() ) );
 
   // Grab the tasks in order
-  vtkSlicerWorkflowSegmentationLogic* wsLogic = vtkSlicerWorkflowSegmentationLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "WorkflowSegmentation" ) );
-  std::vector< std::string > orderedTaskStrings = wsLogic->GetOrderedWorkflowTaskStrings( this->WorkflowToolNode );
+  std::vector< std::string > orderedTaskStrings = vtkSlicerWorkflowSegmentationLogic::GetOrderedWorkflowTaskStrings( this->WorkflowToolNode );
 
   QStringList WorkflowDisplayTableHeaders;
   WorkflowDisplayTableHeaders << "Workflow";
