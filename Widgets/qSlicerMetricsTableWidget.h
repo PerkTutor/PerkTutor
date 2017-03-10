@@ -85,7 +85,6 @@ protected:
   QScopedPointer<qSlicerMetricsTableWidgetPrivate> d_ptr;
 
   vtkMRMLTableNode* MetricsTableNode;
-  vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic;
 
   bool ExpandHeightToContents;
   bool ShowMetricRoles;

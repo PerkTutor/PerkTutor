@@ -85,8 +85,6 @@ void qSlicerPerkEvaluatorRolesWidget
 
   d->setupUi(this);
 
-  this->setMRMLScene( this->PerkEvaluatorLogic->GetMRMLScene() );
-
   // No connections to set...
 }
 
@@ -176,7 +174,7 @@ void qSlicerPerkEvaluatorRolesWidget
     candidateComboBox->setRemoveEnabled( false );
     candidateComboBox->setShowHidden( false );
     candidateComboBox->setShowChildNodeTypes( true );
-    candidateComboBox->setMRMLScene( this->PerkEvaluatorLogic->GetMRMLScene() );
+    candidateComboBox->setMRMLScene( this->mrmlScene() );
 
     std::string roleNodeType = this->getNodeTypeForRole( roles.at( i ) );
     candidateComboBox->setNodeTypes( QStringList( QString::fromStdString( roleNodeType ) ) );

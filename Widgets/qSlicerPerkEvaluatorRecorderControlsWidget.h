@@ -49,7 +49,6 @@ protected:
   QScopedPointer<qSlicerPerkEvaluatorRecorderControlsWidgetPrivate> d_ptr;
 
   vtkWeakPointer< vtkMRMLPerkEvaluatorNode > PerkEvaluatorNode;
-  vtkWeakPointer< vtkSlicerPerkEvaluatorLogic > PerkEvaluatorLogic;
   
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorRecorderControlsWidget);

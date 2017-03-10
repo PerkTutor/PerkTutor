@@ -97,9 +97,17 @@ bool qSlicerMetricScriptReader::load(const IOProperties& properties)
   
   vtkSmartPointer< vtkMRMLMetricScriptNode > msNode;
   msNode.TakeReference( vtkMRMLMetricScriptNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLMetricScriptNode" ) ) );
+  if ( msNode == NULL )
+  {
+    return false; // Possible the node could not be created because Slicer's scene is different from the PerkEvaluator's scene
+  }
   
   vtkSmartPointer< vtkMRMLMetricScriptStorageNode > mssNode;
   mssNode.TakeReference( vtkMRMLMetricScriptStorageNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLMetricScriptStorageNode" ) ) );
+  if ( mssNode == NULL )
+  {
+    return false; // Possible the node could not be created because Slicer's scene is different from the PerkEvaluator's scene
+  }
   mssNode->SetFileName( fileName.toLatin1() );
 
   int result = mssNode->ReadData( msNode ); // Read

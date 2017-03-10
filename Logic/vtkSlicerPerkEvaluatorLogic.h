@@ -85,7 +85,7 @@ public:
   void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double playbackTime );
 
   // convenince methods for working with sequences
-  double GetSelectedTime( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode );
+  static double GetSelectedTime( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode );
 
 
   void ComputeMetrics( vtkMRMLPerkEvaluatorNode* peNode );

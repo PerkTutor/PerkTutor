@@ -101,14 +101,12 @@ qSlicerPerkEvaluatorModuleWidget::qSlicerPerkEvaluatorModuleWidget(QWidget* _par
   : Superclass( _parent )
   , d_ptr( new qSlicerPerkEvaluatorModuleWidgetPrivate( *this ) )
 {
-  // Nothing to do
 }
 
 
 //-----------------------------------------------------------------------------
 qSlicerPerkEvaluatorModuleWidget::~qSlicerPerkEvaluatorModuleWidget()
 {
-  delete this->PlaybackTimer;
 }
 
 

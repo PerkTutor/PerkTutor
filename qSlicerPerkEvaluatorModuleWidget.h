@@ -70,11 +70,6 @@ protected:
   virtual void setupEmbeddedWidgets();
   virtual void enter();
 
-  QTimer* PlaybackTimer;
-  // TODO: Should these be moved to the PerkEvaluator node? Should these be changeable by the user?
-  double PlaybackTimerIntervalSec;
-  double FrameStepSec;
-
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);
   Q_DISABLE_COPY(qSlicerPerkEvaluatorModuleWidget);

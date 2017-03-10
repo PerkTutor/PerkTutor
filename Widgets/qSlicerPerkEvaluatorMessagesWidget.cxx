@@ -66,7 +66,6 @@ qSlicerPerkEvaluatorMessagesWidget
 ::qSlicerPerkEvaluatorMessagesWidget(QWidget* parentWidget) : qSlicerTrackedSequenceMessagesWidget( parentWidget ) , d_ptr( new qSlicerPerkEvaluatorMessagesWidgetPrivate(*this) )
 {
   this->PerkEvaluatorNode = NULL;
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
 }
 
 
@@ -100,7 +99,7 @@ void qSlicerPerkEvaluatorMessagesWidget
     return;
   }
 
-  double time = this->PerkEvaluatorLogic->GetSelectedTime( this->TrackedSequenceBrowserNode );
+  double time = vtkSlicerPerkEvaluatorLogic::GetSelectedTime( this->TrackedSequenceBrowserNode );
   
   // Record the timestamp
   std::stringstream ss;
@@ -116,7 +115,7 @@ void qSlicerPerkEvaluatorMessagesWidget
 {
   Q_D(qSlicerPerkEvaluatorMessagesWidget);  
 
-  double time = this->PerkEvaluatorLogic->GetSelectedTime( this->TrackedSequenceBrowserNode );
+  double time = vtkSlicerPerkEvaluatorLogic::GetSelectedTime( this->TrackedSequenceBrowserNode );
   
   // Record the timestamp
   std::stringstream ss;

@@ -66,8 +66,6 @@ qSlicerMetricsTableWidget
 ::qSlicerMetricsTableWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerMetricsTableWidgetPrivate(*this) )
 {
   this->MetricsTableNode = NULL;
-  this->ExpandHeightToContents = false;
-  this->PerkEvaluatorLogic = vtkSlicerPerkEvaluatorLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "PerkEvaluator" ) );
   this->ExpandHeightToContents = true;
   this->setup();
 }

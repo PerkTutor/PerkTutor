@@ -130,8 +130,6 @@ void vtkSlicerPerkEvaluatorLogic
   this->PythonManager = qSlicerApplication::application()->pythonManager();
   this->PythonManager->executeString( "import PythonMetricsCalculator" );
   this->PythonManager->executeString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.Initialize()" );
-
-
 }
 
 
