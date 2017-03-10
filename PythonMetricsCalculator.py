@@ -1,162 +1,64 @@
-import os, imp, glob, sys, logging
+import os, imp, glob, sys
 import urllib, zipfile
 import unittest
-from __main__ import vtk, qt, ctk, slicer
+import logging
+import vtk, qt, ctk, slicer
+from slicer.ScriptedLoadableModule import *
+
 
 #
-# Python Metrics Calculator
+# PythonMetricsCalculator
 #
 
-class PythonMetricsCalculator:
-  def __init__(self, parent):
-    parent.title = "Python Metrics Calculator" # TODO make this more human readable by adding spaces
-    parent.categories = [ "Perk Tutor" ]
-    parent.dependencies = [ "PerkEvaluator" ]
-    parent.contributors = [ "Matthew S. Holden (Queen's University), Tamas Ungi (Queen's University)" ] # replace with "Firstname Lastname (Org)"
-    parent.helpText = """
+class PythonMetricsCalculator( ScriptedLoadableModule ):
+  """Uses ScriptedLoadableModule base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  """
+
+  def __init__( self, parent ):
+    ScriptedLoadableModule.__init__( self, parent )
+    self.parent.title = "Python Metrics Calculator"
+    self.parent.categories = [ "Perk Tutor" ]
+    self.parent.dependencies = [ "PerkEvaluator" ]
+    self.parent.contributors = [ "Matthew S. Holden (PerkLab, Queen's University), Tamas Ungi (PerkLab, Queen's University)" ]
+    self.parent.helpText = """
     The Python Metric Calculator module is a hidden module for calculating metrics from sequences of transforms. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/PythonMetricsCalculator/wiki'>Python Metric Calculator</a>.
     """
-    parent.acknowledgementText = """
+    self.parent.acknowledgementText = """
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
-    """ # replace with organization, grant and thanks.
-    parent.icon = qt.QIcon( "PythonMetricsCalculator.png" )
-    parent.hidden = True # TODO: Set to "True" when deploying module
-    self.parent = parent
+    """
+    self.parent.hidden = True # Set to True when deploying
 
-    # Add this test to the SelfTest module's list for discovery when the module
-    # is created.  Since this module may be discovered before SelfTests itself,
-    # create the list if it doesn't already exist.
-    try:
-      slicer.selfTests
-    except AttributeError:
-      slicer.selfTests = {}
-    slicer.selfTests['PythonMetricsCalculator'] = self.runTest
-
-  def runTest(self):
-    tester = PythonMetricsCalculatorTest()
-    tester.runTest()
-
-    
 #
-# qPythonMetricsCalculatorWidget
+# PythonMetricsCalculatorWidget
 #
 
-class PythonMetricsCalculatorWidget:
-  def __init__(self, parent = None):
-    if not parent:
-      self.parent = slicer.qMRMLWidget()
-      self.parent.setLayout(qt.QVBoxLayout())
-      self.parent.setMRMLScene(slicer.mrmlScene)
-    else:
-      self.parent = parent
-    self.layout = self.parent.layout()
-    if not parent:
-      self.setup()
-      self.parent.show()
+class PythonMetricsCalculatorWidget( ScriptedLoadableModuleWidget ):
+  """Uses ScriptedLoadableModuleWidget base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  """
 
-  def setup(self):
-    # Instantiate and connect widgets ...
+  def setup( self ):
+    ScriptedLoadableModuleWidget.setup( self )
 
-    # Comment these out when not debugging
-    #
-    # Reload and Test area
-    #
-    reloadCollapsibleButton = ctk.ctkCollapsibleButton()
-    reloadCollapsibleButton.text = "Reload && Test"
-    self.layout.addWidget(reloadCollapsibleButton)
-    reloadFormLayout = qt.QFormLayout(reloadCollapsibleButton)
-
-    # reload button
-    # (use this during development, but remove it when delivering
-    #  your module to users)
-    self.reloadButton = qt.QPushButton("Reload")
-    self.reloadButton.toolTip = "Reload this module."
-    self.reloadButton.name = "PythonMetricsCalculator Reload"
-    reloadFormLayout.addWidget(self.reloadButton)
-    self.reloadButton.connect('clicked()', self.onReload)
-
-    # reload and test button
-    # (use this during development, but remove it when delivering
-    #  your module to users)
-    self.reloadAndTestButton = qt.QPushButton("Reload and Test")
-    self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
-    reloadFormLayout.addWidget(self.reloadAndTestButton)
-    self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
-
-
-  def cleanup(self):
+  def cleanup( self ):
     pass
 
-  def onReload(self,moduleName="PythonMetricsCalculator"):
-    """Generic reload method for any scripted module.
-    ModuleWizard will subsitute correct default moduleName.
-    """
-    import imp, sys, os, slicer
-
-    widgetName = moduleName + "Widget"
-
-    # reload the source code
-    # - set source file path
-    # - load the module to the global space
-    filePath = eval('slicer.modules.%s.path' % moduleName.lower())
-    p = os.path.dirname(filePath)
-    if not sys.path.__contains__(p):
-      sys.path.insert(0,p)
-    fp = open(filePath, "r")
-    globals()[moduleName] = imp.load_module(
-        moduleName, fp, filePath, ('.py', 'r', imp.PY_SOURCE))
-    fp.close()
-
-    # rebuild the widget
-    # - find and hide the existing widget
-    # - create a new widget in the existing parent
-    parent = slicer.util.findChildren(name='%s Reload' % moduleName)[0].parent().parent()
-    for child in parent.children():
-      try:
-        child.hide()
-      except AttributeError:
-        pass
-    # Remove spacer items
-    item = parent.layout().itemAt(0)
-    while item:
-      parent.layout().removeItem(item)
-      item = parent.layout().itemAt(0)
-
-    # delete the old widget instance
-    if hasattr(globals()['slicer'].modules, widgetName):
-      getattr(globals()['slicer'].modules, widgetName).cleanup()
-
-    # create new widget inside existing parent
-    globals()[widgetName.lower()] = eval(
-        'globals()["%s"].%s(parent)' % (moduleName, widgetName))
-    globals()[widgetName.lower()].setup()
-    setattr(globals()['slicer'].modules, widgetName, globals()[widgetName.lower()])
-
-  def onReloadAndTest(self,moduleName="PythonMetricsCalculator"):
-    try:
-      self.onReload()
-      evalString = 'globals()["%s"].%sTest()' % (moduleName, moduleName)
-      tester = eval(evalString)
-      tester.runTest()
-    except Exception, e:
-      import traceback
-      traceback.print_exc()
-      qt.QMessageBox.warning(slicer.util.mainWindow(), 
-          "Reload and Test", 'Exception!\n\n' + str(e) + "\n\nSee Python Console for Stack Trace")
-
-
+	
 #
 # PythonMetricsCalculatorLogic
 #
 
-class PythonMetricsCalculatorLogic:
-  """This class should implement all the actual 
-  computation done by your module.  The interface 
+class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
+  """This class should implement all the actual
+  computation done by your module.  The interface
   should be such that other python code can import
   this class and make use of the functionality without
-  requiring an instance of the Widget
+  requiring an instance of the Widget.
+  Uses ScriptedLoadableModuleLogic base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
-  
+
   # We propose two concepts for metric distribution:
   # Sharing: Whether or not to sync the metric with every Perk Evaluator node
   # Ubiquity: Whether or not the metric spreads to every transform
@@ -590,46 +492,40 @@ class PythonMetricsCalculatorLogic:
   def UpdateRealTimeMetrics( self, time ):
     PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time, self.realTimeMetricsTable )
 
+	
+# PythonMetricsCalculatorTest
 
-class PythonMetricsCalculatorTest(unittest.TestCase):
+class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
   """
   This is the test case for your scripted module.
+  Uses ScriptedLoadableModuleTest base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
-  def delayDisplay(self,message,msec=1000):
-    """This utility method displays a small dialog and waits.
-    This does two things: 1) it lets the event loop catch up
-    to the state of the test so that rendering and widget updates
-    have all taken place before the test continues and 2) it
-    shows the user/developer/tester the state of the test
-    so that we'll know when it breaks.
-    """
-    print(message)
-    self.info = qt.QDialog()
-    self.infoLayout = qt.QVBoxLayout()
-    self.info.setLayout(self.infoLayout)
-    self.label = qt.QLabel(message,self.info)
-    self.infoLayout.addWidget(self.label)
-    qt.QTimer.singleShot(msec, self.info.close)
-    self.info.exec_()
-
-  def setUp(self):
-    """ Do whatever is needed to reset the state - typically a scene clear will be enough.
-    """
+  def setUp( self ):
     slicer.mrmlScene.Clear( 0 )
 
-  def runTest(self):
-    """Run as few or as many tests as needed here.
+  def runTest( self ):
+    """ Run as few or as many tests as needed here.
     """
     self.setUp()
-    
+	
     try:
       self.test_PythonMetricsCalculatorLumbar()
-    
     except Exception, e:
       self.delayDisplay( "Test caused exception!\n" + str(e) )
 
-  def test_PythonMetricsCalculatorLumbar(self):  
+  def test_PythonMetricsCalculatorLumbar( self ):
+    """ Ideally you should have several levels of tests.  At the lowest level
+    tests should exercise the functionality of the logic with different inputs
+    (both valid and invalid).  At higher levels your tests should emulate the
+    way the user would interact with your code and confirm that it still works
+    the way you intended.
+    One of the most important features of the tests is that it should alert other
+    developers when their changes will have an impact on the behavior of your
+    module.  For example, if a developer removes a feature that you depend on,
+    your test should break so they know that the feature is needed.
+    """
     print( "CTEST_FULL_OUTPUT" )
     
     # These are the IDs of the relevant nodes
