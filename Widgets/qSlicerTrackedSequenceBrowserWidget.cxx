@@ -68,7 +68,6 @@ qSlicerTrackedSequenceBrowserWidget
 ::qSlicerTrackedSequenceBrowserWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerTrackedSequenceBrowserWidgetPrivate(*this) )
 {
   this->TrackedSequenceBrowserNode = NULL;
-  this->TransformRecorderLogic = vtkSlicerTransformRecorderLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "TransformRecorder" ) );
   this->setup();
 }
 

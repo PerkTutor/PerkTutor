@@ -68,7 +68,6 @@ protected:
   QScopedPointer<qSlicerTrackedSequenceBrowserWidgetPrivate> d_ptr;
 
   vtkWeakPointer< vtkMRMLSequenceBrowserNode > TrackedSequenceBrowserNode;
-  vtkWeakPointer< vtkSlicerTransformRecorderLogic > TransformRecorderLogic;
 
   virtual void setup();
 
