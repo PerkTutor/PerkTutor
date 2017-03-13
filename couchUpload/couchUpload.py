@@ -113,7 +113,7 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     userID = ('userID', str(self.userIDField.text))
     studyID = ('studyID', str(self.studyIDField.text))
     trialID = ('trialID', str(self.trialIDField.text))
-    skillLevel = ('skill level', str(self.skillSelector.currentText))
+    skillLevel = ('skillLevel', str(self.skillSelector.currentText))
     status = ('status', str(self.sessionCompletionSelector.currentText))
     date = ('date', time.strftime("%m/%d/%Y-%H:%M:%S"))
     metricsComputed = ('metrics computed', False)
@@ -155,8 +155,21 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     self.delayDisplay("Session saved.")
 
   def loadSession(self, searchInputs):
-    pass #logic to be implemented
-
+    self.initializeDB('perk_tutor_test')
+    searchInputs = [[field, value] if value != '' else ["Null Field", value] for (field, value) in searchInputs]
+    searchFields = ['userID', 'studyID', 'trialID', 'skillLevel']
+    savedScenesView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
+    for row in savedScenesView:
+      flag = True
+      rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel']]
+      for i in range(0, 3):
+        if searchInputs[i][0] != "Null Field" and searchInputs[i][1] != rowData[i]:
+          flag = False
+          continue
+      if searchInputs[3][1] != rowData[3] and searchInputs[3][1] != 'All':
+        flag = False
+      if flag:
+        print rowData
 
 class couchUploadTest(ScriptedLoadableModuleTest):
   """
