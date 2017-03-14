@@ -509,11 +509,54 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     """ Run as few or as many tests as needed here.
     """
     self.setUp()
-	
+    
     try:
       self.test_PythonMetricsCalculatorLumbar()
     except Exception, e:
-      self.delayDisplay( "Test caused exception!\n" + str(e) )
+      self.delayDisplay( "Lumbar test caused exception!\n" + str(e) )
+    
+    try:
+      self.test_PythonMetricsCalculatorInPlane()
+    except Exception, e:
+      self.delayDisplay( "In-plane test caused exception!\n" + str(e) )
+      
+      
+  def compareMetricsTables( self, trueMetricsTableNode, testMetricsTableNode ):
+    # Check both tables to make sure they have the same number of rows    
+    if ( trueMetricsTableNode.GetTable().GetNumberOfRows() != testMetricsTableNode.GetTable().GetNumberOfRows() ):
+      print "True number of metrics:", trueMetricsTableNode.GetTable().GetNumberOfRows(), ", calculated number of metrics:", testMetricsTableNode.GetTable().GetNumberOfRows()
+      raise Exception( "A different number of metrics was computed."  )
+
+    # Compare the metrics to the expected results
+    metricsMatch = True
+    for i in range( testMetricsTableNode.GetTable().GetNumberOfRows() ):
+      
+      rowMatch = False # Need to match one row
+      for j in range( trueMetricsTableNode.GetTable().GetNumberOfRows() ):
+        
+        colMatch = True # For a given row, need to match every column
+        for k in range( trueMetricsTableNode.GetTable().GetNumberOfColumns() ):
+          columnName = trueMetricsTableNode.GetTable().GetColumnName( k )
+          trueValue = trueMetricsTableNode.GetTable().GetValueByName( j, columnName )
+          testValue = testMetricsTableNode.GetTable().GetValueByName( i, columnName )
+          if ( not testValue.IsValid() ):
+            raise Exception( "The metrics table was improperly formatted." )
+          if ( trueValue != testValue ):
+            colMatch = False
+        
+        if ( colMatch ):
+          rowMatch = True
+          
+      # If we could not find a row in the true table that matches the row in the test table, report an incorrect metric
+      if ( not rowMatch ):
+        print "Incorrect metric.",
+        for k in range( testMetricsTableNode.GetTable().GetNumberOfColumns() ):
+          print testMetricsTableNode.GetTable().GetColumnName( k ), testMetricsTableNode.GetTable().GetValue( i, k ),
+        print ""          
+        metricsMatch = False
+        
+    return metricsMatch
+  
 
   def test_PythonMetricsCalculatorLumbar( self ):
     """ Ideally you should have several levels of tests.  At the lowest level
@@ -566,63 +609,117 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     PythonMetricsCalculatorLogic.Initialize()
 
     # Setup the parameters
-    peNode = activeScene.CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" )
-    peNode.SetScene( activeScene )
-    activeScene.AddNode( peNode )
+    perkEvaluatorNode = activeScene.CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" )
+    perkEvaluatorNode.SetScene( activeScene )
+    activeScene.AddNode( perkEvaluatorNode )
     
-    mtNode = activeScene.CreateNodeByClass( "vtkMRMLTableNode" )
-    mtNode.SetScene( activeScene )
-    activeScene.AddNode( mtNode )
+    metricsTableNode = activeScene.CreateNodeByClass( "vtkMRMLTableNode" )
+    metricsTableNode.SetScene( activeScene )
+    activeScene.AddNode( metricsTableNode )
     
-    peNode.SetTrackedSequenceBrowserNodeID( trackedSequenceBrowserNode.GetID() )
-    peNode.SetMetricsTableID( mtNode.GetID() )
+    perkEvaluatorNode.SetTrackedSequenceBrowserNodeID( trackedSequenceBrowserNode.GetID() )
+    perkEvaluatorNode.SetMetricsTableID( metricsTableNode.GetID() )
 
     # Now propagate the roles
-    peLogic.SetMetricInstancesRolesToID( peNode, stylusTransformNode.GetID(), "Needle", slicer.vtkMRMLMetricInstanceNode.TransformRole )
-    peLogic.SetMetricInstancesRolesToID( peNode, tissueModelNode.GetID(), "Tissue", slicer.vtkMRMLMetricInstanceNode.AnatomyRole )
+    peLogic.SetMetricInstancesRolesToID( perkEvaluatorNode, stylusTransformNode.GetID(), "Needle", slicer.vtkMRMLMetricInstanceNode.TransformRole )
+    peLogic.SetMetricInstancesRolesToID( perkEvaluatorNode, tissueModelNode.GetID(), "Tissue", slicer.vtkMRMLMetricInstanceNode.AnatomyRole )
 
     # Set the analysis begin and end times
-    peNode.UpdateMeasurementRange()
+    perkEvaluatorNode.UpdateMeasurementRange()
     
     # Calculate the metrics
-    PythonMetricsCalculatorLogic.CalculateAllMetrics( peNode.GetID() )
+    PythonMetricsCalculatorLogic.CalculateAllMetrics( perkEvaluatorNode.GetID() )
     
-    # Check both tables to make sure they have the same number of rows    
-    if ( trueTableNode.GetTable().GetNumberOfRows() != mtNode.GetTable().GetNumberOfRows() ):
-      print "True number of metrics:", trueTableNode.GetTable().GetNumberOfRows(), ", calculated number of metrics:", mtNode.GetTable().GetNumberOfRows()
-      raise Exception( "A different number of metrics was computed."  )
-
-    # Compare the metrics to the expected results
-    metricsFail = False
-    for i in range( mtNode.GetTable().GetNumberOfRows() ):
-      
-      rowMatch = False # Need to match one row
-      for j in range( trueTableNode.GetTable().GetNumberOfRows() ):
+    # Check whether the computed metrics match the expected metrics
+    metricsMatch = self.compareMetricsTables( trueTableNode, metricsTableNode )
         
-        colMatch = True # For a given row, need to match every column
-        for k in range( trueTableNode.GetTable().GetNumberOfColumns() ):
-          columnName = trueTableNode.GetTable().GetColumnName( k )
-          trueValue = trueTableNode.GetTable().GetValueByName( j, columnName )
-          testValue = mtNode.GetTable().GetValueByName( i, columnName )
-          if ( not testValue.IsValid() ):
-            raise Exception( "The metrics table was improperly formatted." )
-          if ( trueValue != testValue ):
-            colMatch = False
-        
-        if ( colMatch ):
-          rowMatch = True
-          
-      # If we could not find a row in the true table that matches the row in the test table, report an incorrect metric
-      if ( not rowMatch ):
-        print "Incorrect metric.",
-        for k in range( mtNode.GetTable().GetNumberOfColumns() ):
-          print mtNode.GetTable().GetColumnName( k ), mtNode.GetTable().GetValue( i, k ),
-        print ""          
-        metricsFail = True
-        
-    if ( metricsFail == True ):
+    if ( not metricsMatch ):
       self.delayDisplay( "Test failed! Calculated metrics were not consistent with results." )
     else:
       self.delayDisplay( "Test passed! Calculated metrics match results!" )
       
-    self.assertFalse( metricsFail )
+    print "Lumbar test completed."
+    self.assertTrue( metricsMatch )
+
+    
+  def test_PythonMetricsCalculatorInPlane( self ):
+    """ Ideally you should have several levels of tests.  At the lowest level
+    tests should exercise the functionality of the logic with different inputs
+    (both valid and invalid).  At higher levels your tests should emulate the
+    way the user would interact with your code and confirm that it still works
+    the way you intended.
+    One of the most important features of the tests is that it should alert other
+    developers when their changes will have an impact on the behavior of your
+    module.  For example, if a developer removes a feature that you depend on,
+    your test should break so they know that the feature is needed.
+    """
+    print( "CTEST_FULL_OUTPUT" )
+    
+    # These are the IDs of the relevant nodes
+    trackedSequenceBrowserID = "vtkMRMLSequenceBrowserNode1"
+    tissueModelID = "vtkMRMLModelNode4"
+    needleTransformID = "vtkMRMLLinearTransformNode4"
+    trueTableID = "vtkMRMLTableNode1"
+    
+    
+    # Load the scene
+    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "InPlane", "Scene_InPlane.mrml" )
+    activeScene = slicer.mrmlScene
+    activeScene.Clear( 0 )
+    activeScene.SetURL( sceneFile )
+    if ( activeScene.Import() != 1 ):
+      raise Exception( "Scene import failed. Scene file: " + sceneFile )
+      
+    # Grab the relevant nodes from the scene
+    trackedSequenceBrowserNode = activeScene.GetNodeByID( trackedSequenceBrowserID )
+    if ( trackedSequenceBrowserNode is None ):
+      raise Exception( "Bad sequence browser." )
+      
+    tissueModelNode = activeScene.GetNodeByID( tissueModelID )
+    if ( tissueModelNode is None ):
+      raise Exception( "Bad tissue model." )
+      
+    needleTransformNode = activeScene.GetNodeByID( needleTransformID )
+    if ( needleTransformNode is None ):
+      raise Exception( "Bad needle transform." )
+      
+    trueTableNode = activeScene.GetNodeByID( trueTableID )
+    if ( trueTableNode is None ):
+      raise Exception( "Bad true metrics table." )
+    
+    # Setup the analysis
+    peLogic = slicer.modules.perkevaluator.logic()
+    PythonMetricsCalculatorLogic.Initialize()
+
+    # Setup the parameters
+    perkEvaluatorNode = activeScene.CreateNodeByClass( "vtkMRMLPerkEvaluatorNode" )
+    perkEvaluatorNode.SetScene( activeScene )
+    activeScene.AddNode( perkEvaluatorNode )
+    
+    metricsTableNode = activeScene.CreateNodeByClass( "vtkMRMLTableNode" )
+    metricsTableNode.SetScene( activeScene )
+    activeScene.AddNode( metricsTableNode )
+    
+    perkEvaluatorNode.SetTrackedSequenceBrowserNodeID( trackedSequenceBrowserNode.GetID() )
+    perkEvaluatorNode.SetMetricsTableID( metricsTableNode.GetID() )
+
+    # Now propagate the roles
+    peLogic.SetMetricInstancesRolesToID( perkEvaluatorNode, needleTransformNode.GetID(), "Needle", slicer.vtkMRMLMetricInstanceNode.TransformRole )
+    peLogic.SetMetricInstancesRolesToID( perkEvaluatorNode, tissueModelNode.GetID(), "Tissue", slicer.vtkMRMLMetricInstanceNode.AnatomyRole )
+
+    # Set the analysis begin and end times
+    perkEvaluatorNode.UpdateMeasurementRange()
+    
+    # Calculate the metrics
+    PythonMetricsCalculatorLogic.CalculateAllMetrics( perkEvaluatorNode.GetID() )
+    
+    # Check whether the computed metrics match the expected metrics
+    metricsMatch = self.compareMetricsTables( trueTableNode, metricsTableNode )
+        
+    if ( not metricsMatch ):
+      self.delayDisplay( "Test failed! Calculated metrics were not consistent with results." )
+    else:
+      self.delayDisplay( "Test passed! Calculated metrics match results!" )
+      
+    print "In-plane test completed."
+    self.assertTrue( metricsMatch )

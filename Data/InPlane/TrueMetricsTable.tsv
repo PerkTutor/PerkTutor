@@ -1,0 +1,10 @@
+MetricName	MetricRoles	MetricUnit	MetricValue
+Elapsed Time	Any = NeedleTipToNeedle	s	27.437
+Elapsed Time	Any = ImageToReference	s	27.437
+Elapsed Time	Any = NeedleToReference	s	27.437
+Path Length	Any = NeedleTipToNeedle	mm	280.892
+Tissue Damage	Needle = NeedleTipToNeedle, Tissue = TissueModel	mm^2	714.74
+Path in Tissue	Needle = NeedleTipToNeedle, Tissue = TissueModel	mm	164.915
+Time in Tissue	Needle = NeedleTipToNeedle, Tissue = TissueModel	s	21.866
+Path Length	Any = ImageToReference	mm	74.8549
+Path Length	Any = NeedleToReference	mm	276.918

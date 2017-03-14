@@ -29,7 +29,7 @@ set(MODULE_PYTHON_SCRIPTS
   )
 
 #-----------------------------------------------------------------------------
-set(SCENE_TEST_RESOURCES
+set(LUMBAR_TEST_RESOURCES
   Data/Lumbar/BodyModel.stl
   Data/Lumbar/StylusTipRotation.tfm
   Data/Lumbar/ProbeToRAS.tfm
@@ -37,6 +37,19 @@ set(SCENE_TEST_RESOURCES
   Data/Lumbar/TransformBuffer_Lumbar_Anonymous.xml
   Data/Lumbar/TrueMetricsTable.tsv
   Data/Lumbar/Scene_Lumbar.mrml
+  ) 
+  
+#-----------------------------------------------------------------------------
+set(INPLANE_TEST_RESOURCES
+  Data/InPlane/ImageToReference.h5
+  Data/InPlane/ImageToReference-Sequence.mrb
+  Data/InPlane/Message-Sequence.mrb
+  Data/InPlane/NeedleTipToNeedle.h5
+  Data/InPlane/NeedleToReference.h5
+  Data/InPlane/NeedleToReference-Sequence.mrb
+  Data/InPlane/TissueModel.stl
+  Data/InPlane/TrueMetricsTable.tsv
+  Data/InPlane/Scene_InPlane.mrml
   )
 
 
@@ -48,7 +61,8 @@ set(MODULE_PYTHON_RESOURCES
 if (BUILD_TESTING)
   set(MODULE_PYTHON_RESOURCES
     ${MODULE_PYTHON_RESOURCES}
-    ${SCENE_TEST_RESOURCES}
+    ${LUMBAR_TEST_RESOURCES}
+    ${INPLANE_TEST_RESOURCES}
     )
 endif()
 
