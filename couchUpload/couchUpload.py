@@ -70,7 +70,7 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
 
      # Load Scene Area
     loadSceneCollapsibleButton = ctk.ctkCollapsibleButton()
-    loadSceneCollapsibleButton.text = "Load Scene"
+    loadSceneCollapsibleButton.text = "Search For Session"
     self.layout.addWidget(loadSceneCollapsibleButton)
 
     # Layout within the dummy collapsible button
@@ -105,6 +105,12 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.searchButton.enabled = True
     loadSceneFormLayout.addRow(self.searchButton)
 
+    # Query Results Area
+    self.queryResultsCollapsibleButton = ctk.ctkCollapsibleButton()
+    self.queryResultsCollapsibleButton.text = "Query Results"
+    self.queryResultsCollapsibleButton.setVisible(False)
+    self.layout.addWidget(self.queryResultsCollapsibleButton)
+
     # Connections
     self.saveButton.connect('clicked(bool)', self.onSaveButton)
     self.searchButton.connect('clicked(bool)', self.onSearchButton)
@@ -126,8 +132,19 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     studyID = ('studyID', str(self.searchStudyID.text))
     trialID = ('trialID', str(self.searchTrialID.text))
     skillLevel = ('skill level', str(self.searchSkill.currentText))
+    searchInput = [userID, studyID, trialID, skillLevel]
     logic = couchUploadLogic()
-    logic.loadSession([userID, studyID, trialID, skillLevel])
+    results = logic.queryDB(searchInput)
+    self.displayResults(results)
+
+  def displayResults(self, results):
+    queryResultsLayout = qt.QFormLayout(self.queryResultsCollapsibleButton)
+    headerLabel = qt.QLabel("UserID \t\t StudyID \t TrialID \t Skill Level \t Session Date \t\t")
+    queryResultsLayout.addRow(headerLabel)
+    for row in results:
+      loadButton = qt.QPushButton("Load Session")
+      queryResultsLayout.addRow(row[0] + '\t' + row[1] + '\t' + row[2] + '\t' + row[3] + '\t' + row[4] + '\t', loadButton)
+    self.queryResultsCollapsibleButton.setVisible(True)
 
 #couchUploadLogic
 class couchUploadLogic(ScriptedLoadableModuleLogic):
@@ -141,27 +158,28 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
 
   def uploadSession(self, dataFields):
     self.initializeDB('perk_tutor_test')
-    print 'db now', self.db
     #replace perk_tutor_test with name of db in the host
     #testhost = couch['host_test']
-    self.db.save(dataFields)
+
     #db.replicate('http://127.0.0.1:5984/perk_tutor_test/', 'http://127.0.0.1:5984/host_test/', continuous=True)
     # save scene to db
-    self.sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S")
-    self.sceneSaveFilename = slicer.app.temporaryPath + "/" + self.sceneName + ".mrb"
+    self.sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S") + ".mrb"
+    self.sceneSaveFilename = slicer.app.temporaryPath + "/" + self.sceneName
+    dataFields['sceneName'] = self.sceneName
+    self.db.save(dataFields)
     slicer.util.saveScene(self.sceneSaveFilename)
     with open(self.sceneSaveFilename,'rb') as f:
       self.db.put_attachment(dataFields, f)
     self.delayDisplay("Session saved.")
 
-  def loadSession(self, searchInputs):
+  def queryDB(self, searchInputs):
     self.initializeDB('perk_tutor_test')
     searchInputs = [[field, value] if value != '' else ["Null Field", value] for (field, value) in searchInputs]
-    searchFields = ['userID', 'studyID', 'trialID', 'skillLevel']
     savedScenesView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
+    queryResults = []
     for row in savedScenesView:
       flag = True
-      rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel']]
+      rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel'], row.doc['date'], row.doc['sceneName']]
       for i in range(0, 3):
         if searchInputs[i][0] != "Null Field" and searchInputs[i][1] != rowData[i]:
           flag = False
@@ -169,58 +187,5 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
       if searchInputs[3][1] != rowData[3] and searchInputs[3][1] != 'All':
         flag = False
       if flag:
-        print rowData
-
-class couchUploadTest(ScriptedLoadableModuleTest):
-  """
-  This is the test case for your scripted module.
-  Uses ScriptedLoadableModuleTest base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
-
-  def setUp(self):
-    """ Do whatever is needed to reset the state - typically a scene clear will be enough.
-    """
-    slicer.mrmlScene.Clear(0)
-
-  def runTest(self):
-    """Run as few or as many tests as needed here.
-    """
-    self.setUp()
-    self.test_couchUpload1()
-
-  def test_couchUpload1(self):
-    """ Ideally you should have several levels of tests.  At the lowest level
-    tests should exercise the functionality of the logic with different inputs
-    (both valid and invalid).  At higher levels your tests should emulate the
-    way the user would interact with your code and confirm that it still works
-    the way you intended.
-    One of the most important features of the tests is that it should alert other
-    developers when their changes will have an impact on the behavior of your
-    module.  For example, if a developer removes a feature that you depend on,
-    your test should break so they know that the feature is needed.
-    """
-
-    self.delayDisplay("Starting the test")
-    #
-    # first, get some data
-    #
-    import urllib
-    downloads = (
-        ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
-
-    for url,name,loader in downloads:
-      filePath = slicer.app.temporaryPath + '/' + name
-      if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-        logging.info('Requesting download %s from %s...\n' % (name, url))
-        urllib.urlretrieve(url, filePath)
-      if loader:
-        logging.info('Loading %s...' % (name,))
-        loader(filePath)
-    self.delayDisplay('Finished with download and loading')
-
-    volumeNode = slicer.util.getNode(pattern="FA")
-    logic = couchUploadLogic()
-    self.assertIsNotNone( logic.hasImageData(volumeNode) )
-    self.delayDisplay('Test passed!')
+        queryResults.append(rowData) #each row should be a new line on a popup window with button to load scene
+    return queryResults
