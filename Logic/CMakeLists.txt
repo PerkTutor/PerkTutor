@@ -7,8 +7,6 @@ set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_LOGIC_EXPORT
 set(${KIT}_INCLUDE_DIRECTORIES
   ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
   ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
-  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   ${Sequences_INCLUDE_DIRS}
   )
 
@@ -22,7 +20,6 @@ set(${KIT}_TARGET_LIBRARIES
   ${MRML_LIBRARIES}
   SlicerBaseLogic
   qSlicerBaseQTCore
-  vtkSlicerTransformRecorderModuleMRML
   vtkSlicerTransformRecorderModuleLogic  
   vtkSlicerWorkflowSegmentationModuleMRML
   ${Sequences_LIBS}

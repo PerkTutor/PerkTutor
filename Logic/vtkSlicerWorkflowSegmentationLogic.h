@@ -39,7 +39,6 @@
 #include "vtkObjectFactory.h"
 #include "vtkXMLDataElement.h"
 
-#include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLWorkflowSegmentationNode.h"
 
 // Workflow Segmentation includes

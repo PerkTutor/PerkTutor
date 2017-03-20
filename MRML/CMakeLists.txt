@@ -5,24 +5,13 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_MRML_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
-  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   ${Sequences_INCLUDE_DIRS}
    )
 
 # --------------------------------------------------------------------------
 # Sources
 
-set(${KIT}_SRCS
-  vtkLabelVector.cxx
-  vtkLabelVector.h
-  vtkLabelRecord.cxx
-  vtkLabelRecord.h
-  vtkMarkovVector.cxx
-  vtkMarkovVector.h
-  
+set(${KIT}_SRCS  
   vtkWorkflowTask.cxx
   vtkWorkflowTask.h
   
@@ -62,7 +51,6 @@ set(${KIT}_TARGET_LIBRARIES
   ${ITK_LIBRARIES}
   ${MRML_LIBRARIES}
   SlicerBaseLogic
-  vtkSlicerTransformRecorderModuleMRML
   ${Sequences_LIBS}
   )
 

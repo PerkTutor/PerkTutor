@@ -1288,8 +1288,6 @@ void vtkMRMLWorkflowSequenceNode
 void vtkMRMLWorkflowSequenceNode
 ::AddMarkovModelAttributes()
 {
-  std::vector< vtkSmartPointer< vtkMarkovVector > > markovVectors;
-
   // We will assume that: Message attribute -> state, values[0] -> symbol
   for ( int i = 0; i < this->GetNumberOfDataNodes(); i++ )
   {

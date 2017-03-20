@@ -21,7 +21,6 @@
 
 // Workflow Segmentation includes
 #include "vtkSlicerWorkflowSegmentationModuleMRMLExport.h"
-#include "vtkLabelVector.h"
 #include "vtkMarkovModelOnline.h"
 
 // This class stores a vector of values and a string label

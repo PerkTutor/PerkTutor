@@ -34,8 +34,6 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
   ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
   ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
-  ${vtkSlicerTransformRecorderModuleMRML_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleMRML_BINARY_DIR}
   ${Sequences_INCLUDE_DIRS}
   )
 
@@ -68,7 +66,6 @@ set(MODULE_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicer${MODULE_NAME}ModuleMRML
   qSlicer${MODULE_NAME}ModuleWidgets
-  vtkSlicerTransformRecorderModuleMRML
   vtkSlicerTransformRecorderModuleLogic
   qSlicerTransformRecorderModuleWidgets
   ${Sequences_LIBS}
