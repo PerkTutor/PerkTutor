@@ -39,12 +39,14 @@
 #include <vtkMRMLScene.h>
 #include <vtkMRMLStorageNode.h>
 #include <vtkMRMLNode.h>
+#include <vtkMRMLLinearTransformNode.h>
 
 // VTK includes
 #include <vtkCollection.h>
 #include <vtkCollectionIterator.h>
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
+#include <vtkMatrix4x4.h>
 
 //-----------------------------------------------------------------------------
 class qSlicerTrackedSequenceBrowserWriterPrivate

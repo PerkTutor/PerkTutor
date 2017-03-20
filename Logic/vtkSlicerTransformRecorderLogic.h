@@ -34,7 +34,6 @@
 #include "vtkSmartPointer.h"
 
 // MRML includes
-#include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLSequenceNode.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 
@@ -71,12 +70,6 @@ public:
   void InitializeEventListeners();
 
   // Convenience methods for intersection between widget and MRML
-  void ClearTransforms( vtkMRMLTransformBufferNode* bufferNode );
-
-  void AddMessage( vtkMRMLTransformBufferNode* bufferNode, std::string messageString, double time );
-  void RemoveMessage( vtkMRMLTransformBufferNode* bufferNode, int index );
-  void ClearMessages( vtkMRMLTransformBufferNode* bufferNode );
-
   vtkMRMLSequenceNode* GetMessageSequenceNode( vtkMRMLSequenceBrowserNode* browserNode );
   void AddMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, std::string indexValue );
   void UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int index );
@@ -85,14 +78,6 @@ public:
 
   double GetMaximumIndexValue( vtkMRMLSequenceBrowserNode* browserNode );
   int GetMaximumNumberOfDataNodes( vtkMRMLSequenceBrowserNode* browserNode );
-
-  void ObserveAllRecordedTransforms( vtkMRMLTransformBufferNode* bufferNode );
-  void AddAllRecordedTransformsToScene( vtkMRMLTransformBufferNode* bufferNode );
-
-  void ImportFromXMLFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
-  void ExportToFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
-
-  void ImportFromMHAFile( vtkMRMLTransformBufferNode* bufferNode, std::string fileName );
 
   // Grab module logic
   static vtkMRMLAbstractLogic* GetSlicerModuleLogic( std::string moduleName );

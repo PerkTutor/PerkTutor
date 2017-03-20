@@ -16,7 +16,6 @@ endif()
 
 #-----------------------------------------------------------------------------
 # Build module sub libraries
-add_subdirectory(MRML)
 add_subdirectory(Logic)
 add_subdirectory(Widgets)
 
@@ -28,8 +27,6 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
   ${CMAKE_CURRENT_SOURCE_DIR}/Logic
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
-  ${CMAKE_CURRENT_SOURCE_DIR}/MRML
-  ${CMAKE_CURRENT_BINARY_DIR}/MRML
   ${Sequences_INCLUDE_DIRS}
   )
 
@@ -39,8 +36,6 @@ set(MODULE_SRCS
   qSlicer${MODULE_NAME}Module.h
   qSlicer${MODULE_NAME}ModuleWidget.cxx
   qSlicer${MODULE_NAME}ModuleWidget.h
-  qSlicerTransformBufferReader.cxx
-  qSlicerTransformBufferReader.h
   qSlicerTrackedSequenceBrowserReader.cxx
   qSlicerTrackedSequenceBrowserReader.h
   qSlicerTrackedSequenceBrowserWriter.cxx
@@ -51,7 +46,6 @@ set(MODULE_SRCS
 set(MODULE_MOC_SRCS
   qSlicer${MODULE_NAME}Module.h
   qSlicer${MODULE_NAME}ModuleWidget.h
-  qSlicerTransformBufferReader.h
   qSlicerTrackedSequenceBrowserReader.h
   qSlicerTrackedSequenceBrowserWriter.h
   )
@@ -65,12 +59,10 @@ set(MODULE_UI_SRCS
 set(MODULE_TARGET_LIBRARIES
   qSlicer${MODULE_NAME}ModuleWidgets
   vtkSlicer${MODULE_NAME}ModuleLogic
-  vtkSlicer${MODULE_NAME}ModuleMRML
   ${MRML_LIBRARIES}
   ${QT_LIBRARIES}
   qSlicerBaseQTCore
   ${Sequences_LIBS}
-  vtkSlicerAnnotationsModuleMRML
   )
 
 # Resources

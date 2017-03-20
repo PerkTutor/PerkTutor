@@ -28,7 +28,6 @@
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
 #include "ui_qSlicerTrackedSequenceMessagesWidget.h"
 
-#include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkMRMLSequenceNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"

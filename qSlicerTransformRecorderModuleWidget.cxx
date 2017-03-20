@@ -36,7 +36,6 @@
 #include "qMRMLNodeComboBox.h"
 #include "vtkMRMLViewNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_TransformRecorder
 class qSlicerTransformRecorderModuleWidgetPrivate: public Ui_qSlicerTransformRecorderModule

@@ -25,7 +25,6 @@
 #include "qSlicerWidget.h"
 
 #include "vtkSlicerModuleLogic.h"
-#include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
@@ -60,7 +59,7 @@ protected slots:
 
 signals:
 
-  void trackedSequenceBrowserNodeChanged( vtkMRMLNode* newTransformBufferNode );
+  void trackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNodeNode );
   void trackedSequenceBrowserNodeModified();
 
 protected:

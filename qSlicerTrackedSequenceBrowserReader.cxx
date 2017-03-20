@@ -32,11 +32,14 @@
 #include "vtkSlicerTransformRecorderLogic.h"
 
 // MRML includes
+#include "vtkMRMLLinearTransformNode.h"
 
 // VTK includes
 #include <vtkSmartPointer.h>
 #include <vtkCollectionIterator.h>
 #include <vtksys/SystemTools.hxx>
+#include <vtkXMLDataParser.h>
+#include <vtkMatrix4x4.h>
 
 //-----------------------------------------------------------------------------
 class qSlicerTrackedSequenceBrowserReaderPrivate
@@ -355,6 +358,7 @@ bool qSlicerTrackedSequenceBrowserReader
     this->copyNodeAttributes( currTempProxyNode, currProxyNode );
   }
 
+  return true;
 }
 
 

@@ -104,7 +104,6 @@ void qSlicerTrackedSequenceRecorderControlsWidget
   this->TrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( newTrackedSequenceBrowserNode );
 
   this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkCommand::ModifiedEvent, this, SLOT( onTrackedSequenceBrowserProxyNodesChanged() ) );
-  //this->qvtkConnect( this->TrackedSequenceBrowserNode, vtkMRMLTransformBufferNode::RecordingStateChangedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }

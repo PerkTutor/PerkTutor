@@ -24,7 +24,6 @@
 // Qt includes
 #include "qSlicerWidget.h"
 
-#include "vtkMRMLTransformBufferNode.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkSlicerSequenceBrowserLogic.h"
 #include "vtkSlicerTransformRecorderLogic.h"
