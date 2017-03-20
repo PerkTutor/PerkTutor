@@ -112,7 +112,7 @@ void qSlicerMetricsTableWidget
   Q_D(qSlicerMetricsTableWidget);
 
   d->MetricsTableNodeComboBox->setCurrentNode( newMetricsTableNode );
-  // If it is a new table node, then the onTransformBufferNodeChanged will be called automatically
+  // If it is a new table node, then the onTrackedSequenceBrowserNodeChanged will be called automatically
 }
 
 

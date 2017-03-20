@@ -58,7 +58,7 @@ public slots:
   void onNeedleTransformChanged( vtkMRMLNode* node );
   void onNeedleOrientationChanged( QAbstractButton* newOrientationButton );
   
-  void onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTransformBuffer );
+  void onTrackedSequenceBrowserNodeChanged( vtkMRMLNode* newTrackedSequenceBrowserNode );
   void onMetricsTableChanged( vtkMRMLNode* newMetricsTable );
   void mrmlNodeChanged( vtkMRMLNode* peNode );
   void updateWidgetFromMRMLNode();

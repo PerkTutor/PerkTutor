@@ -464,11 +464,7 @@ void vtkMRMLPerkEvaluatorNode
 {
   vtkNew< vtkIntArray > events;
   // TODO: See which events we need to observe on the sequence browser node
-   events->InsertNextValue( vtkCommand::ModifiedEvent );
-  // events->InsertNextValue( vtkMRMLTransformBufferNode::TransformAddedEvent );
-  // events->InsertNextValue( vtkMRMLTransformBufferNode::RecordingStateChangedEvent );
-  // events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformAddedEvent );
-  // events->InsertNextValue( vtkMRMLTransformBufferNode::ActiveTransformRemovedEvent );
+  events->InsertNextValue( vtkCommand::ModifiedEvent );
   this->SetAndObserveNodeReferenceID( TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE, newTrackedSequenceBrowserNodeID.c_str(), events.GetPointer() );
 
   // Auto-update as necessary

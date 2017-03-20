@@ -146,8 +146,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>318</width>
-        <height>181</height>
+        <width>606</width>
+        <height>735</height>
        </rect>
       </property>
       <attribute name="label">
@@ -427,7 +427,7 @@
               <property name="nodeTypes">
                <stringlist>
                 <string>vtkMRMLPerkEvaluatorNode</string>
-                <string>vtkMRMLTransformBufferNode</string>
+                <string>vtkMRMLSequenceBrowserNode</string>
                </stringlist>
               </property>
               <property name="sizeAdjustPolicy">

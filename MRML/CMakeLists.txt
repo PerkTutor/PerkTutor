@@ -36,7 +36,6 @@ set(module_mrml_target_libraries
   SlicerBaseLogic
   vtkIOInfovis
   vtkSlicerTransformRecorderModuleLogic
-  vtkSlicerTransformRecorderModuleMRML
   )
 
 SlicerMacroBuildModuleMRML(
