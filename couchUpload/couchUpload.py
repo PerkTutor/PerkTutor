@@ -111,6 +111,17 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.queryResultsCollapsibleButton.setVisible(False)
     self.layout.addWidget(self.queryResultsCollapsibleButton)
 
+    self.queryResultsLayout = qt.QFormLayout(self.queryResultsCollapsibleButton)
+    self.table = qt.QTableWidget(1, 6)
+    self.queryResultsLayout.addRow(self.table)
+
+    #session selector in query results
+    self.selectLabel = qt.QLabel("Select session number: ")
+    self.selectSession = qt.QComboBox()
+    self.queryResultsLayout.addRow(self.selectLabel, self.selectSession)
+
+    self.loadButton = qt.QPushButton("Load Session")
+    self.queryResultsLayout.addWidget(self.loadButton)
     # Connections
     self.saveButton.connect('clicked(bool)', self.onSaveButton)
     self.searchButton.connect('clicked(bool)', self.onSearchButton)
@@ -138,12 +149,25 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.displayResults(results)
 
   def displayResults(self, results):
-    queryResultsLayout = qt.QFormLayout(self.queryResultsCollapsibleButton)
-    headerLabel = qt.QLabel("UserID \t\t StudyID \t TrialID \t Skill Level \t Session Date \t\t")
-    queryResultsLayout.addRow(headerLabel)
-    for row in results:
-      loadButton = qt.QPushButton("Load Session")
-      queryResultsLayout.addRow(row[0] + '\t' + row[1] + '\t' + row[2] + '\t' + row[3] + '\t' + row[4] + '\t', loadButton)
+    numRows = len(results)
+    self.table.setRowCount(numRows)
+    self.table.setHorizontalHeaderItem(0, qt.QTableWidgetItem("UserID"))
+    self.table.setHorizontalHeaderItem(1, qt.QTableWidgetItem("StudyID"))
+    self.table.setColumnWidth(1, 150)
+    self.table.setHorizontalHeaderItem(2, qt.QTableWidgetItem("TrialID"))
+    self.table.setHorizontalHeaderItem(3, qt.QTableWidgetItem("Skill Level"))
+    self.table.setColumnWidth(3, 150)
+    self.table.setHorizontalHeaderItem(4, qt.QTableWidgetItem("Date"))
+    self.table.setColumnWidth(4, 300)
+    self.table.setHorizontalHeaderItem(5, qt.QTableWidgetItem("Session Number"))
+    self.table.setColumnWidth(5, 200)
+    for row in range(0, numRows):
+      for col in range(0, 5):
+        self.table.setItem(row, col, qt.QTableWidgetItem(results[row][col]))
+      self.table.setItem(row, 5, qt.QTableWidgetItem(str(row+1)))
+    self.layout.addStretch(1)
+    self.sessionNumbers = tuple(range(1, len(results) + 1))
+    self.selectSession.addItems(self.sessionNumbers)
     self.queryResultsCollapsibleButton.setVisible(True)
 
 #couchUploadLogic
