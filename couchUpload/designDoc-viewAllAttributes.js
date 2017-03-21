@@ -4,6 +4,8 @@ function(doc) {
         'studyID': doc.studyID,
         'trialID': doc.trialID,
         'skillLevel': doc.skillLevel,
+        'date': doc.date,
+        'sceneName': doc.sceneName,
         'id': doc._id
     });
 }
