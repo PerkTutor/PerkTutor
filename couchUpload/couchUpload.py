@@ -65,8 +65,6 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.saveButton.enabled = True
     metadataFormLayout.addRow(self.saveButton)
 
-    # Add vertical spacer
-    self.layout.addStretch(1)
 
      # Load Scene Area
     loadSceneCollapsibleButton = ctk.ctkCollapsibleButton()
@@ -80,7 +78,6 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.searchText = qt.QLabel()
     self.searchText.text = "Search by fields:"
     loadSceneFormLayout.addRow(self.searchText)
-    self.layout.addStretch(1)
 
     # Search user ID field
     self.searchUserID = qt.QLineEdit()
@@ -112,19 +109,17 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.layout.addWidget(self.queryResultsCollapsibleButton)
 
     self.queryResultsLayout = qt.QFormLayout(self.queryResultsCollapsibleButton)
-    self.table = qt.QTableWidget(1, 6)
+    self.table = qt.QTableWidget(1, 5)
     self.queryResultsLayout.addRow(self.table)
 
-    #session selector in query results
-    self.selectLabel = qt.QLabel("Select session number: ")
-    self.selectSession = qt.QComboBox()
-    self.queryResultsLayout.addRow(self.selectLabel, self.selectSession)
-
+    #load session button
     self.loadButton = qt.QPushButton("Load Session")
     self.queryResultsLayout.addWidget(self.loadButton)
+
     # Connections
     self.saveButton.connect('clicked(bool)', self.onSaveButton)
     self.searchButton.connect('clicked(bool)', self.onSearchButton)
+    self.loadButton.connect('clicked(bool)', self.onLoadButton)
 
   def onSaveButton(self):
     userID = ('userID', str(self.userIDField.text))
@@ -145,11 +140,19 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     skillLevel = ('skill level', str(self.searchSkill.currentText))
     searchInput = [userID, studyID, trialID, skillLevel]
     logic = couchUploadLogic()
-    results = logic.queryDB(searchInput)
-    self.displayResults(results)
+    self.results = logic.queryDB(searchInput)
+    self.displayResults()
 
-  def displayResults(self, results):
-    numRows = len(results)
+  def onLoadButton(self):
+    #index = int(self.selectSession.currentText) - 1 #position in self.savedScenesView
+    #sceneName = self.results[index][-1]
+    logic = couchUploadLogic()
+    rowNum = self.table.currentRow()
+    sceneName = self.results[rowNum][-1]
+    logic.loadScene(sceneName)
+
+  def displayResults(self): # look into highlighting query rows or another option to remove session numbers
+    numRows = len(self.results)
     self.table.setRowCount(numRows)
     self.table.setHorizontalHeaderItem(0, qt.QTableWidgetItem("UserID"))
     self.table.setHorizontalHeaderItem(1, qt.QTableWidgetItem("StudyID"))
@@ -159,15 +162,10 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.table.setColumnWidth(3, 150)
     self.table.setHorizontalHeaderItem(4, qt.QTableWidgetItem("Date"))
     self.table.setColumnWidth(4, 300)
-    self.table.setHorizontalHeaderItem(5, qt.QTableWidgetItem("Session Number"))
-    self.table.setColumnWidth(5, 200)
     for row in range(0, numRows):
       for col in range(0, 5):
-        self.table.setItem(row, col, qt.QTableWidgetItem(results[row][col]))
-      self.table.setItem(row, 5, qt.QTableWidgetItem(str(row+1)))
+        self.table.setItem(row, col, qt.QTableWidgetItem(self.results[row][col]))
     self.layout.addStretch(1)
-    self.sessionNumbers = tuple(range(1, len(results) + 1))
-    self.selectSession.addItems(self.sessionNumbers)
     self.queryResultsCollapsibleButton.setVisible(True)
 
 #couchUploadLogic
@@ -181,11 +179,10 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
       self.db = couch.create(dbName)
 
   def uploadSession(self, dataFields):
-    self.initializeDB('perk_tutor_test')
-    #replace perk_tutor_test with name of db in the host
+    self.initializeDB('perk_tutor_test') #replace perk_tutor_test with name of db in the host
     #testhost = couch['host_test']
-
     #db.replicate('http://127.0.0.1:5984/perk_tutor_test/', 'http://127.0.0.1:5984/host_test/', continuous=True)
+
     # save scene to db
     self.sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S") + ".mrb"
     self.sceneSaveFilename = slicer.app.temporaryPath + "/" + self.sceneName
@@ -199,10 +196,10 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
   def queryDB(self, searchInputs):
     self.initializeDB('perk_tutor_test')
     searchInputs = [[field, value] if value != '' else ["Null Field", value] for (field, value) in searchInputs]
-    savedScenesView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
+    self.savedScenesView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
     queryResults = []
-    for row in savedScenesView:
-      flag = True
+    for row in self.savedScenesView:
+      flag = True #boolean to match all specified search criteria
       rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel'], row.doc['date'], row.doc['sceneName']]
       for i in range(0, 3):
         if searchInputs[i][0] != "Null Field" and searchInputs[i][1] != rowData[i]:
@@ -211,5 +208,22 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
       if searchInputs[3][1] != rowData[3] and searchInputs[3][1] != 'All':
         flag = False
       if flag:
-        queryResults.append(rowData) #each row should be a new line on a popup window with button to load scene
+        queryResults.append(rowData)
     return queryResults
+
+  def loadScene(self, sceneName):
+    self.initializeDB('perk_tutor_test')
+    sceneView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
+    savedSceneDoc = None
+    index = 0
+    for row in sceneView:
+      if row.doc['sceneName'] == sceneName:
+        savedSceneDoc = sceneView.rows[index].doc
+        attachmentFilename = savedSceneDoc['sceneName']
+        attachmentFile = self.db.get_attachment(savedSceneDoc, attachmentFilename)
+        sceneLoadFilename = slicer.app.temporaryPath + '/' + attachmentFilename
+        with open(sceneLoadFilename, 'wb') as file:
+          file.write(attachmentFile.read())
+        slicer.util.loadScene(sceneLoadFilename)
+        return
+      index += 1
