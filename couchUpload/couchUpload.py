@@ -144,8 +144,6 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.displayResults()
 
   def onLoadButton(self):
-    #index = int(self.selectSession.currentText) - 1 #position in self.savedScenesView
-    #sceneName = self.results[index][-1]
     logic = couchUploadLogic()
     rowNum = self.table.currentRow()
     sceneName = self.results[rowNum][-1]
@@ -198,6 +196,40 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     searchInputs = [[field, value] if value != '' else ["Null Field", value] for (field, value) in searchInputs]
     self.savedScenesView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
     queryResults = []
+    viewDoc = {
+      "_id": "_design/docs",
+      "language": "javascript",
+      "views": {
+        "userID": {
+        "map": """function (doc) {
+            if (doc.userID)
+              emit(
+              null, {
+                'name': doc.userID,
+                'id': doc._id
+                });
+              }"""
+          },
+        "studies": {
+          "map": """function (doc) {
+            if (doc.studyID)
+              emit(
+                doc.patient, {
+                  'description': doc.studyID,
+                  'id': doc._id
+                  });
+                }"""
+          }
+        },
+    }
+    patients = self.logic.database.view('_design/docs/_view/patients', include_docs=True)
+    for patient in patients:
+      print patient.doc["UserID"]
+
+    db.save(viewDoc)
+
+    return queryResults
+    '''
     for row in self.savedScenesView:
       flag = True #boolean to match all specified search criteria
       rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel'], row.doc['date'], row.doc['sceneName']]
@@ -209,7 +241,8 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
         flag = False
       if flag:
         queryResults.append(rowData)
-    return queryResults
+    '''
+
 
   def loadScene(self, sceneName):
     self.initializeDB('perk_tutor_test')
