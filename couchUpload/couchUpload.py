@@ -226,6 +226,7 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     return rowData
 
   def loadScene(self, sceneName):
+    print sceneName
     self.initializeDB('perk_tutor_test')
     sceneView = self.db.view('_design/docs/_view/loadScene', include_docs=True, key=sceneName)
     savedSceneDoc = sceneView.rows[0].doc
@@ -234,7 +235,7 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     sceneLoadFilename = slicer.app.temporaryPath + '/' + attachmentFilename
     with open(sceneLoadFilename, 'wb') as file:
       file.write(attachmentFile.read())
-      slicer.util.loadScene(sceneLoadFilename)
-    return
+    slicer.util.loadScene(sceneLoadFilename)
+
 
 
