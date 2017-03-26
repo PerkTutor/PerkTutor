@@ -6,11 +6,12 @@ import logging
 import time
 import sys
 import couchdb
+import re
 
 class couchUpload(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "couchUpload" # TODO make this more human readable by adding spaces
+    self.parent.title = "CouchDB Upload" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Perk Tutor"]
     self.parent.dependencies = []
     self.parent.contributors = ["Christina Yan (Perk Lab)"] # replace with "Firstname Lastname (Organization)"
@@ -137,7 +138,7 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     userID = ('userID', str(self.searchUserID.text))
     studyID = ('studyID', str(self.searchStudyID.text))
     trialID = ('trialID', str(self.searchTrialID.text))
-    skillLevel = ('skill level', str(self.searchSkill.currentText))
+    skillLevel = ('skill', str(self.searchSkill.currentText))
     searchInput = [userID, studyID, trialID, skillLevel]
     logic = couchUploadLogic()
     self.results = logic.queryDB(searchInput)
@@ -161,9 +162,9 @@ class couchUploadWidget(ScriptedLoadableModuleWidget):
     self.table.setHorizontalHeaderItem(4, qt.QTableWidgetItem("Date"))
     self.table.setColumnWidth(4, 300)
     for row in range(0, numRows):
-      for col in range(0, 5):
-        self.table.setItem(row, col, qt.QTableWidgetItem(self.results[row][col]))
-    self.layout.addStretch(1)
+       for col in range(0, 5):
+          self.table.setItem(row, col, qt.QTableWidgetItem(self.results[row][col]))
+
     self.queryResultsCollapsibleButton.setVisible(True)
 
 #couchUploadLogic
@@ -192,44 +193,37 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     self.delayDisplay("Session saved.")
 
   def queryDB(self, searchInputs):
+    print '\nnew run \n'
     self.initializeDB('perk_tutor_test')
-    searchInputs = [[field, value] if value != '' else ["Null Field", value] for (field, value) in searchInputs]
-    self.savedScenesView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
+    queryValues = []
+    viewName = ''
+    for key,value in searchInputs[0:-1]:
+      if value != '':
+        queryValues.append(value)
+        viewName += key
+    (skillText, skillLevel) = searchInputs[-1]
+    if skillLevel != 'All':
+      queryValues.append(value)
+      viewName += skillLevel
     queryResults = []
-    viewDoc = {
-      "_id": "_design/docs",
-      "language": "javascript",
-      "views": {
-        "userID": {
-        "map": """function (doc) {
-            if (doc.userID)
-              emit(
-              null, {
-                'name': doc.userID,
-                'id': doc._id
-                });
-              }"""
-          },
-        "studies": {
-          "map": """function (doc) {
-            if (doc.studyID)
-              emit(
-                doc.patient, {
-                  'description': doc.studyID,
-                  'id': doc._id
-                  });
-                }"""
-          }
-        },
-    }
-    patients = self.logic.database.view('_design/docs/_view/patients', include_docs=True)
-    for patient in patients:
-      print patient.doc["UserID"]
-
-    db.save(viewDoc)
-
-    return queryResults
-    '''
+    viewPath = '_design/docs/_view/'
+    print viewName, queryValues
+    if viewName != '':
+      queryResults = self.db.view(viewPath,include_docs=True,key=queryValues)
+    else:
+      if len(queryValues) == 1:
+        queryResults = queryResults[0]
+      print queryValues
+      viewPath+="userIDstudyIDtrialID" #if no inputs for the userID, studyID, trialID fields and skill selector on 'All'
+      queryResults = self.db.view(viewPath,include_docs=True)
+    rowData = []
+    print queryResults
+    print len(queryResults)
+    for result in queryResults:
+      row =  [result.doc['userID'], result.doc['studyID'], result.doc['trialID'], result.doc['skillLevel'], result.doc['date'], result.doc['sceneName']]
+      rowData.append(row)
+    return rowData
+'''
     for row in self.savedScenesView:
       flag = True #boolean to match all specified search criteria
       rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel'], row.doc['date'], row.doc['sceneName']]
@@ -241,10 +235,8 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
         flag = False
       if flag:
         queryResults.append(rowData)
-    '''
-
-
-  def loadScene(self, sceneName):
+'''
+def loadScene(self, sceneName):
     self.initializeDB('perk_tutor_test')
     sceneView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
     savedSceneDoc = None
@@ -260,3 +252,4 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
         slicer.util.loadScene(sceneLoadFilename)
         return
       index += 1
+
