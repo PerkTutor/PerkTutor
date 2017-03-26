@@ -1,0 +1,4 @@
+function (doc) {
+    emit([doc.userID, doc.skillLevel], doc);
+}
+
