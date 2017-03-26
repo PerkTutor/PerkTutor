@@ -17,7 +17,7 @@ class couchUpload(ScriptedLoadableModule):
     self.parent.contributors = ["Christina Yan (Perk Lab)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
     This is a scripted loadable module to upload PerkTutor data to a distributed database."""
-    self.parent.acknowledgementText = """organization, grant and thanks."""
+    self.parent.acknowledgementText = ""
 
 #
 # couchUploadWidget
@@ -179,9 +179,6 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
 
   def uploadSession(self, dataFields):
     self.initializeDB('perk_tutor_test') #replace perk_tutor_test with name of db in the host
-    #testhost = couch['host_test']
-    #db.replicate('http://127.0.0.1:5984/perk_tutor_test/', 'http://127.0.0.1:5984/host_test/', continuous=True)
-
     # save scene to db
     self.sceneName = "Scene-" + time.strftime("%Y%m%d-%H%M%S") + ".mrb"
     self.sceneSaveFilename = slicer.app.temporaryPath + "/" + self.sceneName
@@ -193,63 +190,51 @@ class couchUploadLogic(ScriptedLoadableModuleLogic):
     self.delayDisplay("Session saved.")
 
   def queryDB(self, searchInputs):
-    print '\nnew run \n'
     self.initializeDB('perk_tutor_test')
     queryValues = []
     viewName = ''
+
+    #check for non empty userID, studyID, trialID
     for key,value in searchInputs[0:-1]:
       if value != '':
         queryValues.append(value)
         viewName += key
     (skillText, skillLevel) = searchInputs[-1]
     if skillLevel != 'All':
-      queryValues.append(value)
-      viewName += skillLevel
+      queryValues.append(skillLevel)
+      viewName += skillText
+
+    #if only one value to query, convert one element list of strings into 1 string
+    if len(queryValues) == 1:
+      queryValues= queryValues[0]
+
     queryResults = []
     viewPath = '_design/docs/_view/'
-    print viewName, queryValues
+    # if search values given to perform query
     if viewName != '':
+      viewPath += viewName
       queryResults = self.db.view(viewPath,include_docs=True,key=queryValues)
+    # if no query values given, just return the view with all docs in DB (no inputs for the userID, studyID, trialID fields and skill selector on 'All')
     else:
-      if len(queryValues) == 1:
-        queryResults = queryResults[0]
-      print queryValues
-      viewPath+="userIDstudyIDtrialID" #if no inputs for the userID, studyID, trialID fields and skill selector on 'All'
+      viewPath+="userIDstudyIDtrialID"
       queryResults = self.db.view(viewPath,include_docs=True)
     rowData = []
-    print queryResults
-    print len(queryResults)
+    #convert data in view into list of lists for displaying results
     for result in queryResults:
-      row =  [result.doc['userID'], result.doc['studyID'], result.doc['trialID'], result.doc['skillLevel'], result.doc['date'], result.doc['sceneName']]
+      row = [result.doc['userID'], result.doc['studyID'], result.doc['trialID'], result.doc['skillLevel'], result.doc['date'], result.doc['sceneName']]
       rowData.append(row)
     return rowData
-'''
-    for row in self.savedScenesView:
-      flag = True #boolean to match all specified search criteria
-      rowData = [row.doc['userID'], row.doc['studyID'], row.doc['trialID'], row.doc['skillLevel'], row.doc['date'], row.doc['sceneName']]
-      for i in range(0, 3):
-        if searchInputs[i][0] != "Null Field" and searchInputs[i][1] != rowData[i]:
-          flag = False
-          continue
-      if searchInputs[3][1] != rowData[3] and searchInputs[3][1] != 'All':
-        flag = False
-      if flag:
-        queryResults.append(rowData)
-'''
-def loadScene(self, sceneName):
+
+  def loadScene(self, sceneName):
     self.initializeDB('perk_tutor_test')
-    sceneView = self.db.view('_design/queryDB/_view/loadAllAttributes', include_docs=True)
-    savedSceneDoc = None
-    index = 0
-    for row in sceneView:
-      if row.doc['sceneName'] == sceneName:
-        savedSceneDoc = sceneView.rows[index].doc
-        attachmentFilename = savedSceneDoc['sceneName']
-        attachmentFile = self.db.get_attachment(savedSceneDoc, attachmentFilename)
-        sceneLoadFilename = slicer.app.temporaryPath + '/' + attachmentFilename
-        with open(sceneLoadFilename, 'wb') as file:
-          file.write(attachmentFile.read())
-        slicer.util.loadScene(sceneLoadFilename)
-        return
-      index += 1
+    sceneView = self.db.view('_design/docs/_view/loadScene', include_docs=True, key=sceneName)
+    savedSceneDoc = sceneView.rows[0].doc
+    attachmentFilename = savedSceneDoc['sceneName']
+    attachmentFile = self.db.get_attachment(savedSceneDoc, attachmentFilename)
+    sceneLoadFilename = slicer.app.temporaryPath + '/' + attachmentFilename
+    with open(sceneLoadFilename, 'wb') as file:
+      file.write(attachmentFile.read())
+      slicer.util.loadScene(sceneLoadFilename)
+    return
+
 
