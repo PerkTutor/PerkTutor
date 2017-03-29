@@ -9,11 +9,6 @@ set(MODULE_TITLE "Perk Evaluator")
 
 string(TOUPPER ${MODULE_NAME} MODULE_NAME_UPPER)
 
-#-----------------------------------------------------------------------------
-if ( NOT DEFINED ${EXTENSION_NAME}_SUPERBUILD )
-  find_package(Slicer REQUIRED)
-  include(${Slicer_USE_FILE})
-endif()
 
 #-----------------------------------------------------------------------------
 add_subdirectory(MRML)

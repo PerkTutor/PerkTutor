@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
 #-----------------------------------------------------------------------------
-set(MODULE_NAME PythonMetricsCalculator)
+set(MODULE_NAME "PythonMetricsCalculator")
+set(MODULE_TITLE "Python Metrics Calculator")
 
-#Change this once it is packaged as an extension
-find_package(Slicer REQUIRED)
-include(${Slicer_USE_FILE})
 
 #-----------------------------------------------------------------------------
 # Update the Python Metrics git submodule

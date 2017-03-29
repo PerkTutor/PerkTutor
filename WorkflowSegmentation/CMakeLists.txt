@@ -8,12 +8,6 @@ set(MODULE_TITLE "Workflow Segmentation")
 string(TOUPPER ${MODULE_NAME} MODULE_NAME_UPPER)
 
 #-----------------------------------------------------------------------------
-if ( NOT DEFINED ${EXTENSION_NAME}_SUPERBUILD )
-  find_package(Slicer REQUIRED)
-  include(${Slicer_USE_FILE})
-endif()
-
-#-----------------------------------------------------------------------------
 # Build module sub libraries
 add_subdirectory(MRML)
 add_subdirectory(Logic)
