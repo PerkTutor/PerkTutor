@@ -8,7 +8,7 @@ set(MODULE_TITLE "Python Metrics Calculator")
 #-----------------------------------------------------------------------------
 # Update the Python Metrics git submodule
 execute_process(
-  COMMAND ${GIT_EXECUTABLE} submodule update
+  COMMAND ${GIT_EXECUTABLE} submodule update WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 #-----------------------------------------------------------------------------

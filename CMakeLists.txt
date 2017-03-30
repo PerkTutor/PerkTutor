@@ -26,12 +26,6 @@ include( "${CMAKE_CURRENT_SOURCE_DIR}/SequencesInclude.cmake" )
 # Sequences_LIBS to the TARGET_LIBRARIES
 
 
-# Update the Python Metrics git submodule
-execute_process(
-  COMMAND ${GIT_EXECUTABLE} submodule update
-)
-
-
 # Extension modules
 add_subdirectory(TransformRecorder)
 add_subdirectory(PerkEvaluator)
