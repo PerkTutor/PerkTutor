@@ -397,6 +397,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     originalItemNumber = peNode.GetTrackedSequenceBrowserNode().GetSelectedItemNumber()
     
     peNode.GetTrackedSequenceBrowserNode().SetSelectedItemNumber( 0 )
+    peNode.GetTrackedSequenceBrowserNode().Modified() # Force update the proxy nodes
     peNode.SetAnalysisState( 0 )
   
     for i in range( masterSequenceNode.GetNumberOfDataNodes() ):
