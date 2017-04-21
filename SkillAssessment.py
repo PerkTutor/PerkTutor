@@ -9,6 +9,14 @@ import logging
 # SkillAssessment
 #
 
+ASSESSMENT_METHOD_ZSCORE = "Z-Score"
+ASSESSMENT_METHOD_PERCENTILE = "Percentile"
+ASSESSMENT_METHOD_RAW = "Raw"
+
+AGGREGATION_METHOD_MEAN = "Mean"
+AGGREGATION_METHOD_MEDIAN = "Median"
+AGGREGATION_METHOD_MAXIMUM = "Maximum"
+
 class SkillAssessment( ScriptedLoadableModule ):
   """Uses ScriptedLoadableModule base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
@@ -134,9 +142,9 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     # Assessment method combo box 
     #    
     self.assessmentMethodComboBox = qt.QComboBox()
-    self.assessmentMethodComboBox.addItem( "Raw" )
-    self.assessmentMethodComboBox.addItem( "Z-Score" )
-    self.assessmentMethodComboBox.addItem( "Percentile" )
+    self.assessmentMethodComboBox.addItem( ASSESSMENT_METHOD_ZSCORE )
+    self.assessmentMethodComboBox.addItem( ASSESSMENT_METHOD_PERCENTILE )
+    self.assessmentMethodComboBox.addItem( ASSESSMENT_METHOD_RAW )
     self.assessmentMethodComboBox.setToolTip( "Choose the assessment method." )
     optionsFormLayout.addRow( "Assessment Method: ", self.assessmentMethodComboBox )
     
@@ -144,13 +152,35 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     # Aggregation method combo box 
     #    
     self.aggregationMethodComboBox = qt.QComboBox()
-    self.aggregationMethodComboBox.addItem( "Mean" )
-    self.aggregationMethodComboBox.addItem( "Median" )
-    self.aggregationMethodComboBox.addItem( "Maximum" )
+    self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MEAN )
+    self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MEDIAN )
+    self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MAXIMUM )
     self.aggregationMethodComboBox.setToolTip( "Choose the aggregation method." )
     optionsFormLayout.addRow( "Aggregation Method: ", self.aggregationMethodComboBox )
-
-
+    
+    #
+    # Showing weight sliders
+    #
+    self.metricWeightSlidersCheckBox = qt.QCheckBox()
+    self.metricWeightSlidersCheckBox.setChecked( True )
+    self.metricWeightSlidersCheckBox.setText( "Show metric weights" )
+    self.metricWeightSlidersCheckBox.setToolTip( "Allow weights for individual metrics to be adjusted from the assessment table." )
+    optionsFormLayout.addWidget( self.metricWeightSlidersCheckBox )
+    
+    self.scoreWeightSlidersCheckBox = qt.QCheckBox()
+    self.scoreWeightSlidersCheckBox.setChecked( True )
+    self.scoreWeightSlidersCheckBox.setText( "Show score weights" )
+    self.scoreWeightSlidersCheckBox.setToolTip( "Allow weights for an entire row or column to be adjusted from the assessment table." )
+    optionsFormLayout.addWidget( self.scoreWeightSlidersCheckBox )
+    
+    #
+    # Whether to show the transformed metric values or the raw values
+    #
+    self.showTransformedMetricValuesCheckBox = qt.QCheckBox()
+    self.showTransformedMetricValuesCheckBox.setChecked( False )
+    self.showTransformedMetricValuesCheckBox.setText( "Show transformed metrics" )
+    self.showTransformedMetricValuesCheckBox.setToolTip( "Show the transformed metric values in the assessment table." )
+    optionsFormLayout.addWidget( self.showTransformedMetricValuesCheckBox )
 
 
     # connections
@@ -184,8 +214,9 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     aggregationMethod = self.aggregationMethodComboBox.currentText
       
     result = self.saLogic.Assess( transformationMethod, aggregationMethod )
-        
+    
     self.resultsLabel.text = result
+    self.weightSelector.setCurrentNode( self.saLogic.weightNode ) # In case the weight node was created during assessment
     
     # Pop-up the big assessment table in a new window
     
@@ -196,8 +227,16 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     saWidgets = imp.load_dynamic( "qSlicerSkillAssessmentModuleWidgetsPythonQt", "d:\PerkTutor\SkillAssessment-0307D\lib\Slicer-4.7\qt-loadable-modules\Debug\qSlicerSkillAssessmentModuleWidgetsPythonQt.pyd" )
     
     self.assessmentTable = saWidgets.qSlicerAssessmentTableWidget()
-    self.assessmentTable.setMetricsNode( self.saLogic.metricsNode )
-    self.assessmentTable.setMetricsWeightNode( self.saLogic.weightNode )
+    self.assessmentTable.setMetricWeightsVisible( self.metricWeightSlidersCheckBox.isChecked() )
+    self.assessmentTable.setScoreWeightsVisible( self.scoreWeightSlidersCheckBox.isChecked() )
+    
+    if ( self.showTransformedMetricValuesCheckBox.isChecked() ):
+      self.assessmentTable.setMetricNode( self.saLogic.transformedMetricsNode )
+    else:    
+      self.assessmentTable.setMetricNode( self.saLogic.metricsNode )
+      
+    
+    self.assessmentTable.setWeightNode( self.saLogic.weightNode )
     self.assessmentTable.setMetricScoreNode( self.saLogic.metricScoreNode )
     self.assessmentTable.setTaskScoreNode( self.saLogic.taskScoreNode )
     self.assessmentTable.setOverallScore( self.saLogic.overallScore )
@@ -226,10 +265,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     self.metricScoreNode = None
     self.taskScoreNode = None
     
+    self.transformedMetricsNode = None
+    
     self.trainingSet = None
     
     self.overallScore = 0
-  
+    
   
   def Assess( self, transformationMethod, aggregationMethod ):
   
@@ -247,12 +288,15 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       
     if ( self.weightNode is None ):
       self.weightNode = self.CreateTableNodeFromMetrics( self.metricsNode, 1 )
+      self.weightNode.SetName( "Weights" )
+      self.weightNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( self.weightNode )
     
     # TODO: Make this code more modular
     
     # Transform the metric values
-    transformedMetricsNode = self.CreateTableNodeFromMetrics( self.metricsNode, 0 )
-    transformedMetricsTable = transformedMetricsNode.GetTable()
+    self.transformedMetricsNode = self.CreateTableNodeFromMetrics( self.metricsNode, 0 )
+    transformedMetricsTable = self.transformedMetricsNode.GetTable()
     
     for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
       metricName = transformedMetricsTable.GetValueByName( rowIndex, "MetricName" )
@@ -287,7 +331,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         if ( columnName == "MetricName" or columnName == "MetricRoles" or columnName == "MetricUnit" ):
           continue
           
-        metricValues.append( self.GetMetricValueFromNode( transformedMetricsNode, metricName, metricRoles, metricUnit, columnName ) )
+        metricValues.append( self.GetMetricValueFromNode( self.transformedMetricsNode, metricName, metricRoles, metricUnit, columnName ) )
         weights.append( self.GetMetricValueFromNode( self.weightNode, metricName, metricRoles, metricUnit, columnName ) )
 
       aggregatedMetricValue = self.GetAggregatedMetricValue( metricValues, weights, aggregationMethod )
@@ -457,11 +501,11 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       logging.info( "SkillAssessmentLogic::GetAggregatedMetricValue: Metric values and weights do not correspond." )
       return 0
       
-    if ( method == "Mean" ):
+    if ( method == AGGREGATION_METHOD_MEAN ):
       return SkillAssessmentLogic.GetWeightedMean( metricValues, weights )
-    if ( method == "Median" ):
+    if ( method == AGGREGATION_METHOD_MEDIAN ):
       return SkillAssessmentLogic.GetWeightedMedian( metricValues, weights )
-    if ( method == "Maximum" ):
+    if ( method == AGGREGATION_METHOD_MAXIMUM ):
       return SkillAssessmentLogic.GetMaximum( metricValues, weights )
       
     logging.info( "SkillAssessmentLogic::GetAggregatedMetricValue: Metric transformation method improperly specified." )
@@ -502,11 +546,11 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     
   @staticmethod 
   def GetTransformedMetricValue( testMetric, trainingMetrics, method ):
-    if ( method == "Raw" ):
+    if ( method == ASSESSMENT_METHOD_RAW ):
       return SkillAssessmentLogic.GetRaw( testMetric, trainingMetrics )
-    if ( method == "Percentile" ):
+    if ( method == ASSESSMENT_METHOD_PERCENTILE ):
       return SkillAssessmentLogic.GetPercentile( testMetric, trainingMetrics )
-    if ( method == "Z-Score" ):
+    if ( method == ASSESSMENT_METHOD_ZSCORE ):
       return SkillAssessmentLogic.GetZScore( testMetric, trainingMetrics )
       
     logging.info( "SkillAssessmentLogic::GetTransformedMetricValue: Metric transformation method improperly specified." )

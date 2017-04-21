@@ -96,7 +96,7 @@ void qSlicerMetricWeightWidget
 
 
 void qSlicerMetricWeightWidget
-::setMetricValue( double value )
+::setMetric( double value )
 {
   Q_D(qSlicerMetricWeightWidget);
   
@@ -105,7 +105,7 @@ void qSlicerMetricWeightWidget
 
 
 void qSlicerMetricWeightWidget
-::setMetricWeight( double weight )
+::setWeight( double weight )
 {
   Q_D(qSlicerMetricWeightWidget);
   
@@ -114,7 +114,7 @@ void qSlicerMetricWeightWidget
 
 
 void qSlicerMetricWeightWidget
-::setMetricValueVisible( bool visible )
+::setMetricVisible( bool visible )
 {
   Q_D(qSlicerMetricWeightWidget);
   
@@ -123,7 +123,7 @@ void qSlicerMetricWeightWidget
 
 
 void qSlicerMetricWeightWidget
-::setWeightSliderVisible( bool visible )
+::setWeightVisible( bool visible )
 {
   Q_D(qSlicerMetricWeightWidget);
   

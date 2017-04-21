@@ -44,13 +44,16 @@ public:
   qSlicerAssessmentTableWidget(QWidget *parent=0);
   virtual ~qSlicerAssessmentTableWidget();
 
-  Q_INVOKABLE virtual void setMetricsNode( vtkMRMLNode* table ); // Note that this is could be the raw metrics or the regularized metrics
-  Q_INVOKABLE virtual void setMetricsWeightNode( vtkMRMLNode* table );
+  Q_INVOKABLE virtual void setMetricNode( vtkMRMLNode* table ); // Note that this is could be the raw metrics or the regularized metrics
+  Q_INVOKABLE virtual void setWeightNode( vtkMRMLNode* table );
   
   Q_INVOKABLE virtual void setMetricScoreNode( vtkMRMLNode* table );
   Q_INVOKABLE virtual void setTaskScoreNode( vtkMRMLNode* table );
   
   Q_INVOKABLE virtual void setOverallScore( double score );
+
+  Q_INVOKABLE virtual void setMetricWeightsVisible( bool visible );
+  Q_INVOKABLE virtual void setScoreWeightsVisible( bool visible );
 
 protected slots:
   
@@ -58,18 +61,29 @@ protected slots:
 
   void updateWidget();
 
+  void updateHeaders();
+  void updateMetrics();
+  void updateMetricScores();
+  void updateTaskScores();
+  void updateOverallScore();
+
 protected:
 
   QScopedPointer<qSlicerAssessmentTableWidgetPrivate> d_ptr;
 
-  vtkWeakPointer< vtkMRMLTableNode > MetricsNode;
-  vtkWeakPointer< vtkMRMLTableNode > MetricsWeightNode;
+  vtkWeakPointer< vtkMRMLTableNode > MetricNode;
+  vtkWeakPointer< vtkMRMLTableNode > WeightNode;
   vtkWeakPointer< vtkMRMLTableNode > MetricScoreNode;
   vtkWeakPointer< vtkMRMLTableNode > TaskScoreNode;
   
   double OverallScore;
 
+  bool ShowMetricWeights;
+  bool ShowScoreWeights;
+
   virtual void setup();
+
+  void getHeaderTable( vtkTable* headerTable );
 
 private:
   Q_DECLARE_PRIVATE(qSlicerAssessmentTableWidget);

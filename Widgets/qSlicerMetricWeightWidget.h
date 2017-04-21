@@ -43,11 +43,11 @@ public:
   qSlicerMetricWeightWidget(QWidget *parent=0);
   virtual ~qSlicerMetricWeightWidget();
 
-  Q_INVOKABLE virtual void setMetricValue( double value );
-  Q_INVOKABLE virtual void setMetricWeight( double weight );
+  Q_INVOKABLE virtual void setMetric( double value );
+  Q_INVOKABLE virtual void setWeight( double weight );
 
-  Q_INVOKABLE void setMetricValueVisible( bool visible );
-  Q_INVOKABLE void setWeightSliderVisible( bool visible );
+  Q_INVOKABLE void setMetricVisible( bool visible );
+  Q_INVOKABLE void setWeightVisible( bool visible );
 
 protected slots:
   

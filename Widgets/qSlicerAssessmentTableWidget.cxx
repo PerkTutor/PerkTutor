@@ -25,6 +25,8 @@
 
 #include <QtGui>
 
+#include <vtkNew.h>
+
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
@@ -67,12 +69,15 @@ void qSlicerAssessmentTableWidgetPrivate
 qSlicerAssessmentTableWidget
 ::qSlicerAssessmentTableWidget(QWidget* parentWidget) : Superclass( parentWidget ) , d_ptr( new qSlicerAssessmentTableWidgetPrivate(*this) )
 {
-  this->MetricsNode = NULL;
-  this->MetricsWeightNode = NULL;
+  this->MetricNode = NULL;
+  this->WeightNode = NULL;
   this->MetricScoreNode = NULL;
   this->TaskScoreNode = NULL;
   
   this->OverallScore = 0;
+
+  this->ShowMetricWeights = true;
+  this->ShowScoreWeights = true;
   
   this->setup();
 }
@@ -96,26 +101,42 @@ void qSlicerAssessmentTableWidget
 
 
 void qSlicerAssessmentTableWidget
-::setMetricsNode( vtkMRMLNode* table )
+::getHeaderTable( vtkTable* headerTable )
 {
   Q_D(qSlicerAssessmentTableWidget);
 
-  this->qvtkDisconnect( this->MetricsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
-  this->MetricsNode = vtkMRMLTableNode::SafeDownCast( table );
-  this->qvtkConnect( this->MetricsNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  if ( this->WeightNode != NULL && this->WeightNode->GetTable() != NULL )
+  {
+    headerTable->DeepCopy( this->WeightNode->GetTable() );
+  }
+  if ( this->MetricNode != NULL && this->MetricNode->GetTable() != NULL )
+  {
+    headerTable->DeepCopy( this->MetricNode->GetTable() );
+  }
+}
+
+
+void qSlicerAssessmentTableWidget
+::setMetricNode( vtkMRMLNode* table )
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  this->qvtkDisconnect( this->MetricNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->MetricNode = vtkMRMLTableNode::SafeDownCast( table );
+  this->qvtkConnect( this->MetricNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
 
 
 void qSlicerAssessmentTableWidget
-::setMetricsWeightNode( vtkMRMLNode* table )
+::setWeightNode( vtkMRMLNode* table )
 {
   Q_D(qSlicerAssessmentTableWidget);
 
-  this->qvtkDisconnect( this->MetricsWeightNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
-  this->MetricsWeightNode = vtkMRMLTableNode::SafeDownCast( table );
-  this->qvtkConnect( this->MetricsWeightNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->qvtkDisconnect( this->WeightNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
+  this->WeightNode = vtkMRMLTableNode::SafeDownCast( table );
+  this->qvtkConnect( this->WeightNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
   this->updateWidget();
 }
@@ -130,7 +151,7 @@ void qSlicerAssessmentTableWidget
   this->MetricScoreNode = vtkMRMLTableNode::SafeDownCast( table );
   this->qvtkConnect( this->MetricScoreNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
-  this->updateWidget();
+  this->updateMetricScores();
 }
 
 
@@ -143,7 +164,7 @@ void qSlicerAssessmentTableWidget
   this->TaskScoreNode = vtkMRMLTableNode::SafeDownCast( table );
   this->qvtkConnect( this->TaskScoreNode, vtkCommand::ModifiedEvent, this, SLOT( updateWidget() ) );
 
-  this->updateWidget();
+  this->updateTaskScores();
 }
 
 
@@ -154,7 +175,25 @@ void qSlicerAssessmentTableWidget
 
   this->OverallScore = score;
 
-  this->updateWidget();
+  this->updateOverallScore();
+}
+
+
+void qSlicerAssessmentTableWidget
+::setMetricWeightsVisible( bool visible )
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  this->ShowMetricWeights = visible;
+}
+
+
+void qSlicerAssessmentTableWidget
+::setScoreWeightsVisible( bool visible )
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  this->ShowScoreWeights = visible;
 }
 
 
@@ -163,7 +202,7 @@ void qSlicerAssessmentTableWidget
 {
   Q_D(qSlicerAssessmentTableWidget);
   
-  if ( this->MetricsWeightNode == NULL || this->MetricsWeightNode->GetTable() == NULL )
+  if ( this->WeightNode == NULL || this->WeightNode->GetTable() == NULL )
   {
     return;
   }
@@ -172,64 +211,34 @@ void qSlicerAssessmentTableWidget
   int rowIndex = slider->property( "row" ).toInt();
   int columnIndex = slider->property( "column" ).toInt();
   
-  this->MetricsWeightNode->GetTable()->SetValue( rowIndex, columnIndex, weight );
+  this->WeightNode->GetTable()->SetValue( rowIndex, columnIndex, weight );
 }
 
 
 void qSlicerAssessmentTableWidget
-::updateWidget()
+::updateHeaders()
 {
   Q_D(qSlicerAssessmentTableWidget);
 
-  // Set up the table
-  d->AssessmentTable->clear();
-  d->AssessmentTable->setRowCount( 0 );
-  
-  // Get a table that has the header information in it  
-  vtkTable* metricsTable = NULL;
-  if ( this->MetricsNode != NULL )
+  // Get the header table
+  vtkNew< vtkTable > headerTable;
+  this->getHeaderTable( headerTable.GetPointer() );
+  if ( headerTable->GetNumberOfRows() == 0 || headerTable->GetNumberOfColumns() == 0 )
   {
-    metricsTable = this->MetricsNode->GetTable();
-  }
-  
-  vtkTable* weightTable = NULL;
-  if ( this->MetricsWeightNode != NULL )
-  {
-    weightTable = this->MetricsWeightNode->GetTable();
-  }  
-  
-  vtkTable* headerTable = NULL;
-  if ( metricsTable != NULL )
-  {
-    headerTable = metricsTable;
-  }
-  if ( weightTable != NULL )
-  {
-    headerTable = weightTable;
-  }
-  
-  if ( headerTable == NULL ) // That is there is no metrics node and no weight node
-  {
+    qWarning( "qSlicerAssessmentTableWidget::updateTableHeaders: Metrics and weight tables improperly specified." );
     return;
   }
-  
+
   // The grid positions
   int numMetrics = headerTable->GetNumberOfRows();
   int numTasks = headerTable->GetNumberOfColumns() - 3; // Ignore "MetricName", "MetricRoles", "MetricUnit"
   
-  int taskHeaderRowOffset = 0; int taskHeaderColumnOffset = 2;
-  int metricHeaderRowOffset = 2; int metricHeaderColumnOffset = 0;
-  int metricValuesRowOffset = 2; int metricValuesColumnOffset = 2;
-  int taskScoresRowOffset = numMetrics + 3; int taskScoresColumnOffset = 2;
-  int metricScoresRowOffset = 2; int metricScoresColumnOffset = numTasks + 3;
-  int overallScoreRowOffset = numMetrics + 3; int overallScoreColumnOffset = numTasks + 3;
-  
   d->AssessmentTable->setRowCount( numMetrics + 4 );
   d->AssessmentTable->setColumnCount( numTasks + 4 );
-  
-  // Note: This assumes that all tables have the same order
-  // This needs to be enforced by the functions using this widget
-  
+
+  int taskHeaderColumnOffset = 2;
+  int metricHeaderRowOffset = 2;
+
   // Task headers
   int taskColumnCount = 0;
   for ( int columnIndex = 0; columnIndex < headerTable->GetNumberOfColumns(); columnIndex++ )
@@ -241,7 +250,7 @@ void qSlicerAssessmentTableWidget
     }
     QTableWidgetItem* taskHeaderItem = new QTableWidgetItem( columnName.c_str() );
     taskHeaderItem->setTextAlignment( Qt::AlignCenter );
-    d->AssessmentTable->setItem( taskHeaderRowOffset, taskHeaderColumnOffset + taskColumnCount, taskHeaderItem );
+    d->AssessmentTable->setItem( 0, taskHeaderColumnOffset + taskColumnCount, taskHeaderItem );
 
     taskColumnCount++;
   }
@@ -250,22 +259,55 @@ void qSlicerAssessmentTableWidget
   for ( int rowIndex = 0; rowIndex < headerTable->GetNumberOfRows(); rowIndex++ )
   {
     QString metricHeaderString;
-    metricHeaderString.append( this->MetricsNode->GetTable()->GetValueByName( rowIndex, "MetricName" ).ToString() );
+    metricHeaderString.append( headerTable->GetValueByName( rowIndex, "MetricName" ).ToString() );
 
     metricHeaderString.append( " [" );
-    metricHeaderString.append( this->MetricsNode->GetTable()->GetValueByName( rowIndex, "MetricRoles" ).ToString() );
+    metricHeaderString.append( headerTable->GetValueByName( rowIndex, "MetricRoles" ).ToString() );
     metricHeaderString.append( "]" );
 
     metricHeaderString.append( " (" );
-    metricHeaderString.append( this->MetricsNode->GetTable()->GetValueByName( rowIndex, "MetricUnit" ).ToString() );
+    metricHeaderString.append( headerTable->GetValueByName( rowIndex, "MetricUnit" ).ToString() );
     metricHeaderString.append( ")" );
     
     QTableWidgetItem* metricHeaderItem = new QTableWidgetItem( metricHeaderString );
-    d->AssessmentTable->setItem( rowIndex + metricHeaderRowOffset, metricHeaderColumnOffset, metricHeaderItem );
+    d->AssessmentTable->setItem( rowIndex + metricHeaderRowOffset, 0, metricHeaderItem );
   }
 
-  // Metric values
-  taskColumnCount = 0;
+}
+
+
+void qSlicerAssessmentTableWidget
+::updateMetrics()
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  // Ensure this table and the header table are compatible
+  vtkTable* metricTable = NULL;
+  if ( this->MetricNode != NULL )
+  {
+    metricTable = this->MetricNode->GetTable();
+  }
+  vtkTable* weightTable = NULL;
+  if ( this->WeightNode != NULL )
+  {
+    weightTable = this->WeightNode->GetTable();
+  }
+
+  vtkNew< vtkTable > headerTable;
+  this->getHeaderTable( headerTable.GetPointer() );
+
+  bool metricTableCompatible = metricTable != NULL
+    && metricTable->GetNumberOfRows() == headerTable->GetNumberOfRows()
+    && metricTable->GetNumberOfColumns() == headerTable->GetNumberOfColumns();
+  bool weightTableCompatible = weightTable != NULL
+    && weightTable->GetNumberOfRows() == headerTable->GetNumberOfRows()
+    && weightTable->GetNumberOfColumns() == headerTable->GetNumberOfColumns();
+
+  int metricRowOffset = 2;
+  int metricColumnOffset = 2;
+
+  // Put the metric values and weights into the table
+  int taskColumnCount = 0;
   for ( int columnIndex = 0; columnIndex < headerTable->GetNumberOfColumns(); columnIndex++ )
   {
     std::string columnName = headerTable->GetColumnName( columnIndex );
@@ -276,20 +318,21 @@ void qSlicerAssessmentTableWidget
     for ( int rowIndex = 0; rowIndex < headerTable->GetNumberOfRows(); rowIndex++ )
     {
       double value = 0;
-      if ( metricsTable != NULL && columnIndex < metricsTable->GetNumberOfColumns() && rowIndex < metricsTable->GetNumberOfRows() )
+      if ( metricTableCompatible )
       {
-        value = metricsTable->GetValue( rowIndex, columnIndex ).ToDouble();
+        value = metricTable->GetValue( rowIndex, columnIndex ).ToDouble();
       }
       double weight = 0;
-      if ( weightTable != NULL && columnIndex < weightTable->GetNumberOfColumns() && rowIndex < weightTable->GetNumberOfRows() )
+      if ( weightTableCompatible )
       {
         weight = weightTable->GetValue( rowIndex, columnIndex ).ToDouble();
       }
       
       qSlicerMetricWeightWidget* metricWeightWidget = new qSlicerMetricWeightWidget();
-      metricWeightWidget->setMetricValue( value );
-      metricWeightWidget->setMetricWeight( weight );
-      d->AssessmentTable->setCellWidget( rowIndex + metricValuesRowOffset, taskColumnCount + metricValuesColumnOffset, metricWeightWidget );
+      metricWeightWidget->setMetric( value );
+      metricWeightWidget->setWeight( weight );
+      metricWeightWidget->setWeightVisible( this->ShowMetricWeights );
+      d->AssessmentTable->setCellWidget( rowIndex + metricRowOffset, taskColumnCount + metricColumnOffset, metricWeightWidget );
       
       connect( metricWeightWidget, SIGNAL( weightSliderChanged( double ) ), this, SLOT( onWeightSliderChanged( double ) ) );
       metricWeightWidget->setProperty( "row", QVariant( rowIndex ) );
@@ -297,66 +340,136 @@ void qSlicerAssessmentTableWidget
     }
     taskColumnCount++;
   }
-  
-  // Metric scores
+
+}
+
+
+void qSlicerAssessmentTableWidget
+::updateMetricScores()
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  // Ensure this table and the header table are compatible
   vtkTable* metricScoreTable = NULL;
   if ( this->MetricScoreNode != NULL )
   {
     metricScoreTable = this->MetricScoreNode->GetTable();
   }
-  if ( metricScoreTable != NULL )
+
+  vtkNew< vtkTable > headerTable;
+  this->getHeaderTable( headerTable.GetPointer() );
+
+  if ( metricScoreTable == NULL
+    || metricScoreTable->GetNumberOfRows() != headerTable->GetNumberOfRows()
+    || metricScoreTable->GetNumberOfColumns() != 4 )
   {
-    int metricScoreColumn = metricScoreTable->GetNumberOfColumns() - 1;
-    for ( int rowIndex = 0; rowIndex < metricScoreTable->GetNumberOfRows(); rowIndex++ )
-    {      
-      double value = metricScoreTable->GetValue( rowIndex, metricScoreColumn ).ToDouble();
-      
-      qSlicerMetricWeightWidget* metricWeightWidget = new qSlicerMetricWeightWidget();
-      metricWeightWidget->setMetricValue( value );
-      d->AssessmentTable->setCellWidget( rowIndex + metricScoresRowOffset, metricScoresColumnOffset, metricWeightWidget );
-    }
+    qWarning( "qSlicerAssessmentTableWidget::updateMetricScores: Metric score table improperly specified." );
+    return;
   }
-  
-  // Task scores
-  taskColumnCount = 0;
+
+  int metricScoreRowOffset = 2;
+  int metricScoreColumn = metricScoreTable->GetNumberOfColumns() - 1;
+
+  for ( int rowIndex = 0; rowIndex < metricScoreTable->GetNumberOfRows(); rowIndex++ )
+  {      
+    double value = metricScoreTable->GetValue( rowIndex, metricScoreColumn ).ToDouble();
+      
+    qSlicerMetricWeightWidget* metricWeightWidget = new qSlicerMetricWeightWidget();
+    metricWeightWidget->setMetric( value );
+    metricWeightWidget->setWeightVisible( this->ShowScoreWeights );
+    d->AssessmentTable->setCellWidget( rowIndex + metricScoreRowOffset, d->AssessmentTable->columnCount() - 1, metricWeightWidget );
+  }
+
+}
+
+
+void qSlicerAssessmentTableWidget
+::updateTaskScores()
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  // Ensure this table and the header table are compatible
   vtkTable* taskScoreTable = NULL;
   if ( this->TaskScoreNode != NULL )
   {
     taskScoreTable = this->TaskScoreNode->GetTable();
   }
-  if ( taskScoreTable != NULL )
-  {
-    int taskScoreRow = 0;
-    for ( int columnIndex = 0; columnIndex < taskScoreTable->GetNumberOfColumns(); columnIndex++ )
-    {
-      std::string columnName = headerTable->GetColumnName( columnIndex );
-      if ( columnName.compare( "MetricName" ) == 0 || columnName.compare( "MetricRoles" ) == 0 || columnName.compare( "MetricUnit" ) == 0 )
-      {
-        continue;
-      }
-      
-      double value = taskScoreTable->GetValue( taskScoreRow, columnIndex ).ToDouble();
-      
-      qSlicerMetricWeightWidget* metricWeightWidget = new qSlicerMetricWeightWidget();
-      metricWeightWidget->setMetricValue( value );
-      d->AssessmentTable->setCellWidget( taskScoresRowOffset, taskColumnCount + taskScoresColumnOffset, metricWeightWidget );
 
-      taskColumnCount++;
-    }
+  vtkNew< vtkTable > headerTable;
+  this->getHeaderTable( headerTable.GetPointer() );
+
+  if ( taskScoreTable == NULL
+    || taskScoreTable->GetNumberOfColumns() != headerTable->GetNumberOfColumns()
+    || taskScoreTable->GetNumberOfRows() != 1 )
+  {
+    qWarning( "qSlicerAssessmentTableWidget::updateTaskScores: Task score table improperly specified." );
+    return;
   }
+
+  int taskScoreColumnOffset = 2;
+  int taskScoreRow = 0;
+  int taskColumnCount = 0;
+
+  for ( int columnIndex = 0; columnIndex < taskScoreTable->GetNumberOfColumns(); columnIndex++ )
+  {
+    std::string columnName = headerTable->GetColumnName( columnIndex );
+    if ( columnName.compare( "MetricName" ) == 0 || columnName.compare( "MetricRoles" ) == 0 || columnName.compare( "MetricUnit" ) == 0 )
+    {
+      continue;
+    }
+      
+    double value = taskScoreTable->GetValue( taskScoreRow, columnIndex ).ToDouble();
   
-  // Overall score
+    qSlicerMetricWeightWidget* metricWeightWidget = new qSlicerMetricWeightWidget();
+    metricWeightWidget->setMetric( value );
+    metricWeightWidget->setWeightVisible( this->ShowScoreWeights );
+    d->AssessmentTable->setCellWidget( d->AssessmentTable->rowCount() - 1, taskColumnCount + taskScoreColumnOffset, metricWeightWidget );
+
+    taskColumnCount++;
+  }
+
+}
+
+
+void qSlicerAssessmentTableWidget
+::updateOverallScore()
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
   QTableWidgetItem* overallScoreItem = new QTableWidgetItem( QString::number( this->OverallScore ) );
   overallScoreItem->setTextAlignment( Qt::AlignCenter );
-  d->AssessmentTable->setItem( overallScoreRowOffset, overallScoreColumnOffset, overallScoreItem );
-  
+  d->AssessmentTable->setItem( d->AssessmentTable->rowCount() - 1, d->AssessmentTable->columnCount() - 1, overallScoreItem );
+}
+
+
+void qSlicerAssessmentTableWidget
+::updateWidget()
+{
+  Q_D(qSlicerAssessmentTableWidget);
+
+  // Set up the table
+  d->AssessmentTable->clear();
+  d->AssessmentTable->setRowCount( 0 );
+
+  this->updateHeaders();
+  this->updateMetrics();
+  this->updateMetricScores();
+  this->updateTaskScores();
+  this->updateOverallScore();
+
   // Some stretching to make the table look nicer
   d->AssessmentTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
   d->AssessmentTable->verticalHeader()->setResizeMode( QHeaderView::Stretch );
 
-  d->AssessmentTable->horizontalHeader()->setResizeMode( 1, QHeaderView::ResizeToContents );
-  d->AssessmentTable->horizontalHeader()->setResizeMode( d->AssessmentTable->columnCount() - 2, QHeaderView::ResizeToContents );
+  if ( d->AssessmentTable->columnCount() > 1 )
+  {  
+    d->AssessmentTable->horizontalHeader()->setResizeMode( 1, QHeaderView::ResizeToContents );
+    d->AssessmentTable->horizontalHeader()->setResizeMode( d->AssessmentTable->columnCount() - 2, QHeaderView::ResizeToContents );
+  }
 
-  d->AssessmentTable->verticalHeader()->setResizeMode( 1, QHeaderView::ResizeToContents );
-  d->AssessmentTable->verticalHeader()->setResizeMode( d->AssessmentTable->rowCount() - 2, QHeaderView::ResizeToContents );
+  if ( d->AssessmentTable->rowCount() > 1 )
+  {
+    d->AssessmentTable->verticalHeader()->setResizeMode( 1, QHeaderView::ResizeToContents );
+    d->AssessmentTable->verticalHeader()->setResizeMode( d->AssessmentTable->rowCount() - 2, QHeaderView::ResizeToContents );
+  }
 }
