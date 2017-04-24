@@ -84,7 +84,7 @@ if(BUILD_TESTING)
       ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Debug
       ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Release
       ${CMAKE_BINARY_DIR}/${Slicer_QTSCRIPTEDMODULES_LIB_DIR}
-	  ${Sequences_LIB_DIR}
+      ${Sequences_ADDITIONAL_MODULE_PATHS}
     )
   # We need to add these additional module paths, because they are not otherwise found correctly
 
