@@ -26,11 +26,13 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
-  ${qSlicerTransformRecorderModuleWidgets_SOURCE_DIR}
-  ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
-  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
-  ${Sequences_INCLUDE_DIRS}
+  ${vtkSlicerTransformRecorderModuleLogic_INCLUDE_DIRS}
+  ${qSlicerTransformRecorderModuleWidgets_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
+  ${qSlicerSequenceBrowserModuleWidgets_INCLUDE_DIRS}
   )
 
 set(MODULE_SRCS
@@ -58,7 +60,11 @@ set(MODULE_TARGET_LIBRARIES
   qSlicer${MODULE_NAME}ModuleWidgets
   vtkSlicerTransformRecorderModuleLogic
   qSlicerTransformRecorderModuleWidgets
-  ${Sequences_LIBS}
+  vtkSlicerSequencesModuleMRML
+  vtkSlicerSequenceBrowserModuleMRML
+  vtkSlicerSequencesModuleLogic
+  vtkSlicerSequenceBrowserModuleLogic
+  qSlicerSequenceBrowserModuleWidgets
   )
   
 #-----------------------------------------------------------------------------

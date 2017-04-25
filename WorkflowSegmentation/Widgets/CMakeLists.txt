@@ -5,11 +5,10 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "Q_SLICER_MODULE_${MODULE_NAME_UPPER}_WIDGETS_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${qSlicerTransformRecorderModuleWidgets_SOURCE_DIR}
-  ${qSlicerTransformRecorderModuleWidgets_BINARY_DIR}
-  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
-  ${Sequences_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
   )
 
 set(${KIT}_SRCS
@@ -37,16 +36,17 @@ set(${KIT}_UI_SRCS
   )
   
 set(${KIT}_RESOURCES
-  Resources/UI/qSlicerWorkflowToolSummaryWidget.ui
-  Resources/UI/qSlicerWorkflowToolWidget.ui
-  Resources/UI/qSlicerWorkflowGuideDisplayWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES
+  vtkSlicer${MODULE_NAME}ModuleMRML
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicerTransformRecorderModuleLogic 
   qSlicerTransformRecorderModuleWidgets
-  ${Sequences_LIBS}
+  vtkSlicerSequencesModuleMRML
+  vtkSlicerSequenceBrowserModuleMRML
+  vtkSlicerSequencesModuleLogic
+  vtkSlicerSequenceBrowserModuleLogic
   )
 
 #-----------------------------------------------------------------------------

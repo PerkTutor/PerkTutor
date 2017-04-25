@@ -17,11 +17,14 @@ set(MODULE_EXPORT_DIRECTIVE "Q_SLICER_QTMODULES_${MODULE_NAME_UPPER}_EXPORT")
 
 # Additional includes - Current_{source,binary} and Slicer_{Libs,Base} already included
 set(MODULE_INCLUDE_DIRECTORIES
-  ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
-  ${CMAKE_CURRENT_BINARY_DIR}/Widgets
   ${CMAKE_CURRENT_SOURCE_DIR}/Logic
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
-  ${Sequences_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
+  ${CMAKE_CURRENT_BINARY_DIR}/Widgets
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
   )
 
 # Source files
@@ -53,10 +56,10 @@ set(MODULE_UI_SRCS
 set(MODULE_TARGET_LIBRARIES
   qSlicer${MODULE_NAME}ModuleWidgets
   vtkSlicer${MODULE_NAME}ModuleLogic
-  ${MRML_LIBRARIES}
-  ${QT_LIBRARIES}
-  qSlicerBaseQTCore
-  ${Sequences_LIBS}
+  vtkSlicerSequencesModuleMRML
+  vtkSlicerSequenceBrowserModuleMRML
+  vtkSlicerSequencesModuleLogic
+  vtkSlicerSequenceBrowserModuleLogic
   )
 
 # Resources

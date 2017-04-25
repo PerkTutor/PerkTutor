@@ -5,7 +5,11 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "Q_SLICER_MODULE_${MODULE_NAME_UPPER}_WIDGETS_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${Sequences_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
+  ${qSlicerSequenceBrowserModuleWidgets_INCLUDE_DIRS}
   )
 
 set(${KIT}_SRCS
@@ -38,15 +42,17 @@ set(${KIT}_UI_SRCS
   )
 
 set(${KIT}_RESOURCES
-  Resources/UI/qSlicerPerkEvaluatorRolesWidget.ui
-  Resources/UI/qSlicerMetricsTableWidget.ui
   )
 
 set(${KIT}_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleLogic
-  qSlicerTransformRecorderModuleWidgets
   vtkSlicerTransformRecorderModuleLogic
-  ${Sequences_LIBS}
+  qSlicerTransformRecorderModuleWidgets  
+  vtkSlicerSequencesModuleMRML
+  vtkSlicerSequenceBrowserModuleMRML
+  vtkSlicerSequencesModuleLogic
+  vtkSlicerSequenceBrowserModuleLogic
+  qSlicerSequenceBrowserModuleWidgets
   )
 
 #-----------------------------------------------------------------------------

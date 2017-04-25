@@ -5,9 +5,10 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_LOGIC_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${vtkSlicerTransformRecorderModuleLogic_SOURCE_DIR}
-  ${vtkSlicerTransformRecorderModuleLogic_BINARY_DIR}
-  ${Sequences_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
   )
 
 set(${KIT}_SRCS
@@ -16,13 +17,12 @@ set(${KIT}_SRCS
   )
 
 set(${KIT}_TARGET_LIBRARIES
-  ${ITK_LIBRARIES}
-  ${MRML_LIBRARIES}
-  SlicerBaseLogic
-  qSlicerBaseQTCore
   vtkSlicerTransformRecorderModuleLogic  
-  vtkSlicerWorkflowSegmentationModuleMRML
-  ${Sequences_LIBS}
+  vtkSlicer${MODULE_NAME}ModuleMRML
+  vtkSlicerSequencesModuleMRML
+  vtkSlicerSequenceBrowserModuleMRML
+  vtkSlicerSequencesModuleLogic
+  vtkSlicerSequenceBrowserModuleLogic
   )
 
 #-----------------------------------------------------------------------------

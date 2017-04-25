@@ -20,23 +20,7 @@ find_package( Slicer REQUIRED )
 include( ${Slicer_USE_FILE} )
 
 find_package( Sequences REQUIRED )
-# Convenience variables to easily add all necessary Sequences dependencies.
-# It would be probably nicer to explicitly list dependencies, as this mixed set
-# of headers and libraries allows MRML to depend on logic or widgets, which
-# should be avoided.
-set(Sequences_INCLUDE_DIRS
-  ${Sequences_ModuleMRML_INCLUDE_DIRS}
-  ${Sequences_ModuleLogic_INCLUDE_DIRS}
-  ${Sequences_ModuleWidgets_INCLUDE_DIRS}
-  )
-set(Sequences_LIBS
-  vtkSlicerSequencesModuleMRML
-  vtkSlicerSequenceBrowserModuleMRML
-  vtkSlicerSequencesModuleLogic
-  vtkSlicerSequenceBrowserModuleLogic
-  qSlicerSequencesModuleWidgets
-  qSlicerSequenceBrowserModuleWidgets
-  )
+
 set(Sequences_ADDITIONAL_MODULE_PATHS
   ${Sequences_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}
   ${Sequences_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Debug

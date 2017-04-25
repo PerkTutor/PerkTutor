@@ -5,7 +5,8 @@ set(KIT ${PROJECT_NAME})
 set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_MRML_EXPORT")
 
 set(${KIT}_INCLUDE_DIRECTORIES
-  ${Sequences_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
+  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
    )
 
 # --------------------------------------------------------------------------
@@ -48,10 +49,8 @@ set(${KIT}_SRCS
 # Build the library
 
 set(${KIT}_TARGET_LIBRARIES
-  ${ITK_LIBRARIES}
-  ${MRML_LIBRARIES}
-  SlicerBaseLogic
-  ${Sequences_LIBS}
+  vtkSlicerSequencesModuleMRML
+  vtkSlicerSequenceBrowserModuleMRML
   )
 
 SlicerMacroBuildModuleMRML(
