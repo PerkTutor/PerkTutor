@@ -12,7 +12,6 @@ set( EXTENSION_DESCRIPTION "This extension holds modules for training of needle 
 set( EXTENSION_ICONURL "http://www.slicer.org/slicerWiki/images/2/21/PerkTutorLogo.png" )
 set( EXTENSION_SCREENSHOTURLS "http://www.slicer.org/slicerWiki/images/2/28/PerkTutorScreenshot.png" )
 set( EXTENSION_DEPENDS "Sequences" ) # Specified as a space separated list or 'NA' if any
-set( EXTENSION_BUILD_SUBDIRECTORY inner-build )
 
 
 # Extension dependencies
@@ -28,6 +27,7 @@ set(Sequences_ADDITIONAL_MODULE_PATHS
   ${Sequences_DIR}/${Slicer_QTSCRIPTEDMODULES_LIB_DIR}
   )
 
+  
 # Extension modules
 add_subdirectory(TransformRecorder)
 add_subdirectory(PerkEvaluator)
