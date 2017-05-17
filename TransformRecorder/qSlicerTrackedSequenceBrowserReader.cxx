@@ -27,6 +27,7 @@
 #include "qSlicerCoreApplication.h"
 #include "vtkSlicerApplicationLogic.h"
 #include "qSlicerTrackedSequenceBrowserReader.h"
+#include "qSlicerTrackedSequenceBrowserReaderOptionsWidget.h"
 
 // Logic includes
 #include "vtkSlicerTransformRecorderLogic.h"
@@ -94,11 +95,21 @@ QStringList qSlicerTrackedSequenceBrowserReader::extensions() const
 }
 
 //-----------------------------------------------------------------------------
+qSlicerIOOptions* qSlicerTrackedSequenceBrowserReader::options()const
+{
+  // set the mrml scene on the options widget to allow selecting a color node
+  qSlicerTrackedSequenceBrowserReaderOptionsWidget* options = new qSlicerTrackedSequenceBrowserReaderOptionsWidget;
+  options->setMRMLScene(this->mrmlScene());
+  return options;
+}
+
+//-----------------------------------------------------------------------------
 bool qSlicerTrackedSequenceBrowserReader::load(const IOProperties& properties)
 {
   Q_D(qSlicerTrackedSequenceBrowserReader);
   Q_ASSERT( properties.contains( "fileName" ) );
   QString fileName = properties[ "fileName" ].toString();
+  bool useSceneProxyNodes = properties[ "UseSceneProxyNodes" ].toBool();
 
   QFileInfo fileInfo( fileName );
   QString extension = fileInfo.suffix();
@@ -118,7 +129,7 @@ bool qSlicerTrackedSequenceBrowserReader::load(const IOProperties& properties)
   }
   else
   {
-    loadSuccess = this->loadSQBR( trackedSequenceBrowserNode, fileName.toStdString() );
+    loadSuccess = this->loadSQBR( trackedSequenceBrowserNode, fileName.toStdString(), useSceneProxyNodes );
   }
   trackedSequenceBrowserNode->EndModify( modifyFlag );
 
@@ -268,7 +279,7 @@ std::string qSlicerTrackedSequenceBrowserReader
 
 //-----------------------------------------------------------------------------
 bool qSlicerTrackedSequenceBrowserReader
-::loadSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName )
+::loadSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName, bool useSceneProxyNodes )
 {
   Q_D(qSlicerTrackedSequenceBrowserReader);
 
@@ -349,10 +360,15 @@ bool qSlicerTrackedSequenceBrowserReader
     {
       continue;
     }
-    vtkSmartPointer< vtkMRMLNode > currProxyNode = currTempProxyNode->CreateNodeInstance();
-    currProxyNode->Copy( currTempProxyNode );
-    currProxyNode->SetScene( this->mrmlScene() );
-    this->mrmlScene()->AddNode( currProxyNode );
+
+    vtkSmartPointer< vtkMRMLNode > currProxyNode = this->mrmlScene()->GetFirstNode( currTempProxyNode->GetName(), currTempProxyNode->GetClassName() );
+    if ( ! useSceneProxyNodes || currProxyNode == NULL )
+    {
+      currProxyNode = currTempProxyNode->CreateNodeInstance();
+      currProxyNode->Copy( currTempProxyNode );
+      currProxyNode->SetScene( this->mrmlScene() );
+      this->mrmlScene()->AddNode( currProxyNode );
+    }
     trackedSequenceBrowserNode->AddProxyNode( currProxyNode, currSequenceNode, false );
 
     this->copyNodeAttributes( currTempProxyNode, currProxyNode );

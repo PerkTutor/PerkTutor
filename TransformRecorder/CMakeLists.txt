@@ -37,6 +37,8 @@ set(MODULE_SRCS
   qSlicerTrackedSequenceBrowserReader.h
   qSlicerTrackedSequenceBrowserWriter.cxx
   qSlicerTrackedSequenceBrowserWriter.h
+  qSlicerTrackedSequenceBrowserReaderOptionsWidget.cxx
+  qSlicerTrackedSequenceBrowserReaderOptionsWidget.h
   )
 
 # Headers that should run through moc
@@ -45,11 +47,13 @@ set(MODULE_MOC_SRCS
   qSlicer${MODULE_NAME}ModuleWidget.h
   qSlicerTrackedSequenceBrowserReader.h
   qSlicerTrackedSequenceBrowserWriter.h
+  qSlicerTrackedSequenceBrowserReaderOptionsWidget.h
   )
 
 # UI files
 set(MODULE_UI_SRCS
   Resources/UI/qSlicer${MODULE_NAME}Module.ui
+  Resources/UI/qSlicerTrackedSequenceBrowserReaderOptionsWidget.ui
   )
  
 # Additional Target libraries

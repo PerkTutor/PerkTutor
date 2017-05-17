@@ -51,6 +51,7 @@ public:
   virtual QString description() const;
   virtual IOFileType fileType() const;
   virtual QStringList extensions() const;
+  virtual qSlicerIOOptions* options() const;
 
   virtual bool load( const IOProperties& properties );
   
@@ -60,7 +61,7 @@ protected:
   virtual bool loadXML( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName );
   virtual std::string getTimeStringFromXMLElement( vtkXMLDataElement* element );
 
-  virtual bool loadSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName );
+  virtual bool loadSQBR( vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode, std::string fileName, bool useSceneProxyNodes = false );
 
   void copyNodeAttributes( vtkMRMLNode* sourceNode, vtkMRMLNode* targetNode );
 
