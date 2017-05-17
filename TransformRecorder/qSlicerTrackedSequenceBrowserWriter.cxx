@@ -321,7 +321,11 @@ bool qSlicerTrackedSequenceBrowserWriter
     tempTrackedSequenceBrowserNode->AddProxyNode( currTempProxyNode, currTempSequenceNode, false );
 
     this->copyNodeAttributes( currProxyNode, currTempProxyNode );
+    currProxyNode->UpdateReferences();
   }
+
+  // Remove references to all other nodes
+  tempScene->RemoveUnusedNodeReferences();
 
   // Save the newly created scene into a scene bundle
   vtkNew< vtkMRMLApplicationLogic > appLogic;

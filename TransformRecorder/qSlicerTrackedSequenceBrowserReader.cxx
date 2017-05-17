@@ -356,6 +356,13 @@ bool qSlicerTrackedSequenceBrowserReader
     trackedSequenceBrowserNode->AddProxyNode( currProxyNode, currSequenceNode, false );
 
     this->copyNodeAttributes( currTempProxyNode, currProxyNode );
+
+    // Create default display nodes for any displayable nodes
+    vtkMRMLDisplayableNode* currDisplayableProxyNode = vtkMRMLDisplayableNode::SafeDownCast( currProxyNode );
+    if ( currDisplayableProxyNode != NULL )
+    {
+      currDisplayableProxyNode->CreateDefaultDisplayNodes();
+    }
   }
 
   return true;
