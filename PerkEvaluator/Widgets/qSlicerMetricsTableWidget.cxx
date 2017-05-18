@@ -67,6 +67,7 @@ qSlicerMetricsTableWidget
 {
   this->MetricsTableNode = NULL;
   this->ExpandHeightToContents = true;
+  this->ShowMetricRoles = true;
   this->setup();
 }
 

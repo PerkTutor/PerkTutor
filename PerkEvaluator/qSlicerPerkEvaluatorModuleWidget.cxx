@@ -480,6 +480,7 @@ qSlicerPerkEvaluatorModuleWidget
 
   d->MetricsTableWidget = new qSlicerMetricsTableWidget();
   d->MetricsTableWidget->setExpandHeightToContents( true );
+  d->MetricsTableWidget->setShowMetricRoles( true );
   d->ResultsGroupBox->layout()->addWidget( d->MetricsTableWidget );
   d->MetricsTableWidget->setMRMLScene( NULL ); 
   d->MetricsTableWidget->setMRMLScene( d->logic()->GetMRMLScene() );
