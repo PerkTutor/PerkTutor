@@ -169,13 +169,20 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       return
 
     # Hold off on modified events until we are finished modifying
-    modifyFlag = metricsTable.StartModify()
-  
+    modifyFlag = metricsTable.StartModify()  
     PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable )
-
-    metricsTable.GetTable().SetNumberOfRows( len( allMetrics ) )
-    insertRow = 0
+    
+    visibleMetrics = []
     for metric in allMetrics.values():
+      try:
+        if ( not metric.IsHidden() ):
+          visibleMetrics.append( metric )
+      except: #TODO: Keep for backwards compataibility
+        visibleMetrics.append( metric )
+
+    metricsTable.GetTable().SetNumberOfRows( len( visibleMetrics ) )
+    insertRow = 0
+    for metric in visibleMetrics:
       metricsTable.GetTable().SetValueByName( insertRow, "MetricName", metric.GetMetricName() )
       metricsTable.GetTable().SetValueByName( insertRow, "MetricRoles", metric.CombinedRoleString )
       metricsTable.GetTable().SetValueByName( insertRow, "MetricUnit", metric.GetMetricUnit() )
