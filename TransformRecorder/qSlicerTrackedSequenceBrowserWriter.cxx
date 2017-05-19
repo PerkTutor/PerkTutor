@@ -321,7 +321,7 @@ bool qSlicerTrackedSequenceBrowserWriter
     tempTrackedSequenceBrowserNode->AddProxyNode( currTempProxyNode, currTempSequenceNode, false );
 
     this->copyNodeAttributes( currProxyNode, currTempProxyNode );
-    currProxyNode->UpdateReferences();
+    currTempProxyNode->UpdateReferences();
   }
 
   // Remove references to all other nodes
