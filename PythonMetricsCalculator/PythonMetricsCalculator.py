@@ -104,7 +104,14 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricsZipFile.extractall( metricsDownloadDirectory )
     
     additionalMetricScriptDirectory = os.path.join( metricsDownloadDirectory, "PythonMetrics-master" )
-    PythonMetricsCalculatorLogic.AddMetricsFromDirectoryToScene( additionalMetricScriptDirectory )
+    metricScriptFiles = glob.glob( os.path.join( additionalMetricScriptDirectory, "[a-z]*.py" ) )
+    properties = { "fileNames": metricScriptFiles }
+    
+    ioManager = slicer.app.ioManager()
+    if ( ioManager is not None ):
+      ioManager.openDialog( "NoFile", slicer.qSlicerFileDialog.Read, properties )
+    else:
+      logging.warning( "PythonMetricsCalculatorLogic::DownloadAdditionalMetrics: Could not download additional metrics. The I/O manager was not found." )
 
     
   @staticmethod
