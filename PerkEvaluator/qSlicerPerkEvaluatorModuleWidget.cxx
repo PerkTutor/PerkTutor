@@ -379,6 +379,16 @@ qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void
+qSlicerPerkEvaluatorModuleWidget
+::OnRestoreDefaultMetricsClicked()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  d->logic()->RestoreDefaultMetrics();
+}
+
+
 void qSlicerPerkEvaluatorModuleWidget
 ::OnMetricInstanceNodesChanged()
 {
@@ -564,6 +574,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
   connect( d->DownloadAdditionalMetricsButton, SIGNAL( clicked() ), this, SLOT( OnDownloadAdditionalMetricsClicked() ) );
+  connect( d->RestoreDefaultMetricsButton, SIGNAL( clicked() ), this, SLOT( OnRestoreDefaultMetricsClicked() ) );
 
 
 

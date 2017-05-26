@@ -78,7 +78,7 @@ public:
   std::string GetAnatomyRoleClassName( std::string msNodeID, std::string role );
 
   void DownloadAdditionalMetrics();
-  
+  void RestoreDefaultMetrics();
 
   void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
 

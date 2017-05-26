@@ -594,6 +594,16 @@ void vtkSlicerPerkEvaluatorLogic
 
 
 void vtkSlicerPerkEvaluatorLogic
+::RestoreDefaultMetrics()
+{
+  // This just call the python metrics calculator's function to restore the default metrics
+  // This is because these operations are easier to do in Python
+  // TODO: Is there an elegant way to do this in C++
+  this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.AddCoreMetricsToScene()" ) );
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
 ::GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes )
 {
   if ( visibleTransformNodes == NULL )

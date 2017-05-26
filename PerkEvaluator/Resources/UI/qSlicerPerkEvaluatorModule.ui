@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>624</width>
+    <width>500</width>
     <height>860</height>
    </rect>
   </property>
@@ -51,7 +51,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
+        <width>482</width>
         <height>735</height>
        </rect>
       </property>
@@ -146,7 +146,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>606</width>
+        <width>462</width>
         <height>735</height>
        </rect>
       </property>
@@ -490,8 +490,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>357</width>
-        <height>143</height>
+        <width>482</width>
+        <height>735</height>
        </rect>
       </property>
       <attribute name="label">
@@ -825,20 +825,40 @@
            </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="DownloadAdditionalMetricsButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <property name="topMargin">
+             <number>0</number>
             </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download and add the additional metrics from the Perk Tutor website.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="text">
-             <string>Download Additional Metrics</string>
-            </property>
-           </widget>
+            <item>
+             <widget class="QPushButton" name="DownloadAdditionalMetricsButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download and add the additional metrics from the Perk Tutor website.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Download Additional Metrics</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="RestoreDefaultMetricsButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Restore Default Metrics</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
