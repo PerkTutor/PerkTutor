@@ -1,85 +1,47 @@
-import os
+import os, imp, glob, sys
+import urllib, zipfile
 import unittest
-from __main__ import vtk, qt, ctk, slicer
+import logging
+import vtk, qt, ctk, slicer
+from slicer.ScriptedLoadableModule import *
+
 
 #
 # TissueModelCreator
 #
 
-class TissueModelCreator:
-  def __init__(self, parent):
-    parent.title = "Tissue Model Creator" # TODO make this more human readable by adding spaces
-    parent.categories = ["Perk Tutor"]
-    parent.dependencies = []
-    parent.contributors = ["Matthew Holden (Queen's University)"] # replace with "Firstname Lastname (Org)"
-    parent.helpText = """
-    The purpose of the Tissue Model Creator module is to create a model based on a set of collected fiducial points. For help on how to use this module visit: <a href='http://www.github.com/PerkTutor/TissueModelCreator/wiki'>Tissue Model Creator</a>.
+class TissueModelCreator( ScriptedLoadableModule ):
+  """Uses ScriptedLoadableModule base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  """
+
+  def __init__( self, parent ):
+    ScriptedLoadableModule.__init__( self, parent )
+    self.parent.title = "Tissue Model Creator"
+    self.parent.categories = [ "Perk Tutor" ]
+    self.parent.dependencies = [ "MarkupsToModel" ]
+    self.parent.contributors = [ "Matthew S. Holden (PerkLab; Queen's University)" ]
+    self.parent.helpText = """
+    The purpose of the Tissue Model Creator module is to create a model based on a set of collected fiducial points. For help on how to use this module visit: <a href='http://www.perktutor.org/'>Perk Tutor</a>.
     """
-    parent.acknowledgementText = """
+    self.parent.acknowledgementText = """
     This work was was funded by Cancer Care Ontario and the Ontario Consortium for Adaptive Interventions in Radiation Oncology (OCAIRO).
-    """ # replace with organization, grant and thanks.
-    parent.icon = qt.QIcon( "TissueModelCreator.png" )
-    self.parent = parent
-
-    # Add this test to the SelfTest module's list for discovery when the module
-    # is created.  Since this module may be discovered before SelfTests itself,
-    # create the list if it doesn't already exist.
-    try:
-      slicer.selfTests
-    except AttributeError:
-      slicer.selfTests = {}
-    slicer.selfTests['TissueModelCreator'] = self.runTest
-
-  def runTest(self):
-    tester = TissueModelCreatorTest()
-    tester.runTest()
+    """
 
 #
-# qTissueModelCreatorWidget
+# TissueModelCreatorWidget
 #
 
-class TissueModelCreatorWidget:
-  def __init__(self, parent = None):
-    if not parent:
-      self.parent = slicer.qMRMLWidget()
-      self.parent.setLayout(qt.QVBoxLayout())
-      self.parent.setMRMLScene(slicer.mrmlScene)
-    else:
-      self.parent = parent
-    self.layout = self.parent.layout()
-    if not parent:
-      self.setup()
-      self.parent.show()
+class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
+  """Uses ScriptedLoadableModuleWidget base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  """
 
-  def setup(self):
-    # Instantiate and connect widgets ...
-
-    # # Comment these out when not debugging
-    # #
-    # # Reload and Test area
-    # #
-    # reloadCollapsibleButton = ctk.ctkCollapsibleButton()
-    # reloadCollapsibleButton.text = "Reload && Test"
-    # self.layout.addWidget(reloadCollapsibleButton)
-    # reloadFormLayout = qt.QFormLayout(reloadCollapsibleButton)
-
-    # # reload button
-    # # (use this during development, but remove it when delivering
-    # #  your module to users)
-    # self.reloadButton = qt.QPushButton("Reload")
-    # self.reloadButton.toolTip = "Reload this module."
-    # self.reloadButton.name = "TissueModelCreator Reload"
-    # reloadFormLayout.addWidget(self.reloadButton)
-    # self.reloadButton.connect('clicked()', self.onReload)
-
-    # # reload and test button
-    # # (use this during development, but remove it when delivering
-    # #  your module to users)
-    # self.reloadAndTestButton = qt.QPushButton("Reload and Test")
-    # self.reloadAndTestButton.toolTip = "Reload this module and then run the self tests."
-    # reloadFormLayout.addWidget(self.reloadAndTestButton)
-    # self.reloadAndTestButton.connect('clicked()', self.onReloadAndTest)
-
+  def setup( self ):
+    ScriptedLoadableModuleWidget.setup( self )
+    
+    self.tmcLogic = TissueModelCreatorLogic()
+    
     #
     # Display Area
     #
@@ -94,25 +56,40 @@ class TissueModelCreatorWidget:
     # input fiducials selector
     #
     self.markupSelector = slicer.qMRMLNodeComboBox()
-    self.markupSelector.nodeTypes = ( ("vtkMRMLMarkupsFiducialNode"), "" )
+    self.markupSelector.nodeTypes = [ "vtkMRMLMarkupsFiducialNode" ]
     self.markupSelector.addEnabled = False
     self.markupSelector.removeEnabled = False
     self.markupSelector.noneEnabled = False
     self.markupSelector.showHidden = False
     self.markupSelector.showChildNodeTypes = False
     self.markupSelector.setMRMLScene( slicer.mrmlScene )
-    self.markupSelector.setToolTip( "Pick the markup node for the algorithm." )
-    displayFormLayout.addRow( "Select Markup Node: ", self.markupSelector )
+    self.markupSelector.setToolTip( "Select the markup node for the algorithm." )
+    displayFormLayout.addRow( "Input Markup ", self.markupSelector )
+    
+    #
+    # Output model selector
+    #
+    self.modelSelector = slicer.qMRMLNodeComboBox()
+    self.modelSelector.nodeTypes = [ "vtkMRMLModelNode" ]
+    self.modelSelector.addEnabled = True
+    self.modelSelector.removeEnabled = True
+    self.modelSelector.renameEnabled = True
+    self.modelSelector.noneEnabled = True
+    self.modelSelector.showHidden = False
+    self.modelSelector.showChildNodeTypes = False
+    self.modelSelector.setMRMLScene( slicer.mrmlScene )
+    self.modelSelector.setToolTip( "Select the output model for the algorithm." )
+    displayFormLayout.addRow( "Output Model ", self.modelSelector )
     
     #
     # Depth slider
     #
     self.depthSlider = ctk.ctkSliderWidget()
     self.depthSlider.maximum = 1000
-    self.depthSlider.minimum = 0
+    self.depthSlider.minimum = 1
     self.depthSlider.value = 100
     self.depthSlider.setToolTip( "Select the depth of the tissue." )
-    displayFormLayout.addRow( "Depth (mm): ", self.depthSlider )
+    displayFormLayout.addRow( "Depth (mm) ", self.depthSlider )
 
     #
     # Flip (ie flip) checkbox
@@ -124,311 +101,111 @@ class TissueModelCreatorWidget:
     displayFormLayout.addRow( self.flipCheckBox )
 
     #
-    # Create Button
+    # Update Button
     #
-    self.createButton = qt.QPushButton( "Create" )
-    self.createButton.toolTip = "Create a tissue model."
-    self.createButton.enabled = True
-    displayFormLayout.addRow( self.createButton )
+    self.updateButton = qt.QPushButton( "Update" )
+    self.updateButton.toolTip = "Update the tissue model."
+    self.updateButton.enabled = True
+    displayFormLayout.addRow( self.updateButton )
     
     #
     # Status Label
     #
-    self.statusLabel = qt.QLabel( "Status:" )
+    self.statusLabel = qt.QLabel( "" )
     self.statusLabel.toolTip = "Status of whether the tissue model was successfully created."
     self.statusLabel.enabled = True
     displayFormLayout.addRow( self.statusLabel )
-    
-    
 
+    
     # connections
-    self.createButton.connect( 'clicked(bool)', self.onCreateButtonClicked )
+    self.updateButton.connect( 'clicked(bool)', self.onUpdateButtonClicked )
 
-    # Add vertical spacer
-    self.layout.addStretch(1)
-
-  def cleanup(self):
+  def cleanup( self ):
     pass
-
-  def onCreateButtonClicked(self):
-    logic = TissueModelCreatorLogic()
-    surfaceClosed = logic.run( self.markupSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked )
     
-    if ( surfaceClosed == True ):
-      self.statusLabel.setText( "Status: Success!" )
-    else:
-      self.statusLabel.setText( "Status: Failed!" )
+    
+  def onUpdateButtonClicked(self):
+    statusText = self.tmcLogic.UpdateTissueModel( self.markupSelector.currentNode(), self.modelSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked )
 
-  def onReload(self,moduleName="TissueModelCreator"):
-    """Generic reload method for any scripted module.
-    ModuleWizard will subsitute correct default moduleName.
-    """
-    import imp, sys, os, slicer
+    self.statusLabel.setText( statusText )
 
-    widgetName = moduleName + "Widget"
-
-    # reload the source code
-    # - set source file path
-    # - load the module to the global space
-    filePath = eval('slicer.modules.%s.path' % moduleName.lower())
-    p = os.path.dirname(filePath)
-    if not sys.path.__contains__(p):
-      sys.path.insert(0,p)
-    fp = open(filePath, "r")
-    globals()[moduleName] = imp.load_module(
-        moduleName, fp, filePath, ('.py', 'r', imp.PY_SOURCE))
-    fp.close()
-
-    # rebuild the widget
-    # - find and hide the existing widget
-    # - create a new widget in the existing parent
-    parent = slicer.util.findChildren(name='%s Reload' % moduleName)[0].parent().parent()
-    for child in parent.children():
-      try:
-        child.hide()
-      except AttributeError:
-        pass
-    # Remove spacer items
-    item = parent.layout().itemAt(0)
-    while item:
-      parent.layout().removeItem(item)
-      item = parent.layout().itemAt(0)
-
-    # delete the old widget instance
-    if hasattr(globals()['slicer'].modules, widgetName):
-      getattr(globals()['slicer'].modules, widgetName).cleanup()
-
-    # create new widget inside existing parent
-    globals()[widgetName.lower()] = eval(
-        'globals()["%s"].%s(parent)' % (moduleName, widgetName))
-    globals()[widgetName.lower()].setup()
-    setattr(globals()['slicer'].modules, widgetName, globals()[widgetName.lower()])
-
-  def onReloadAndTest(self,moduleName="TissueModelCreator"):
-    try:
-      self.onReload()
-      evalString = 'globals()["%s"].%sTest()' % (moduleName, moduleName)
-      tester = eval(evalString)
-      tester.runTest()
-    except Exception, e:
-      import traceback
-      traceback.print_exc()
-      qt.QMessageBox.warning(slicer.util.mainWindow(), 
-          "Reload and Test", 'Exception!\n\n' + str(e) + "\n\nSee Python Console for Stack Trace")
-
-
+	
 #
 # TissueModelCreatorLogic
 #
 
-class TissueModelCreatorLogic:
-  """This class should implement all the actual 
-  computation done by your module.  The interface 
+class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
+  """This class should implement all the actual
+  computation done by your module.  The interface
   should be such that other python code can import
   this class and make use of the functionality without
-  requiring an instance of the Widget
+  requiring an instance of the Widget.
+  Uses ScriptedLoadableModuleLogic base class, available at:
+  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
-  def __init__(self):
-    pass
-
-
-  def run( self, markupNode, depth, flip ):
-    """
-    Run the actual algorithm
-    """
-    
-    # Get all of the fiducial nodes and convert to vtkPoints
-    points = vtk.vtkPoints()
-    
-    for i in range( 0, markupNode.GetNumberOfFiducials() ):
-      currentCoordinates = [ 0, 0, 0 ]
-      markupNode.GetNthFiducialPosition( i, currentCoordinates )
-      points.InsertNextPoint( currentCoordinates )
-      
-    # Check that there is non-zero range in all coordinate directions
-    pointsBounds = [ 0, 0, 0, 0, 0, 0 ]
-    points.GetBounds( pointsBounds )
-    if ( pointsBounds[0] == pointsBounds [1] or pointsBounds[2] == pointsBounds [3] or pointsBounds[4] == pointsBounds [5] ):
-      print "Tissue Model Creator: Points have no extent in one or more coordinate directions."
-      return False
-      
-    # Create a polydata object from the points
-    # The reversiness doesn't matter - we will fix it later if it os wrong
-    surfacePolyData = self.PointsToSurfacePolyData( points, True )
-    surfaceCleaner = vtk.vtkCleanPolyData()
-    surfaceCleaner.SetInputData( surfacePolyData )
-    surfaceCleaner.Update()
-    surfacePolyData = surfaceCleaner.GetOutput()
-    
-    mean = self.CalculateMean( points )
-    
-    surfaceBase = [ 0, 0, 0 ]
-    surfaceDir1 = [ 0, 0, 0 ]
-    surfaceDir2 = [ 0, 0, 0 ]
-    surfaceNormal = [ 0, 0, 0 ]
-    self.CalculatePlane( surfacePolyData.GetPoints(), surfaceBase, surfaceDir1, surfaceDir2, surfaceNormal )
-    
-    if ( flip == True ):
-      surfaceNormal[ 0 ] = - surfaceNormal[ 0 ]
-      surfaceNormal[ 1 ] = - surfaceNormal[ 1 ]
-      surfaceNormal[ 2 ] = - surfaceNormal[ 2 ]
-    
-    extremePointIndex = self.FindExtremePoint( surfacePolyData.GetPoints(), surfaceBase, surfaceNormal )
-    reverse = self.ReverseNormals( extremePointIndex, surfacePolyData, surfaceNormal )
-    
-    # Reverse the normals if necessary
-    reverseFilter = vtk.vtkReverseSense()
-    reverseFilter.SetInputData( surfacePolyData )
-    reverseFilter.SetReverseCells( reverse )
-    reverseFilter.SetReverseNormals( reverse )
-    reverseFilter.Update()
-    surfacePolyData = reverseFilter.GetOutput()
-    
-    untransDeepPolyData = vtk.vtkPolyData()
-    untransDeepPolyData.DeepCopy( surfacePolyData )
-    
-    # Make the normals opposite the surface's normals
-    reverseFilter = vtk.vtkReverseSense()
-    reverseFilter.SetInputData( untransDeepPolyData )
-    reverseFilter.SetReverseCells( True )
-    reverseFilter.SetReverseNormals( True )
-    reverseFilter.Update()
-    untransDeepPolyData = reverseFilter.GetOutput()
-    
-    deepTransform = vtk.vtkTransform()
-    deepTransform.Translate( depth * surfaceNormal[0], depth * surfaceNormal[1], depth * surfaceNormal[2] )  
-    deepTransformFilter = vtk.vtkTransformPolyDataFilter()
-    deepTransformFilter.SetInputData( untransDeepPolyData )
-    deepTransformFilter.SetTransform( deepTransform )
-    deepTransformFilter.Update()
-    
-    deepPolyData = deepTransformFilter.GetOutput()
-
-    
-    surfaceHullPoints = self.GetBoundaryPoints( surfacePolyData )
-    
-    deepHullPoints = self.GetBoundaryPoints( deepPolyData )
-    
-    jointHullPolyData = self.JoinBoundaryPoints( surfaceHullPoints, deepHullPoints )
-    
-    # Append all of the polydata together
-    tissuePolyDataAppend = vtk.vtkAppendPolyData()
-    tissuePolyDataAppend.AddInputData( surfacePolyData )
-    tissuePolyDataAppend.AddInputData( deepPolyData )
-    tissuePolyDataAppend.AddInputData( jointHullPolyData )   
-    tissuePolyDataAppend.Update()
-
-    # Clean up so the surface is closed
-    tissueCleaner = vtk.vtkCleanPolyData()
-    tissueCleaner.SetInputData( tissuePolyDataAppend.GetOutput() )
-    tissueCleaner.Update()
-    
-    tissueModelPolyData = tissueCleaner.GetOutput()
-    
-    # Add the data to a model 
-    tissueModel = slicer.mrmlScene.CreateNodeByClass( "vtkMRMLModelNode" )
-    slicer.mrmlScene.AddNode( tissueModel )
-    tissueModel.SetName( "TissueModel" )
-    tissueModel.SetAndObservePolyData( tissueModelPolyData )    
-    tissueModel.SetScene( slicer.mrmlScene )
-    
-    # Finally display the model
-    tissueModelDisplay = slicer.mrmlScene.CreateNodeByClass( "vtkMRMLModelDisplayNode" )
-    slicer.mrmlScene.AddNode( tissueModelDisplay )
-    tissueModel.SetAndObserveDisplayNodeID( tissueModelDisplay.GetID() )
-    tissueModelDisplay.SetScene( slicer.mrmlScene )
-    tissueModelDisplay.SetInputPolyDataConnection( tissueModel.GetPolyDataConnection() )
-
-
-    # Check to make sure the model is a closed surface
-    edgesFilter = vtk.vtkFeatureEdges()
-    edgesFilter.FeatureEdgesOff()
-    edgesFilter.BoundaryEdgesOn()
-    edgesFilter.NonManifoldEdgesOn()
-    edgesFilter.SetInputData( tissueModel.GetPolyData() )
-    edgesFilter.Update()
-    
-    if ( edgesFilter.GetOutput().GetNumberOfCells() != 0 ):
-      print "Tissue Model Creator: Surface is not closed."
-      return False
-      
-    return True
-      
-    
-  def PointsToSurfacePolyData( self, inPoints, reverse ):
-
-    # Create a polydata object from the points
-    pointsPolyData = vtk.vtkPolyData()
-    pointsPolyData.SetPoints( inPoints )
-  
-    # Create the surface filter from the polydata
-    surfaceFilter = vtk.vtkSurfaceReconstructionFilter()
-    surfaceFilter.SetInputData( pointsPolyData )
-    surfaceFilter.Update()
-    
-    # Do the contouring filter, and reverse to ensure it works properly
-    contourFilter = vtk.vtkContourFilter()
-    contourFilter.SetValue( 0, 0.0 )
-    contourFilter.SetInputData( surfaceFilter.GetOutput() )
-    contourFilter.Update()
-    
-    # Reverse the normals if necessary
-    reverseFilter = vtk.vtkReverseSense()
-    reverseFilter.SetInputData( contourFilter.GetOutput() )
-    reverseFilter.SetReverseCells( reverse )
-    reverseFilter.SetReverseNormals( reverse )
-    reverseFilter.Update()
    
-    # Reset the scaling to let the surface match the points
-    fiducialBounds = [ 0, 0, 0, 0, 0, 0 ]
-    pointsPolyData.GetBounds( fiducialBounds )
+  def __init__( self ):
+    pass
     
-    tissueBounds = [ 0, 0, 0, 0, 0, 0 ]
-    reverseFilter.GetOutput().GetBounds( tissueBounds )
     
-    scaleX = ( fiducialBounds[1] - fiducialBounds[0] ) / ( tissueBounds[1] - tissueBounds[0] )
-    scaleY = ( fiducialBounds[3] - fiducialBounds[2] ) / ( tissueBounds[3] - tissueBounds[2] )
-    scaleZ = ( fiducialBounds[5] - fiducialBounds[4] ) / ( tissueBounds[5] - tissueBounds[4] )
-    
-    transform = vtk.vtkTransform()
-    transform.Translate( fiducialBounds[0], fiducialBounds[2], fiducialBounds[4] )
-    transform.Scale( scaleX, scaleY, scaleZ )
-    transform.Translate( - tissueBounds[0], - tissueBounds[2], - tissueBounds[4] )
+  def UpdateTissueModel( self, markupsNode, modelNode, depth, flip ):
+    if ( markupsNode is None or modelNode is None ):
+      return "Markups node or model node not properly specified."
+      
+    # Use the 2D delaunay filter to get a model of the surface
+    surfacePolyData = self.ComputeSurfacePolyData( markupsNode )
   
-    transformFilter = vtk.vtkTransformPolyDataFilter()
-    transformFilter.SetInputData( reverseFilter.GetOutput() )
-    transformFilter.SetTransform( transform )
-    transformFilter.Update()
+    # Compute the axes from the PCA
+    normalAxis = [ 0, 0, 0 ]
+    self.ComputeTissueNormal( markupsNode, normalAxis )
+    
+    # Compute the deep poly data from the surface poly 
+    deepPolyData = self.ComputeDeepPolyData( surfacePolyData, normalAxis, depth, flip )
+    
+    # Compute the side poly data that joins the surface and deep poly data
+    surfaceBoundaryPoints = self.GetBoundaryPoints( surfacePolyData )
+    deepBoundaryPoints = self.GetBoundaryPoints( deepPolyData )
+    
+    sidePolyData = self.JoinBoundaryPoints( surfaceBoundaryPoints, deepBoundaryPoints )
+    
+    # Put it all together
+    tissuePolyData = self.JoinTissuePolyData( surfacePolyData, deepPolyData, sidePolyData )
+    
+    # Put it back in the model
+    modelNode.SetAndObservePolyData( tissuePolyData )
+    if ( modelNode.GetDisplayNode() is None ):
+      modelNode.CreateDefaultDisplayNodes()
+      
+    if ( not self.IsPolyDataClosed( tissuePolyData ) ):
+      return "Could not create closed tissue model."
+      
+    return "Success!"
+    
+    
+  def ComputeSurfacePolyData( self, markupsNode ):
+    surfacePoints = vtk.vtkPoints()
+    for i in range( markupsNode.GetNumberOfFiducials() ):
+      point = [ 0, 0, 0 ]
+      markupsNode.GetNthFiducialPosition( i, point )
+      surfacePoints.InsertNextPoint( point )
   
-    return transformFilter.GetOutput()
-    
-
-  def CalculateMean( self, inPoints ):
-
-    mean = [ 0, 0, 0 ]
+    surfacePolyData = vtk.vtkPolyData()
+    surfacePolyData.SetPoints( surfacePoints )  
   
-    for i in range( 0, inPoints.GetNumberOfPoints() ):
+    delaunay = vtk.vtkDelaunay2D()
+    delaunay.SetProjectionPlaneMode( vtk.VTK_BEST_FITTING_PLANE )
+    delaunay.SetInputData( surfacePolyData )
+    delaunay.Update()
     
-      currPoint = [ 0, 0, 0 ]
-      inPoints.GetPoint( i, currPoint )
+    surfaceCleaner = vtk.vtkCleanPolyData()
+    surfaceCleaner.SetInputData( delaunay.GetOutput() )
+    surfaceCleaner.Update()
     
-      mean[ 0 ] = mean[ 0 ] + currPoint[ 0 ]
-      mean[ 1 ] = mean[ 1 ] + currPoint[ 1 ]
-      mean[ 2 ] = mean[ 2 ] + currPoint[ 2 ]
-    
-    if ( inPoints.GetNumberOfPoints() > 0 ):
-      mean[ 0 ] = mean[ 0 ] / inPoints.GetNumberOfPoints()
-      mean[ 1 ] = mean[ 1 ] / inPoints.GetNumberOfPoints()
-      mean[ 2 ] = mean[ 2 ] / inPoints.GetNumberOfPoints()
-    
-    return mean
+    return surfaceCleaner.GetOutput()
     
 
-  def CalculatePlane( self, inPoints, base, dir1, dir2, normal ):
-
+  def ComputeTissueNormal( self, markupsNode, normalAxis ):
     # Create arrays for the dataset
-    points2D = vtk.vtkPoints()
-  
     arrayX = vtk.vtkDoubleArray()
     arrayX.SetNumberOfComponents( 1 )
     arrayX.SetName ( 'X' )
@@ -439,15 +216,13 @@ class TissueModelCreatorLogic:
     arrayZ.SetNumberOfComponents( 1 )
     arrayZ.SetName ( 'Z' )
     
-    # Add the points to the table
-    for i in range( 0, inPoints.GetNumberOfPoints() ):
-    
-      currPoint = [ 0, 0, 0 ]
-      inPoints.GetPoint( i, currPoint )   
-      
-      arrayX.InsertNextValue( currPoint[ 0 ] )
-      arrayY.InsertNextValue( currPoint[ 1 ] ) 
-      arrayZ.InsertNextValue( currPoint[ 2 ] )
+    # Add the points to the double arrays
+    for i in range( markupsNode.GetNumberOfFiducials() ):   
+      currPosition = [ 0, 0, 0 ]
+      markupsNode.GetNthFiducialPosition( i, currPosition )      
+      arrayX.InsertNextValue( currPosition[ 0 ] )
+      arrayY.InsertNextValue( currPosition[ 1 ] ) 
+      arrayZ.InsertNextValue( currPosition[ 2 ] )
     
     # Create a table for the dataset
     table = vtk.vtkTable()
@@ -465,28 +240,40 @@ class TissueModelCreatorLogic:
     pca.SetDeriveOption( True )
     pca.Update()
     
-    eigvec = vtk.vtkDoubleArray()
-    pca.GetEigenvectors( eigvec )
-  
+    eigenvectors = vtk.vtkDoubleArray()
+    pca.GetEigenvectors( eigenvectors )  
     
-    eigvec.GetTuple( 0, dir1 )
-    eigvec.GetTuple( 1, dir2 )
-    eigvec.GetTuple( 2, normal )
-  
-    mean = self.CalculateMean( inPoints )
-    base[0] = mean[0]
-    base[1] = mean[1]
-    base[2] = mean[2]
-    
-    
-  def GetBoundaryPoints( self, inPolyData ):
+    # The eigenvectors are arrange from largest to smallest
+    #eigenvectors.GetTuple( 0, majorAxis )
+    #eigenvectors.GetTuple( 1, minorAxis )
+    eigenvectors.GetTuple( 2, normalAxis )
 
+      
+  def ComputeDeepPolyData( self, surfacePolyData, normalAxis, depth, flip ):
+    translationVector = normalAxis[:]
+    if ( flip ):
+      vtk.vtkMath.MultiplyScalar( translationVector, depth )
+    else:
+      vtk.vtkMath.MultiplyScalar( translationVector, -depth )
+    
+    deepTransform = vtk.vtkTransform()
+    deepTransform.Translate( translationVector[ 0 ], translationVector[ 1 ], translationVector[ 2 ] )
+    
+    deepTransformFilter = vtk.vtkTransformPolyDataFilter()
+    deepTransformFilter.SetInputData( surfacePolyData ) # TODO: May need deep copy
+    deepTransformFilter.SetTransform( deepTransform )
+    deepTransformFilter.Update()
+    
+    return deepTransformFilter.GetOutput()
+    
+    
+  def GetBoundaryPoints( self, inputPolyData ):  
     featureEdges = vtk.vtkFeatureEdges()
     featureEdges.FeatureEdgesOff()
     featureEdges.NonManifoldEdgesOff()
     featureEdges.ManifoldEdgesOff()
     featureEdges.BoundaryEdgesOn()
-    featureEdges.SetInputData( inPolyData )
+    featureEdges.SetInputData( inputPolyData )
     featureEdges.Update()
     
     stripper = vtk.vtkStripper()
@@ -498,38 +285,36 @@ class TissueModelCreatorLogic:
     cleaner.Update()
        
     return cleaner.GetOutput().GetPoints()
-
-  
-  def JoinBoundaryPoints( self, hullPoints1, hullPoints2 ):
-
-    if ( hullPoints1.GetNumberOfPoints() != hullPoints2.GetNumberOfPoints() ):
+    
+    
+  def JoinBoundaryPoints( self, surfaceBoundaryPoints, deepBoundaryPoints ):
+    if ( surfaceBoundaryPoints.GetNumberOfPoints() != deepBoundaryPoints.GetNumberOfPoints() ):
+      logging.error( "TissueModelCreatorLogic::JoinBoundaryPoints: Top and deep surfaces have different number of boundary points." )
       return
     
     joiningAppend = vtk.vtkAppendPolyData()
-    numPoints = hullPoints1.GetNumberOfPoints()
+    numPoints = surfaceBoundaryPoints.GetNumberOfPoints()
   
-    for i in range( 0, numPoints ):
-    
+    for i in range( 0, numPoints ):    
       currPointsForSurface = vtk.vtkPoints()
     
       point1 = [ 0, 0, 0 ]
-      hullPoints1.GetPoint( i % numPoints, point1 )
+      surfaceBoundaryPoints.GetPoint( i % numPoints, point1 )
       currPointsForSurface.InsertNextPoint( point1[ 0 ], point1[ 1 ], point1[ 2 ] )
     
       point2 = [ 0, 0, 0 ]
-      hullPoints2.GetPoint( ( - i ) % numPoints, point2 )
+      deepBoundaryPoints.GetPoint( i % numPoints, point2 )
       currPointsForSurface.InsertNextPoint( point2[ 0 ], point2[ 1 ], point2[ 2 ] )
     
       # Observe that the deep is flipped from the surface
       # Must proceed in opposite orders
       point3 = [ 0, 0, 0 ]
-      hullPoints1.GetPoint( ( i + 1 ) % numPoints, point3 )
+      surfaceBoundaryPoints.GetPoint( ( i + 1 ) % numPoints, point3 )
       currPointsForSurface.InsertNextPoint( point3[ 0 ], point3[ 1 ], point3[ 2 ] )
     
       point4 = [ 0, 0, 0 ]
-      hullPoints2.GetPoint( ( - ( i + 1 ) ) % numPoints, point4 )
+      deepBoundaryPoints.GetPoint( ( i + 1 ) % numPoints, point4 )
       currPointsForSurface.InsertNextPoint( point4[ 0 ], point4[ 1 ], point4[ 2 ] )
-      
       
       # We know what the triangles should look like, so create them manually
       # Note: The order here is important - ensure the triangles face the correct way
@@ -555,67 +340,50 @@ class TissueModelCreatorLogic:
     
     joiningAppend.Update()
     return joiningAppend.GetOutput()
+
     
-  
-  def FindExtremePoint( self, surfacePoints, surfaceBase, surfaceNormal ):
-  
-    extremePointIndex = 1
-    extremePointProjection = 0
-    # Find the point with the smallest projection (ie most negative) onto the surface normal
-    for i in range( surfacePoints.GetNumberOfPoints() ):
+  def JoinTissuePolyData( self, surfacePolyData, deepPolyData, sidePolyData ):
+    # Put the poly data together
+    tissuePolyDataAppend = vtk.vtkAppendPolyData()
+    tissuePolyDataAppend.AddInputData( surfacePolyData )
+    tissuePolyDataAppend.AddInputData( deepPolyData )
+    tissuePolyDataAppend.AddInputData( sidePolyData )   
+    tissuePolyDataAppend.Update()
     
-      currPoint = [ 0, 0, 0 ]
-      surfacePoints.GetPoint( i, currPoint )
-          
-      currProjection = ( currPoint[ 0 ] - surfaceBase [ 0 ] ) * surfaceNormal [ 0 ] + ( currPoint[ 1 ] - surfaceBase [ 1 ] ) * surfaceNormal [ 1 ] + ( currPoint[ 2 ] - surfaceBase [ 2 ] ) * surfaceNormal [ 2 ]
+    # Clean up so the surface is closed and the normal face inward
+    preNormalCleaner = vtk.vtkCleanPolyData()
+    preNormalCleaner.SetInputData( tissuePolyDataAppend.GetOutput() )
+    preNormalCleaner.Update()
+    
+    # Make sure the normals all face inward
+    normalFilter = vtk.vtkPolyDataNormals()
+    normalFilter.SetInputData( preNormalCleaner.GetOutput() )
+    normalFilter.AutoOrientNormalsOn()
+    normalFilter.Update()
+    
+    # Clean up so the surface is closed and the normal face inward
+    postNormalCleaner = vtk.vtkCleanPolyData()
+    postNormalCleaner.SetInputData( normalFilter.GetOutput() )
+    postNormalCleaner.Update()
+    
+    return postNormalCleaner.GetOutput()
+    
+    
+  def IsPolyDataClosed( self, inputPolyData ):
+    edgesFilter = vtk.vtkFeatureEdges()
+    edgesFilter.FeatureEdgesOff()
+    edgesFilter.BoundaryEdgesOn()
+    edgesFilter.NonManifoldEdgesOn()
+    edgesFilter.SetInputData( inputPolyData )
+    edgesFilter.Update()
+    
+    return ( edgesFilter.GetOutput().GetNumberOfCells() == 0 )
+ 
       
-      if ( currProjection < extremePointProjection ):
-        extremePointProjection = currProjection
-        extremePointIndex = i
-    
-    return extremePointIndex
-
-
-  def ReverseNormals( self, extremePointIndex, surfacePolyData, surfaceNormal ):
-   
-    normalArray = surfacePolyData.GetPointData().GetNormals()
-    
-    extremePointNormal = [ 0, 0, 0 ]
-    normalArray.GetTuple( extremePointIndex, extremePointNormal )
-    
-    if ( vtk.vtkMath.Dot( extremePointNormal, surfaceNormal ) > 0 ):
-      return True
-      
-    return False
-    
-
-
-
-
-    
-
-
-class TissueModelCreatorTest(unittest.TestCase):
+class TissueModelCreatorTest(ScriptedLoadableModuleTest):
   """
   This is the test case for your scripted module.
   """
-
-  def delayDisplay(self,message,msec=1000):
-    """This utility method displays a small dialog and waits.
-    This does two things: 1) it lets the event loop catch up
-    to the state of the test so that rendering and widget updates
-    have all taken place before the test continues and 2) it
-    shows the user/developer/tester the state of the test
-    so that we'll know when it breaks.
-    """
-    print(message)
-    self.info = qt.QDialog()
-    self.infoLayout = qt.QVBoxLayout()
-    self.info.setLayout(self.infoLayout)
-    self.label = qt.QLabel(message,self.info)
-    self.infoLayout.addWidget(self.label)
-    qt.QTimer.singleShot(msec, self.info.close)
-    self.info.exec_()
 
   def setUp(self):
     """ Do whatever is needed to reset the state - typically a scene clear will be enough.
@@ -640,26 +408,4 @@ class TissueModelCreatorTest(unittest.TestCase):
     your test should break so they know that the feature is needed.
     """
 
-    self.delayDisplay("Starting the test")
-    #
-    # first, get some data
-    #
-    import urllib
-    downloads = (
-        ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
-
-    for url,name,loader in downloads:
-      filePath = slicer.app.temporaryPath + '/' + name
-      if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-        print('Requesting download %s from %s...\n' % (name, url))
-        urllib.urlretrieve(url, filePath)
-      if loader:
-        print('Loading %s...\n' % (name,))
-        loader(filePath)
-    self.delayDisplay('Finished with download and loading\n')
-
-    volumeNode = slicer.util.getNode(pattern="FA")
-    logic = TissueModelCreatorLogic()
-    self.assertTrue( logic.hasImageData(volumeNode) )
-    self.delayDisplay('Test passed!')
+    self.delayDisplay('Tests are not implemented for TissueModelCreator')
