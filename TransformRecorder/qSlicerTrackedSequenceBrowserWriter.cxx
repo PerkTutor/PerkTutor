@@ -47,6 +47,7 @@
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
 #include <vtkMatrix4x4.h>
+#include <vtkDirectory.h>
 
 //-----------------------------------------------------------------------------
 class qSlicerTrackedSequenceBrowserWriterPrivate
@@ -335,9 +336,9 @@ bool qSlicerTrackedSequenceBrowserWriter
   QFileInfo fileInfo( QString( fileName.c_str() ) );
   QString tempPath = qSlicerCoreApplication::application()->temporaryPath() + "/" + fileInfo.baseName();
 
-
+  // TODO: Use Qt mkpath and Qt removeRecursively from Qt5 when available
   // Need to try to create a temporary directory to facilitate saving
-  if ( ! QDir().mkpath( tempPath ) )
+  if ( ! vtkDirectory::MakeDirectory( tempPath.toAscii() ) )
   {
     qWarning() << "Could not make a temporary directory for storing the sequence browser.";
     return false;
@@ -356,7 +357,7 @@ bool qSlicerTrackedSequenceBrowserWriter
   }
 
   // Delete the temporary directory
-  if ( ! QDir().rmdir( tempPath ) )
+  if ( ! vtkDirectory::DeleteDirectory( tempPath.toAscii() ) )
   {
     qWarning() << "Could not remove the temporary directory for storing the sequence browser.";
     return false;
