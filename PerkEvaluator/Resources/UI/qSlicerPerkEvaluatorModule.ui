@@ -44,7 +44,7 @@
       <bool>false</bool>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="DisplayToolboxPage">
       <property name="geometry">
@@ -650,7 +650,7 @@
           <string>Options</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
