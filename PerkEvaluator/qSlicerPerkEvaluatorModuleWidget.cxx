@@ -369,6 +369,21 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnComputeTaskSpecificMetricsToggled()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetComputeTaskSpecificMetrics( d->ComputeTaskSpecificMetricsCheckBox->isChecked() );
+}
+
+
 void
 qSlicerPerkEvaluatorModuleWidget
 ::OnDownloadAdditionalMetricsClicked()
@@ -572,6 +587,7 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
   connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
+  connect( d->ComputeTaskSpecificMetricsCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnComputeTaskSpecificMetricsToggled() ) );
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
   connect( d->DownloadAdditionalMetricsButton, SIGNAL( clicked() ), this, SLOT( OnDownloadAdditionalMetricsClicked() ) );
   connect( d->RestoreDefaultMetricsButton, SIGNAL( clicked() ), this, SLOT( OnRestoreDefaultMetricsClicked() ) );

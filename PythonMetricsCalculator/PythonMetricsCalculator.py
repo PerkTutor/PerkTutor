@@ -2,6 +2,7 @@ import os, imp, glob, sys
 import urllib, zipfile
 import unittest
 import logging
+import collections
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 
@@ -62,6 +63,8 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
   # We propose two concepts for metric distribution:
   # Sharing: Whether or not to sync the metric with every Perk Evaluator node
   # Ubiquity: Whether or not the metric spreads to every transform
+  
+  METRIC_VALUE = "MetricValue"
   
   NEEDLE_LENGTH = 300 # 30cm is approximate need length
   
@@ -156,14 +159,15 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     
     
   @staticmethod
-  def InitializeMetricsTable( metricsTable ):
+  def InitializeMetricsTable( metricsTable, taskNames ):
     if ( metricsTable == None ):
       return
   
     metricsTable.GetTable().Initialize()
     
     # TODO: Make the more robust (e.g. qSlicerMetricsTableWidget::METRIC_TABLE_COLUMNS) 
-    metricsTableColumnNames = [ "MetricName", "MetricRoles", "MetricUnit", "MetricValue" ]
+    metricsTableColumnNames = [ "MetricName", "MetricRoles", "MetricUnit" ]
+    metricsTableColumnNames = metricsTableColumnNames + taskNames
     for columnName in metricsTableColumnNames:
       column = vtk.vtkStringArray()
       column.SetName( columnName )
@@ -177,23 +181,26 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
 
     # Hold off on modified events until we are finished modifying
     modifyFlag = metricsTable.StartModify()  
-    PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable )
+    PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable, allMetrics.keys() )
     
-    visibleMetrics = []
-    for metric in allMetrics.values():
+    visibleIDs = []
+    for id, metric in allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ].iteritems():
       try:
         if ( not metric.IsHidden() ):
-          visibleMetrics.append( metric )
+          visibleIDs.append( id )
       except: #TODO: Keep for backwards compataibility
-        visibleMetrics.append( metric )
+        visibleIDs.append( id )
 
-    metricsTable.GetTable().SetNumberOfRows( len( visibleMetrics ) )
+    metricsTable.GetTable().SetNumberOfRows( len( visibleIDs ) )
     insertRow = 0
-    for metric in visibleMetrics:
-      metricsTable.GetTable().SetValueByName( insertRow, "MetricName", metric.GetMetricName() )
-      metricsTable.GetTable().SetValueByName( insertRow, "MetricRoles", metric.CombinedRoleString )
-      metricsTable.GetTable().SetValueByName( insertRow, "MetricUnit", metric.GetMetricUnit() )
-      metricsTable.GetTable().SetValueByName( insertRow, "MetricValue", metric.GetMetric() )
+    for id in visibleIDs:
+      for taskName, taskMetrics in allMetrics.iteritems():
+        currMetric = taskMetrics[ id ]
+        if ( taskName is PythonMetricsCalculatorLogic.METRIC_VALUE ):
+          metricsTable.GetTable().SetValueByName( insertRow, "MetricName", currMetric.GetMetricName() )
+          metricsTable.GetTable().SetValueByName( insertRow, "MetricRoles", currMetric.CombinedRoleString )
+          metricsTable.GetTable().SetValueByName( insertRow, "MetricUnit", currMetric.GetMetricUnit() )
+        metricsTable.GetTable().SetValueByName( insertRow, taskName, currMetric.GetMetric() )
       insertRow += 1
 
     metricsTable.EndModify( modifyFlag )
@@ -394,18 +401,32 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     # So, we just need to iterate through the master sequence node
     masterSequenceNode = peNode.GetTrackedSequenceBrowserNode().GetMasterSequenceNode()
     if ( masterSequenceNode is None ):
-      logging.warning( "Sequence browser has no associated sequence nodes." )
+      logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Sequence browser has no associated sequence nodes." )
       return
     if ( masterSequenceNode.GetIndexType() != slicer.vtkMRMLSequenceNode.NumericIndex ):
-      logging.warning( "Cannot analyze sequence with non-numeric index type." )
+      logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Cannot analyze sequence with non-numeric index type." )
       return    
     if ( masterSequenceNode.GetNumberOfDataNodes() == 0 ):
       return
       
     proxyNodeCollection = vtk.vtkCollection()
     peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodes( proxyNodeCollection )
-  
-    allMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )   
+
+    # Overall metrics
+    allMetrics = collections.OrderedDict()
+    allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ] = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
+    
+    # Task-specific metrics
+    trLogic = slicer.modules.transformrecorder.logic()
+    if ( peNode.GetComputeTaskSpecificMetrics() ):
+      if ( trLogic is None ):
+        logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Cannot create task-specific metrics. Perhaps the Transform Recorder logic cannot be found." )
+        return        
+      messageSequenceNode = trLogic.GetMessageSequenceNode( peNode.GetTrackedSequenceBrowserNode() )
+      for itemNumber in range( messageSequenceNode.GetNumberOfDataNodes() ):
+        messageString = messageSequenceNode.GetNthDataNode( itemNumber ).GetAttribute( "Message" )
+        allMetrics[ messageString ] = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
+
 
     # Start at the beginning (but remember where we were)
     originalItemNumber = peNode.GetTrackedSequenceBrowserNode().GetSelectedItemNumber()
@@ -414,12 +435,11 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     peNode.GetTrackedSequenceBrowserNode().Modified() # Force update the proxy nodes
     peNode.SetAnalysisState( 0 )
   
-    for i in range( masterSequenceNode.GetNumberOfDataNodes() ):
-    
+    for i in range( masterSequenceNode.GetNumberOfDataNodes() ):    
       try:
         time = float( masterSequenceNode.GetNthIndexValue( i ) )
       except:
-        logging.warning( "Index:" + i + "has non-numeric index type." )
+        logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Index" + i + "has non-numeric index type." )
         continue
         
       if ( time < peNode.GetMarkBegin() or time > peNode.GetMarkEnd() ):
@@ -427,7 +447,19 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
         
       # Update the scene so that all proxy nodes are at the appropriate frame
       peNode.GetTrackedSequenceBrowserNode().SetSelectedItemNumber( i )
-      PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics, proxyNodeCollection, time, None )
+      
+      # Overall metrics
+      PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ], proxyNodeCollection, time )
+      
+      # Task-specific metrics
+      # TODO
+      if ( peNode.GetComputeTaskSpecificMetrics() ):
+        if ( trLogic is not None ):
+          messageString = trLogic.GetPriorMessageString( peNode.GetTrackedSequenceBrowserNode(), str( time ) )
+          if ( messageString is not "" ):
+            PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ messageString ], proxyNodeCollection, time )
+        else:
+          logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Cannot determine task at index value " + str( time ) + "." )
       
       # Update the progress
       progressPercent = 100 * ( time - peNode.GetMarkBegin() ) / ( peNode.GetMarkEnd() - peNode.GetMarkBegin() )
@@ -445,7 +477,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
 
   
   @staticmethod  
-  def UpdateProxyNodeMetrics( allMetrics, proxyNodeCollection, time, metricsTable ):
+  def UpdateProxyNodeMetrics( taskMetrics, proxyNodeCollection, time ):
     if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None or PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic() == None ):
       return
     
@@ -459,11 +491,11 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       for j in range( transformCollection.GetNumberOfItems() ):
         currentTransformNode = transformCollection.GetItemAsObject( j )
         if ( PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().IsSelfOrDescendentNode( currentProxyNode, currentTransformNode ) ):
-          PythonMetricsCalculatorLogic.UpdateMetrics( allMetrics, currentTransformNode, time, metricsTable )
+          PythonMetricsCalculatorLogic.UpdateMetrics( taskMetrics, currentTransformNode, time )
 
   
   @staticmethod  
-  def UpdateMetrics( allMetrics, transformNode, time, metricsTable ):
+  def UpdateMetrics( taskMetrics, transformNode, time ):
     if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
       return
       
@@ -473,8 +505,8 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     transformNode.GetMatrixTransformToWorld( matrix )
     point = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ), matrix.GetElement( 3, 3 ) ]
     
-    for metricInstanceID in allMetrics:
-      metric = allMetrics[ metricInstanceID ]
+    for metricInstanceID in taskMetrics:
+      metric = taskMetrics[ metricInstanceID ]
       metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
       
       for role in metric.GetAcceptedTransformRoles():
@@ -483,11 +515,6 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
             metric.AddTimestamp( time, matrix, point, role )
           except TypeError: # Only look if there is an issue with the number of arguments
             metric.AddTimestamp( time, matrix, point ) # TODO: Keep this for backwards compatibility with Python Metrics?
-      
-    # Output the results to the metrics table node
-    # TODO: Do we have to clear it all and re-write it all?
-    if ( metricsTable != None ):
-      PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( metricsTable, allMetrics )
       
       
   # Instance methods for real-time metric computation
@@ -505,7 +532,10 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     
     
   def UpdateRealTimeMetrics( self, time ):
-    PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time, self.realTimeMetricsTable )
+    PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time )
+    
+    if ( self.realTimeMetricsTable is not None ):
+      PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( metricsTable, self.realTimeMetrics )
 
 	
 # PythonMetricsCalculatorTest

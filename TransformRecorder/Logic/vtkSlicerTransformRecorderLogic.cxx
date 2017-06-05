@@ -180,7 +180,6 @@ void vtkSlicerTransformRecorderLogic
   {
     return;
   }
-
   // Record the timestamp
   vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
   if ( messageSequenceNode == NULL )
@@ -197,20 +196,19 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
-::UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int index )
+::UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int itemNumber )
 {
   if ( browserNode == NULL )
   {
     return;
   }
-
   // Record the timestamp
   vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
   if ( messageSequenceNode == NULL )
   {
     return;
   }
-  std::string indexValue = messageSequenceNode->GetNthIndexValue( index );
+  std::string indexValue = messageSequenceNode->GetNthIndexValue( itemNumber );
 
   vtkSmartPointer< vtkMRMLNode > messageNode;
   messageNode.TakeReference( vtkMRMLNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLScriptedModuleNode" ) ) );
@@ -222,19 +220,18 @@ void vtkSlicerTransformRecorderLogic
 
 
 void vtkSlicerTransformRecorderLogic
-::RemoveMessage( vtkMRMLSequenceBrowserNode* browserNode, int index )
+::RemoveMessage( vtkMRMLSequenceBrowserNode* browserNode, int itemNumber )
 {
   if ( browserNode == NULL )
   {
     return;
   }
-
   vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
   if ( messageSequenceNode == NULL )
   {
     return;
   }
-  std::string value = messageSequenceNode->GetNthIndexValue( index );
+  std::string value = messageSequenceNode->GetNthIndexValue( itemNumber );
   messageSequenceNode->RemoveDataNodeAtValue( value );
 }
 
@@ -246,13 +243,49 @@ void vtkSlicerTransformRecorderLogic
   {
     return;
   }
-
   vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
   if ( messageSequenceNode == NULL )
   {
     return;
   }
   browserNode->RemoveSynchronizedSequenceNode( messageSequenceNode->GetID() );
+}
+
+
+// Note: This gets the message prior to the index value
+// If there is no prior message, then it returns an empty string
+std::string vtkSlicerTransformRecorderLogic
+::GetPriorMessageString( vtkMRMLSequenceBrowserNode* browserNode, std::string indexValue )
+{
+  if ( browserNode == NULL )
+  {
+    return "";
+  }
+  vtkMRMLSequenceNode* messageSequenceNode = this->GetMessageSequenceNode( browserNode );
+  if ( messageSequenceNode == NULL )
+  {
+    return "";
+  }
+  vtkMRMLNode* messageNode = messageSequenceNode->GetDataNodeAtValue( indexValue, false );
+  if ( messageNode == NULL )
+  {
+    return "";
+  }
+
+  std::string messageString = messageNode->GetAttribute( "Message" );
+  
+  // Need to deal with the case where we are before the first message
+  if ( messageSequenceNode->GetIndexType() == vtkMRMLSequenceNode::NumericIndex )
+  {
+    double time = atof( indexValue.c_str() );
+    double firstMessageTime = atof( messageSequenceNode->GetNthIndexValue( 0 ).c_str() );
+    if ( time < firstMessageTime )
+    {
+      return "";
+    }
+  }
+
+  return messageString;
 }
 
 

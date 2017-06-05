@@ -77,6 +77,10 @@ public:
   bool GetAutoUpdateMeasurementRange();
   void SetAutoUpdateMeasurementRange( bool update );
 
+  // Whether to compute task-specific metrics (in addition to computing overall metrics)
+  bool GetComputeTaskSpecificMetrics();
+  void SetComputeTaskSpecificMetrics( bool compute );
+
   // Analysis start/end times (note: these are relative times)
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
@@ -141,6 +145,7 @@ public:
 protected:
 
   bool AutoUpdateMeasurementRange;
+  bool ComputeTaskSpecificMetrics;
 
   double MarkBegin;
   double MarkEnd;
@@ -148,7 +153,6 @@ protected:
   NeedleOrientationEnum NeedleOrientation;
 
   int AnalysisState;
-
   bool RealTimeProcessing;
 
 };  

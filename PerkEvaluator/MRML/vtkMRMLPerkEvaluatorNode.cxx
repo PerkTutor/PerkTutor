@@ -56,6 +56,7 @@ void vtkMRMLPerkEvaluatorNode
   vtkIndent indent(nIndent);
   
   of << indent << "AutoUpdateMeasurementRange=\"" << this->AutoUpdateMeasurementRange << "\"";
+  of << indent << "ComputeTaskSpecificMetrics=\"" << this->ComputeTaskSpecificMetrics << "\"";
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
   of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
@@ -84,6 +85,10 @@ void vtkMRMLPerkEvaluatorNode
     if ( ! strcmp( attName, "AutoUpdateMeasurementRange" ) )
     {
       this->AutoUpdateMeasurementRange = atoi( attValue );
+    }
+    if ( ! strcmp( attName, "ComputeTaskSpecificMetrics" ) )
+    {
+      this->ComputeTaskSpecificMetrics = atoi( attValue );
     }
     if ( ! strcmp( attName, "MarkBegin" ) )
     {
@@ -135,6 +140,7 @@ void vtkMRMLPerkEvaluatorNode
   vtkMRMLPerkEvaluatorNode *node = ( vtkMRMLPerkEvaluatorNode* ) anode;
 
   this->AutoUpdateMeasurementRange = node->AutoUpdateMeasurementRange;
+  this->ComputeTaskSpecificMetrics = node->ComputeTaskSpecificMetrics;
   this->MarkBegin = node->MarkBegin;
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
@@ -150,6 +156,7 @@ vtkMRMLPerkEvaluatorNode
 ::vtkMRMLPerkEvaluatorNode()
 {
   this->AutoUpdateMeasurementRange = true;
+  this->ComputeTaskSpecificMetrics = false;
 
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
@@ -191,6 +198,24 @@ void vtkMRMLPerkEvaluatorNode
   if ( update != this->AutoUpdateMeasurementRange )
   {
     this->AutoUpdateMeasurementRange = update;
+    this->Modified();
+  }
+}
+
+
+bool vtkMRMLPerkEvaluatorNode
+::GetComputeTaskSpecificMetrics()
+{
+  return this->ComputeTaskSpecificMetrics;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetComputeTaskSpecificMetrics( bool compute )
+{
+  if ( compute != this->ComputeTaskSpecificMetrics )
+  {
+    this->ComputeTaskSpecificMetrics = compute;
     this->Modified();
   }
 }

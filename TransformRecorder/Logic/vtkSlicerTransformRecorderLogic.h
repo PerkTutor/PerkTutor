@@ -72,9 +72,10 @@ public:
   // Convenience methods for intersection between widget and MRML
   vtkMRMLSequenceNode* GetMessageSequenceNode( vtkMRMLSequenceBrowserNode* browserNode );
   void AddMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, std::string indexValue );
-  void UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int index );
-  void RemoveMessage( vtkMRMLSequenceBrowserNode* browserNode, int index );
+  void UpdateMessage( vtkMRMLSequenceBrowserNode* browserNode, std::string messageString, int itemNumber );
+  void RemoveMessage( vtkMRMLSequenceBrowserNode* browserNode, int itemNumber );
   void ClearMessages( vtkMRMLSequenceBrowserNode* browserNode );
+  std::string GetPriorMessageString( vtkMRMLSequenceBrowserNode* browserNode, std::string indexValue );
 
   double GetMaximumIndexValue( vtkMRMLSequenceBrowserNode* browserNode );
   int GetMaximumNumberOfDataNodes( vtkMRMLSequenceBrowserNode* browserNode );

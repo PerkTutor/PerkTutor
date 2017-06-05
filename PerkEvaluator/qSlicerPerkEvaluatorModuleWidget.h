@@ -51,6 +51,7 @@ public slots:
   void OnEditMetricInstanceNodeChanged();
 
   void OnAutoUpdateMeasurementRangeToggled();
+  void OnComputeTaskSpecificMetricsToggled();
 
   void OnDownloadAdditionalMetricsClicked();
   void OnRestoreDefaultMetricsClicked();
