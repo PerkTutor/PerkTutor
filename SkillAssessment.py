@@ -4,6 +4,7 @@ import vtk, qt, ctk, slicer
 import numpy
 from slicer.ScriptedLoadableModule import *
 import logging
+from functools import partial
 
 #
 # SkillAssessment
@@ -32,7 +33,7 @@ class SkillAssessment( ScriptedLoadableModule ):
     This module computes the overall skill level of an operator performing an image-guided intervention. <br>
     Raw Method: Computes a weighted average of metrics. <br>
     Percentile Method: Computes a weighted average of percentile scores (use for non-parametrically distributed data). <br>
-    Z-Score Method" Computes a weight average of z-scores (use for normally distributed data).
+    Z-Score Method: Computes a weight average of z-scores (use for normally distributed data).
     """
     self.parent.acknowledgementText = """
     Acknowledgements.
@@ -137,6 +138,21 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     # Layout within the dummy collapsible button
     optionsFormLayout = qt.QFormLayout(optionsCollapsibleButton)
     
+    
+    #
+    # Skill assessment module node selector
+    #    
+    self.parameterNodeSelector = slicer.qMRMLNodeComboBox()
+    self.parameterNodeSelector.nodeTypes = [ "vtkMRMLScriptedModuleNode" ]
+    self.parameterNodeSelector.addEnabled = True
+    self.parameterNodeSelector.removeEnabled = True
+    self.parameterNodeSelector.showHidden = True
+    self.parameterNodeSelector.showChildNodeTypes = False
+    self.parameterNodeSelector.baseName = "SkillAssessment"
+    self.parameterNodeSelector.setMRMLScene( slicer.mrmlScene )
+    self.parameterNodeSelector.setToolTip( "Select the module parameters node." )
+    optionsFormLayout.addRow( "Parameter node: ", self.parameterNodeSelector )
+    
         
     #
     # Assessment method combo box 
@@ -181,12 +197,25 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.showTransformedMetricValuesCheckBox.setText( "Show transformed metrics" )
     self.showTransformedMetricValuesCheckBox.setToolTip( "Show the transformed metric values in the assessment table." )
     optionsFormLayout.addWidget( self.showTransformedMetricValuesCheckBox )
-
+    
+    #
+    # The assessment table itself
+    #
+    self.assessmentTable = qt.QTableWidget()
+    self.assessmentTable.horizontalHeader().hide()
+    self.assessmentTable.verticalHeader().hide()
+    self.assessmentTable.setShowGrid( False )
+    self.assessmentTable.setAlternatingRowColors( True )
+    self.assessmentTable.resize( 600, 400 ) # Reasonable starting size - to be adjusted by the user
 
     # connections
+    self.parameterNodeSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onParameterNodeChanged )
     self.metricsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onMetricsChanged )
     self.weightSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onWeightsChanged )
     self.trainingSetSelector.connect( 'checkedNodesChanged()', self.onTrainingSetChanged )
+    
+    self.assessmentMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAssessmentMethodChanged )
+    self.aggregationMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAggregationMethodChanged )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
 
@@ -198,50 +227,288 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     pass
     
     
+  def updateAssessmentTable( self, node, eventid ):
+    if ( node is None ):
+      return
+    
+    metricsNode = node.GetNodeReference( "Metrics" )
+    weightsNode = node.GetNodeReference( "Weights" )
+    
+    if ( metricsNode is None or weightsNode is None ):
+      logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Empty metrics or weights node." )
+      return
+      
+    metricsTable = metricsNode.GetTable()
+    weightsTable = weightsNode.GetTable()
+      
+    if ( metricsTable is None or weightsTable is None ):
+      logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Metrics or weights table not specified." )
+      return
+      
+    if ( metricsTable.GetNumberOfRows() == 0 or metricsTable.GetNumberOfColumns() == 0
+      or metricsTable.GetNumberOfRows() != weightsTable.GetNumberOfRows()
+      or metricsTable.GetNumberOfColumns() != weightsTable.GetNumberOfColumns() ):
+      logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Metrics and weights tables incompatible." )
+      return
+      
+    numMetrics = metricsTable.GetNumberOfRows()
+    numTasks = metricsTable.GetNumberOfColumns() - 3 # Ignore "MetricName", "MetricRoles", "MetricUnit"
+    
+    self.assessmentTable.setRowCount( numMetrics + 4 )
+    self.assessmentTable.setColumnCount( numTasks + 4 )
+    
+    # Task headers
+    taskColumnCount = 0
+    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
+      if ( SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex ) ):
+        continue
+      
+      columnName = metricsTable.GetColumnName( columnIndex )
+      taskHeaderLabel = qt.QLabel( columnName )
+      taskHeaderLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignCenter }" )
+      self.assessmentTable.setCellWidget( 0, taskColumnCount + 2, taskHeaderLabel )
+      taskColumnCount = taskColumnCount + 1
+        
+    # Metric headers
+    for rowIndex in range( metricsTable.GetNumberOfRows() ):
+      metricHeaderString = metricsTable.GetValueByName( rowIndex, "MetricName" ).ToString()
+      
+      metricHeaderString = metricHeaderString + " ["
+      metricHeaderString = metricHeaderString + metricsTable.GetValueByName( rowIndex, "MetricRoles" ).ToString()
+      metricHeaderString = metricHeaderString + "] "
+      
+      metricHeaderString = metricHeaderString + "("
+      metricHeaderString = metricHeaderString +  metricsTable.GetValueByName( rowIndex, "MetricUnit" ).ToString()
+      metricHeaderString = metricHeaderString + ")"
+      
+      metricHeaderLabel = qt.QLabel( metricHeaderString )
+      metricHeaderLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignVCenter }" )
+      self.assessmentTable.setCellWidget( rowIndex + 2, 0, metricHeaderLabel )
+      
+    # Metrics and metric weights
+    taskColumnCount = 0
+    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
+      if ( SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex ) ):
+        continue
+    
+      for rowIndex in range( metricsTable.GetNumberOfRows() ):
+        metric = metricsTable.GetValue( rowIndex, columnIndex )
+        weight = weightsTable.GetValue( rowIndex, columnIndex )
+        
+        try:
+          metricWeightWidget = self.assessmentTable.cellWidget( rowIndex + 2, taskColumnCount + 2 )
+          metricWeightWidget.findChild( qt.QLabel ).setText( metric.ToString() )
+          metricWeightWidget.findChild( ctk.ctkSliderWidget ).value = weight.ToDouble()
+        except:
+          metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metric.ToString(), weight.ToDouble(), rowIndex, columnIndex )
+          self.assessmentTable.setCellWidget( rowIndex + 2, taskColumnCount + 2, metricWeightWidget )
+        
+      taskColumnCount = taskColumnCount + 1
+      
+    # Get the scores nodes    
+    metricScoresNode = node.GetNodeReference( "MetricScores" )
+    taskScoresNode = node.GetNodeReference( "TaskScores" )
+    
+    if ( metricScoresNode is None or taskScoresNode is None ):
+      logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Empty metric scores or task scores node." )
+      return
+      
+    metricScoresTable = metricScoresNode.GetTable()
+    taskScoresTable = taskScoresNode.GetTable()
+      
+    if ( metricScoresTable is None or taskScoresTable is None ):
+      logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Metric scores or task scores table not specified." )
+      return
+      
+    if ( metricScoresTable.GetNumberOfColumns() != 4
+      or metricScoresTable.GetNumberOfRows() != metricsTable.GetNumberOfRows()
+      or taskScoresTable.GetNumberOfRows() != 1
+      or taskScoresTable.GetNumberOfColumns() != metricsTable.GetNumberOfColumns() ):
+      logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Metric scores or task scores tables incompatible with metrics table." )
+      return
+      
+    # Metric scores
+    for rowIndex in range( metricScoresTable.GetNumberOfRows() ):
+      metric = metricScoresTable.GetValueByName( rowIndex, "MetricScore" )
+      try:
+        metricWeightWidget = self.assessmentTable.cellWidget( rowIndex + 2, self.assessmentTable.columnCount - 1 )
+        metricWeightWidget.findChild( qt.QLabel ).setText( metric.ToString() )
+      except:
+        metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metric.ToString(), 1.0, rowIndex, None )
+        self.assessmentTable.setCellWidget( rowIndex + 2, self.assessmentTable.columnCount - 1, metricWeightWidget )
+      
+    # Task scores
+    taskColumnCount = 0
+    for columnIndex in range( taskScoresTable.GetNumberOfColumns() ):
+      if ( SkillAssessmentLogic.IsHeaderColumn( taskScoresTable, columnIndex ) ):
+        continue
+        
+      metric = taskScoresTable.GetValue( 0, columnIndex )
+      try:
+        metricWeightWidget = self.assessmentTable.cellWidget( self.assessmentTable.rowCount - 1, taskColumnCount + 2 )
+        metricWeightWidget.findChild( qt.QLabel ).setText( metric.ToString() )
+      except:
+        metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metric.ToString(), 1.0, None, columnIndex )
+        self.assessmentTable.setCellWidget( self.assessmentTable.rowCount - 1, taskColumnCount + 2, metricWeightWidget )
+        
+      taskColumnCount = taskColumnCount + 1
+      
+    # Overall score
+    overallScore = node.GetAttribute( "OverallScore" )
+    overallScoreLabel = qt.QLabel( overallScore )
+    overallScoreLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignCenter }" )
+    self.assessmentTable.setCellWidget( self.assessmentTable.rowCount - 1, self.assessmentTable.columnCount - 1, overallScoreLabel )
+    
+    # Do some strechting to make the table look nice
+    self.assessmentTable.horizontalHeader().setResizeMode( qt.QHeaderView.Stretch )
+    self.assessmentTable.verticalHeader().setResizeMode( qt.QHeaderView.Stretch )
+    
+    if ( self.assessmentTable.columnCount > 1 ):
+      self.assessmentTable.horizontalHeader().setResizeMode( 0, qt.QHeaderView.ResizeToContents )
+      self.assessmentTable.horizontalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
+      self.assessmentTable.horizontalHeader().setResizeMode( self.assessmentTable.columnCount - 2, qt.QHeaderView.ResizeToContents )
+    
+    if ( self.assessmentTable.rowCount > 1 ):
+      self.assessmentTable.verticalHeader().setResizeMode( 0, qt.QHeaderView.ResizeToContents )
+      self.assessmentTable.verticalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
+      self.assessmentTable.verticalHeader().setResizeMode( self.assessmentTable.rowCount - 2, qt.QHeaderView.ResizeToContents )
+      
+  
+  
+  def createMetricWeightWidget( self, parent, metric, weight, rowIndex = None, columnIndex = None ):
+    # Establish the container widget and layout
+    metricWeightWidget = slicer.qSlicerWidget( parent )
+    metricWeightLayout = qt.QVBoxLayout( metricWeightWidget )
+    
+    # Add the weight slider
+    weightSlider = ctk.ctkSliderWidget( metricWeightWidget )
+    weightSlider.maximum = 1
+    weightSlider.minimum = 0
+    weightSlider.singleStep = 0.01
+    weightSlider.pageStep = 0.1
+    weightSlider.decimals = 2
+    weightSlider.value = weight
+    metricWeightLayout.addWidget( weightSlider )
+    
+    weightSlider.connect( 'valueChanged(double)', partial( self.onWeightSliderChanged, rowIndex, columnIndex ) )
+    
+    # Add the metric value
+    metricLabel = qt.QLabel( metric, metricWeightWidget )
+    metricLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignCenter }" )
+    metricWeightLayout.addWidget( metricLabel )
+    
+    return metricWeightWidget
+    
+    
+  def onWeightSliderChanged( self, rowIndex, columnIndex, weight ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+    weightsNode = parameterNode.GetNodeReference( "Weights" )
+    if ( weightsNode is None ):
+      return
+    weightsTable = weightsNode.GetTable()
+    if ( weightsTable is None ):
+      return      
+      
+    # If the row or column index is none, that means apply to all rows or columns
+    if ( rowIndex is None ):
+      rowIndex = range( weightsTable.GetNumberOfRows() )
+    else:
+      rowIndex = [ rowIndex ]
+    if ( columnIndex is None ):
+      columnIndex = range( weightsTable.GetNumberOfColumns() ) # Ignore header columns
+    else:
+      columnIndex = [ columnIndex ]
+      
+    for row in rowIndex:
+      for column in columnIndex:
+        if ( not SkillAssessmentLogic.IsHeaderColumn( weightsTable, column ) ):
+          weightsTable.SetValue( row, column, weight )
+        
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+
+    
+  def onParameterNodeChanged( self, parameterNode ):
+    if ( parameterNode is None ):
+      return
+      
+    # Set the default values
+    if ( parameterNode.GetAttribute( "AssessmentMethod" ) is None ):
+      parameterNode.SetAttribute( "AssessmentMethod", ASSESSMENT_METHOD_ZSCORE )
+    if ( parameterNode.GetAttribute( "AggregationMethod" ) is None ):
+      parameterNode.SetAttribute( "AggregationMethod", AGGREGATION_METHOD_MEAN )
+      
+    if ( parameterNode.GetAttribute( "OverallScore" ) is None ):
+      parameterNode.SetAttribute( "OverallScore", "0" )      
+  
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+
+
   def onMetricsChanged( self, metricsNode ):
-    self.saLogic.metricsNode = metricsNode
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+    
+    parameterNode.SetNodeReferenceID( "Metrics", metricsNode.GetID() )
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+    
     
   def onWeightsChanged( self, weightNode ):
-    self.saLogic.weightNode = weightNode
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+    
+    parameterNode.SetNodeReferenceID( "Weights", weightNode.GetID() )
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+    
     
   def onTrainingSetChanged( self ):
-    self.saLogic.trainingSet = self.trainingSetSelector.checkedNodes()
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+      
+    trainingNodes = self.trainingSetSelector.checkedNodes()
+    parameterNode.RemoveNodeReferenceIDs( "Training" )
+    for node in trainingNodes:
+      parameterNode.AddNodeReferenceID( "Training", node.GetID() )
+    
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+    
+    
+  def onAssessmentMethodChanged( self, text ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+      
+    parameterNode.SetAttribute( "AssessmentMethod", text )
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+    
+    
+  def onAggregationMethodChanged( self, text ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+      
+    parameterNode.SetAttribute( "AggregationMethod", text )
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
+    
 
   def onAssessButtonClicked( self ):
-    result = 0
-    
-    transformationMethod = self.assessmentMethodComboBox.currentText
-    aggregationMethod = self.aggregationMethodComboBox.currentText
-      
-    result = self.saLogic.Assess( transformationMethod, aggregationMethod )
-    
-    self.resultsLabel.text = result
-    self.weightSelector.setCurrentNode( self.saLogic.weightNode ) # In case the weight node was created during assessment
-    
-    # Pop-up the big assessment table in a new window
-    
-    # TODO
-    # HACK
-    # This uses an absolute path # This is only for debugging until I can get the widget to be loaded from the additional module paths
-    import imp
-    saWidgets = imp.load_dynamic( "qSlicerSkillAssessmentModuleWidgetsPythonQt", "d:\PerkTutor\SkillAssessment-0307D\lib\Slicer-4.7\qt-loadable-modules\Debug\qSlicerSkillAssessmentModuleWidgetsPythonQt.pyd" )
-    
-    self.assessmentTable = saWidgets.qSlicerAssessmentTableWidget()
-    self.assessmentTable.setMetricWeightsVisible( self.metricWeightSlidersCheckBox.isChecked() )
-    self.assessmentTable.setScoreWeightsVisible( self.scoreWeightSlidersCheckBox.isChecked() )
-    
-    if ( self.showTransformedMetricValuesCheckBox.isChecked() ):
-      self.assessmentTable.setMetricNode( self.saLogic.transformedMetricsNode )
-    else:    
-      self.assessmentTable.setMetricNode( self.saLogic.metricsNode )
-      
-    
-    self.assessmentTable.setWeightNode( self.saLogic.weightNode )
-    self.assessmentTable.setMetricScoreNode( self.saLogic.metricScoreNode )
-    self.assessmentTable.setTaskScoreNode( self.saLogic.taskScoreNode )
-    self.assessmentTable.setOverallScore( self.saLogic.overallScore )
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+  
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode, None )
     self.assessmentTable.show()
-    
     
 
     
@@ -260,43 +527,44 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
   def __init__( self ):
-    self.metricsNode = None
-    self.weightNode = None
-    self.metricScoreNode = None
-    self.taskScoreNode = None
-    
-    self.transformedMetricsNode = None
-    
-    self.trainingSet = None
-    
-    self.overallScore = 0
+    pass
     
   
-  def Assess( self, transformationMethod, aggregationMethod ):
+  @staticmethod
+  def Assess( parameterNode ):
   
-    if ( transformationMethod == "" or aggregationMethod == "" ):
-      logging.info( "SkillAssessmentLogic::Assess: Transformation or aggregation method improperly specified. Please pick on of the pre-defined options." )
+    assessmentMethod = parameterNode.GetAttribute( "AssessmentMethod" )
+    aggregationMethod = parameterNode.GetAttribute( "AggregationMethod" )
+    if ( assessmentMethod == "" or aggregationMethod == "" ):
+      logging.info( "SkillAssessmentLogic::Assess: Assessment or aggregation method improperly specified. Please pick on of the pre-defined options." )
       return 0
 
-    if ( self.metricsNode is None ):
+    metricsNode = parameterNode.GetNodeReference( "Metrics" )
+    if ( metricsNode is None ):
       logging.info( "SkillAssessmentLogic::Assess: Metrics table is empty. Could not assess." )
       return 0
       
-    if ( self.trainingSet is None or len( self.trainingSet ) == 0 ):
+    trainingNodes = []
+    for i in range( parameterNode.GetNumberOfNodeReferences( "Training" ) ):
+      trainingNodes.append( parameterNode.GetNthNodeReference( "Training", i ) )    
+    if ( len( trainingNodes ) == 0 ):
       logging.info( "SkillAssessmentLogic::Assess: Training dataset is empty. Could not assess." )
       return 0
       
-    if ( self.weightNode is None ):
-      self.weightNode = self.CreateTableNodeFromMetrics( self.metricsNode, 1 )
-      self.weightNode.SetName( "Weights" )
-      self.weightNode.SetScene( slicer.mrmlScene )
-      slicer.mrmlScene.AddNode( self.weightNode )
+    weightsNode = parameterNode.GetNodeReference( "Weights" )
+    if ( weightsNode is None ):      
+      weightsNode = slicer.vtkMRMLTableNode()
+      weightsTable = SkillAssessmentLogic.CreateTableFromMetrics( metricsNode, 1 )
+      weightsNode.SetAndObserveTable( weightsTable )
+      weightsNode.SetName( "Weights" )
+      weightsNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( weightsNode )
+      parameterNode.SetNodeReferenceID( "Weights", weightsNode.GetID() )
     
     # TODO: Make this code more modular
     
     # Transform the metric values
-    self.transformedMetricsNode = self.CreateTableNodeFromMetrics( self.metricsNode, 0 )
-    transformedMetricsTable = self.transformedMetricsNode.GetTable()
+    transformedMetricsTable = SkillAssessmentLogic.CreateTableFromMetrics( metricsNode, 0 )
     
     for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
       metricName = transformedMetricsTable.GetValueByName( rowIndex, "MetricName" )
@@ -304,80 +572,96 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       metricUnit = transformedMetricsTable.GetValueByName( rowIndex, "MetricUnit" )
       
       for columnIndex in range( transformedMetricsTable.GetNumberOfColumns() ):
-        columnName = transformedMetricsTable.GetColumnName( columnIndex )
-        if ( columnName == "MetricName" or columnName == "MetricRoles" or columnName == "MetricUnit" ):
+        if ( SkillAssessmentLogic.IsHeaderColumn( transformedMetricsTable, columnIndex ) ):
           continue
-          
-        trainingMetricValues = self.GetMetricValuesFromNodes( self.trainingSet, metricName, metricRoles, metricUnit, columnName )
-        testMetricValue = self.GetMetricValueFromNode( self.metricsNode, metricName, metricRoles, metricUnit, columnName )
+        
+        columnName = transformedMetricsTable.GetColumnName( columnIndex )
+        trainingMetricValues = SkillAssessmentLogic.GetMetricValuesFromNodes( trainingNodes, metricName, metricRoles, metricUnit, columnName )
+        testMetricValue = SkillAssessmentLogic.GetMetricValueFromNode( metricsNode, metricName, metricRoles, metricUnit, columnName )
 
-        transformedMetricValue = self.GetTransformedMetricValue( testMetricValue, trainingMetricValues, transformationMethod )
+        transformedMetricValue = SkillAssessmentLogic.GetTransformedMetricValue( testMetricValue, trainingMetricValues, assessmentMethod )
 
         transformedMetricsTable.SetValue( rowIndex, columnIndex, transformedMetricValue )        
     
     # Compute the metric scores
-    self.metricScoreNode = self.CreateMetricScoreTableNodeFromMetrics( self.metricsNode, 0 )
-    metricScoreTable = self.metricScoreNode.GetTable()
+    metricScoresTable = SkillAssessmentLogic.CreateMetricScoresTableFromMetrics( metricsNode, 0 )
     
-    for rowIndex in range( metricScoreTable.GetNumberOfRows() ):
-      metricName = metricScoreTable.GetValueByName( rowIndex, "MetricName" )
-      metricRoles = metricScoreTable.GetValueByName( rowIndex, "MetricRoles" ) 
-      metricUnit = metricScoreTable.GetValueByName( rowIndex, "MetricUnit" )
+    for rowIndex in range( metricScoresTable.GetNumberOfRows() ):
+      metricName = metricScoresTable.GetValueByName( rowIndex, "MetricName" )
+      metricRoles = metricScoresTable.GetValueByName( rowIndex, "MetricRoles" ) 
+      metricUnit = metricScoresTable.GetValueByName( rowIndex, "MetricUnit" )
       
-      metricValues = []
+      metrics = []
       weights = []
       for columnIndex in range( transformedMetricsTable.GetNumberOfColumns() ):
-        columnName = transformedMetricsTable.GetColumnName( columnIndex )
-        if ( columnName == "MetricName" or columnName == "MetricRoles" or columnName == "MetricUnit" ):
+        if ( SkillAssessmentLogic.IsHeaderColumn( transformedMetricsTable, columnIndex ) ):
           continue
-          
-        metricValues.append( self.GetMetricValueFromNode( self.transformedMetricsNode, metricName, metricRoles, metricUnit, columnName ) )
-        weights.append( self.GetMetricValueFromNode( self.weightNode, metricName, metricRoles, metricUnit, columnName ) )
+        
+        columnName = transformedMetricsTable.GetColumnName( columnIndex )
+        metrics.append( SkillAssessmentLogic.GetMetricValueFromTable( transformedMetricsTable, metricName, metricRoles, metricUnit, columnName ) )
+        weights.append( SkillAssessmentLogic.GetMetricValueFromNode( weightsNode, metricName, metricRoles, metricUnit, columnName ) )
 
-      aggregatedMetricValue = self.GetAggregatedMetricValue( metricValues, weights, aggregationMethod )
-      metricScoreTable.SetValueByName( rowIndex, "MetricScore", aggregatedMetricValue ) 
+      aggregatedMetricValue = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
+      metricScoresTable.SetValueByName( rowIndex, "MetricScore", aggregatedMetricValue )
+      
+    metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
+    if ( metricScoresNode is None ):
+      metricScoresNode = slicer.vtkMRMLTableNode()
+      metricScoresNode.SetName( "MetricScores" )
+      metricScoresNode.HideFromEditorsOn()
+      metricScoresNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( metricScoresNode )
+      parameterNode.SetNodeReferenceID( "MetricScores", metricScoresNode.GetID() )
+    metricScoresNode.SetAndObserveTable( metricScoresTable )
       
       
     # Compute the task scores
-    self.taskScoreNode = self.CreateTaskScoreTableNodeFromMetrics( self.metricsNode, 0 )
-    taskScoreTable = self.taskScoreNode.GetTable()
+    taskScoresTable = SkillAssessmentLogic.CreateTaskScoresTableFromMetrics( metricsNode, 0 )
     
-    for columnIndex in range( taskScoreTable.GetNumberOfColumns() ):
-      columnName = taskScoreTable.GetColumnName( columnIndex )
-      if ( columnName == "MetricName" or columnName == "MetricRoles" or columnName == "MetricUnit" ):
-          continue
-       
-      metricValues = []
+    for columnIndex in range( taskScoresTable.GetNumberOfColumns() ):
+      if ( SkillAssessmentLogic.IsHeaderColumn( taskScoresTable, columnIndex ) ):
+        continue
+      columnName = taskScoresTable.GetColumnName( columnIndex )
+
+      metrics = []
       weights = []       
       for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
-        metricValues.append( transformedMetricsTable.GetValueByName( rowIndex, columnName ).ToDouble() )
-        weights.append( self.weightNode.GetTable().GetValueByName( rowIndex, columnName ).ToDouble() )
+        metrics.append( transformedMetricsTable.GetValueByName( rowIndex, columnName ).ToDouble() )
+        weights.append( weightsNode.GetTable().GetValueByName( rowIndex, columnName ).ToDouble() )
         
-      aggregatedMetricValue = self.GetAggregatedMetricValue( metricValues, weights, aggregationMethod )
-      taskScoreTable.SetValueByName( 0, columnName, aggregatedMetricValue )
+      aggregatedMetricValue = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
+      taskScoresTable.SetValueByName( 0, columnName, aggregatedMetricValue )
+      
+    taskScoresNode = parameterNode.GetNodeReference( "TaskScores" )
+    if ( taskScoresNode is None ):
+      taskScoresNode = slicer.vtkMRMLTableNode()
+      taskScoresNode.SetName( "TaskScores" )
+      taskScoresNode.HideFromEditorsOn()
+      taskScoresNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( taskScoresNode )
+      parameterNode.SetNodeReferenceID( "TaskScores", taskScoresNode.GetID() )
+    taskScoresNode.SetAndObserveTable( taskScoresTable )
       
       
     # Compute the overall score
-    metricValues = []
+    metrics = []
     weights = []
     for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
       for columnIndex in range( transformedMetricsTable.GetNumberOfColumns() ):
-        columnName = transformedMetricsTable.GetColumnName( columnIndex )
-        if ( columnName == "MetricName" or columnName == "MetricRoles" or columnName == "MetricUnit" ):
+        if ( SkillAssessmentLogic.IsHeaderColumn( transformedMetricsTable, columnIndex ) ):
           continue
           
-        metricValues.append( transformedMetricsTable.GetValueByName( rowIndex, columnName ).ToDouble() )
-        weights.append( self.weightNode.GetTable().GetValueByName( rowIndex, columnName ).ToDouble() )
+        columnName = transformedMetricsTable.GetColumnName( columnIndex )
+        metrics.append( transformedMetricsTable.GetValueByName( rowIndex, columnName ).ToDouble() )
+        weights.append( weightsNode.GetTable().GetValueByName( rowIndex, columnName ).ToDouble() )
 
-    self.overallScore = self.GetAggregatedMetricValue( metricValues, weights, aggregationMethod )
-
-    return self.overallScore
-    
+    overallScore = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
+    parameterNode.SetAttribute( "OverallScore", str( overallScore ) )
+      
     
   @staticmethod
-  def CreateTaskScoreTableNodeFromMetrics( metricsNode, value ):
-    tableNode = slicer.vtkMRMLTableNode()
-    table = tableNode.GetTable()
+  def CreateTaskScoresTableFromMetrics( metricsNode, value ):
+    table = vtk.vtkTable()
     
     # Constructive approach
     metricsTable = metricsNode.GetTable()
@@ -404,13 +688,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       newColumn.InsertNextValue( str( value ) )
       table.AddColumn( newColumn )
 
-    return tableNode
+    return table
     
  
   @staticmethod
-  def CreateMetricScoreTableNodeFromMetrics( metricsNode, value ):
-    tableNode = slicer.vtkMRMLTableNode()
-    table = tableNode.GetTable()
+  def CreateMetricScoresTableFromMetrics( metricsNode, value ):
+    table = vtk.vtkTable()
 
     # Constructive approach
     metricsTable = metricsNode.GetTable()
@@ -434,13 +717,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       metricScoreColumn.SetValue( rowIndex, str( value ) )
     table.AddColumn( metricScoreColumn )
       
-    return tableNode
+    return table
 
 
   @staticmethod
-  def CreateTableNodeFromMetrics( metricsNode, value ):
-    tableNode = slicer.vtkMRMLTableNode()
-    table = tableNode.GetTable()
+  def CreateTableFromMetrics( metricsNode, value ):
+    table = vtk.vtkTable()
     table.DeepCopy( metricsNode.GetTable() ) # Make the weight table the same size
     for columnIndex in range( table.GetNumberOfColumns() ):
       columnName = table.GetColumnName( columnIndex )
@@ -449,22 +731,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       for rowIndex in range( table.GetNumberOfRows() ):
         table.SetValue( rowIndex, columnIndex, value ) # Set the default value to 1
         
-    return tableNode
-    
-    
-  @staticmethod
-  def CreateTableNodeFromMetrics( metricsNode, value ):
-    tableNode = slicer.vtkMRMLTableNode()
-    table = tableNode.GetTable()
-    table.DeepCopy( metricsNode.GetTable() ) # Make the weight table the same size
-    for columnIndex in range( table.GetNumberOfColumns() ):
-      columnName = table.GetColumnName( columnIndex )
-      if ( columnName == "MetricName" or columnName == "MetricRoles" or columnName == "MetricUnit" ):
-        continue
-      for rowIndex in range( table.GetNumberOfRows() ):
-        table.SetValue( rowIndex, columnIndex, value ) # Set the default value to 1
-        
-    return tableNode
+    return table
 
     
   @staticmethod
@@ -483,7 +750,15 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     if ( metricsNode is None or metricsNode.GetTable() is None ):
       logging.info( "SkillAssessmentLogic::GetMetricValueFromNode: Table of metrics is empty." )
       return
-    metricsTable = metricsNode.GetTable()  
+
+    return SkillAssessmentLogic.GetMetricValueFromTable( metricsNode.GetTable(), metricName, metricRoles, metricUnit, taskName ) 
+    
+    
+  @staticmethod
+  def GetMetricValueFromTable( metricsTable, metricName, metricRoles, metricUnit, taskName ):
+    if ( metricsTable is None ):
+      logging.info( "SkillAssessmentLogic::GetMetricValueFromTable: Table of metrics is empty." )
+      return
     
     for rowIndex in range( metricsTable.GetNumberOfRows() ):
       nameMatch = ( metricsTable.GetValueByName( rowIndex, "MetricName" ) == metricName )
@@ -492,8 +767,9 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       if ( nameMatch and rolesMatch and unitMatch ):
         return metricsTable.GetValueByName( rowIndex, taskName ).ToDouble()
         
-    logging.info( "SkillAssessmentLogic::GetMetricValueFromNode: Could not find metric in the table." )
+    logging.info( "SkillAssessmentLogic::GetMetricValueFromTable: Could not find metric in the table." )
     return
+    
 
   @staticmethod
   def GetAggregatedMetricValue( metricValues, weights, method ):
@@ -586,6 +862,18 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       zscore = ( testMetric - trainingMean ) / trainingStd
       
     return zscore
+    
+    
+  # Convenience method for checking if a column in a metrics table is a header columns
+  @staticmethod
+  def IsHeaderColumn( metricsTable, index ):
+    columnName = metricsTable.GetColumnName( index )
+    if ( columnName == "MetricName"
+      or columnName == "MetricRoles"
+      or columnName == "MetricUnit" ):
+      return True
+      
+    return False
     
 
 

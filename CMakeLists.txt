@@ -12,10 +12,6 @@ include(${Slicer_USE_FILE})
 
 include(ExternalProject)
 
-
-#-----------------------------------------------------------------------------
-add_subdirectory(Widgets)
-
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
