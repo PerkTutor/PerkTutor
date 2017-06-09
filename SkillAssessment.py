@@ -847,7 +847,10 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       
       valueSum += currMetricValue * currWeight
       weightSum += currWeight
-      
+
+    if ( weightSum == 0.0 ):
+      return 0.0
+
     return valueSum / weightSum
 
 
@@ -905,13 +908,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
   def GetZScore( testMetric, trainingMetrics ):
     trainingMean = numpy.mean( trainingMetrics )
     trainingStd = numpy.std( trainingMetrics )
-    
-    zscore = 0
-    if ( trainingStd is not 0 ):
-      zscore = ( testMetric - trainingMean ) / trainingStd
-      
-    return zscore
-    
+
+    if ( trainingStd == 0.0 ):
+      return 0.0
+
+    return ( testMetric - trainingMean ) / trainingStd
+
     
   # Convenience method for checking if a column in a metrics table is a header columns
   @staticmethod
