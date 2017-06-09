@@ -54,6 +54,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     # Instantiate and connect widgets ...
     self.saLogic = SkillAssessmentLogic()
 
+    self.parameterNodeObserverTags = []
+
     #
     # Assessment Area
     #
@@ -81,17 +83,17 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     #
     # Weight selector
     #
-    self.weightSelector = slicer.qMRMLNodeComboBox()
-    self.weightSelector.nodeTypes = [ "vtkMRMLTableNode" ]
-    self.weightSelector.selectNodeUponCreation = True
-    self.weightSelector.noneEnabled = True
-    self.weightSelector.addEnabled = False
-    self.weightSelector.removeEnabled = False
-    self.weightSelector.showHidden = False
-    self.weightSelector.showChildNodeTypes = False
-    self.weightSelector.setMRMLScene( slicer.mrmlScene )
-    self.weightSelector.setToolTip( "Choose the weights for assessment." )
-    assessmentFormLayout.addRow( "Weights: ", self.weightSelector )
+    self.weightsSelector = slicer.qMRMLNodeComboBox()
+    self.weightsSelector.nodeTypes = [ "vtkMRMLTableNode" ]
+    self.weightsSelector.selectNodeUponCreation = True
+    self.weightsSelector.noneEnabled = True
+    self.weightsSelector.addEnabled = False
+    self.weightsSelector.removeEnabled = False
+    self.weightsSelector.showHidden = False
+    self.weightsSelector.showChildNodeTypes = False
+    self.weightsSelector.setMRMLScene( slicer.mrmlScene )
+    self.weightsSelector.setToolTip( "Choose the weights for assessment." )
+    assessmentFormLayout.addRow( "Weights: ", self.weightsSelector )
     
     #
     # Training set selector
@@ -211,7 +213,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     # connections
     self.parameterNodeSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onParameterNodeChanged )
     self.metricsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onMetricsChanged )
-    self.weightSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onWeightsChanged )
+    self.weightsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onWeightsChanged )
     self.trainingSetSelector.connect( 'checkedNodesChanged()', self.onTrainingSetChanged )
     
     self.assessmentMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAssessmentMethodChanged )
@@ -227,7 +229,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     pass
     
     
-  def updateAssessmentTable( self, node, eventid ):
+  def updateAssessmentTable( self, node ):
     if ( node is None ):
       return
     
@@ -427,7 +429,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
           weightsTable.SetValue( row, column, weight )
         
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
 
     
   def onParameterNodeChanged( self, parameterNode ):
@@ -441,11 +443,30 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       parameterNode.SetAttribute( "AggregationMethod", AGGREGATION_METHOD_MEAN )
       
     if ( parameterNode.GetAttribute( "OverallScore" ) is None ):
-      parameterNode.SetAttribute( "OverallScore", "0" )      
+      parameterNode.SetAttribute( "OverallScore", "0" )
+
+    self.updateWidgetFromParameterNode( parameterNode )
+
+    # Deal with observing the parameter node
+    for tag in self.parameterNodeObserverTags:
+      parameterNode.RemoveObserver( tag )
+    self.parameterNodeObserverTags = []
+
+    self.parameterNodeObserverTags.append( parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.onParameterNodeModified ) )
+    self.parameterNodeObserverTags.append( parameterNode.AddObserver( slicer.vtkMRMLNode.ReferencedNodeModifiedEvent, self.onParameterNodeModified ) )
   
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
-
+    self.updateAssessmentTable( parameterNode )
+    
+    
+  def onParameterNodeModified( self, parameterNode, eventid ):
+    if ( parameterNode is None ):
+      return
+    
+    self.updateWidgetFromParameterNode( parameterNode )
+    SkillAssessmentLogic.Assess( parameterNode )
+    self.updateAssessmentTable( parameterNode )
+    
 
   def onMetricsChanged( self, metricsNode ):
     parameterNode = self.parameterNodeSelector.currentNode()
@@ -454,7 +475,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     
     parameterNode.SetNodeReferenceID( "Metrics", metricsNode.GetID() )
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
     
     
   def onWeightsChanged( self, weightNode ):
@@ -464,7 +485,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     
     parameterNode.SetNodeReferenceID( "Weights", weightNode.GetID() )
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
     
     
   def onTrainingSetChanged( self ):
@@ -478,7 +499,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       parameterNode.AddNodeReferenceID( "Training", node.GetID() )
     
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
     
     
   def onAssessmentMethodChanged( self, text ):
@@ -488,7 +509,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       
     parameterNode.SetAttribute( "AssessmentMethod", text )
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
     
     
   def onAggregationMethodChanged( self, text ):
@@ -498,7 +519,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       
     parameterNode.SetAttribute( "AggregationMethod", text )
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
     
 
   def onAssessButtonClicked( self ):
@@ -507,10 +528,30 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
   
     SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode, None )
+    self.updateAssessmentTable( parameterNode )
     self.assessmentTable.show()
     
+    
+  def updateWidgetFromParameterNode( self, parameterNode ):
+    if ( parameterNode is None ):
+      return
+      
+    self.metricsSelector.setCurrentNode( parameterNode.GetNodeReference( "Metrics" ) )
+    self.weightsSelector.setCurrentNode( parameterNode.GetNodeReference( "Weights" ) )
+    
+    for nodeIndex in range( parameterNode.GetNumberOfNodeReferences( "Training" ) ):
+      trainingNode = parameterNode.GetNthNodeReference( "Training", nodeIndex )
+      self.trainingSetSelector.setCheckState( trainingNode, 2 )
+      
+    assessmentMethodIndex = self.assessmentMethodComboBox.findText( parameterNode.GetAttribute( "AssessmentMethod" ) )
+    if ( assessmentMethodIndex >= 0 ):
+      self.assessmentMethodComboBox.setCurrentIndex( assessmentMethodIndex )
+    
+    aggregationMethodIndex = self.aggregationMethodComboBox.findText( parameterNode.GetAttribute( "AggregationMethod" ) )
+    if ( aggregationMethodIndex >= 0 ):
+      self.aggregationMethodComboBox.setCurrentIndex( aggregationMethodIndex )
 
+    self.resultsLabel.setText( parameterNode.GetAttribute( "OverallScore" ) )
     
 
 #
