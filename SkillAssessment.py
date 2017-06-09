@@ -177,31 +177,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MAXIMUM )
     self.aggregationMethodComboBox.setToolTip( "Choose the aggregation method." )
     optionsFormLayout.addRow( "Aggregation Method: ", self.aggregationMethodComboBox )
-    
-    #
-    # Showing weight sliders
-    #
-    self.metricWeightSlidersCheckBox = qt.QCheckBox()
-    self.metricWeightSlidersCheckBox.setChecked( True )
-    self.metricWeightSlidersCheckBox.setText( "Show metric weights" )
-    self.metricWeightSlidersCheckBox.setToolTip( "Allow weights for individual metrics to be adjusted from the assessment table." )
-    optionsFormLayout.addWidget( self.metricWeightSlidersCheckBox )
-    
-    self.scoreWeightSlidersCheckBox = qt.QCheckBox()
-    self.scoreWeightSlidersCheckBox.setChecked( True )
-    self.scoreWeightSlidersCheckBox.setText( "Show score weights" )
-    self.scoreWeightSlidersCheckBox.setToolTip( "Allow weights for an entire row or column to be adjusted from the assessment table." )
-    optionsFormLayout.addWidget( self.scoreWeightSlidersCheckBox )
-    
-    #
-    # Whether to show the transformed metric values or the raw values
-    #
-    self.showTransformedMetricValuesCheckBox = qt.QCheckBox()
-    self.showTransformedMetricValuesCheckBox.setChecked( False )
-    self.showTransformedMetricValuesCheckBox.setText( "Show transformed metrics" )
-    self.showTransformedMetricValuesCheckBox.setToolTip( "Show the transformed metric values in the assessment table." )
-    optionsFormLayout.addWidget( self.showTransformedMetricValuesCheckBox )
-    
+
     #
     # The assessment table itself
     #
@@ -366,6 +342,9 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     overallScoreLabel = qt.QLabel( overallScore )
     overallScoreLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignCenter }" )
     self.assessmentTable.setCellWidget( self.assessmentTable.rowCount - 1, self.assessmentTable.columnCount - 1, overallScoreLabel )
+
+    # More options
+    self.addOptionsMenuToAssessmentTable()
     
     # Do some strechting to make the table look nice
     self.assessmentTable.horizontalHeader().setResizeMode( qt.QHeaderView.Stretch )
@@ -381,7 +360,68 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       self.assessmentTable.verticalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
       self.assessmentTable.verticalHeader().setResizeMode( self.assessmentTable.rowCount - 2, qt.QHeaderView.ResizeToContents )
       
-  
+
+  def addOptionsMenuToAssessmentTable( self ):
+    moreOptionsWidget = slicer.qSlicerWidget( self.assessmentTable )
+    moreOptionsLayout = qt.QVBoxLayout( moreOptionsWidget )
+    moreOptionsLayout.setAlignment( 0x0002 ) # TODO: This is right alignment, but the enum is not accessible in Python. Is there a better way to do this?
+
+    # Set up the more options button
+    moreOptionsButton = qt.QToolButton( moreOptionsWidget )
+    moreOptionsButton.setText( "..." )
+    moreOptionsButton.setPopupMode( qt.QToolButton.InstantPopup )
+    moreOptionsButton.setSizePolicy( qt.QSizePolicy.Fixed, qt.QSizePolicy.Preferred )
+    moreOptionsLayout.addWidget( moreOptionsButton )
+
+    # Create the menu
+    moreOptionsMenu = qt.QMenu( "More options", moreOptionsButton )
+    moreOptionsMenu.setObjectName( "MoreOptionsMenu" )
+
+    # Create all the actions
+    metricsWeightsVisibilityAction = qt.QAction( qt.QIcon( ":/Icons/Small/SlicerVisible.png" ), "Metrics Weights Visibility", moreOptionsMenu )
+    scoreWeightsVisibilityAction = qt.QAction( qt.QIcon( ":/Icons/Small/SlicerVisible.png" ), "Score Weights Visibility", moreOptionsMenu )
+
+    # Add the actions to the menu and menu to the button
+    moreOptionsMenu.addAction( metricsWeightsVisibilityAction )
+    metricsWeightsVisibilityAction.connect( 'triggered()', self.toggleMetricsWeightsVisibility )
+    moreOptionsMenu.addAction( scoreWeightsVisibilityAction )
+    scoreWeightsVisibilityAction.connect( 'triggered()', self.toggleScoreWeightsVisibility )
+
+    moreOptionsButton.setMenu( moreOptionsMenu )
+
+    self.assessmentTable.setCellWidget( 0, self.assessmentTable.columnCount - 1, moreOptionsWidget )
+
+
+  def toggleMetricsWeightsVisibility( self ):
+    # Iterate over all non-last rows/columns and toggle visibility on all of the slider widgets
+    for rowIndex in range( self.assessmentTable.rowCount - 1 ):
+      for columnIndex in range( self.assessmentTable.columnCount - 1 ):
+        try:
+          metricWeightWidget = self.assessmentTable.cellWidget( rowIndex, columnIndex )
+          descendentSliderWidget = metricWeightWidget.findChild( ctk.ctkSliderWidget )
+          descendentSliderWidget.setVisible( not descendentSliderWidget.isVisible() )
+        except:
+          continue
+
+
+  def toggleScoreWeightsVisibility( self ):
+    # Iterate over last column and last row and toogle visibility of all those sliders
+    for rowIndex in range( self.assessmentTable.rowCount ):
+      try:
+        metricWeightWidget = self.assessmentTable.cellWidget( rowIndex, self.assessmentTable.columnCount - 1 )
+        descendentSliderWidget = metricWeightWidget.findChild( ctk.ctkSliderWidget )
+        descendentSliderWidget.setVisible( not descendentSliderWidget.isVisible() )
+      except:
+        continue
+
+    for columnIndex in range( self.assessmentTable.columnCount ):
+      try:
+        metricWeightWidget = self.assessmentTable.cellWidget( self.assessmentTable.rowCount - 1, columnIndex )
+        descendentSliderWidget = metricWeightWidget.findChild( ctk.ctkSliderWidget )
+        descendentSliderWidget.setVisible( not descendentSliderWidget.isVisible() )
+      except:
+        continue
+
   
   def createMetricWeightWidget( self, parent, metric, weight, rowIndex = None, columnIndex = None ):
     # Establish the container widget and layout
