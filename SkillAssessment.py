@@ -72,6 +72,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.metricsSelector = slicer.qMRMLNodeComboBox()
     self.metricsSelector.nodeTypes = [ "vtkMRMLTableNode" ]
     self.metricsSelector.selectNodeUponCreation = True
+    self.metricsSelector.noneEnabled = True
     self.metricsSelector.addEnabled = False
     self.metricsSelector.removeEnabled = False
     self.metricsSelector.showHidden = False
@@ -150,6 +151,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.parameterNodeSelector.removeEnabled = True
     self.parameterNodeSelector.showHidden = True
     self.parameterNodeSelector.showChildNodeTypes = False
+    self.parameterNodeSelector.addAttribute( "vtkMRMLScriptedModuleNode", "SkillAssessment" )
     self.parameterNodeSelector.baseName = "SkillAssessment"
     self.parameterNodeSelector.setMRMLScene( slicer.mrmlScene )
     self.parameterNodeSelector.setToolTip( "Select the module parameters node." )
@@ -220,6 +222,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.aggregationMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAggregationMethodChanged )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
+
+    # Create a default parameter node
+    if ( self.parameterNodeSelector.currentNode() is None ):
+      self.parameterNodeSelector.addNode( "vtkMRMLScriptedModuleNode" )
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -437,6 +443,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
       
     # Set the default values
+    parameterNode.SetAttribute( "SkillAssessment", "True" )
+
     if ( parameterNode.GetAttribute( "AssessmentMethod" ) is None ):
       parameterNode.SetAttribute( "AssessmentMethod", ASSESSMENT_METHOD_ZSCORE )
     if ( parameterNode.GetAttribute( "AggregationMethod" ) is None ):
