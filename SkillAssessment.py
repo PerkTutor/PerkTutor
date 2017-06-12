@@ -5,6 +5,7 @@ import numpy
 from slicer.ScriptedLoadableModule import *
 import logging
 from functools import partial
+import operator
 
 #
 # SkillAssessment
@@ -114,7 +115,6 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       self.trainingSetSelector.setCheckState( node, 2 ) # By default, check all of the training data so that we don't have to change the parameters unless we want to exclude training data.
       # TODO: Use qt.Checked instead of 2
 
-
     #
     # Assess Button
     #
@@ -129,6 +129,36 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.resultsLabel.toolTip = "The overall proficiency score."
     assessmentFormLayout.addRow( "Result: ", self.resultsLabel )
 
+
+    #
+    # Feedback Area
+    #
+    feedbackCollapsibleButton = ctk.ctkCollapsibleButton()
+    feedbackCollapsibleButton.text = "Feedback"
+    feedbackCollapsibleButton.collapsed = False
+    self.layout.addWidget(feedbackCollapsibleButton)
+
+    # Layout within the dummy collapsible button
+    feedbackFormLayout = qt.QVBoxLayout( feedbackCollapsibleButton )
+
+    # Strengths label
+    self.strengthsLabel = qt.QLabel( "Strengths" )
+    feedbackFormLayout.addWidget( self.strengthsLabel )
+
+    # Strengths text box
+    self.strengthsTextBox = qt.QTextBrowser()
+    self.strengthsTextBox.toolTip = "A list of the top strengths during the performance."
+    feedbackFormLayout.addWidget( self.strengthsTextBox )
+
+    # Weaknesses label
+    self.weaknessesLabel = qt.QLabel( "Weaknesses" )
+    feedbackFormLayout.addWidget( self.weaknessesLabel )
+
+    # Strengths text box
+    self.weaknessesTextBox = qt.QTextBrowser()
+    self.weaknessesTextBox.toolTip = "A list of the top weaknesses during the performance."
+    feedbackFormLayout.addWidget( self.weaknessesTextBox )
+
     
     #
     # Options Area
@@ -136,10 +166,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     optionsCollapsibleButton = ctk.ctkCollapsibleButton()
     optionsCollapsibleButton.text = "Options"
     optionsCollapsibleButton.collapsed = True
-    self.layout.addWidget(optionsCollapsibleButton)
+    self.layout.addWidget( optionsCollapsibleButton )
 
     # Layout within the dummy collapsible button
-    optionsFormLayout = qt.QFormLayout(optionsCollapsibleButton)
+    optionsFormLayout = qt.QFormLayout( optionsCollapsibleButton )
     
     
     #
@@ -600,6 +630,9 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       self.aggregationMethodComboBox.setCurrentIndex( aggregationMethodIndex )
 
     self.resultsLabel.setText( parameterNode.GetAttribute( "OverallScore" ) )
+
+    self.strengthsTextBox.setText( parameterNode.GetAttribute( "Strengths" ) )
+    self.weaknessesTextBox.setText( parameterNode.GetAttribute( "Weaknesses" ) )
     
 
 #
@@ -746,7 +779,68 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
 
     overallScore = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
     parameterNode.SetAttribute( "OverallScore", str( overallScore ) )
-      
+
+    strengthsString = SkillAssessmentLogic.GetFeedbackString( transformedMetricsTable, assessmentMethod, operator.lt, "good", 3 )
+    parameterNode.SetAttribute( "Strengths", strengthsString )
+    weaknessesString = SkillAssessmentLogic.GetFeedbackString( transformedMetricsTable, assessmentMethod, operator.gt, "too high", 3 )
+    parameterNode.SetAttribute( "Weaknesses", weaknessesString )
+
+
+  @staticmethod
+  def GetFeedbackString( transformedMetricsTable, assessmentMethod, operator, noteString, maxNumberOfFeedbacks = 3 ):
+    criticalValue = 0 # This is the cutoff between a good metric and a bad metric
+    if ( assessmentMethod == ASSESSMENT_METHOD_RAW ):
+      criticalValue = 0
+    if ( assessmentMethod == ASSESSMENT_METHOD_PERCENTILE ):
+      criticalValue = 0.5
+    if ( assessmentMethod == ASSESSMENT_METHOD_ZSCORE ):
+      criticalValue = 0
+
+    # Get a list of row/column indices sorted by the metric value
+    feedbackElements = []
+    for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
+      for columnIndex in range( transformedMetricsTable.GetNumberOfColumns() ):
+        if ( SkillAssessmentLogic.IsHeaderColumn( transformedMetricsTable, columnIndex ) ):
+          continue
+
+        currMetricValue = transformedMetricsTable.GetValue( rowIndex, columnIndex ).ToDouble()
+        if ( operator( criticalValue, currMetricValue ) ):
+          continue # The metric did not satisfy the cutoff
+
+        newElementInserted = False
+        for feedbackIndex in range( len( feedbackElements ) ):
+          feedbackValue = transformedMetricsTable.GetValue( feedbackElements[ feedbackIndex ][ 0 ], feedbackElements[ feedbackIndex ][ 1 ] ).ToDouble()
+          if ( operator( currMetricValue, feedbackValue ) ):
+            feedbackElements.insert( feedbackIndex, [ rowIndex, columnIndex ] )
+            newElementInserted = True
+            break
+        if ( not newElementInserted ):
+          feedbackElements.append( [ rowIndex, columnIndex ] )
+
+    print feedbackElements
+    # Reconstruct the list of row/column indices into feedback strings
+    feedbackString = ""
+    for feedbackIndex in range( min( maxNumberOfFeedbacks, len( feedbackElements ) ) ):
+      feedbackString = feedbackString + transformedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricName" ).ToString()
+
+      feedbackString = feedbackString + " ["
+      feedbackString = feedbackString + transformedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricRoles" ).ToString()
+      feedbackString = feedbackString + "] "
+
+      feedbackString = feedbackString + "("
+      feedbackString = feedbackString + transformedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricUnit" ).ToString()
+      feedbackString = feedbackString + ")"
+
+      feedbackString = feedbackString + " during "
+      feedbackString = feedbackString + transformedMetricsTable.GetColumnName( feedbackElements[ feedbackIndex ][ 1 ] )
+      feedbackString = feedbackString + " is "
+      feedbackString = feedbackString + noteString
+      feedbackString = feedbackString + "."
+      feedbackString = feedbackString + "\n"
+
+    return feedbackString
+
+
     
   @staticmethod
   def CreateTaskScoresTableFromMetrics( metricsNode, value ):
