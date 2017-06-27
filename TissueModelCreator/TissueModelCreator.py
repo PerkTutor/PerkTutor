@@ -41,30 +41,31 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     ScriptedLoadableModuleWidget.setup( self )
     
     self.tmcLogic = TissueModelCreatorLogic()
+    self.markupsNode = None
     
     #
     # Display Area
     #
-    displayCollapsibleButton = ctk.ctkCollapsibleButton()
-    displayCollapsibleButton.text = "Display"
-    self.layout.addWidget(displayCollapsibleButton)
+    self.displayCollapsibleButton = ctk.ctkCollapsibleButton()
+    self.displayCollapsibleButton.text = "Display"
+    self.layout.addWidget( self.displayCollapsibleButton )
 
     # Layout within the dummy collapsible button
-    displayFormLayout = qt.QFormLayout(displayCollapsibleButton)
+    self.displayFormLayout = qt.QFormLayout( self.displayCollapsibleButton )
 
     #
     # input fiducials selector
     #
-    self.markupSelector = slicer.qMRMLNodeComboBox()
-    self.markupSelector.nodeTypes = [ "vtkMRMLMarkupsFiducialNode" ]
-    self.markupSelector.addEnabled = False
-    self.markupSelector.removeEnabled = False
-    self.markupSelector.noneEnabled = False
-    self.markupSelector.showHidden = False
-    self.markupSelector.showChildNodeTypes = False
-    self.markupSelector.setMRMLScene( slicer.mrmlScene )
-    self.markupSelector.setToolTip( "Select the markup node for the algorithm." )
-    displayFormLayout.addRow( "Input Markup ", self.markupSelector )
+    self.markupsSelector = slicer.qMRMLNodeComboBox()
+    self.markupsSelector.nodeTypes = [ "vtkMRMLMarkupsFiducialNode" ]
+    self.markupsSelector.addEnabled = False
+    self.markupsSelector.removeEnabled = False
+    self.markupsSelector.noneEnabled = True
+    self.markupsSelector.showHidden = False
+    self.markupsSelector.showChildNodeTypes = False
+    self.markupsSelector.setMRMLScene( slicer.mrmlScene )
+    self.markupsSelector.setToolTip( "Select the markup node for the algorithm." )
+    self.displayFormLayout.addRow( "Input Markup ", self.markupsSelector )
     
     #
     # Output model selector
@@ -79,7 +80,7 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.modelSelector.showChildNodeTypes = False
     self.modelSelector.setMRMLScene( slicer.mrmlScene )
     self.modelSelector.setToolTip( "Select the output model for the algorithm." )
-    displayFormLayout.addRow( "Output Model ", self.modelSelector )
+    self.displayFormLayout.addRow( "Output Model ", self.modelSelector )
     
     #
     # Depth slider
@@ -89,7 +90,7 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.depthSlider.minimum = 1
     self.depthSlider.value = 100
     self.depthSlider.setToolTip( "Select the depth of the tissue." )
-    displayFormLayout.addRow( "Depth (mm) ", self.depthSlider )
+    self.displayFormLayout.addRow( "Depth (mm) ", self.depthSlider )
 
     #
     # Flip (ie flip) checkbox
@@ -98,7 +99,7 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.flipCheckBox.setCheckState( False )
     self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
     self.flipCheckBox.setText( "Flip" )
-    displayFormLayout.addRow( self.flipCheckBox )
+    self.displayFormLayout.addRow( self.flipCheckBox )
     
     #
     # Fit the surface to a plane checkbox
@@ -107,15 +108,16 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.planeCheckBox.setCheckState( False )
     self.planeCheckBox.setToolTip( "Force the tissue surface to a plane." )
     self.planeCheckBox.setText( "Plane" )
-    displayFormLayout.addRow( self.planeCheckBox )
+    self.displayFormLayout.addRow( self.planeCheckBox )
 
     #
     # Update Button
     #
-    self.updateButton = qt.QPushButton( "Update" )
+    self.updateButton = ctk.ctkCheckablePushButton( self.displayCollapsibleButton )
+    self.updateButton.setText( "Update" )
     self.updateButton.toolTip = "Update the tissue model."
     self.updateButton.enabled = True
-    displayFormLayout.addRow( self.updateButton )
+    self.displayFormLayout.addRow( self.updateButton )
     
     #
     # Status Label
@@ -123,19 +125,62 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.statusLabel = qt.QLabel( "" )
     self.statusLabel.toolTip = "Status of whether the tissue model was successfully created."
     self.statusLabel.enabled = True
-    displayFormLayout.addRow( self.statusLabel )
+    self.displayFormLayout.addRow( self.statusLabel )
 
     # connections
-    self.updateButton.connect( 'clicked(bool)', self.onUpdateButtonClicked )
+    self.updateButton.connect( 'clicked(bool)', self.updateTissueModel )
+    self.updateButton.connect( 'checkBoxToggled(bool)', self.onUpdateButtonToggled )
     
-
+    self.markupsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onMarkupsNodeChanged )
+    
+    self.modelSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onInputUpdated )
+    self.depthSlider.connect( 'valueChanged(double)', self.onInputUpdated )
+    self.flipCheckBox.connect( 'toggled(bool)', self.onInputUpdated )
+    self.planeCheckBox.connect( 'toggled(bool)', self.onInputUpdated )
+    
+    
   def cleanup( self ):
     pass
     
     
-  def onUpdateButtonClicked(self):
-    statusText = self.tmcLogic.UpdateTissueModel( self.markupSelector.currentNode(), self.modelSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked, self.planeCheckBox.checked )
-
+  def onMarkupsNodeChanged( self, selectedMarkupsNode ):
+    # Remove the old observer (if it exists)
+    if ( self.markupsNode is not None ):
+      self.markupsNode.RemoveObserver( self.markupsNodeObserverTag )
+    
+    # Observe the new nodes
+    self.markupsNode = selectedMarkupsNode
+    if ( self.markupsNode is not None ):
+      self.markupsNodeObserverTag = self.markupsNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.onMarkupsNodeModified )
+    
+    self.onInputUpdated()
+    
+    
+  def onMarkupsNodeModified( self, node, eventID ):
+    self.onInputUpdated()
+      
+      
+  def onInputUpdated( self ):
+    if ( self.updateButton.isChecked() == True ):
+      self.updateTissueModel()
+    
+    
+  def onUpdateButtonToggled( self, toggled ):
+    self.updateButton.setCheckable( toggled )
+    self.updateButton.setChecked( toggled )
+    
+    if toggled:
+      self.updateButton.setText( "Auto-Update" )
+    else:
+      self.updateButton.setText( "Update" )
+      
+    self.onInputUpdated()
+    
+    
+  def updateTissueModel( self ):
+    self.updateButton.setChecked( True ) # Always make it checked if auto-update is on, otherwise this will do nothing
+    
+    statusText = self.tmcLogic.UpdateTissueModel( self.markupsNode, self.modelSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked, self.planeCheckBox.checked )
     self.statusLabel.setText( statusText )
 
 	
