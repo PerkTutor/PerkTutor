@@ -54,8 +54,13 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.displayFormLayout = qt.QFormLayout( self.displayCollapsibleButton )
 
     #
-    # input fiducials selector
+    # Markups layout
     #
+    self.markupsLayout = qt.QHBoxLayout()
+    self.displayFormLayout.addRow( "Input markups ", self.markupsLayout )    
+
+    
+    # input markups selector
     self.markupsSelector = slicer.qMRMLNodeComboBox()
     self.markupsSelector.nodeTypes = [ "vtkMRMLMarkupsFiducialNode" ]
     self.markupsSelector.addEnabled = False
@@ -65,7 +70,13 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.markupsSelector.showChildNodeTypes = False
     self.markupsSelector.setMRMLScene( slicer.mrmlScene )
     self.markupsSelector.setToolTip( "Select the markup node for the algorithm." )
-    self.displayFormLayout.addRow( "Input Markup ", self.markupsSelector )
+    self.markupsLayout.addWidget( self.markupsSelector )
+    
+    # Markups place widget
+    self.markupsPlaceWidget = slicer.qSlicerMarkupsPlaceWidget()
+    self.markupsPlaceWidget.setMRMLScene( slicer.mrmlScene )
+    self.markupsLayout.addWidget( self.markupsPlaceWidget )
+    
     
     #
     # Output model selector
@@ -80,11 +91,14 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.modelSelector.showChildNodeTypes = False
     self.modelSelector.setMRMLScene( slicer.mrmlScene )
     self.modelSelector.setToolTip( "Select the output model for the algorithm." )
-    self.displayFormLayout.addRow( "Output Model ", self.modelSelector )
+    self.displayFormLayout.addRow( "Output model ", self.modelSelector )
+    
     
     #
-    # Depth slider
+    # Parameters
     #
+    
+    # Depth slider
     self.depthSlider = ctk.ctkSliderWidget()
     self.depthSlider.maximum = 1000
     self.depthSlider.minimum = 1
@@ -92,24 +106,21 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.depthSlider.setToolTip( "Select the depth of the tissue." )
     self.displayFormLayout.addRow( "Depth (mm) ", self.depthSlider )
 
-    #
-    # Flip (ie flip) checkbox
-    #
+    # Flip checkbox
     self.flipCheckBox = qt.QCheckBox()
     self.flipCheckBox.setCheckState( False )
     self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
     self.flipCheckBox.setText( "Flip" )
     self.displayFormLayout.addRow( self.flipCheckBox )
     
-    #
     # Fit the surface to a plane checkbox
-    #
     self.planeCheckBox = qt.QCheckBox()
     self.planeCheckBox.setCheckState( False )
     self.planeCheckBox.setToolTip( "Force the tissue surface to a plane." )
     self.planeCheckBox.setText( "Plane" )
     self.displayFormLayout.addRow( self.planeCheckBox )
 
+    
     #
     # Update Button
     #
@@ -119,6 +130,7 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.updateButton.enabled = True
     self.displayFormLayout.addRow( self.updateButton )
     
+    
     #
     # Status Label
     #
@@ -127,7 +139,10 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.statusLabel.enabled = True
     self.displayFormLayout.addRow( self.statusLabel )
 
+    
+    #
     # connections
+    #
     self.updateButton.connect( 'clicked(bool)', self.updateTissueModel )
     self.updateButton.connect( 'checkBoxToggled(bool)', self.onUpdateButtonToggled )
     
@@ -152,6 +167,8 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.markupsNode = selectedMarkupsNode
     if ( self.markupsNode is not None ):
       self.markupsNodeObserverTag = self.markupsNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.onMarkupsNodeModified )
+      
+    self.markupsPlaceWidget.setCurrentNode( self.markupsNode )
     
     self.onInputUpdated()
     
@@ -205,6 +222,9 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
   def UpdateTissueModel( self, markupsNode, modelNode, depth, flip, plane ):
     if ( markupsNode is None or modelNode is None ):
       return "Markups node or model node not properly specified."
+      
+    if ( markupsNode.GetNumberOfFiducials() < 3 ):
+      return "Markups node has an insufficient number of points."
       
     surfacePoints = vtk.vtkPoints()
     self.GetPointsFromMarkups( markupsNode, surfacePoints )
