@@ -50,15 +50,13 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.displayCollapsibleButton.text = "Display"
     self.layout.addWidget( self.displayCollapsibleButton )
 
-    # Layout within the dummy collapsible button
+    # Layout within the display collapsible button
     self.displayFormLayout = qt.QFormLayout( self.displayCollapsibleButton )
 
     #
     # Markups layout
     #
     self.markupsLayout = qt.QHBoxLayout()
-    self.displayFormLayout.addRow( "Input markups ", self.markupsLayout )    
-
     
     # input markups selector
     self.markupsSelector = slicer.qMRMLNodeComboBox()
@@ -77,7 +75,9 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.markupsPlaceWidget.setMRMLScene( slicer.mrmlScene )
     self.markupsLayout.addWidget( self.markupsPlaceWidget )
     
-    
+    self.displayFormLayout.addRow( "Input markups ", self.markupsLayout ) 
+
+
     #
     # Output model selector
     #
@@ -92,34 +92,6 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.modelSelector.setMRMLScene( slicer.mrmlScene )
     self.modelSelector.setToolTip( "Select the output model for the algorithm." )
     self.displayFormLayout.addRow( "Output model ", self.modelSelector )
-    
-    
-    #
-    # Parameters
-    #
-    
-    # Depth slider
-    self.depthSlider = ctk.ctkSliderWidget()
-    self.depthSlider.maximum = 1000
-    self.depthSlider.minimum = 1
-    self.depthSlider.value = 100
-    self.depthSlider.setToolTip( "Select the depth of the tissue." )
-    self.displayFormLayout.addRow( "Depth (mm) ", self.depthSlider )
-
-    # Flip checkbox
-    self.flipCheckBox = qt.QCheckBox()
-    self.flipCheckBox.setCheckState( False )
-    self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
-    self.flipCheckBox.setText( "Flip" )
-    self.displayFormLayout.addRow( self.flipCheckBox )
-    
-    # Fit the surface to a plane checkbox
-    self.planeCheckBox = qt.QCheckBox()
-    self.planeCheckBox.setCheckState( False )
-    self.planeCheckBox.setToolTip( "Force the tissue surface to a plane." )
-    self.planeCheckBox.setText( "Plane" )
-    self.displayFormLayout.addRow( self.planeCheckBox )
-
     
     #
     # Update Button
@@ -141,6 +113,72 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
 
     
     #
+    # Advanced Area
+    #
+    self.advancedCollapsibleButton = ctk.ctkCollapsibleButton()
+    self.advancedCollapsibleButton.text = "Advanced"
+    self.advancedCollapsibleButton.collapsed = True
+    self.layout.addWidget( self.advancedCollapsibleButton )
+    
+    # Layout within the advanced collapsible button
+    self.advancedFormLayout = qt.QFormLayout( self.advancedCollapsibleButton )
+    
+    #
+    # Sequence conversion layout
+    #
+    self.sequenceLayout = qt.QHBoxLayout()
+    
+    # Input sequences selector
+    self.sequenceSelector = slicer.qMRMLNodeComboBox()
+    self.sequenceSelector.nodeTypes = [ "vtkMRMLSequenceNode" ]
+    self.sequenceSelector.addEnabled = False
+    self.sequenceSelector.removeEnabled = False
+    self.sequenceSelector.noneEnabled = True
+    self.sequenceSelector.showHidden = False
+    self.sequenceSelector.showChildNodeTypes = False
+    self.sequenceSelector.setMRMLScene( slicer.mrmlScene )
+    self.sequenceSelector.setToolTip( "Select a sequence for conversion to markup." )
+    self.sequenceLayout.addWidget( self.sequenceSelector )
+    
+    # Convert button
+    self.convertSequenceButton = qt.QPushButton()
+    self.convertSequenceButton.setIcon( slicer.app.style().standardIcon( qt.QStyle.SP_ArrowUp ) )
+    self.sequenceLayout.addWidget( self.convertSequenceButton )
+    
+    self.advancedFormLayout.addRow( "Convert sequence ", self.sequenceLayout ) 
+    
+    
+    #
+    # Parameters
+    #
+    
+    # Depth slider
+    self.depthSlider = ctk.ctkSliderWidget()
+    self.depthSlider.maximum = 1000
+    self.depthSlider.minimum = 1
+    self.depthSlider.value = 100
+    self.depthSlider.setToolTip( "Select the depth of the tissue." )
+    self.advancedFormLayout.addRow( "Depth (mm) ", self.depthSlider )
+
+    # Flip checkbox
+    self.flipCheckBox = qt.QCheckBox()
+    self.flipCheckBox.setCheckState( False )
+    self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
+    self.flipCheckBox.setText( "Flip" )
+    self.advancedFormLayout.addRow( self.flipCheckBox )
+    
+    # Fit the surface to a plane checkbox
+    self.planeCheckBox = qt.QCheckBox()
+    self.planeCheckBox.setCheckState( False )
+    self.planeCheckBox.setToolTip( "Force the tissue surface to a plane." )
+    self.planeCheckBox.setText( "Plane" )
+    self.advancedFormLayout.addRow( self.planeCheckBox )
+    
+    
+    self.layout.addStretch( 1 )
+
+    
+    #
     # connections
     #
     self.updateButton.connect( 'clicked(bool)', self.updateTissueModel )
@@ -149,6 +187,9 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.markupsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onMarkupsNodeChanged )
     
     self.modelSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onInputUpdated )
+    
+    self.convertSequenceButton.connect( 'clicked(bool)', self.createMarkupsFromSequence )
+    
     self.depthSlider.connect( 'valueChanged(double)', self.onInputUpdated )
     self.flipCheckBox.connect( 'toggled(bool)', self.onInputUpdated )
     self.planeCheckBox.connect( 'toggled(bool)', self.onInputUpdated )
@@ -156,6 +197,13 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     
   def cleanup( self ):
     pass
+    
+    
+  def createMarkupsFromSequence( self, clicked ):
+    selectedSequenceNode = self.sequenceSelector.currentNode()
+    if ( selectedSequenceNode is not None ):
+      markupsNode = self.tmcLogic.CreateMarkupsFromSequence( selectedSequenceNode )
+      self.markupsSelector.setCurrentNode( markupsNode )
     
     
   def onMarkupsNodeChanged( self, selectedMarkupsNode ):
@@ -530,6 +578,26 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
       currPoint = [ 0, 0, 0 ]
       markupsNode.GetNthFiducialPosition( i, currPoint )
       points.InsertNextPoint( currPoint )
+      
+      
+  def CreateMarkupsFromSequence( self, sequenceNode ):
+    markupsNode = slicer.vtkMRMLMarkupsFiducialNode()
+    markupsNode.SetName( sequenceNode.GetName() + "_Markups" )
+    markupsNode.SetScene( slicer.mrmlScene )
+    slicer.mrmlScene.AddNode( markupsNode )
+    markupsNode.CreateDefaultDisplayNodes()
+    
+    for i in range( sequenceNode.GetNumberOfDataNodes() ):
+      transformNode = sequenceNode.GetNthDataNode( i )
+      try:
+        matrix = vtk.vtkMatrix4x4()
+        transformNode.GetMatrixTransformToParent( matrix )
+        currPoint = [ matrix.GetElement( 0, 3 ), matrix.GetElement( 1, 3 ), matrix.GetElement( 2, 3 ) ]
+        markupsNode.AddFiducialFromArray( currPoint )
+      except:
+        logging.warning( "TissueModelCreatorLogic::CreateMarkupsFromSequence: Could not create point from sequence." )
+        
+    return markupsNode
  
       
 class TissueModelCreatorTest(ScriptedLoadableModuleTest):
