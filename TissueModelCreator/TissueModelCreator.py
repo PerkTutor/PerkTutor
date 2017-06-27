@@ -19,7 +19,7 @@ class TissueModelCreator( ScriptedLoadableModule ):
     ScriptedLoadableModule.__init__( self, parent )
     self.parent.title = "Tissue Model Creator"
     self.parent.categories = [ "Perk Tutor" ]
-    self.parent.dependencies = [ "MarkupsToModel" ]
+    self.parent.dependencies = []
     self.parent.contributors = [ "Matthew S. Holden (PerkLab; Queen's University)" ]
     self.parent.helpText = """
     The purpose of the Tissue Model Creator module is to create a model based on a set of collected fiducial points. For help on how to use this module visit: <a href='http://www.perktutor.org/'>Perk Tutor</a>.
@@ -99,6 +99,15 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.flipCheckBox.setToolTip( "Flip the tissue so it is in the other direction." )
     self.flipCheckBox.setText( "Flip" )
     displayFormLayout.addRow( self.flipCheckBox )
+    
+    #
+    # Fit the surface to a plane checkbox
+    #
+    self.planeCheckBox = qt.QCheckBox()
+    self.planeCheckBox.setCheckState( False )
+    self.planeCheckBox.setToolTip( "Force the tissue surface to a plane." )
+    self.planeCheckBox.setText( "Plane" )
+    displayFormLayout.addRow( self.planeCheckBox )
 
     #
     # Update Button
@@ -116,16 +125,16 @@ class TissueModelCreatorWidget( ScriptedLoadableModuleWidget ):
     self.statusLabel.enabled = True
     displayFormLayout.addRow( self.statusLabel )
 
-    
     # connections
     self.updateButton.connect( 'clicked(bool)', self.onUpdateButtonClicked )
+    
 
   def cleanup( self ):
     pass
     
     
   def onUpdateButtonClicked(self):
-    statusText = self.tmcLogic.UpdateTissueModel( self.markupSelector.currentNode(), self.modelSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked )
+    statusText = self.tmcLogic.UpdateTissueModel( self.markupSelector.currentNode(), self.modelSelector.currentNode(), self.depthSlider.value, self.flipCheckBox.checked, self.planeCheckBox.checked )
 
     self.statusLabel.setText( statusText )
 
@@ -148,16 +157,22 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     pass
     
     
-  def UpdateTissueModel( self, markupsNode, modelNode, depth, flip ):
+  def UpdateTissueModel( self, markupsNode, modelNode, depth, flip, plane ):
     if ( markupsNode is None or modelNode is None ):
       return "Markups node or model node not properly specified."
       
+    surfacePoints = vtk.vtkPoints()
+    self.GetPointsFromMarkups( markupsNode, surfacePoints )
+      
     # Use the 2D delaunay filter to get a model of the surface
-    surfacePolyData = self.ComputeSurfacePolyData( markupsNode )
+    if plane:
+      surfacePolyData = self.ComputePlanarSurfacePolyData( surfacePoints )
+    else:
+      surfacePolyData = self.ComputeSurfacePolyData( surfacePoints )
   
     # Compute the axes from the PCA
     normalAxis = [ 0, 0, 0 ]
-    self.ComputeTissueNormal( markupsNode, normalAxis )
+    self.ComputeTissueNormal( surfacePoints, normalAxis )
     
     # Compute the deep poly data from the surface poly 
     deepPolyData = self.ComputeDeepPolyData( surfacePolyData, normalAxis, depth, flip )
@@ -182,13 +197,78 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     return "Success!"
     
     
-  def ComputeSurfacePolyData( self, markupsNode ):
-    surfacePoints = vtk.vtkPoints()
-    for i in range( markupsNode.GetNumberOfFiducials() ):
-      point = [ 0, 0, 0 ]
-      markupsNode.GetNthFiducialPosition( i, point )
-      surfacePoints.InsertNextPoint( point )
+  def ComputePlanarSurfacePolyData( self, surfacePoints ):  
+    surfacePolyData = vtk.vtkPolyData()
+    surfacePolyData.SetPoints( surfacePoints ) 
   
+    comFilter = vtk.vtkCenterOfMass()
+    comFilter.SetInputData( surfacePolyData )
+    comFilter.SetUseScalarsAsWeights( False )
+    comFilter.Update()
+    com = comFilter.GetCenter()
+    
+    # Project all the points onto the plane
+    normal = [ 0, 0, 0 ]
+    self.ComputeTissueNormal( surfacePoints, normal )    
+    
+    planePoints = vtk.vtkPoints()
+    for i in range( surfacePoints.GetNumberOfPoints() ):
+      currPoint = [ 0, 0, 0 ]
+      surfacePoints.GetPoint( i, currPoint )
+      relativePoint = [ 0, 0, 0 ]
+      vtk.vtkMath.Subtract( currPoint, com, relativePoint )
+      normalLength = vtk.vtkMath.Dot( relativePoint, normal )
+      normalComponent = normal[:]
+      vtk.vtkMath.MultiplyScalar( normalComponent, normalLength )
+      relativePlanePoint = [ 0, 0, 0 ]
+      vtk.vtkMath.Subtract( relativePoint, normalComponent, relativePlanePoint )
+      planePoint = [ 0, 0, 0 ]
+      vtk.vtkMath.Add( com, relativePlanePoint, planePoint )
+      planePoints.InsertNextPoint( planePoint )
+      
+    return self.ComputeSurfacePolyData( planePoints )
+    
+    """
+    # Use the oriented bounding box
+    corner = [ 0, 0, 0 ]
+    maxVector = [ 0, 0, 0 ]
+    midVector = [ 0, 0, 0 ]
+    minVector = [ 0, 0, 0 ]
+    size = [ 0, 0, 0 ]    
+    obbFilter = vtk.vtkOBBTree()
+    obbFilter.ComputeOBB( surfacePoints, corner, maxVector, midVector, minVector, size )
+    
+    normal = minVector[:]
+    vtk.vtkMath().Normalize( normal )
+        
+    # Get the points defining the plane
+    relativeCOM = [ 0, 0, 0 ]
+    # Find the projection of the mean point in the minVector direction
+    vtk.vtkMath().Subtract( com, corner, relativeCOM )
+    minProjectionLength = vtk.vtkMath().Dot( relativeCOM, normal )
+    minProjection = normal[:]
+    vtk.vtkMath().MultiplyScalar( minProjection, minProjectionLength )
+    
+    # Find the points on the plane
+    origin = [ 0, 0, 0 ]
+    point1 = [ 0, 0, 0 ]
+    point2 = [ 0, 0, 0 ]
+    vtk.vtkMath().Add( corner, minProjection, origin )
+    vtk.vtkMath().Add( origin, maxVector, point1 )
+    vtk.vtkMath().Add( origin, midVector, point2 )
+    
+    # Construct the plane
+    plane = vtk.vtkPlaneSource()
+    plane.SetOrigin( origin )
+    plane.SetPoint1( point1 )
+    plane.SetPoint2( point2 )
+    plane.Update()
+    
+    return plane.GetOutput()
+    """
+
+    
+  def ComputeSurfacePolyData( self, surfacePoints ):   
     surfacePolyData = vtk.vtkPolyData()
     surfacePolyData.SetPoints( surfacePoints )  
   
@@ -204,7 +284,7 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     return surfaceCleaner.GetOutput()
     
 
-  def ComputeTissueNormal( self, markupsNode, normalAxis ):
+  def ComputeTissueNormal( self, surfacePoints, normalAxis ):
     # Create arrays for the dataset
     arrayX = vtk.vtkDoubleArray()
     arrayX.SetNumberOfComponents( 1 )
@@ -217,12 +297,12 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     arrayZ.SetName ( 'Z' )
     
     # Add the points to the double arrays
-    for i in range( markupsNode.GetNumberOfFiducials() ):   
-      currPosition = [ 0, 0, 0 ]
-      markupsNode.GetNthFiducialPosition( i, currPosition )      
-      arrayX.InsertNextValue( currPosition[ 0 ] )
-      arrayY.InsertNextValue( currPosition[ 1 ] ) 
-      arrayZ.InsertNextValue( currPosition[ 2 ] )
+    for i in range( surfacePoints.GetNumberOfPoints() ):   
+      currPoint = [ 0, 0, 0 ]
+      surfacePoints.GetPoint( i, currPoint )      
+      arrayX.InsertNextValue( currPoint[ 0 ] )
+      arrayY.InsertNextValue( currPoint[ 1 ] ) 
+      arrayZ.InsertNextValue( currPoint[ 2 ] )
     
     # Create a table for the dataset
     table = vtk.vtkTable()
@@ -378,6 +458,13 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     edgesFilter.Update()
     
     return ( edgesFilter.GetOutput().GetNumberOfCells() == 0 )
+    
+    
+  def GetPointsFromMarkups( self, markupsNode, points ):
+    for i in range( markupsNode.GetNumberOfFiducials() ):
+      currPoint = [ 0, 0, 0 ]
+      markupsNode.GetNthFiducialPosition( i, currPoint )
+      points.InsertNextPoint( currPoint )
  
       
 class TissueModelCreatorTest(ScriptedLoadableModuleTest):
