@@ -294,6 +294,9 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     surfaceBoundaryPoints = self.GetBoundaryPoints( surfacePolyData )
     deepBoundaryPoints = self.GetBoundaryPoints( deepPolyData )
     
+    if ( surfaceBoundaryPoints is None or deepBoundaryPoints is None ):
+      return "Point geometry is degenerate." 
+    
     sidePolyData = self.JoinBoundaryPoints( surfaceBoundaryPoints, deepBoundaryPoints )
     
     # Put it all together
@@ -340,45 +343,6 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
       planePoints.InsertNextPoint( planePoint )
       
     return self.ComputeSurfacePolyData( planePoints )
-    
-    """
-    # Use the oriented bounding box
-    corner = [ 0, 0, 0 ]
-    maxVector = [ 0, 0, 0 ]
-    midVector = [ 0, 0, 0 ]
-    minVector = [ 0, 0, 0 ]
-    size = [ 0, 0, 0 ]    
-    obbFilter = vtk.vtkOBBTree()
-    obbFilter.ComputeOBB( surfacePoints, corner, maxVector, midVector, minVector, size )
-    
-    normal = minVector[:]
-    vtk.vtkMath().Normalize( normal )
-        
-    # Get the points defining the plane
-    relativeCOM = [ 0, 0, 0 ]
-    # Find the projection of the mean point in the minVector direction
-    vtk.vtkMath().Subtract( com, corner, relativeCOM )
-    minProjectionLength = vtk.vtkMath().Dot( relativeCOM, normal )
-    minProjection = normal[:]
-    vtk.vtkMath().MultiplyScalar( minProjection, minProjectionLength )
-    
-    # Find the points on the plane
-    origin = [ 0, 0, 0 ]
-    point1 = [ 0, 0, 0 ]
-    point2 = [ 0, 0, 0 ]
-    vtk.vtkMath().Add( corner, minProjection, origin )
-    vtk.vtkMath().Add( origin, maxVector, point1 )
-    vtk.vtkMath().Add( origin, midVector, point2 )
-    
-    # Construct the plane
-    plane = vtk.vtkPlaneSource()
-    plane.SetOrigin( origin )
-    plane.SetPoint1( point1 )
-    plane.SetPoint2( point2 )
-    plane.Update()
-    
-    return plane.GetOutput()
-    """
 
     
   def ComputeSurfacePolyData( self, surfacePoints ):   
@@ -460,7 +424,7 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     return deepTransformFilter.GetOutput()
     
     
-  def GetBoundaryPoints( self, inputPolyData ):  
+  def GetBoundaryPoints( self, inputPolyData ):
     featureEdges = vtk.vtkFeatureEdges()
     featureEdges.FeatureEdgesOff()
     featureEdges.NonManifoldEdgesOff()
@@ -475,7 +439,7 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
     
     cleaner = vtk.vtkCleanPolyData()
     cleaner.SetInputData( stripper.GetOutput() )
-    cleaner.Update()
+    cleaner.Update()   
        
     return cleaner.GetOutput().GetPoints()
     
@@ -598,6 +562,7 @@ class TissueModelCreatorLogic( ScriptedLoadableModuleLogic ):
         logging.warning( "TissueModelCreatorLogic::CreateMarkupsFromSequence: Could not create point from sequence." )
         
     return markupsNode
+
  
       
 class TissueModelCreatorTest(ScriptedLoadableModuleTest):
