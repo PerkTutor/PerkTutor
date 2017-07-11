@@ -6,18 +6,15 @@ from slicer.ScriptedLoadableModule import *
 import logging
 from functools import partial
 import operator
+import AssessmentMethods
 
 #
 # SkillAssessment
 #
+ASSESSMENT_METHOD_LINEARCOMBINATION = "LinearCombination"
+ASSESSMENT_METHOD_NEARESTNEIGHBOR = "NearestNeighbor"
+ASSESSMENT_METHOD_FUZZY = "Fuzzy"
 
-ASSESSMENT_METHOD_ZSCORE = "Z-Score"
-ASSESSMENT_METHOD_PERCENTILE = "Percentile"
-ASSESSMENT_METHOD_RAW = "Raw"
-
-AGGREGATION_METHOD_MEAN = "Mean"
-AGGREGATION_METHOD_MEDIAN = "Median"
-AGGREGATION_METHOD_MAXIMUM = "Maximum"
 
 class SkillAssessment( ScriptedLoadableModule ):
   """Uses ScriptedLoadableModule base class, available at:
@@ -26,10 +23,10 @@ class SkillAssessment( ScriptedLoadableModule ):
 
   def __init__( self, parent ):
     ScriptedLoadableModule.__init__( self, parent )
-    self.parent.title = "Skill Assessment" # TODO make this more human readable by adding spaces
+    self.parent.title = "Skill Assessment"
     self.parent.categories = [ "Perk Tutor" ]
     self.parent.dependencies = []
-    self.parent.contributors = [ "Matthew S. Holden (Queen's University)" ] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = [ "Matthew S. Holden (Perk Lab; Queen's University)" ]
     self.parent.helpText = """
     This module computes the overall skill level of an operator performing an image-guided intervention. <br>
     Raw Method: Computes a weighted average of metrics. <br>
@@ -80,7 +77,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.metricsSelector.showChildNodeTypes = False
     self.metricsSelector.setMRMLScene( slicer.mrmlScene )
     self.metricsSelector.setToolTip( "Choose the metrics table to assess." )
-    assessmentFormLayout.addRow( "Metrics: ", self.metricsSelector )
+    assessmentFormLayout.addRow( "Metrics ", self.metricsSelector )
     
     #
     # Weight selector
@@ -95,7 +92,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.weightsSelector.showChildNodeTypes = False
     self.weightsSelector.setMRMLScene( slicer.mrmlScene )
     self.weightsSelector.setToolTip( "Choose the weights for assessment." )
-    assessmentFormLayout.addRow( "Weights: ", self.weightsSelector )
+    assessmentFormLayout.addRow( "Weights ", self.weightsSelector )
     
     #
     # Training set selector
@@ -108,7 +105,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.trainingSetSelector.showChildNodeTypes = False
     self.trainingSetSelector.setMRMLScene( slicer.mrmlScene )
     self.trainingSetSelector.setToolTip( "Choose the training data for the assessment." )
-    assessmentFormLayout.addRow( "Training Data: ", self.trainingSetSelector )
+    assessmentFormLayout.addRow( "Training data ", self.trainingSetSelector )
     
     trainingNodes = self.trainingSetSelector.uncheckedNodes()
     for node in trainingNodes:
@@ -169,7 +166,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.layout.addWidget( optionsCollapsibleButton )
 
     # Layout within the dummy collapsible button
-    optionsFormLayout = qt.QFormLayout( optionsCollapsibleButton )
+    self.optionsFormLayout = qt.QFormLayout( optionsCollapsibleButton )
     
     
     #
@@ -181,33 +178,43 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.parameterNodeSelector.removeEnabled = True
     self.parameterNodeSelector.showHidden = True
     self.parameterNodeSelector.showChildNodeTypes = False
-    self.parameterNodeSelector.addAttribute( "vtkMRMLScriptedModuleNode", "SkillAssessment" )
+    self.parameterNodeSelector.addAttribute( "vtkMRMLScriptedModuleNode", "AssessmentMethod" )
     self.parameterNodeSelector.baseName = "SkillAssessment"
     self.parameterNodeSelector.setMRMLScene( slicer.mrmlScene )
     self.parameterNodeSelector.setToolTip( "Select the module parameters node." )
-    optionsFormLayout.addRow( "Parameter node: ", self.parameterNodeSelector )
+    self.optionsFormLayout.addRow( "Parameter node ", self.parameterNodeSelector )
     
-        
-    #
-    # Assessment method combo box 
-    #    
-    self.assessmentMethodComboBox = qt.QComboBox()
-    self.assessmentMethodComboBox.addItem( ASSESSMENT_METHOD_ZSCORE )
-    self.assessmentMethodComboBox.addItem( ASSESSMENT_METHOD_PERCENTILE )
-    self.assessmentMethodComboBox.addItem( ASSESSMENT_METHOD_RAW )
-    self.assessmentMethodComboBox.setToolTip( "Choose the assessment method." )
-    optionsFormLayout.addRow( "Assessment Method: ", self.assessmentMethodComboBox )
+    # Assessment method selection
+    self.assessmentMethodGroupBox = qt.QGroupBox( "Assessment Method" )
+    self.assessmentMethodLayout = qt.QVBoxLayout( self.assessmentMethodGroupBox )
+    self.assessmentMethodGroupBox.setLayout( self.assessmentMethodLayout )
+    self.optionsFormLayout.addRow( self.assessmentMethodGroupBox )
     
-    #
-    # Aggregation method combo box 
-    #    
-    self.aggregationMethodComboBox = qt.QComboBox()
-    self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MEAN )
-    self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MEDIAN )
-    self.aggregationMethodComboBox.addItem( AGGREGATION_METHOD_MAXIMUM )
-    self.aggregationMethodComboBox.setToolTip( "Choose the aggregation method." )
-    optionsFormLayout.addRow( "Aggregation Method: ", self.aggregationMethodComboBox )
+    self.linearCombinationRadioButton = qt.QRadioButton( self.assessmentMethodGroupBox )
+    self.linearCombinationRadioButton.setText( "Linear combination" )
+    self.assessmentMethodLayout.addWidget( self.linearCombinationRadioButton )
+    
+    self.nearestNeighborRadioButton = qt.QRadioButton( self.assessmentMethodGroupBox )
+    self.nearestNeighborRadioButton.setText( "Nearest neighbor" )
+    self.assessmentMethodLayout.addWidget( self.nearestNeighborRadioButton )
+    
+    self.fuzzyRadioButton = qt.QRadioButton( self.assessmentMethodGroupBox )
+    self.fuzzyRadioButton.setText( "Fuzzy" )
+    self.assessmentMethodLayout.addWidget( self.fuzzyRadioButton )
+    
 
+    #
+    # Parameters area
+    #   
+    self.parametersGroupBox = qt.QGroupBox( "Parameters" )
+    self.parametersLayout = qt.QVBoxLayout( self.parametersGroupBox )
+    self.parametersGroupBox.setLayout( self.parametersLayout )
+    self.optionsFormLayout.addRow( self.parametersGroupBox )
+    
+    self.linearCombinationParametersFrame = AssessmentMethods.LinearCombinationParametersWidget( self.parametersGroupBox )
+    self.parametersLayout.addWidget( self.linearCombinationParametersFrame )
+
+    
     #
     # The assessment table itself
     #
@@ -218,14 +225,12 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.assessmentTable.setAlternatingRowColors( True )
     self.assessmentTable.resize( 600, 400 ) # Reasonable starting size - to be adjusted by the user
 
+    
     # connections
     self.parameterNodeSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onParameterNodeChanged )
     self.metricsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onMetricsChanged )
     self.weightsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onWeightsChanged )
     self.trainingSetSelector.connect( 'checkedNodesChanged()', self.onTrainingSetChanged )
-    
-    self.assessmentMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAssessmentMethodChanged )
-    self.aggregationMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAggregationMethodChanged )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
 
@@ -513,17 +518,14 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
       
     # Set the default values
-    parameterNode.SetAttribute( "SkillAssessment", "True" )
-
-    if ( parameterNode.GetAttribute( "AssessmentMethod" ) is None ):
-      parameterNode.SetAttribute( "AssessmentMethod", ASSESSMENT_METHOD_ZSCORE )
-    if ( parameterNode.GetAttribute( "AggregationMethod" ) is None ):
-      parameterNode.SetAttribute( "AggregationMethod", AGGREGATION_METHOD_MEAN )
+    parameterNode.SetAttribute( "AssessmentMethod", "LinearCombination" )
       
     if ( parameterNode.GetAttribute( "OverallScore" ) is None ):
       parameterNode.SetAttribute( "OverallScore", "0" )
 
     self.updateWidgetFromParameterNode( parameterNode )
+    
+    self.linearCombinationParametersFrame.setParameterNode( parameterNode )
 
     # Deal with observing the parameter node
     for tag in self.parameterNodeObserverTags:
@@ -533,6 +535,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.parameterNodeObserverTags.append( parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.onParameterNodeModified ) )
     self.parameterNodeObserverTags.append( parameterNode.AddObserver( slicer.vtkMRMLNode.ReferencedNodeModifiedEvent, self.onParameterNodeModified ) )
   
+    self.updateWidgetFromParameterNode( parameterNode )
     SkillAssessmentLogic.Assess( parameterNode )
     self.updateAssessmentTable( parameterNode )
     
@@ -579,26 +582,6 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     SkillAssessmentLogic.Assess( parameterNode )
     self.updateAssessmentTable( parameterNode )
     
-    
-  def onAssessmentMethodChanged( self, text ):
-    parameterNode = self.parameterNodeSelector.currentNode()
-    if ( parameterNode is None ):
-      return
-      
-    parameterNode.SetAttribute( "AssessmentMethod", text )
-    SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode )
-    
-    
-  def onAggregationMethodChanged( self, text ):
-    parameterNode = self.parameterNodeSelector.currentNode()
-    if ( parameterNode is None ):
-      return
-      
-    parameterNode.SetAttribute( "AggregationMethod", text )
-    SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode )
-    
 
   def onAssessButtonClicked( self ):
     parameterNode = self.parameterNodeSelector.currentNode()
@@ -620,14 +603,6 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     for nodeIndex in range( parameterNode.GetNumberOfNodeReferences( "Training" ) ):
       trainingNode = parameterNode.GetNthNodeReference( "Training", nodeIndex )
       self.trainingSetSelector.setCheckState( trainingNode, 2 )
-      
-    assessmentMethodIndex = self.assessmentMethodComboBox.findText( parameterNode.GetAttribute( "AssessmentMethod" ) )
-    if ( assessmentMethodIndex >= 0 ):
-      self.assessmentMethodComboBox.setCurrentIndex( assessmentMethodIndex )
-    
-    aggregationMethodIndex = self.aggregationMethodComboBox.findText( parameterNode.GetAttribute( "AggregationMethod" ) )
-    if ( aggregationMethodIndex >= 0 ):
-      self.aggregationMethodComboBox.setCurrentIndex( aggregationMethodIndex )
 
     self.resultsLabel.setText( parameterNode.GetAttribute( "OverallScore" ) )
 
@@ -654,13 +629,15 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
   
   @staticmethod
   def Assess( parameterNode ):
+    if ( parameterNode is None ):
+      logging.info( "SkillAssessmentLogic::Assess: Parameter node is None." )
+      return 0
   
     assessmentMethod = parameterNode.GetAttribute( "AssessmentMethod" )
-    aggregationMethod = parameterNode.GetAttribute( "AggregationMethod" )
-    if ( assessmentMethod == "" or aggregationMethod == "" ):
-      logging.info( "SkillAssessmentLogic::Assess: Assessment or aggregation method improperly specified. Please pick on of the pre-defined options." )
+    if ( assessmentMethod == "" ):
+      logging.info( "SkillAssessmentLogic::Assess: Assessment method improperly specified. Please pick one of the pre-defined options." )
       return 0
-
+    
     metricsNode = parameterNode.GetNodeReference( "Metrics" )
     if ( metricsNode is None ):
       logging.info( "SkillAssessmentLogic::Assess: Metrics table is empty. Could not assess." )
@@ -682,12 +659,56 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       weightsNode.SetScene( slicer.mrmlScene )
       slicer.mrmlScene.AddNode( weightsNode )
       parameterNode.SetNodeReferenceID( "Weights", weightsNode.GetID() )
-    
-    # TODO: Make this code more modular
-    
-    # Transform the metric values
+      
+    metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
+    if ( metricScoresNode is None ):
+      metricScoresNode = slicer.vtkMRMLTableNode()
+      metricScoresNode.SetName( "MetricScores" )
+      metricScoresNode.HideFromEditorsOn()
+      metricScoresNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( metricScoresNode )
+      parameterNode.SetNodeReferenceID( "MetricScores", metricScoresNode.GetID() )
+      
+    taskScoresNode = parameterNode.GetNodeReference( "TaskScores" )
+    if ( taskScoresNode is None ):
+      taskScoresNode = slicer.vtkMRMLTableNode()
+      taskScoresNode.SetName( "TaskScores" )
+      taskScoresNode.HideFromEditorsOn()
+      taskScoresNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( taskScoresNode )
+      parameterNode.SetNodeReferenceID( "TaskScores", taskScoresNode.GetID() )
+      
+    # Different assessment methods
     transformedMetricsTable = SkillAssessmentLogic.CreateTableFromMetrics( metricsNode, 0 )
+    criticalValue = 0
+    if ( assessmentMethod == ASSESSMENT_METHOD_LINEARCOMBINATION ):
+      SkillAssessmentLogic.LinearCombinationAssess( parameterNode, transformedMetricsTable )
+      criticalValue = AssessmentMethods.LinearCombinationAssessment.GetCriticalValue( parameterNode.GetAttribute( "CombinationMethod" ) )
+
+    strengthsString = SkillAssessmentLogic.GetFeedbackString( transformedMetricsTable, criticalValue, operator.lt, "good", 3 )
+    parameterNode.SetAttribute( "Strengths", strengthsString )
+    weaknessesString = SkillAssessmentLogic.GetFeedbackString( transformedMetricsTable, criticalValue, operator.gt, "too high", 3 )
+    parameterNode.SetAttribute( "Weaknesses", weaknessesString )
+
     
+  @staticmethod
+  def LinearCombinationAssess( parameterNode, transformedMetricsTable ):
+    combinationMethod = parameterNode.GetAttribute( "CombinationMethod" )
+    aggregationMethod = parameterNode.GetAttribute( "AggregationMethod" )
+    if ( combinationMethod == "" or aggregationMethod == "" ):
+      logging.info( "SkillAssessmentLogic::LinearCombinationAssess: Combination or aggregation method improperly specified. Please pick one of the pre-defined options." )
+      return 0
+    
+    # Grab all of the relevant nodes
+    metricsNode = parameterNode.GetNodeReference( "Metrics" )
+    weightsNode = parameterNode.GetNodeReference( "Weights" )
+    metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
+    taskScoresNode = parameterNode.GetNodeReference( "TaskScores" )
+    trainingNodes = []
+    for i in range( parameterNode.GetNumberOfNodeReferences( "Training" ) ):
+      trainingNodes.append( parameterNode.GetNthNodeReference( "Training", i ) ) 
+      
+    # Transform the metric values    
     for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
       metricName = transformedMetricsTable.GetValueByName( rowIndex, "MetricName" )
       metricRoles = transformedMetricsTable.GetValueByName( rowIndex, "MetricRoles" ) 
@@ -701,7 +722,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         trainingMetricValues = SkillAssessmentLogic.GetMetricValuesFromNodes( trainingNodes, metricName, metricRoles, metricUnit, columnName )
         testMetricValue = SkillAssessmentLogic.GetMetricValueFromNode( metricsNode, metricName, metricRoles, metricUnit, columnName )
 
-        transformedMetricValue = SkillAssessmentLogic.GetTransformedMetricValue( testMetricValue, trainingMetricValues, assessmentMethod )
+        transformedMetricValue = AssessmentMethods.LinearCombinationAssessment.GetTransformedMetricValue( testMetricValue, trainingMetricValues, combinationMethod )
 
         transformedMetricsTable.SetValue( rowIndex, columnIndex, transformedMetricValue )        
     
@@ -723,17 +744,10 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         metrics.append( SkillAssessmentLogic.GetMetricValueFromTable( transformedMetricsTable, metricName, metricRoles, metricUnit, columnName ) )
         weights.append( SkillAssessmentLogic.GetMetricValueFromNode( weightsNode, metricName, metricRoles, metricUnit, columnName ) )
 
-      aggregatedMetricValue = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
+      aggregatedMetricValue = AssessmentMethods.LinearCombinationAssessment.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
       metricScoresTable.SetValueByName( rowIndex, "MetricScore", aggregatedMetricValue )
       
     metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
-    if ( metricScoresNode is None ):
-      metricScoresNode = slicer.vtkMRMLTableNode()
-      metricScoresNode.SetName( "MetricScores" )
-      metricScoresNode.HideFromEditorsOn()
-      metricScoresNode.SetScene( slicer.mrmlScene )
-      slicer.mrmlScene.AddNode( metricScoresNode )
-      parameterNode.SetNodeReferenceID( "MetricScores", metricScoresNode.GetID() )
     metricScoresNode.SetAndObserveTable( metricScoresTable )
       
       
@@ -751,17 +765,10 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         metrics.append( transformedMetricsTable.GetValueByName( rowIndex, columnName ).ToDouble() )
         weights.append( weightsNode.GetTable().GetValueByName( rowIndex, columnName ).ToDouble() )
         
-      aggregatedMetricValue = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
+      aggregatedMetricValue = AssessmentMethods.LinearCombinationAssessment.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
       taskScoresTable.SetValueByName( 0, columnName, aggregatedMetricValue )
       
     taskScoresNode = parameterNode.GetNodeReference( "TaskScores" )
-    if ( taskScoresNode is None ):
-      taskScoresNode = slicer.vtkMRMLTableNode()
-      taskScoresNode.SetName( "TaskScores" )
-      taskScoresNode.HideFromEditorsOn()
-      taskScoresNode.SetScene( slicer.mrmlScene )
-      slicer.mrmlScene.AddNode( taskScoresNode )
-      parameterNode.SetNodeReferenceID( "TaskScores", taskScoresNode.GetID() )
     taskScoresNode.SetAndObserveTable( taskScoresTable )
       
       
@@ -777,25 +784,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         metrics.append( transformedMetricsTable.GetValueByName( rowIndex, columnName ).ToDouble() )
         weights.append( weightsNode.GetTable().GetValueByName( rowIndex, columnName ).ToDouble() )
 
-    overallScore = SkillAssessmentLogic.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
+    overallScore = AssessmentMethods.LinearCombinationAssessment.GetAggregatedMetricValue( metrics, weights, aggregationMethod )
     parameterNode.SetAttribute( "OverallScore", str( overallScore ) )
-
-    strengthsString = SkillAssessmentLogic.GetFeedbackString( transformedMetricsTable, assessmentMethod, operator.lt, "good", 3 )
-    parameterNode.SetAttribute( "Strengths", strengthsString )
-    weaknessesString = SkillAssessmentLogic.GetFeedbackString( transformedMetricsTable, assessmentMethod, operator.gt, "too high", 3 )
-    parameterNode.SetAttribute( "Weaknesses", weaknessesString )
-
+    
 
   @staticmethod
-  def GetFeedbackString( transformedMetricsTable, assessmentMethod, operator, noteString, maxNumberOfFeedbacks = 3 ):
-    criticalValue = 0 # This is the cutoff between a good metric and a bad metric
-    if ( assessmentMethod == ASSESSMENT_METHOD_RAW ):
-      criticalValue = 0
-    if ( assessmentMethod == ASSESSMENT_METHOD_PERCENTILE ):
-      criticalValue = 0.5
-    if ( assessmentMethod == ASSESSMENT_METHOD_ZSCORE ):
-      criticalValue = 0
-
+  def GetFeedbackString( transformedMetricsTable, criticalValue, operator, noteString, maxNumberOfFeedbacks = 3 ):
     # Get a list of row/column indices sorted by the metric value
     feedbackElements = []
     for rowIndex in range( transformedMetricsTable.GetNumberOfRows() ):
@@ -817,7 +811,6 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         if ( not newElementInserted ):
           feedbackElements.append( [ rowIndex, columnIndex ] )
 
-    print feedbackElements
     # Reconstruct the list of row/column indices into feedback strings
     feedbackString = ""
     for feedbackIndex in range( min( maxNumberOfFeedbacks, len( feedbackElements ) ) ):
@@ -953,101 +946,6 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     logging.info( "SkillAssessmentLogic::GetMetricValueFromTable: Could not find metric in the table." )
     return
     
-
-  @staticmethod
-  def GetAggregatedMetricValue( metricValues, weights, method ):
-    if ( len( metricValues ) != len( weights ) ):
-      logging.info( "SkillAssessmentLogic::GetAggregatedMetricValue: Metric values and weights do not correspond." )
-      return 0
-      
-    if ( method == AGGREGATION_METHOD_MEAN ):
-      return SkillAssessmentLogic.GetWeightedMean( metricValues, weights )
-    if ( method == AGGREGATION_METHOD_MEDIAN ):
-      return SkillAssessmentLogic.GetWeightedMedian( metricValues, weights )
-    if ( method == AGGREGATION_METHOD_MAXIMUM ):
-      return SkillAssessmentLogic.GetMaximum( metricValues, weights )
-      
-    logging.info( "SkillAssessmentLogic::GetAggregatedMetricValue: Metric transformation method improperly specified." )
-    return 0
-  
-  @staticmethod
-  def GetWeightedMean( metricValues, weights ):
-    valueSum = 0
-    weightSum = 0
-  
-    for i in range( len( metricValues ) ):
-      currMetricValue = metricValues[ i ]
-      currWeight = weights[ i ]
-      
-      valueSum += currMetricValue * currWeight
-      weightSum += currWeight
-
-    if ( weightSum == 0.0 ):
-      return 0.0
-
-    return valueSum / weightSum
-
-
-  @staticmethod
-  def GetWeightedMedian( metricValues, weights ):
-    sortedPairs = sorted( zip( metricValues, weights ) )
-  
-    totalWeight = sum( weights )
-    weightSum = 0
-    for pair in sortedPairs:
-      weightSum += pair[ 1 ]
-      if ( weightSum > 0.5 * totalWeight ):
-        return pair[ 0 ]
-      
-    return metricValues[-1]
-
-  @staticmethod
-  def GetMaximum( metricValues, weights ):
-    return max( metricValues ) 
-      
-    
-  @staticmethod 
-  def GetTransformedMetricValue( testMetric, trainingMetrics, method ):
-    if ( method == ASSESSMENT_METHOD_RAW ):
-      return SkillAssessmentLogic.GetRaw( testMetric, trainingMetrics )
-    if ( method == ASSESSMENT_METHOD_PERCENTILE ):
-      return SkillAssessmentLogic.GetPercentile( testMetric, trainingMetrics )
-    if ( method == ASSESSMENT_METHOD_ZSCORE ):
-      return SkillAssessmentLogic.GetZScore( testMetric, trainingMetrics )
-      
-    logging.info( "SkillAssessmentLogic::GetTransformedMetricValue: Metric transformation method improperly specified." )
-    return 0
-    
-    
-  # This assumes rank 0 is the smallest value and rank N is the largest value
-  @staticmethod
-  def GetRaw( testMetric, trainingMetrics ):
-    return testMetric
-
-  # This assumes rank 0 is the smallest value and rank N is the largest value
-  @staticmethod
-  def GetPercentile( testMetric, trainingMetrics ):
-    tiedRank = 0
-    for dataPoint in trainingMetrics:
-      if ( testMetric > dataPoint ):
-        tiedRank = tiedRank + 1
-      if ( testMetric == dataPoint ):
-        tiedRank = tiedRank + 0.5
-        
-    return tiedRank / len( trainingMetrics )
-
-
-  # This computes the z-score
-  @staticmethod
-  def GetZScore( testMetric, trainingMetrics ):
-    trainingMean = numpy.mean( trainingMetrics )
-    trainingStd = numpy.std( trainingMetrics )
-
-    if ( trainingStd == 0.0 ):
-      return 0.0
-
-    return ( testMetric - trainingMean ) / trainingStd
-
     
   # Convenience method for checking if a column in a metrics table is a header columns
   @staticmethod
@@ -1092,26 +990,4 @@ class SkillAssessmentTest( ScriptedLoadableModuleTest ):
     your test should break so they know that the feature is needed.
     """
 
-    self.delayDisplay("Starting the test")
-    #
-    # first, get some data
-    #
-    import urllib
-    downloads = (
-        ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
-
-    for url,name,loader in downloads:
-      filePath = slicer.app.temporaryPath + '/' + name
-      if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-        logging.info('Requesting download %s from %s...\n' % (name, url))
-        urllib.urlretrieve(url, filePath)
-      if loader:
-        logging.info('Loading %s...' % (name,))
-        loader(filePath)
-    self.delayDisplay('Finished with download and loading')
-
-    volumeNode = slicer.util.getNode(pattern="FA")
-    logic = SkillAssessmentLogic()
-    self.assertIsNotNone( logic.hasImageData(volumeNode) )
-    self.delayDisplay('Test passed!')
+    self.delayDisplay("No test available")
