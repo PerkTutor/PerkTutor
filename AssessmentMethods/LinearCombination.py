@@ -8,9 +8,9 @@ import logging
 # Linear Combination Skill Assessment
 #
 
-COMBINATION_METHOD_ZSCORE = "Z-Score"
-COMBINATION_METHOD_PERCENTILE = "Percentile"
-COMBINATION_METHOD_RAW = "Raw"
+SCALING_METHOD_ZSCORE = "Z-Score"
+SCALING_METHOD_PERCENTILE = "Percentile"
+SCALING_METHOD_RAW = "Raw"
 
 AGGREGATION_METHOD_MEAN = "Mean"
 AGGREGATION_METHOD_MEDIAN = "Median"
@@ -35,14 +35,14 @@ class LinearCombinationParametersWidget( qt.QFrame ):
     self.setLayout( self.parametersLayout )
         
     #
-    # Combination method combo box 
+    # Scaling method combo box 
     #    
-    self.combinationMethodComboBox = qt.QComboBox()
-    self.combinationMethodComboBox.addItem( COMBINATION_METHOD_ZSCORE )
-    self.combinationMethodComboBox.addItem( COMBINATION_METHOD_PERCENTILE )
-    self.combinationMethodComboBox.addItem( COMBINATION_METHOD_RAW )
-    self.combinationMethodComboBox.setToolTip( "Choose the combination method." )
-    self.parametersLayout.addRow( "Combination method ", self.combinationMethodComboBox )
+    self.scalingMethodComboBox = qt.QComboBox()
+    self.scalingMethodComboBox.addItem( SCALING_METHOD_ZSCORE )
+    self.scalingMethodComboBox.addItem( SCALING_METHOD_PERCENTILE )
+    self.scalingMethodComboBox.addItem( SCALING_METHOD_RAW )
+    self.scalingMethodComboBox.setToolTip( "Choose the scaling method." )
+    self.parametersLayout.addRow( "Scaling method ", self.scalingMethodComboBox )
     
     #
     # Aggregation method combo box 
@@ -56,7 +56,7 @@ class LinearCombinationParametersWidget( qt.QFrame ):
 
     
     # connections
-    self.combinationMethodComboBox.connect( 'currentIndexChanged(QString)', self.onCombinationMethodChanged )
+    self.scalingMethodComboBox.connect( 'currentIndexChanged(QString)', self.onScalingMethodChanged )
     self.aggregationMethodComboBox.connect( 'currentIndexChanged(QString)', self.onAggregationMethodChanged )
     
     
@@ -70,8 +70,8 @@ class LinearCombinationParametersWidget( qt.QFrame ):
     if ( self.parameterNode is not None ):
       self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
   
-    if ( self.parameterNode.GetAttribute( "CombinationMethod" ) is None ):
-      self.parameterNode.SetAttribute( "CombinationMethod", COMBINATION_METHOD_ZSCORE )
+    if ( self.parameterNode.GetAttribute( "ScalingMethod" ) is None ):
+      self.parameterNode.SetAttribute( "ScalingMethod", SCALING_METHOD_ZSCORE )
     if ( self.parameterNode.GetAttribute( "AggregationMethod" ) is None ):
       self.parameterNode.SetAttribute( "AggregationMethod", AGGREGATION_METHOD_MEAN )
 
@@ -82,10 +82,10 @@ class LinearCombinationParametersWidget( qt.QFrame ):
     return self.parameterNode
     
     
-  def onCombinationMethodChanged( self, text ):
+  def onScalingMethodChanged( self, text ):
     if ( self.parameterNode is None ):
       return      
-    self.parameterNode.SetAttribute( "CombinationMethod", text )
+    self.parameterNode.SetAttribute( "ScalingMethod", text )
     
     
   def onAggregationMethodChanged( self, text ):
@@ -98,9 +98,9 @@ class LinearCombinationParametersWidget( qt.QFrame ):
     if ( self.parameterNode is None ):
       return
 
-    combinationMethodIndex = self.combinationMethodComboBox.findText( self.parameterNode.GetAttribute( "CombinationMethod" ) )
-    if ( combinationMethodIndex >= 0 ):
-      self.combinationMethodComboBox.setCurrentIndex( combinationMethodIndex )
+    scalingMethodIndex = self.scalingMethodComboBox.findText( self.parameterNode.GetAttribute( "ScalingMethod" ) )
+    if ( scalingMethodIndex >= 0 ):
+      self.scalingMethodComboBox.setCurrentIndex( scalingMethodIndex )
     
     aggregationMethodIndex = self.aggregationMethodComboBox.findText( self.parameterNode.GetAttribute( "AggregationMethod" ) )
     if ( aggregationMethodIndex >= 0 ):
@@ -118,30 +118,40 @@ class LinearCombinationAssessment():
     pass
 
     
+  @staticmethod 
+  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, labels ):
+    scalingMethod = parameterNode.GetAttribute( "ScalingMethod" )
+    aggregationMethod = parameterNode.GetAttribute( "AggregationMethod" )
+  
+    scaledTestRecord = LinearCombinationAssessment.GetScaledRecord( testRecord, trainingRecords, scalingMethod )
+    combination = LinearCombinationAssessment.GetAggregatedSkillScore( scaledTestRecord, weights, aggregationMethod )
+    
+    return combination
+    
   @staticmethod
-  def GetAggregatedMetricValue( metricValues, weights, method ):
-    if ( len( metricValues ) != len( weights ) ):
+  def GetAggregatedSkillScore( scaledRecord, weights, method ):
+    if ( len( scaledRecord ) != len( weights ) ):
       logging.info( "LinearCombinationAssessment::GetAggregatedMetricValue: Metric values and weights do not correspond." )
       return 0
       
     if ( method == AGGREGATION_METHOD_MEAN ):
-      return LinearCombinationAssessment.GetWeightedMean( metricValues, weights )
+      return LinearCombinationAssessment.GetWeightedMean( scaledRecord, weights )
     if ( method == AGGREGATION_METHOD_MEDIAN ):
-      return LinearCombinationAssessment.GetWeightedMedian( metricValues, weights )
+      return LinearCombinationAssessment.GetWeightedMedian( scaledRecord, weights )
     if ( method == AGGREGATION_METHOD_MAXIMUM ):
-      return LinearCombinationAssessment.GetMaximum( metricValues, weights )
+      return LinearCombinationAssessment.GetMaximum( scaledRecord, weights )
       
     logging.info( "LinearCombinationAssessment::GetAggregatedMetricValue: Metric transformation method improperly specified." )
     return 0
  
  
   @staticmethod
-  def GetWeightedMean( metricValues, weights ):
+  def GetWeightedMean( scaledRecord, weights ):
     valueSum = 0
     weightSum = 0
   
-    for i in range( len( metricValues ) ):
-      currMetricValue = metricValues[ i ]
+    for i in range( len( scaledRecord ) ):
+      currMetricValue = scaledRecord[ i ]
       currWeight = weights[ i ]
       
       valueSum += currMetricValue * currWeight
@@ -150,12 +160,12 @@ class LinearCombinationAssessment():
     if ( weightSum == 0.0 ):
       return 0.0
 
-    return valueSum / weightSum
+    return float( valueSum ) / weightSum
 
 
   @staticmethod
-  def GetWeightedMedian( metricValues, weights ):
-    sortedPairs = sorted( zip( metricValues, weights ) )
+  def GetWeightedMedian( scaledRecord, weights ):
+    sortedPairs = sorted( zip( scaledRecord, weights ) )
   
     totalWeight = sum( weights )
     weightSum = 0
@@ -164,24 +174,37 @@ class LinearCombinationAssessment():
       if ( weightSum > 0.5 * totalWeight ):
         return pair[ 0 ]
       
-    return metricValues[-1]
+    return scaledRecord[-1]
 
   @staticmethod
-  def GetMaximum( metricValues, weights ):
-    return max( metricValues ) 
+  def GetMaximum( scaledRecord, weights ):
+    return max( scaledRecord ) 
       
     
   @staticmethod 
-  def GetTransformedMetricValue( testMetric, trainingMetrics, method ):
-    if ( method == COMBINATION_METHOD_RAW ):
-      return LinearCombinationAssessment.GetRaw( testMetric, trainingMetrics )
-    if ( method == COMBINATION_METHOD_PERCENTILE ):
-      return LinearCombinationAssessment.GetPercentile( testMetric, trainingMetrics )
-    if ( method == COMBINATION_METHOD_ZSCORE ):
-      return LinearCombinationAssessment.GetZScore( testMetric, trainingMetrics )
+  def GetScaledRecord( testRecord, trainingRecords, method ):
+    # Assume that all the records are of the same length
+    scaledRecord = []
+    for i in range( len( testRecord ) ):
+      currTrainingVector = [] # A list of all values from the same attribute (i.e. metric/task pair)
+      for currTrainingRecord in trainingRecords:
+        currTrainingVector.append( currTrainingRecord[ i ] )
+
+      currScaled = None
+      if ( method == SCALING_METHOD_RAW ):
+        currScaled = LinearCombinationAssessment.GetRaw( testRecord[ i ], currTrainingVector )
+      if ( method == SCALING_METHOD_PERCENTILE ):
+        currScaled = LinearCombinationAssessment.GetPercentile( testRecord[ i ], currTrainingVector )
+      if ( method == SCALING_METHOD_ZSCORE ):
+        currScaled = LinearCombinationAssessment.GetZScore( testRecord[ i ], currTrainingVector )
       
-    logging.info( "LinearCombinationAssessment::GetTransformedMetricValue: Metric transformation method improperly specified." )
-    return 0
+      if ( currScaled is None ):
+        logging.info( "LinearCombinationAssessment::GetConvertedMetricValue: Metric scaling method improperly specified." )
+        continue
+        
+      scaledRecord.append( currScaled )
+    
+    return scaledRecord
     
     
   # This assumes rank 0 is the smallest value and rank N is the largest value
@@ -217,13 +240,15 @@ class LinearCombinationAssessment():
     
   # The critical value for feedback
   @staticmethod
-  def GetCriticalValue( combinationMethod ):
+  def GetCriticalValue( parameterNode, skillLabels ):
+    scalingMethod = parameterNode.GetAttribute( "ScalingMethod" )
+    
     criticalValue = 0 # This is the cutoff between a good metric and a bad metric
-    if ( combinationMethod == COMBINATION_METHOD_RAW ):
+    if ( scalingMethod == SCALING_METHOD_RAW ):
       criticalValue = 0
-    if ( combinationMethod == COMBINATION_METHOD_PERCENTILE ):
+    if ( scalingMethod == SCALING_METHOD_PERCENTILE ):
       criticalValue = 0.5
-    if ( combinationMethod == COMBINATION_METHOD_ZSCORE ):
+    if ( scalingMethod == SCALING_METHOD_ZSCORE ):
       criticalValue = 0
       
     return criticalValue
