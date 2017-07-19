@@ -1,5 +1,6 @@
 import MembershipFunction
 import BinaryFunction
+import math
 
 
 # Class for defuzzifiers
@@ -38,9 +39,9 @@ class Defuzzifier:
     
     return maxVal
   
-  def ClosestMaximum( self, membershipFunction, start, step ):
+  def ClosestMaximum( self, membershipFunction, start, min, max, step ):
 
-    maxVal = MaxValue( membershipFunction )
+    maxVal = self.MaximumValue( membershipFunction, min, max, step )
   
     locPlus = start
     locMinus = start
@@ -112,7 +113,7 @@ class DefuzzifierMOM( Defuzzifier ):
   
     # Find the maximum value of the membership function
     flatMaxFunction = MembershipFunction.FlatMembershipFunction()
-    flatMaxFunction.SetParameters( [ self.MaximumValue( membershipFunction ) ] )
+    flatMaxFunction.SetParameters( [ self.MaximumValue( membershipFunction, min, max, step ) ] )
   
     # This function is the max value when the original membership function achieves its max, and is zero otherwise
     maxFunction = MembershipFunction.MembershipFunction()
@@ -141,7 +142,7 @@ class DefuzzifierCMCOA( Defuzzifier ):
     coaDefuzzifier = DefuzzifierCOA()
     coa = coaDefuzzifier.Evaluate( membershipFunction, min, max, step )
     
-    return self.ClosestMaximum( membershipFunction, coa, step )
+    return self.ClosestMaximum( membershipFunction, coa, min, max, step )
   
 
 class DefuzzifierCMCOM( Defuzzifier ):
@@ -151,7 +152,7 @@ class DefuzzifierCMCOM( Defuzzifier ):
     comDefuzzifier = DefuzzifierCOM()
     com = comDefuzzifier.Evaluate( membershipFunction, min, max, step )
     
-    return self.ClosestMaximum( membershipFunction, com, step )
+    return self.ClosestMaximum( membershipFunction, com, min, max, step )
     
     
 class DefuzzifierCMMOM( Defuzzifier ):
@@ -161,7 +162,7 @@ class DefuzzifierCMMOM( Defuzzifier ):
     momDefuzzifier = DefuzzifierMOM()
     mom = momDefuzzifier.Evaluate( membershipFunction, min, max, step )
     
-    return self.ClosestMaximum( membershipFunction, mom, step )
+    return self.ClosestMaximum( membershipFunction, mom, min, max, step )
     
 
   
