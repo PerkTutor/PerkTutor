@@ -200,7 +200,7 @@ class FuzzyAssessment():
     
   @staticmethod
   def GetShrinker( shrinkerName ):
-    if ( shrinkerName == SHRINK_SCALE ):
+    if ( shrinkerName == SHRINK_CLIP ):
       return FuzzyLogic.BinaryFunction.GodelTNorm()
     if ( shrinkerName == SHRINK_SCALE ):
       return FuzzyLogic.BinaryFunction.GoguenTNorm()
@@ -270,6 +270,9 @@ class FuzzyAssessment():
     
     stdev = math.sqrt( stdev - math.pow( mean, 2 ) )
 
+    if ( stdev == 0 ):
+      logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: Cannot create a Gaussian membership function from the provided input. Input requires more instances or more variance." )
+
     membershipFunction = FuzzyLogic.MembershipFunction.GaussianMembershipFunction()
     membershipFunction.SetParameters( [ mean, stdev ] )
     return membershipFunction
@@ -324,3 +327,42 @@ class FuzzyAssessment():
     criticalValue = minSkill + ( maxSkill - minSkill ) / 2.0
 
     return criticalValue
+
+
+  # Use a chart node to plot a membership function
+  # Mostly for debugging, but it may be interesting to look at membership functions from the Python interactor
+  @staticmethod
+  def PlotMembershipFunctions( membershipFunctions, min, max, steps ):
+
+    step = float( max - min ) / steps
+    # Setting up the array of values
+    chartNode = slicer.vtkMRMLChartNode()
+    chartNode.SetScene( slicer.mrmlScene )
+    slicer.mrmlScene.AddNode( chartNode )
+
+    for i in range( len( membershipFunctions ) ):
+      arrayNode = slicer.vtkMRMLDoubleArrayNode()
+      arrayNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( arrayNode )
+      array = arrayNode.GetArray()
+      array.SetNumberOfTuples( int( ( max - min ) / step ) )
+
+      for j in range( array.GetNumberOfTuples() ):
+        array.SetComponent( j, 0, min + j * step )
+        array.SetComponent( j, 1, membershipFunctions[ i ].Evaluate( min + j * step ) )
+        array.SetComponent( j, 2, 0 )
+
+      # Add array into a chart node
+      chartNode.AddArray( "Membership Function " + str( i ), arrayNode.GetID() )
+
+    chartNode.SetProperty( 'default', 'title', 'Membership Functions' )
+    chartNode.SetProperty( 'default', 'xAxisLabel', 'Membership Value' )
+    chartNode.SetProperty( 'default', 'yAxisLabel', 'Element' )
+
+    # Set the chart in the chart view node
+    chartViewNode = slicer.mrmlScene.GetNthNodeByClass( 0, "vtkMRMLChartViewNode" )
+    if ( chartViewNode is None ):
+      chartViewNode = slicer.vtkMRMLChartViewNode()
+      chartViewNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( chartViewNode )
+    chartViewNode.SetChartNodeID( chartNode.GetID() )

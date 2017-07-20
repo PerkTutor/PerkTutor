@@ -1,6 +1,7 @@
 import MembershipFunction
 import BinaryFunction
 import math
+import logging
 
 
 # Class for defuzzifiers
@@ -20,9 +21,11 @@ class Defuzzifier:
   def Integrate( self, function, min, max, step ):
     loc = min
     integral = 0
-  
+
+    # Use the trapezoidal rule
+    # Note: The midpoint rule gets us into trouble when only a single point is identified by the maximum because the points sampled for maximum checking and intergrating are different using midpoint
     while( loc < max ):
-      integral += function.Evaluate( loc + step / 2 ) * step
+      integral += step * ( function.Evaluate( loc ) + function.Evaluate( loc + step ) ) / 2
       loc += step
     
     return integral
@@ -31,7 +34,7 @@ class Defuzzifier:
   def MaximumValue( self, function, min, max, step ):
     loc = min
     maxVal = - float( 'inf' ) # In theory, this can be zero since the max value should always be at least zero (but let's make it more robust in practice)
-  
+
     while( loc < max ):
       if ( function.Evaluate( loc ) > maxVal ):
         maxVal = function.Evaluate( loc )
@@ -45,17 +48,23 @@ class Defuzzifier:
   
     locPlus = start
     locMinus = start
-    precision = - math.floor( math.log10( step ) )
-    
-    # This is guaranteed to terminate
+    tolerance = step
+
+    # Step away from the starting point until we reach a maximum
     while( True ):
-      if ( round( membershipFunction.Evaluate( locPlus ) - maxVal, precision ) == 0 ):
+      if ( abs( membershipFunction.Evaluate( locPlus ) - maxVal ) <= tolerance ):
         return locPlus
-      if ( round( membershipFunction.Evaluate( locMinus ) - maxVal, precision ) == 0 ):
+      if ( abs( membershipFunction.Evaluate( locMinus ) - maxVal ) <= tolerance ):
         return locMinus
       
       locPlus += step
       locMinus -= step
+
+      # Some trickery to force termination in the case of numerical issues
+      if ( locPlus > max and locMinus < min ):
+        locPlus = start
+        locMinus = start
+        tolerance = 2 * tolerance
   
 
   # "Pure virtual" method to evaluate a particular defuzzification of the function
@@ -81,6 +90,10 @@ class DefuzzifierCOA( Defuzzifier ):
     num = self.Integrate( numeratorFunction, min, max, step )  
     denom = self.Integrate( denominatorFunction, min, max, step )
 
+    if ( denom == 0 ):
+      logging.warning( "DefuzzifierCOA::Evaluate: Membership function has zero area." )
+      return 0
+
     return num / denom
 
 
@@ -101,6 +114,10 @@ class DefuzzifierCOM( Defuzzifier ):
   
     num = self.Integrate( numeratorFunction, min, max, step )  
     denom = self.Integrate( denominatorFunction, min, max, step )
+
+    if ( denom == 0 ):
+      logging.warning( "DefuzzifierCOM::Evaluate: Membership function has zero mass." )
+      return 0
 
     return num / denom
   
@@ -131,6 +148,10 @@ class DefuzzifierMOM( Defuzzifier ):
   
     num = self.Integrate( numeratorFunction, min, max, step )  
     denom = self.Integrate( denominatorFunction, min, max, step )
+
+    if ( denom == 0 ):
+      logging.warning( "DefuzzifierMOM::Evaluate: Membership function has zero maximum." )
+      return 0
 
     return num / denom
   
@@ -171,7 +192,8 @@ class XMembershipFunction( MembershipFunction.MembershipFunction ):
 
   def Evaluate( self, value ):
     if ( len( self.Parameters ) != 0 ):
-      raise Exception( "Improperly specified parameters" )
+      logging.warning( "XMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
     
     return value
     

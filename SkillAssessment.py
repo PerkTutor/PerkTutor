@@ -218,6 +218,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.nearestNeighborParametersFrame = AssessmentMethods.NearestNeighborParametersWidget( self.parametersGroupBox )
     self.nearestNeighborParametersFrame.hide()
     self.parametersLayout.addWidget( self.nearestNeighborParametersFrame )
+    
+    self.fuzzyParametersFrame = AssessmentMethods.FuzzyParametersWidget( self.parametersGroupBox )
+    self.fuzzyParametersFrame.hide()
+    self.parametersLayout.addWidget( self.fuzzyParametersFrame )
 
     
     #
@@ -239,7 +243,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     
     self.linearCombinationRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_LINEARCOMBINATION, self.linearCombinationParametersFrame ) )
     self.nearestNeighborRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_NEARESTNEIGHBOR, self.nearestNeighborParametersFrame ) )
-    # self.fuzzyRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FUZZY, self.fuzzyParametersFrame ) )
+    self.fuzzyRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FUZZY, self.fuzzyParametersFrame ) )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
 
@@ -535,7 +539,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.updateWidgetFromParameterNode( parameterNode )
     
     self.linearCombinationParametersFrame.setParameterNode( parameterNode )
-    self.nearestNeighborParametersFrame.setParameterNode( parameterNode )    
+    self.nearestNeighborParametersFrame.setParameterNode( parameterNode )
+    self.fuzzyParametersFrame.setParameterNode( parameterNode )    
 
     # Deal with observing the parameter node
     for tag in self.parameterNodeObserverTags:
@@ -724,6 +729,8 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       Assessor = AssessmentMethods.LinearCombinationAssessment
     if ( assessmentMethod == ASSESSMENT_METHOD_NEARESTNEIGHBOR ):
       Assessor = AssessmentMethods.NearestNeighborAssessment
+    if ( assessmentMethod == ASSESSMENT_METHOD_FUZZY ):
+      Assessor = AssessmentMethods.FuzzyAssessment
       
     print Assessor
 

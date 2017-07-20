@@ -1,4 +1,5 @@
 import math
+import logging
 
 
 # Class for membership functions
@@ -53,7 +54,8 @@ class TriangleMembershipFunction( MembershipFunction ):
 
   def Evaluate( self, value ):
     if ( len( self.Parameters ) != 3 ):
-      raise Exception( "Improperly specified parameters" )
+      logging.warning( "TriangleMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
     
     if ( value <= self.Parameters[ 0 ] ):
       return 0
@@ -70,7 +72,8 @@ class TrapezoidMembershipFunction( MembershipFunction ):
 
   def Evaluate( self, value ):
     if ( len( self.Parameters ) != 4 ):
-      raise Exception( "Improperly specified parameters" )
+      logging.warning( "TrapezoidMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
     
     if ( value <= self.Parameters[ 0 ] ):
       return 0
@@ -90,7 +93,11 @@ class GaussianMembershipFunction( MembershipFunction ):
 
   def Evaluate( self, value ):
     if ( len( self.Parameters ) != 2 ):
-      raise Exception( "Improperly specified parameters" )
+      logging.warning( "GaussianMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
+    if ( self.Parameters[ 1 ] == 0 ):
+      logging.warning( "GaussianMembershipFunction::Evaluate: Gaussian has standard deviation zero." )
+      return 0
     
     return math.exp( - math.pow( value - self.Parameters[ 0 ], 2 ) / float( 2 * math.pow( self.Parameters[ 1 ], 2 ) ) )
     
@@ -99,6 +106,7 @@ class FlatMembershipFunction( MembershipFunction ):
 
   def Evaluate( self, value ):
     if ( len( self.Parameters ) != 1 ):
-      raise Exception( "Improperly specified parameters" )
+      logging.warning( "FlatMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
     
     return self.Parameters[ 0 ]
