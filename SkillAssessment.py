@@ -80,21 +80,6 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     assessmentFormLayout.addRow( "Metrics ", self.metricsSelector )
     
     #
-    # Weight selector
-    #
-    self.weightsSelector = slicer.qMRMLNodeComboBox()
-    self.weightsSelector.nodeTypes = [ "vtkMRMLTableNode" ]
-    self.weightsSelector.selectNodeUponCreation = True
-    self.weightsSelector.noneEnabled = True
-    self.weightsSelector.addEnabled = False
-    self.weightsSelector.removeEnabled = False
-    self.weightsSelector.showHidden = False
-    self.weightsSelector.showChildNodeTypes = False
-    self.weightsSelector.setMRMLScene( slicer.mrmlScene )
-    self.weightsSelector.setToolTip( "Choose the weights for assessment." )
-    assessmentFormLayout.addRow( "Weights ", self.weightsSelector )
-    
-    #
     # Training set selector
     #
     self.trainingSetSelector = slicer.qMRMLCheckableNodeComboBox()
@@ -183,6 +168,21 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.parameterNodeSelector.setMRMLScene( slicer.mrmlScene )
     self.parameterNodeSelector.setToolTip( "Select the module parameters node." )
     self.optionsFormLayout.addRow( "Parameter node ", self.parameterNodeSelector )
+    
+    #
+    # Weight selector
+    #
+    self.weightsSelector = slicer.qMRMLNodeComboBox()
+    self.weightsSelector.nodeTypes = [ "vtkMRMLTableNode" ]
+    self.weightsSelector.selectNodeUponCreation = True
+    self.weightsSelector.noneEnabled = True
+    self.weightsSelector.addEnabled = False
+    self.weightsSelector.removeEnabled = False
+    self.weightsSelector.showHidden = False
+    self.weightsSelector.showChildNodeTypes = False
+    self.weightsSelector.setMRMLScene( slicer.mrmlScene )
+    self.weightsSelector.setToolTip( "Choose the weights for assessment." )
+    self.optionsFormLayout.addRow( "Weights ", self.weightsSelector )
     
     # Assessment method selection
     self.assessmentMethodGroupBox = qt.QGroupBox( "Assessment Method" )
