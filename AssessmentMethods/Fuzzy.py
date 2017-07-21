@@ -174,7 +174,7 @@ class FuzzyAssessment():
     
     fuzzyRules = FuzzyAssessment.CreateAllFuzzyRules( metricMembershipFunctions, skillMembershipFunctions )
     
-    consequence = FuzzyAssessment.ComputeFuzzyOutput( fuzzyRules, testRecord, shrinker )
+    consequence = FuzzyAssessment.ComputeFuzzyOutput( fuzzyRules, testRecord, weights, shrinker )
     
     fuzzySkill = defuzzifier.Evaluate( consequence, minSkill, maxSkill, stepSize )
     return fuzzySkill
@@ -283,38 +283,42 @@ class FuzzyAssessment():
   # All metrics will be of this form
   @staticmethod
   def CreateAllFuzzyRules( metricMembershipFunctions, skillMembershipFunctions ):
-    fuzzyRules = [] # Reset
+    fuzzyRules = dict() # Reset
 
     for skillClassIndex in metricMembershipFunctions:
-      skillMembership = skillMembershipFunctions[ skillClassIndex ]    
+      skillMembership = skillMembershipFunctions[ skillClassIndex ]
+      fuzzyRules[ skillClassIndex ] = dict()
       for metricIndex in metricMembershipFunctions[ skillClassIndex ]:
-        rule = FuzzyLogic.FuzzyRule.FuzzyRule()
-        rule.SetComposeFunction( FuzzyLogic.BinaryFunction.GodelTNorm() ) #TODO: This compose function is not actually used. In the future, the rule should not require a compose function unless multiple input membership functions are specified for the rule.
-        rule.SetOutputMembershipFunction( skillMembership )
-        rule.AddInputMembershipFunction( metricMembershipFunctions[ skillClassIndex ][ metricIndex ], metricIndex )
+        currFuzzyRule = FuzzyLogic.FuzzyRule.FuzzyRule()
+        currFuzzyRule.SetComposeFunction( FuzzyLogic.BinaryFunction.GodelTNorm() ) #TODO: This compose function is not actually used. In the future, the rule should not require a compose function unless multiple input membership functions are specified for the rule.
+        currFuzzyRule.SetOutputMembershipFunction( skillMembership )
+        currFuzzyRule.AddInputMembershipFunction( metricMembershipFunctions[ skillClassIndex ][ metricIndex ], "Metric" )
       
-        fuzzyRules.append( rule )
+        fuzzyRules[ skillClassIndex ][ metricIndex ] = currFuzzyRule
         
     return fuzzyRules
     
     
   # Given a crisp input, apply all of the fuzzy rules, and come up with a fuzzy output
   @staticmethod
-  def ComputeFuzzyOutput( fuzzyRules, testRecord, shrinker ):
+  def ComputeFuzzyOutput( fuzzyRules, testRecord, weights, shrinker ):
     # Turn the test record into a dictionary
-    testDictionary = dict()
-    for metricIndex in range( len( testRecord ) ):
-      testDictionary[ metricIndex ] = testRecord[ metricIndex ]
+    totalConsequence = FuzzyLogic.MembershipFunction.MembershipFunction()
+    for skillClassIndex in fuzzyRules:
+      for metricIndex in fuzzyRules[ skillClassIndex ]:
+        currFuzzyRule = fuzzyRules[ skillClassIndex ][ metricIndex ]
+        currInputValue = { "Metric": testRecord[ metricIndex ] }
+        currConsequence = currFuzzyRule.Evaluate( currInputValue, shrinker )
+        # Use the weighting (with the same shrink method)
+        weightMembershipFunction = FuzzyLogic.MembershipFunction.FlatMembershipFunction()
+        weightMembershipFunction.SetParameters( [ weights[ metricIndex ] ] )
+        currConsequence.AddBaseFunction( weightMembershipFunction )
+        # Add the current consequence function to the total consequence function
+        totalConsequence.AddBaseFunction( currConsequence )
 
-    # For each fuzzy rule, add evaluate at the input value
-    # The function will automatically pick out the required inputs
-    consequence = FuzzyLogic.MembershipFunction.MembershipFunction()
-    for rule in fuzzyRules:
-      consequence.AddBaseFunction( rule.Evaluate( testDictionary, shrinker ) )
-    
     # Note: Still have to set the compose function
     # This is because the compose function will differ depending on which defuzzification technique is used
-    return consequence
+    return totalConsequence
     
     
   # The critical value for feedback
