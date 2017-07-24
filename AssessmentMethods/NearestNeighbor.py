@@ -166,14 +166,19 @@ class NearestNeighborAssessment():
       
   @staticmethod
   def CastEqualWeightedVotes( distances, labels ):
-    return float( sum( labels ) ) / len( labels )
+    labelArray = numpy.array( labels )
+    equalWeights = numpy.ones( len( distances ) )
+    equalWeights = equalWeights / sum( equalWeights )
+    return numpy.dot( equalWeights, labelArray )
     
     
   @staticmethod
   def CastDistanceWeightedVotes( distances, labels ):
     distanceArray = numpy.array( distances )
     labelArray = numpy.array( labels )
-    return numpy.dot( 1.0 / ( distanceArray ** 2 ), labelArray )
+    distanceWeights = 1.0 / ( distanceArray ** 2 )
+    distanceWeights = distanceWeights / sum( distanceWeights )
+    return numpy.dot( distanceWeights, labelArray )
     
     
   @staticmethod
@@ -181,8 +186,10 @@ class NearestNeighborAssessment():
     distanceArray = numpy.array( distances )
     labelArray = numpy.array( labels )
     rankedIndices = distanceArray.argsort() # TODO: Deal with ties
-    
-    return numpy.dot( 1.0 / ( rankedIndices + 1 ), labelArray ) # Add one because ranking starts at ( 0, 1, 2, 3, ... )
+
+    rankWeights = 1.0 / ( rankedIndices + 1 )
+    rankWeights = rankWeights / sum( rankWeights )
+    return numpy.dot( rankWeights, labelArray ) # Add one because ranking starts at ( 0, 1, 2, 3, ... )
       
     
     
