@@ -241,9 +241,9 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.weightsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onWeightsChanged )
     self.trainingSetSelector.connect( 'checkedNodesChanged()', self.onTrainingSetChanged )
     
-    self.linearCombinationRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_LINEARCOMBINATION, self.linearCombinationParametersFrame ) )
-    self.nearestNeighborRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_NEARESTNEIGHBOR, self.nearestNeighborParametersFrame ) )
-    self.fuzzyRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FUZZY, self.fuzzyParametersFrame ) )
+    self.linearCombinationRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_LINEARCOMBINATION ) )
+    self.nearestNeighborRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_NEARESTNEIGHBOR ) )
+    self.fuzzyRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FUZZY ) )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
 
@@ -569,9 +569,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     if ( parameterNode is None ):
       return
     
-    parameterNode.SetNodeReferenceID( "Metrics", metricsNode.GetID() )
-    SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode )
+    parameterNode.SetNodeReferenceID( "Metrics", metricsNode.GetID() ) # Automatically triggers update
     
     
   def onWeightsChanged( self, weightNode ):
@@ -579,28 +577,25 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     if ( parameterNode is None ):
       return
     
-    parameterNode.SetNodeReferenceID( "Weights", weightNode.GetID() )
-    SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode )
+    parameterNode.SetNodeReferenceID( "Weights", weightNode.GetID() ) # Automatically triggers update
     
     
   def onTrainingSetChanged( self ):
     parameterNode = self.parameterNodeSelector.currentNode()
     if ( parameterNode is None ):
       return
-      
+
+    modifyState = parameterNode.StartModify()
+
     trainingNodes = self.trainingSetSelector.checkedNodes()
     parameterNode.RemoveNodeReferenceIDs( "Training" )
     for node in trainingNodes:
       parameterNode.AddNodeReferenceID( "Training", node.GetID() )
+
+    parameterNode.EndModify( modifyState ) # Automatically triggers update
     
-    SkillAssessmentLogic.Assess( parameterNode )
-    self.updateAssessmentTable( parameterNode )
     
-    
-  def onAssessmentMethodRadioButtonToggled( self, assessmentMethod, frame, toggled ):    
-    frame.setVisible( toggled )
-    
+  def onAssessmentMethodRadioButtonToggled( self, assessmentMethod, toggled ):
     parameterNode = self.parameterNodeSelector.currentNode()
     if ( parameterNode is None ):
       return
@@ -615,6 +610,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
   
     SkillAssessmentLogic.Assess( parameterNode )
+    self.updateWidgetFromParameterNode( parameterNode )
     self.updateAssessmentTable( parameterNode )
     self.assessmentTable.show()
     
@@ -622,21 +618,43 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
   def updateWidgetFromParameterNode( self, parameterNode ):
     if ( parameterNode is None ):
       return
-      
+
+    blockState = self.metricsSelector.blockSignals( True )
     self.metricsSelector.setCurrentNode( parameterNode.GetNodeReference( "Metrics" ) )
+    self.metricsSelector.blockSignals( blockState )
+
+    blockState = self.weightsSelector.blockSignals( True )
     self.weightsSelector.setCurrentNode( parameterNode.GetNodeReference( "Weights" ) )
-    
-    for nodeIndex in range( parameterNode.GetNumberOfNodeReferences( "Training" ) ):
-      trainingNode = parameterNode.GetNthNodeReference( "Training", nodeIndex )
-      self.trainingSetSelector.setCheckState( trainingNode, 2 )
+    self.weightsSelector.blockSignals( blockState )
+
+    blockState = self.trainingSetSelector.blockSignals( True )
+    for node in self.trainingSetSelector.checkedNodes():
+      if ( not parameterNode.HasNodeReferenceID( "Training", node.GetID() ) ):
+        self.trainingSetSelector.setCheckState( node, 0 )
+    for node in self.trainingSetSelector.uncheckedNodes():
+      if ( parameterNode.HasNodeReferenceID( "Training", node.GetID() ) ):
+        self.trainingSetSelector.setCheckState( node, 2 )
+    self.trainingSetSelector.blockSignals( blockState )
       
     assessmentMethod = parameterNode.GetAttribute( "AssessmentMethod" )
+    linearCombinationBlockState = self.linearCombinationRadioButton.blockSignals( True )
+    nearestNeighborBlockState = self.nearestNeighborRadioButton.blockSignals( True )
+    fuzzyBlockState = self.fuzzyRadioButton.blockSignals( True )
+    self.linearCombinationParametersFrame.hide()
+    self.nearestNeighborParametersFrame.hide()
+    self.fuzzyParametersFrame.hide()
     if ( assessmentMethod == ASSESSMENT_METHOD_LINEARCOMBINATION ):
       self.linearCombinationRadioButton.setChecked( True )
+      self.linearCombinationParametersFrame.show()
     if ( assessmentMethod == ASSESSMENT_METHOD_NEARESTNEIGHBOR ):
       self.nearestNeighborRadioButton.setChecked( True )
+      self.nearestNeighborParametersFrame.show()
     if ( assessmentMethod == ASSESSMENT_METHOD_FUZZY ):
       self.fuzzyRadioButton.setChecked( True )
+      self.fuzzyParametersFrame.show()
+    self.linearCombinationRadioButton.blockSignals( linearCombinationBlockState)
+    self.nearestNeighborRadioButton.blockSignals( nearestNeighborBlockState )
+    self.fuzzyRadioButton.blockSignals( fuzzyBlockState )
 
     self.resultsLabel.setText( parameterNode.GetAttribute( "OverallScore" ) )
 
@@ -666,7 +684,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     if ( parameterNode is None ):
       logging.info( "SkillAssessmentLogic::Assess: Parameter node is None." )
       return 0
-  
+
     assessmentMethod = parameterNode.GetAttribute( "AssessmentMethod" )
     if ( assessmentMethod == "" ):
       logging.info( "SkillAssessmentLogic::Assess: Assessment method improperly specified. Please pick one of the pre-defined options." )
@@ -683,6 +701,8 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     if ( len( trainingNodes ) == 0 ):
       logging.info( "SkillAssessmentLogic::Assess: Training dataset is empty. Could not assess." )
       return 0
+
+    modifyState = parameterNode.StartModify()
       
     weightsNode = parameterNode.GetNodeReference( "Weights" )
     if ( weightsNode is None ):      
@@ -731,8 +751,6 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       Assessor = AssessmentMethods.NearestNeighborAssessment
     if ( assessmentMethod == ASSESSMENT_METHOD_FUZZY ):
       Assessor = AssessmentMethods.FuzzyAssessment
-      
-    print Assessor
 
     # Compute the metric/task pair skill values
     convertedMetricsTable = SkillAssessmentLogic.CreateTableFromMetricsNode( metricsNode, 0 )
@@ -807,6 +825,8 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     parameterNode.SetAttribute( "Strengths", strengthsString )
     weaknessesString = SkillAssessmentLogic.GetFeedbackString( convertedMetricsTable, criticalValue, operator.gt, "too high", 3 )
     parameterNode.SetAttribute( "Weaknesses", weaknessesString )
+
+    parameterNode.EndModify( modifyState )
     
 
   @staticmethod

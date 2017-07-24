@@ -66,15 +66,14 @@ class LinearCombinationParametersWidget( qt.QFrame ):
       self.parameterNode.RemoveObserver( self.parameterNodeObserverTag )
       
     self.parameterNode = parameterNode
-    
-    if ( self.parameterNode is not None ):
-      self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
-  
+
     if ( self.parameterNode.GetAttribute( "ScalingMethod" ) is None ):
       self.parameterNode.SetAttribute( "ScalingMethod", SCALING_METHOD_ZSCORE )
     if ( self.parameterNode.GetAttribute( "AggregationMethod" ) is None ):
       self.parameterNode.SetAttribute( "AggregationMethod", AGGREGATION_METHOD_MEAN )
 
+    if ( self.parameterNode is not None ):
+      self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
     self.updateWidgetFromParameterNode()
     
     

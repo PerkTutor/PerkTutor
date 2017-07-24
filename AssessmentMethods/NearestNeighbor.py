@@ -62,15 +62,14 @@ class NearestNeighborParametersWidget( qt.QFrame ):
       self.parameterNode.RemoveObserver( self.parameterNodeObserverTag )
       
     self.parameterNode = parameterNode
-    
-    if ( self.parameterNode is not None ):
-      self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
   
     if ( self.parameterNode.GetAttribute( "NeighborWeight" ) is None ):
       self.parameterNode.SetAttribute( "NeighborWeight", NEIGHBOR_WEIGHT_EQUAL )
     if ( self.parameterNode.GetAttribute( "NumberOfNeighbors" ) is None ):
       self.parameterNode.SetAttribute( "NumberOfNeighbors", str( 1 ) )
 
+    if ( self.parameterNode is not None ):
+      self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
     self.updateWidgetFromParameterNode()
     
     

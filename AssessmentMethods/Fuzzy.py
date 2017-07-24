@@ -97,10 +97,7 @@ class FuzzyParametersWidget( qt.QFrame ):
       self.parameterNode.RemoveObserver( self.parameterNodeObserverTag )
       
     self.parameterNode = parameterNode
-    
-    if ( self.parameterNode is not None ):
-      self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
-  
+
     if ( self.parameterNode.GetAttribute( "Defuzzifier" ) is None ):
       self.parameterNode.SetAttribute( "Defuzzifier", DEFUZZIFIER_COM )
     if ( self.parameterNode.GetAttribute( "Shrink" ) is None ):
@@ -108,6 +105,8 @@ class FuzzyParametersWidget( qt.QFrame ):
     if ( self.parameterNode.GetAttribute( "SkillClasses" ) is None ):
       self.parameterNode.SetAttribute( "SkillClasses", str( 2 ) ) # Default 2 (i.e. Novice and Expert)
 
+    if ( self.parameterNode is not None ):
+      self.parameterNodeObserverTag = self.parameterNode.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateWidgetFromParameterNode )
     self.updateWidgetFromParameterNode()
     
     
