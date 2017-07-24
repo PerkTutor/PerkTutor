@@ -15,6 +15,8 @@ ASSESSMENT_METHOD_LINEARCOMBINATION = "LinearCombination"
 ASSESSMENT_METHOD_NEARESTNEIGHBOR = "NearestNeighbor"
 ASSESSMENT_METHOD_FUZZY = "Fuzzy"
 
+OUTPUT_PRECISION = 3
+
 
 class SkillAssessment( ScriptedLoadableModule ):
   """Uses ScriptedLoadableModule base class, available at:
@@ -770,7 +772,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         weights = SkillAssessmentLogic.GetMetricValuesFromNode( weightsNode, metricName, metricRoles, metricUnit, columnName )
 
         convertedMetricValue = Assessor.ComputeSkill( parameterNode, testMetricValue, trainingMetricValues, weights, skillLabels )
-        convertedMetricsTable.SetValue( rowIndex, columnIndex, convertedMetricValue )
+        convertedMetricsTable.SetValue( rowIndex, columnIndex, round( convertedMetricValue, OUTPUT_PRECISION ) )
 
     convertedMetricsNode = parameterNode.GetNodeReference( "ConvertedMetrics" )
     convertedMetricsNode.SetAndObserveTable( convertedMetricsTable )    
@@ -788,7 +790,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       weights = SkillAssessmentLogic.GetMetricValuesFromNode( weightsNode, metricName, metricRoles, metricUnit, None )
 
       currMetricScore = Assessor.ComputeSkill( parameterNode, testMetricValue, trainingMetricValues, weights, skillLabels )
-      metricScoresTable.SetValueByName( rowIndex, "MetricScore", currMetricScore )
+      metricScoresTable.SetValueByName( rowIndex, "MetricScore", round( currMetricScore, OUTPUT_PRECISION ) )
       
     metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
     metricScoresNode.SetAndObserveTable( metricScoresTable )
@@ -806,7 +808,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       weights = SkillAssessmentLogic.GetMetricValuesFromNode( weightsNode, None, None, None, columnName )
 
       currTaskScore = Assessor.ComputeSkill( parameterNode, testMetricValue, trainingMetricValues, weights, skillLabels )
-      taskScoresTable.SetValueByName( 0, columnName, currTaskScore )
+      taskScoresTable.SetValueByName( 0, columnName, round( currTaskScore, OUTPUT_PRECISION ) )
       
     taskScoresNode = parameterNode.GetNodeReference( "TaskScores" )
     taskScoresNode.SetAndObserveTable( taskScoresTable )
@@ -817,7 +819,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     weights = SkillAssessmentLogic.GetMetricValuesFromNode( weightsNode, None, None, None, None )
 
     overallScore = Assessor.ComputeSkill( parameterNode, testMetricValue, trainingMetricValues, weights, skillLabels )
-    parameterNode.SetAttribute( "OverallScore", str( overallScore ) )
+    parameterNode.SetAttribute( "OverallScore", str( round( overallScore, OUTPUT_PRECISION ) ) )
 
     # Produce the feedback strings
     criticalValue = Assessor.GetCriticalValue( parameterNode, skillLabels )
