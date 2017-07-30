@@ -107,7 +107,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricsZipFile.extractall( metricsDownloadDirectory )
     
     additionalMetricScriptDirectory = os.path.join( metricsDownloadDirectory, "PythonMetrics-master" )
-    metricScriptFiles = glob.glob( os.path.join( additionalMetricScriptDirectory, "[a-z]*.py" ) )
+    metricScriptFiles = glob.glob( os.path.join( additionalMetricScriptDirectory, "[a-zA-Z]*.py" ) )
     properties = { "fileNames": metricScriptFiles }
     
     ioManager = slicer.app.ioManager()
@@ -119,7 +119,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     
   @staticmethod
   def AddMetricsFromDirectoryToScene( metricsDirectory ):
-    metricScriptFiles = glob.glob( os.path.join( metricsDirectory, "[a-z]*.py" ) )
+    metricScriptFiles = glob.glob( os.path.join( metricsDirectory, "[a-zA-Z]*.py" ) )
     for script in metricScriptFiles:
       slicer.util.loadNodeFromFile( script, "Python Metric Script" )
     
