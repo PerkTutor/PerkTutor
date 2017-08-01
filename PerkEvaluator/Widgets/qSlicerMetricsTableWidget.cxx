@@ -361,6 +361,7 @@ void qSlicerMetricsTableWidget
     d->MetricsTable->setItem( i, 1, valueItem );
   }
 
+  d->MetricsTable->sortItems( 0 ); // Sort by metric name to ensure we always have consistent ordering (no matter what order the metrics were imported into the scene)
   d->MetricsTable->resizeRowsToContents();
 
   // Make sure the table widget is large enough so that no scroll bar is needed to see all of the data
