@@ -353,10 +353,10 @@ vtkMRMLMetricInstanceNode* vtkSlicerPerkEvaluatorLogic
   // Create a metric instance node, with empty roles
   vtkSmartPointer< vtkMRMLMetricInstanceNode > newMINode;
   newMINode.TakeReference( vtkMRMLMetricInstanceNode::SafeDownCast( this->GetMRMLScene()->CreateNodeByClass( "vtkMRMLMetricInstanceNode" ) ) );
-  newMINode->SetScene( this->GetMRMLScene() );
-	this->GetMRMLScene()->AddNode( newMINode );
   newMINode->SetName( msNode->GetName() );
+  newMINode->SetScene( this->GetMRMLScene() );
   newMINode->SetAssociatedMetricScriptID( msNode->GetID() );
+	this->GetMRMLScene()->AddNode( newMINode );
   // If it is shared, it will be added automatically to all the perk evaluator nodes
   // If it is not shared, it must be added manually to perk evaluator nodes
 

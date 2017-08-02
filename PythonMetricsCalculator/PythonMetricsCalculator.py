@@ -222,10 +222,26 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricScriptNodes = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodesByClass( "vtkMRMLMetricScriptNode" )
     
     for i in range( metricScriptNodes.GetNumberOfItems() ):
-      execDict = dict()
+      execVars = dict()
       currentMetricScriptNode = metricScriptNodes.GetItemAsObject( i )
-      exec currentMetricScriptNode.GetPythonSourceCode() in execDict
-      metricModuleDict[ currentMetricScriptNode.GetID() ] = execDict[ "PerkEvaluatorMetric" ]
+      exec currentMetricScriptNode.GetPythonSourceCode() in execVars
+      # Find the metric module in the locals dict
+      currMetricModule = None
+      for localVar in execVars.values():
+        try:
+          if ( issubclass( localVar, PerkEvaluatorMetric ) ):
+            currMetricModule = localVar
+        except: # If localVar is not a class at all, then continue
+          pass
+
+      # Add the metric module to a dictionary of all metric modules
+      if ( currMetricModule is None ):
+        try:
+          currMetricModule = execVars[ "PerkEvaluatorMetric" ]
+        except:
+          continue
+
+      metricModuleDict[ currentMetricScriptNode.GetID() ] = currMetricModule
     
     return metricModuleDict
     
@@ -270,11 +286,11 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
      
     rolesSatisfied = True
       
-    for role in metricModule.GetRequiredAnatomyRoles():
+    for role in PythonMetricsCalculatorLogic.GetAnatomyRoles( metricModule ):
       if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.AnatomyRole ) == "" ):
         rolesSatisfied = False        
           
-    for role in metricModule.GetAcceptedTransformRoles():
+    for role in PythonMetricsCalculatorLogic.GetTransformRoles( metricModule ):
       if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == "" ):
         rolesSatisfied = False
           
@@ -291,12 +307,15 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     unfulfilledAnatomies = []    
   
     for metricInstanceID in metrics:
-      metricAnatomyRoles = metrics[ metricInstanceID ].GetRequiredAnatomyRoles()
+      metricAnatomyRoles = PythonMetricsCalculatorLogic.GetAnatomyRoles( metrics[ metricInstanceID ] )
       metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
       
       for role in metricAnatomyRoles:
         anatomyNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.AnatomyRole )
-        added = metrics[ metricInstanceID ].AddAnatomyRole( role, anatomyNode )
+        try:
+          added = metrics[ metricInstanceID ].CheckAndSetAnatomy( role, anatomyNode )
+        except: #TODO: Keep for backwards compatibility
+          added = metrics[ metricInstanceID ].AddAnatomyRole( role, anatomyNode )
         
         if ( not added ):
           unfulfilledAnatomies.append( metricInstanceID )
@@ -316,7 +335,32 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     peNode.GetNeedleOrientation( peNodeNeedleOrientation )
     
     for metricInstanceID in metrics:
-      metrics[ metricInstanceID ].NeedleOrientation = peNodeNeedleOrientation[:] # Element copy
+      try:
+        metrics[ metricInstanceID ].SetNeedleOrientation( peNodeNeedleOrientation )
+      except: #TODO: Keeping for backwards compatibility
+        metrics[ metricInstanceID ].NeedleOrientation = peNodeNeedleOrientation[:] # Element copy
+        
+        
+  # Note: We are returning a list here, not a dictionary
+  @staticmethod
+  def GetTransformRoles( metric ): # TODO: We maintain this for backwards compatiblity with old-style metrics
+    # This may take a metric (instance) or metric module (class) as input
+    # This is OK because the GetTransformRoles is a static method
+    try:
+      return metric.GetTransformRoles()
+    except: #TODO: Backwards compatibility
+      return metric.GetAcceptedTransformRoles()
+      
+      
+  # Note: We are returning a dictionary here
+  @staticmethod
+  def GetAnatomyRoles( metric ): # TODO: We maintain this for backwards compatiblity with old-style metrics
+    # This may take a metric (instance) or metric module (class) as input
+    # This is OK because the GetAnatomyRoles is a static method
+    try:
+      return metric.GetAnatomyRoles()
+    except: #TODO: Backwards compatibility
+      return metric.GetRequiredAnatomyRoles()
       
         
   # Note: We are returning a list here, not a dictionary
@@ -326,9 +370,9 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       return []
   
     if ( roleType == slicer.vtkMRMLMetricInstanceNode.TransformRole ):
-      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles()
+      return PythonMetricsCalculatorLogic.GetTransformRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] )
     elif ( roleType == slicer.vtkMRMLMetricInstanceNode.AnatomyRole ):
-      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys()
+      return PythonMetricsCalculatorLogic.GetAnatomyRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] ).keys()
     else:
       return []
     
@@ -339,7 +383,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
       return "" 
       
-    return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles()[ role ]
+    return PythonMetricsCalculatorLogic.GetAnatomyRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] )[ role ]
     
   # Note: We are returning a string here
   @staticmethod
@@ -366,9 +410,9 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       return False
       
     try:
-      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetMetricShared()
+      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].IsShared()
     except: # TODO: Keep this for backwards compatibility with Python Metrics?
-      return True
+      return False
       
   
   # Note: We are returning a bool here
@@ -377,15 +421,15 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     if ( metricScriptID not in PythonMetricsCalculatorLogic.AllMetricModules ):
       return False
     
-    numTransformRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetAcceptedTransformRoles() ) #TODO: Add check for "Any" role?
-    numAnatomyRoles = len( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetRequiredAnatomyRoles().keys() )
+    numTransformRoles = len( PythonMetricsCalculatorLogic.GetTransformRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] ) ) #TODO: Add check for "Any" role?
+    numAnatomyRoles = len( PythonMetricsCalculatorLogic.GetAnatomyRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] ) )
     if ( numTransformRoles != 1 or numAnatomyRoles != 0 ):
       return False
       
     try:
-      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].GetMetricPervasive()
+      return PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ].IsPervasive()
     except: # TODO: Keep this for backwards compatibility with Python Metrics?
-      return True
+      return False
       
     
   @staticmethod
@@ -509,7 +553,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       metric = taskMetrics[ metricInstanceID ]
       metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
       
-      for role in metric.GetAcceptedTransformRoles():
+      for role in PythonMetricsCalculatorLogic.GetTransformRoles( metric ):
         if ( metricInstanceNode.GetRoleID( role, metricInstanceNode.TransformRole ) == transformNode.GetID() ):
           try:
             metric.AddTimestamp( time, matrix, point, role )
@@ -536,9 +580,11 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     
     if ( self.realTimeMetricsTable is not None ):
       PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( metricsTable, self.realTimeMetrics )
-
-	
+    
+      
+#	
 # PythonMetricsCalculatorTest
+#
 
 class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
   """
@@ -768,3 +814,63 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
       
     print "In-plane test completed."
     self.assertTrue( metricsMatch )
+
+    
+    
+    
+#
+# PerkEvaluatorMetric
+#
+
+class PerkEvaluatorMetric:
+  
+  # Static methods
+  @staticmethod
+  def GetMetricName():
+    return "Perk Evaluator Metric"
+    
+  @staticmethod
+  def GetMetricUnit():
+    return ""
+    
+  @staticmethod
+  def IsPervasive():
+    return False
+    
+  @staticmethod
+  def IsShared():
+    return False
+    
+  @staticmethod
+  def IsHidden():
+    return False
+    
+  @staticmethod
+  def GetTransformRoles():
+    return [ "Any" ]
+    
+  @staticmethod
+  def GetAnatomyRoles():
+    return {}
+    
+  
+  # Instance methods
+  def __init__( self ):
+    self.NeedleOrientation = [ 0, 0, 0 ]
+    
+  def SetNeedleOrientation( self, orientation ):
+    self.NeedleOrientation = orientation[:] # Element copy
+    
+  def CheckAndSetAnatomy( self, role, node ):
+    if ( role in self.GetAnatomyRoles() and node.IsA( self.GetAnatomyRoles()[ role ] ) ):
+      return self.SetAnatomy( role, node )      
+    return False
+    
+  def SetAnatomy( self, role, node ):
+    return False
+    
+  def AddTimestamp( self, time, matrix, point, role ):
+    pass
+    
+  def GetMetric( self ):
+    return 0      
