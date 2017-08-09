@@ -550,28 +550,51 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <widget class="qMRMLNodeComboBox" name="BaseMetricScriptComboBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <property name="topMargin">
+             <number>0</number>
             </property>
-            <property name="toolTip">
-             <string>Choose a metric script node as a template to create instances.</string>
-            </property>
-            <property name="nodeTypes">
-             <stringlist>
-              <string>vtkMRMLMetricScriptNode</string>
-             </stringlist>
-            </property>
-            <property name="addEnabled">
-             <bool>false</bool>
-            </property>
-            <property name="removeEnabled">
-             <bool>false</bool>
-            </property>
-           </widget>
+            <item>
+             <widget class="qMRMLNodeComboBox" name="BaseMetricScriptComboBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Choose a metric script node as a template to create instances.</string>
+              </property>
+              <property name="nodeTypes">
+               <stringlist>
+                <string>vtkMRMLMetricScriptNode</string>
+               </stringlist>
+              </property>
+              <property name="addEnabled">
+               <bool>false</bool>
+              </property>
+              <property name="removeEnabled">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="AddMetricInstanceButton">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Create and add metric instance based on the selected metric script.</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <widget class="QFrame" name="HorizontalLine">
@@ -592,7 +615,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>Create a metric instance node based on the selected templates.</string>
+             <string>Select a metric instance node to edit.</string>
             </property>
             <property name="nodeTypes">
              <stringlist>
@@ -601,6 +624,9 @@
             </property>
             <property name="showHidden">
              <bool>true</bool>
+            </property>
+            <property name="addEnabled">
+             <bool>false</bool>
             </property>
             <property name="renameEnabled">
              <bool>true</bool>

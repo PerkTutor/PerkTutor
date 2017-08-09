@@ -328,19 +328,25 @@ qSlicerPerkEvaluatorModuleWidget
 
 
 void qSlicerPerkEvaluatorModuleWidget
-::OnEditMetricInstanceNodeCreated( vtkMRMLNode* node )
+::OnAddMetricInstance()
 {
   Q_D( qSlicerPerkEvaluatorModuleWidget );
 
-  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( node );
+  vtkMRMLMetricInstanceNode* miNode = vtkMRMLMetricInstanceNode::SafeDownCast( d->EditMetricInstanceNodeComboBox->addNode() );
   vtkMRMLMetricScriptNode* msNode = vtkMRMLMetricScriptNode::SafeDownCast( d->BaseMetricScriptComboBox->currentNode() );
   if ( miNode == NULL || msNode == NULL )
   {
     return;
   }
+  miNode->SetAssociatedMetricScriptID( msNode->GetID() ); // automatically updates node name
 
-  miNode->SetAssociatedMetricScriptID( msNode->GetID() );
-  miNode->SetName( msNode->GetName() );
+  // Add the metric instance to the current PerkEvaluator node for convenience
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+  peNode->AddMetricInstanceID( miNode->GetID() );
 }
 
 
@@ -583,12 +589,15 @@ qSlicerPerkEvaluatorModuleWidget
 
 
   // Advanced tab
-  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( nodeAddedByUser( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeCreated( vtkMRMLNode* ) ) );
-  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
   connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
+
+  connect( d->AddMetricInstanceButton, SIGNAL( clicked() ), this, SLOT( OnAddMetricInstance() ) );
+  d->AddMetricInstanceButton->setIcon( QIcon( ":/Icons/Add.png" ) ); // Borrowed from Sequences
+  connect( d->EditMetricInstanceNodeComboBox, SIGNAL( currentNodeChanged( vtkMRMLNode* ) ), this, SLOT( OnEditMetricInstanceNodeChanged() ) );
+
+  connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->ComputeTaskSpecificMetricsCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnComputeTaskSpecificMetricsToggled() ) );
-  connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
   connect( d->DownloadAdditionalMetricsButton, SIGNAL( clicked() ), this, SLOT( OnDownloadAdditionalMetricsClicked() ) );
   connect( d->RestoreDefaultMetricsButton, SIGNAL( clicked() ), this, SLOT( OnRestoreDefaultMetricsClicked() ) );
 

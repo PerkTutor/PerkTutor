@@ -524,7 +524,7 @@ bool vtkSlicerPerkEvaluatorLogic
 {
   if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
   {
-    return "";
+    return false;
   }
 
   // Use the python metrics calculator module
@@ -540,7 +540,7 @@ bool vtkSlicerPerkEvaluatorLogic
 {
   if ( this->GetMRMLScene()->GetNodeByID( msNodeID ) == NULL )
   {
-    return "";
+    return false;
   }
 
   // Use the python metrics calculator module

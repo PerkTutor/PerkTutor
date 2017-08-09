@@ -47,7 +47,7 @@ public slots:
 
   void OnMetricInstanceNodesChanged();
 
-  void OnEditMetricInstanceNodeCreated( vtkMRMLNode* node );
+  void OnAddMetricInstance();
   void OnEditMetricInstanceNodeChanged();
 
   void OnAutoUpdateMeasurementRangeToggled();
