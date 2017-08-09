@@ -749,7 +749,7 @@ void vtkSlicerPerkEvaluatorLogic
     {
       this->UpdatePervasiveMetrics( msNode );
     }
-    else
+    else if ( this->GetMetricShared( msNode->GetID() ) )
     {
       this->CreateMetricInstance( msNode );
     }
