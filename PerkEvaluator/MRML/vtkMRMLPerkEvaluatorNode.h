@@ -81,6 +81,10 @@ public:
   bool GetComputeTaskSpecificMetrics();
   void SetComputeTaskSpecificMetrics( bool compute );
 
+  // Whether to ignore transforms that are not proxy nodes or children of proxy nodes (that is their ToWorld transform is unchanged by browsing the sequence)
+  bool GetIgnoreIrrelevantTransforms();
+  void SetIgnoreIrrelevantTransforms( bool ignore );
+
   // Analysis start/end times (note: these are relative times)
   double GetMarkBegin();
   void SetMarkBegin( double newBegin );
@@ -146,6 +150,7 @@ protected:
 
   bool AutoUpdateMeasurementRange;
   bool ComputeTaskSpecificMetrics;
+  bool IgnoreIrrelevantTransforms;
 
   double MarkBegin;
   double MarkEnd;

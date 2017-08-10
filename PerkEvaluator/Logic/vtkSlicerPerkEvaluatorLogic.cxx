@@ -329,12 +329,15 @@ void vtkSlicerPerkEvaluatorLogic
   std::vector< std::string > transformRoles = this->GetAllRoles( msNode->GetID(), vtkMRMLMetricInstanceNode::TransformRole );
 
   // Grab all transforms
-  vtkSmartPointer< vtkCollection > transformNodes = vtkSmartPointer< vtkCollection >::New();
-  this->GetSceneVisibleTransformNodes( transformNodes );
+  vtkSmartPointer< vtkCollection > transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
 
   for ( int i = 0; i < transformNodes->GetNumberOfItems(); i++ )
   {
     vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNodes->GetItemAsObject( i ) );
+    if ( transformNode == NULL || transformNode->GetHideFromEditors() )
+    {
+      continue;
+    }
     // Create a metric instance node, with this transform serving the lone transform role
     this->CreatePervasiveMetric( msNode, transformNode, transformRoles.at( 0 ) ); // Must have precisely one transform role if it is pervasive 
   }
@@ -464,26 +467,58 @@ void vtkSlicerPerkEvaluatorLogic
 }
 
 
-bool vtkSlicerPerkEvaluatorLogic
-::IsSelfOrDescendentNode( vtkMRMLNode* parent, vtkMRMLNode* child )
+void vtkSlicerPerkEvaluatorLogic
+::GetProxyRelevantTransformNodes( vtkMRMLSequenceBrowserNode* sequenceBrowser, vtkCollection* relevantTransformNodes )
 {
-  while( child != NULL )
+  if ( sequenceBrowser == NULL || relevantTransformNodes == NULL )
   {
-    if ( strcmp( parent->GetID(), child->GetID() ) == 0 )
-    {
-      return true;
-    }
-
-    vtkMRMLTransformableNode* childTransformable = vtkMRMLTransformableNode::SafeDownCast( child );
-    if ( childTransformable == NULL )
-    {
-      return false;
-    }
-
-    child = childTransformable->GetParentTransformNode();
+    return;
   }
 
-  return false;
+  vtkNew< vtkCollection > proxyNodes;
+  sequenceBrowser->GetAllProxyNodes( proxyNodes.GetPointer() );
+  this->GetProxyRelevantTransformNodes( proxyNodes.GetPointer(), relevantTransformNodes );
+}
+
+
+void vtkSlicerPerkEvaluatorLogic
+::GetProxyRelevantTransformNodes( vtkCollection* proxyNodes, vtkCollection* relevantTransformNodes )
+{
+  if ( proxyNodes == NULL || relevantTransformNodes == NULL )
+  {
+    return;
+  }
+
+  // Get all transform nodes which are a proxy node or a child of a proxy node
+  vtkSmartPointer< vtkCollection > sceneTransformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkNew< vtkCollectionIterator > sceneTransformNodesIt;
+  sceneTransformNodesIt->SetCollection( sceneTransformNodes );
+
+  vtkNew< vtkCollectionIterator > proxyNodesIt;
+  proxyNodesIt->SetCollection( proxyNodes );
+
+  for ( sceneTransformNodesIt->InitTraversal(); ! sceneTransformNodesIt->IsDoneWithTraversal(); sceneTransformNodesIt->GoToNextItem() )
+  {
+    vtkMRMLLinearTransformNode* currSceneTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( sceneTransformNodesIt->GetCurrentObject() );
+    if ( currSceneTransformNode == NULL )
+    {
+      continue;
+    }
+    for ( proxyNodesIt->InitTraversal(); ! proxyNodesIt->IsDoneWithTraversal(); proxyNodesIt->GoToNextItem() )
+    {
+      vtkMRMLLinearTransformNode* currProxyTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( proxyNodesIt->GetCurrentObject() );
+      if ( currProxyTransformNode == NULL )
+      {
+        continue;
+      }
+      if ( currSceneTransformNode == currProxyTransformNode
+        || currSceneTransformNode->IsTransformNodeMyParent( currProxyTransformNode ) )
+      {
+        relevantTransformNodes->AddItem( currSceneTransformNode );
+        break;
+      }  
+    }  
+  }
 }
 
 
@@ -601,29 +636,6 @@ void vtkSlicerPerkEvaluatorLogic
   // TODO: Is there an elegant way to do this in C++
   this->PythonManager->executeString( QString( "PythonMetricsCalculator.PythonMetricsCalculatorLogic.AddCoreMetricsToScene()" ) );
 }
-
-
-void vtkSlicerPerkEvaluatorLogic
-::GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes )
-{
-  if ( visibleTransformNodes == NULL )
-  {
-    return;
-  }
-  visibleTransformNodes->RemoveAllItems();
-
-  vtkSmartPointer< vtkCollection > transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
-  
-  for ( int i = 0; i < transformNodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast( transformNodes->GetItemAsObject( i ) );
-    if ( transformNode != NULL && transformNode->GetHideFromEditors() == false )
-    {
-      visibleTransformNodes->AddItem( transformNode );
-    }
-  }
-}
-
 
 
 void vtkSlicerPerkEvaluatorLogic

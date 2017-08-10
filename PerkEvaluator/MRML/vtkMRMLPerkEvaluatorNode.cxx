@@ -57,6 +57,7 @@ void vtkMRMLPerkEvaluatorNode
   
   of << indent << "AutoUpdateMeasurementRange=\"" << this->AutoUpdateMeasurementRange << "\"";
   of << indent << "ComputeTaskSpecificMetrics=\"" << this->ComputeTaskSpecificMetrics << "\"";
+  of << indent << "IgnoreIrrelevantTransforms=\"" << this->IgnoreIrrelevantTransforms << "\"";
   of << indent << "MarkBegin=\"" << this->MarkBegin << "\"";
   of << indent << "MarkEnd=\"" << this->MarkEnd << "\"";
   of << indent << "NeedleOrientation=\"" << this->NeedleOrientation << "\"";
@@ -89,6 +90,10 @@ void vtkMRMLPerkEvaluatorNode
     if ( ! strcmp( attName, "ComputeTaskSpecificMetrics" ) )
     {
       this->ComputeTaskSpecificMetrics = atoi( attValue );
+    }
+    if ( ! strcmp( attName, "IgnoreIrrelevantTransforms" ) )
+    {
+      this->IgnoreIrrelevantTransforms = atoi( attValue );
     }
     if ( ! strcmp( attName, "MarkBegin" ) )
     {
@@ -141,6 +146,7 @@ void vtkMRMLPerkEvaluatorNode
 
   this->AutoUpdateMeasurementRange = node->AutoUpdateMeasurementRange;
   this->ComputeTaskSpecificMetrics = node->ComputeTaskSpecificMetrics;
+  this->IgnoreIrrelevantTransforms = node->IgnoreIrrelevantTransforms;
   this->MarkBegin = node->MarkBegin;
   this->MarkEnd = node->MarkEnd;
   this->NeedleOrientation = node->NeedleOrientation;
@@ -157,6 +163,7 @@ vtkMRMLPerkEvaluatorNode
 {
   this->AutoUpdateMeasurementRange = true;
   this->ComputeTaskSpecificMetrics = false;
+  this->IgnoreIrrelevantTransforms = true;
 
   this->MarkBegin = 0.0;
   this->MarkEnd = 0.0;
@@ -216,6 +223,24 @@ void vtkMRMLPerkEvaluatorNode
   if ( compute != this->ComputeTaskSpecificMetrics )
   {
     this->ComputeTaskSpecificMetrics = compute;
+    this->Modified();
+  }
+}
+
+
+bool vtkMRMLPerkEvaluatorNode
+::GetIgnoreIrrelevantTransforms()
+{
+  return this->IgnoreIrrelevantTransforms;
+}
+
+
+void vtkMRMLPerkEvaluatorNode
+::SetIgnoreIrrelevantTransforms( bool ignore )
+{
+  if ( ignore != this->IgnoreIrrelevantTransforms )
+  {
+    this->IgnoreIrrelevantTransforms = ignore;
     this->Modified();
   }
 }

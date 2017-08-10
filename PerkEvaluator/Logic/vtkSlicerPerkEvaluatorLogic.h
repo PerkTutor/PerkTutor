@@ -66,8 +66,6 @@ protected:
   qSlicerPythonManager* PythonManager;
 
 public:
-  
-  bool IsSelfOrDescendentNode( vtkMRMLNode* parent, vtkMRMLNode* child );
 
   std::string GetMetricName( std::string msNodeID );
   std::string GetMetricUnit( std::string msNodeID );
@@ -80,7 +78,8 @@ public:
   void DownloadAdditionalMetrics();
   void RestoreDefaultMetrics();
 
-  void GetSceneVisibleTransformNodes( vtkCollection* visibleTransformNodes );
+  void GetProxyRelevantTransformNodes( vtkMRMLSequenceBrowserNode* sequenceBrowser, vtkCollection* relevantTransformNodes );
+  void GetProxyRelevantTransformNodes( vtkCollection* proxyNodes, vtkCollection* relevantTransformNodes );
 
   void UpdateSceneToPlaybackTime( vtkMRMLPerkEvaluatorNode* peNode, double playbackTime );
 

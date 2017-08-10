@@ -52,6 +52,7 @@ public slots:
 
   void OnAutoUpdateMeasurementRangeToggled();
   void OnComputeTaskSpecificMetricsToggled();
+  void OnIgnoreIrrelevantTransformsToggled();
 
   void OnDownloadAdditionalMetricsClicked();
   void OnRestoreDefaultMetricsClicked();

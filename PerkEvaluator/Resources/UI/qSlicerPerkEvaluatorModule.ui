@@ -832,8 +832,27 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Compute metrics during each task defined in the message sequence.</string>
+            </property>
             <property name="text">
              <string>Compute Task-Specific Metrics</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="IgnoreIrrelevantTransformsCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Ignore transforms that are not proxy nodes or children of proxy nodes of the tracked sequence browser during metric computation.</string>
+            </property>
+            <property name="text">
+             <string>Ignore Irrelevant Transforms</string>
             </property>
            </widget>
           </item>

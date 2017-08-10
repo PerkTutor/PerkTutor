@@ -390,6 +390,21 @@ void qSlicerPerkEvaluatorModuleWidget
 }
 
 
+void qSlicerPerkEvaluatorModuleWidget
+::OnIgnoreIrrelevantTransformsToggled()
+{
+  Q_D( qSlicerPerkEvaluatorModuleWidget );
+
+  vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( d->PerkEvaluatorNodeComboBox->currentNode() );
+  if ( peNode == NULL )
+  {
+    return;
+  }
+
+  peNode->SetIgnoreIrrelevantTransforms( d->IgnoreIrrelevantTransformsCheckBox->isChecked() );
+}
+
+
 void
 qSlicerPerkEvaluatorModuleWidget
 ::OnDownloadAdditionalMetricsClicked()
@@ -598,11 +613,9 @@ qSlicerPerkEvaluatorModuleWidget
   connect( d->NeedleOrientationButtonGroup, SIGNAL( buttonClicked( QAbstractButton* ) ), this, SLOT( onNeedleOrientationChanged( QAbstractButton* ) ) );
   connect( d->AutoUpdateMeasurementRangeCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnAutoUpdateMeasurementRangeToggled() ) );
   connect( d->ComputeTaskSpecificMetricsCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnComputeTaskSpecificMetricsToggled() ) );
+  connect( d->IgnoreIrrelevantTransformsCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( OnIgnoreIrrelevantTransformsToggled() ) );
   connect( d->DownloadAdditionalMetricsButton, SIGNAL( clicked() ), this, SLOT( OnDownloadAdditionalMetricsClicked() ) );
   connect( d->RestoreDefaultMetricsButton, SIGNAL( clicked() ), this, SLOT( OnRestoreDefaultMetricsClicked() ) );
-
-
-
 
   this->updateWidgetFromMRMLNode();
 }
@@ -735,7 +748,9 @@ void qSlicerPerkEvaluatorModuleWidget
   connect( d->MetricInstanceComboBox, SIGNAL( checkedNodesChanged() ), this, SLOT( OnMetricInstanceNodesChanged() ) );
 
 
-  d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() ); 
+  d->AutoUpdateMeasurementRangeCheckBox->setChecked( peNode->GetAutoUpdateMeasurementRange() );
+  d->ComputeTaskSpecificMetricsCheckBox->setChecked( peNode->GetComputeTaskSpecificMetrics() );
+  d->IgnoreIrrelevantTransformsCheckBox->setChecked( peNode->GetIgnoreIrrelevantTransforms() );
 
   if ( peNode->GetNeedleOrientation() == vtkMRMLPerkEvaluatorNode::PlusX )
   {

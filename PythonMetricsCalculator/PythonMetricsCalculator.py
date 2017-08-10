@@ -273,6 +273,10 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
         # Add the roles description (to make it easier to distinguish the same metric under different roles)
         metricDict[ metricInstanceNode.GetID() ].CombinedRoleString = metricInstanceNode.GetCombinedRoleString()
         
+    # Ignore irrelevant transforms (i.e. transforms which are not a proxy node or a child of a proxy node)
+    if ( peNode.GetIgnoreIrrelevantTransforms() ):
+      PythonMetricsCalculatorLogic.IgnoreIrrelevantMetrics( metricDict, peNode )
+    
     # Add the anatomy to the fresh metrics
     PythonMetricsCalculatorLogic.AddAnatomyNodesToMetrics( metricDict )
     PythonMetricsCalculatorLogic.SetNeedleOrientation( metricDict, peNode )
@@ -296,34 +300,60 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
           
     return rolesSatisfied
 
-    
+
   # Note: This modifies the inputted dictionary of metrics
   @staticmethod
-  def AddAnatomyNodesToMetrics( metrics ): 
+  def IgnoreIrrelevantMetrics( metricDict, peNode ): 
+    if ( peNode is None or PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic() is None ):
+      return
+      
+    irrelevantTransformMetrics = []
+  
+    relevantTransformNodes = vtk.vtkCollection()
+    PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().GetProxyRelevantTransformNodes( peNode.GetTrackedSequenceBrowserNode(), relevantTransformNodes )
+  
+    for metricInstanceID in metricDict:
+      metricTransformRoles = PythonMetricsCalculatorLogic.GetTransformRoles( metricDict[ metricInstanceID ] )
+      metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
+      
+      for role in metricTransformRoles:
+        transformNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.TransformRole )
+        transformNodeRelevant = relevantTransformNodes.IsItemPresent( transformNode )
+        if ( not transformNodeRelevant ):
+          irrelevantTransformMetrics.append( metricInstanceID )
+          
+    for metricInstanceID in irrelevantTransformMetrics:
+      metricDict.pop( metricInstanceID )
+
+
+  # Note: This modifies the inputted dictionary of metrics
+  @staticmethod
+  def AddAnatomyNodesToMetrics( metricDict ): 
     if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None ):
       return
   
     # Keep track of which metrics all anatomies are sucessfully delivered to    
-    unfulfilledAnatomies = []    
+    unfulfilledAnatomyMetrics = []    
   
-    for metricInstanceID in metrics:
-      metricAnatomyRoles = PythonMetricsCalculatorLogic.GetAnatomyRoles( metrics[ metricInstanceID ] )
+    for metricInstanceID in metricDict:
+      metricAnatomyRoles = PythonMetricsCalculatorLogic.GetAnatomyRoles( metricDict[ metricInstanceID ] )
       metricInstanceNode = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodeByID( metricInstanceID )
       
       for role in metricAnatomyRoles:
         anatomyNode = metricInstanceNode.GetRoleNode( role, metricInstanceNode.AnatomyRole )
         try:
-          added = metrics[ metricInstanceID ].CheckAndSetAnatomy( role, anatomyNode )
+          added = metricDict[ metricInstanceID ].CheckAndSetAnatomy( role, anatomyNode )
         except: #TODO: Keep for backwards compatibility
-          added = metrics[ metricInstanceID ].AddAnatomyRole( role, anatomyNode )
+          added = metricDict[ metricInstanceID ].AddAnatomyRole( role, anatomyNode )
         
         if ( not added ):
-          unfulfilledAnatomies.append( metricInstanceID )
+          unfulfilledAnatomyMetrics.append( metricInstanceID )
           
     # In practice, the anatomies should always be fulfilled because we already filtered out those that could not be fulfilled
     # However, if the wrong type of node is selected, then this may return false
-    for metricInstanceID in unfulfilledAnatomies:
-      metrics.pop( metricInstanceID )
+    for metricInstanceID in unfulfilledAnatomyMetrics:
+      metricDict.pop( metricInstanceID )
+      logging.info( "PythonMetricsCalculatorLogic::AddAnatomyNodesToMetrics: The metric with ID " + metricInstanceID + " not computed due to incompatible anatomy." ) 
 
   
   @staticmethod
@@ -453,8 +483,8 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     if ( masterSequenceNode.GetNumberOfDataNodes() == 0 ):
       return
       
-    proxyNodeCollection = vtk.vtkCollection()
-    peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodes( proxyNodeCollection )
+    proxyNodes = vtk.vtkCollection()
+    peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodes( proxyNodes )
 
     # Overall metrics
     allMetrics = collections.OrderedDict()
@@ -493,7 +523,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       peNode.GetTrackedSequenceBrowserNode().SetSelectedItemNumber( i )
       
       # Overall metrics
-      PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ], proxyNodeCollection, time )
+      PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ], proxyNodes, time )
       
       # Task-specific metrics
       # TODO
@@ -501,7 +531,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
         if ( trLogic is not None ):
           messageString = trLogic.GetPriorMessageString( peNode.GetTrackedSequenceBrowserNode(), str( time ) )
           if ( messageString is not "" ):
-            PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ messageString ], proxyNodeCollection, time )
+            PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ messageString ], proxyNodes, time )
         else:
           logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Cannot determine task at index value " + str( time ) + "." )
       
@@ -521,21 +551,18 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
 
   
   @staticmethod  
-  def UpdateProxyNodeMetrics( taskMetrics, proxyNodeCollection, time ):
+  def UpdateProxyNodeMetrics( taskMetrics, proxyNodes, time ):
     if ( PythonMetricsCalculatorLogic.GetMRMLScene() == None or PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic() == None ):
       return
     
     # Get all transforms in the scene
-    transformCollection = vtk.vtkCollection()
-    PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().GetSceneVisibleTransformNodes( transformCollection )
+    relevantTransformNodes = vtk.vtkCollection()
+    PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().GetProxyRelevantTransformNodes( proxyNodes, relevantTransformNodes )
     
     # Update all metrics associated with children of the recorded transform
-    for i in range( proxyNodeCollection.GetNumberOfItems() ):
-      currentProxyNode = proxyNodeCollection.GetItemAsObject( i )
-      for j in range( transformCollection.GetNumberOfItems() ):
-        currentTransformNode = transformCollection.GetItemAsObject( j )
-        if ( PythonMetricsCalculatorLogic.GetPerkEvaluatorLogic().IsSelfOrDescendentNode( currentProxyNode, currentTransformNode ) ):
-          PythonMetricsCalculatorLogic.UpdateMetrics( taskMetrics, currentTransformNode, time )
+    for j in range( relevantTransformNodes.GetNumberOfItems() ):
+      currentTransformNode = relevantTransformNodes.GetItemAsObject( j )
+      PythonMetricsCalculatorLogic.UpdateMetrics( taskMetrics, currentTransformNode, time )
 
   
   @staticmethod  
