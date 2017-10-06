@@ -233,6 +233,53 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.fuzzyParametersFrame = AssessmentMethods.FuzzyParametersWidget( self.parametersGroupBox )
     self.fuzzyParametersFrame.hide()
     self.parametersLayout.addWidget( self.fuzzyParametersFrame )
+    
+    
+        
+    #
+    # Translation Area
+    #
+    translationCollapsibleButton = ctk.ctkCollapsibleButton()
+    translationCollapsibleButton.text = "Translation"
+    translationCollapsibleButton.collapsed = True
+    self.layout.addWidget( translationCollapsibleButton )
+    
+    # Layout within collapsible buttion
+    self.translationVBoxLayout = qt.QVBoxLayout( translationCollapsibleButton )
+    
+    # Translation table selector
+    self.translationTableSelector = slicer.qMRMLNodeComboBox()
+    self.translationTableSelector.nodeTypes = [ "vtkMRMLTableNode" ]
+    self.translationTableSelector.addEnabled = True
+    self.translationTableSelector.removeEnabled = True
+    self.translationTableSelector.showHidden = True
+    self.translationTableSelector.showChildNodeTypes = False
+    self.translationTableSelector.addAttribute( "vtkMRMLTableNode", "Translation" )
+    self.translationTableSelector.baseName = "TranslationTable"
+    self.translationTableSelector.setMRMLScene( slicer.mrmlScene )
+    self.translationTableSelector.setToolTip( "Select the table node with translations for the metrics." )
+    self.translationVBoxLayout.addWidget( self.translationTableSelector )
+    
+    # Translation table
+    self.translationTableView = slicer.qMRMLTableView()
+    self.translationVBoxLayout.addWidget( self.translationTableView )
+    
+    # Options for adding/removing translations
+    translationManagementHBoxLayout = qt.QHBoxLayout()
+    self.translationVBoxLayout.addLayout( translationManagementHBoxLayout )
+    
+    self.translationPopulateButton = qt.QPushButton( "Populate" )
+    self.translationPopulateButton.toolTip = "Add all metrics from the currently selected metrics node."
+    translationManagementHBoxLayout.addWidget( self.translationPopulateButton )
+    
+    self.translationAddButton = qt.QPushButton( "Add translation" )
+    self.translationAddButton.toolTip = "Add a metric to be translated."
+    translationManagementHBoxLayout.addWidget( self.translationAddButton )
+    
+    self.translationDeleteButton = qt.QPushButton( "Remove translation" )
+    self.translationDeleteButton.toolTip = "Add a metric to be translated."
+    translationManagementHBoxLayout.addWidget( self.translationDeleteButton )
+    
 
     
     #
@@ -260,6 +307,12 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.fuzzyRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FUZZY ) )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
+    
+    self.translationTableSelector.connect( 'nodeAddedByUser(vtkMRMLNode*)', self.onTranslationTableAdded )
+    self.translationTableSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onTranslationTableChanged )
+    self.translationPopulateButton.connect( 'clicked(bool)', self.populateTranslationTableFromMetrics )
+    self.translationAddButton.connect( 'clicked(bool)', self.addTranslation )
+    self.translationDeleteButton.connect( 'clicked(bool)', self.deleteTranslation )
 
     # Create a default parameter node
     if ( self.parameterNodeSelector.currentNode() is None ):
@@ -650,6 +703,60 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.assessmentTable.show()
     
     
+  def onTranslationTableAdded( self, translationTableNode ):
+    if ( translationTableNode is None ):
+      return
+    translationTable = translationTableNode.GetTable()
+    if ( translationTable is None ):
+      return
+  
+    translationTable.Initialize()
+    translationTableColumnNames = [ "MetricName", "MetricRoles", "MetricUnit", "Translation" ]
+    for columnName in translationTableColumnNames:
+      column = vtk.vtkStringArray()
+      column.SetName( columnName )
+      translationTable.AddColumn( column )
+
+    
+  def onTranslationTableChanged( self, translationTableNode ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+
+    self.translationTableView.setMRMLTableNode( None )
+    if ( translationTableNode is None ):
+      parameterNode.RemoveNodeReferenceIDs( "TranslationTable" )
+      return
+      
+    # Verify that the translation table has the necessary columns    
+    parameterNode.SetNodeReferenceID( "TranslationTable", translationTableNode.GetID() ) # Automatically triggers update
+    self.translationTableView.setMRMLTableNode( translationTableNode )
+    translationTableNode.SetUseColumnNameAsColumnHeader( True )
+    
+          
+  def addTranslation( self ):
+    self.translationTableView.insertRow()
+
+    
+  def deleteTranslation( self ):
+    self.translationTableView.deleteRow()
+    
+    
+  def populateTranslationTableFromMetrics( self ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+    
+    metricsNode = parameterNode.GetNodeReference( "Metrics" )
+    translationTableNode = parameterNode.GetNodeReference( "TranslationTable" )
+    if ( metricsNode is None or translationTableNode is None ):
+      logging.info( "SkillAssessmentWidget::populateTranslationTableFromMetrics: Metrics node and/or translation node are None." )
+      return
+    
+    SkillAssessmentLogic.AddTranslationsFromMetrics( metricsNode.GetTable(), translationTableNode.GetTable() )
+    translationTableNode.Modified() # Cue table refresh
+    
+    
   def updateWidgetFromParameterNode( self, parameterNode ):
     if ( parameterNode is None ):
       return
@@ -744,7 +851,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     if ( len( trainingNodes ) == 0 ):
       logging.info( "SkillAssessmentLogic::Assess: Training dataset is empty. Could not assess." )
       return 0
-
+      
+    translationTable = None
+    translationTableNode = parameterNode.GetNodeReference( "TranslationTable" )
+    if ( translationTableNode is not None ):
+      translationTable = translationTableNode.GetTable()      
+      
     modifyState = parameterNode.StartModify()
       
     weightsNode = parameterNode.GetNodeReference( "Weights" )
@@ -864,16 +976,16 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
 
     # Produce the feedback strings
     criticalValue = Assessor.GetCriticalValue( parameterNode, skillLabels )
-    strengthsString = SkillAssessmentLogic.GetFeedbackString( convertedMetricsTable, criticalValue, operator.lt, "good", ignoreMetricValue, 3 )
+    strengthsString = SkillAssessmentLogic.GetFeedbackString( convertedMetricsTable, translationTable, criticalValue, operator.lt, "good", ignoreMetricValue, 3 )
     parameterNode.SetAttribute( "Strengths", strengthsString )
-    weaknessesString = SkillAssessmentLogic.GetFeedbackString( convertedMetricsTable, criticalValue, operator.gt, "poor", ignoreMetricValue, 3 )
+    weaknessesString = SkillAssessmentLogic.GetFeedbackString( convertedMetricsTable, translationTable, criticalValue, operator.gt, "poor", ignoreMetricValue, 3 )
     parameterNode.SetAttribute( "Weaknesses", weaknessesString )
 
     parameterNode.EndModify( modifyState )
     
 
   @staticmethod
-  def GetFeedbackString( convertedMetricsTable, criticalValue, operator, noteString, ignoreMetricValue, maxNumberOfFeedbacks = 3 ):
+  def GetFeedbackString( convertedMetricsTable, translationTable, criticalValue, operator, noteString, ignoreMetricValue, maxNumberOfFeedbacks = 3 ):
     if ( convertedMetricsTable is None ):
       logging.info( "SkillAssessmentLogic::GetFeedbackString: Converted metrics table is empty. Could not provide feedback." )
       return ""
@@ -902,15 +1014,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     # Reconstruct the list of row/column indices into feedback strings
     feedbackString = ""
     for feedbackIndex in range( min( maxNumberOfFeedbacks, len( feedbackElements ) ) ):
-      feedbackString = feedbackString + convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricName" ).ToString()
-
-      feedbackString = feedbackString + " ["
-      feedbackString = feedbackString + convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricRoles" ).ToString()
-      feedbackString = feedbackString + "] "
-
-      feedbackString = feedbackString + "("
-      feedbackString = feedbackString + convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricUnit" ).ToString()
-      feedbackString = feedbackString + ")"
+      metricName = convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricName" )
+      metricRoles = convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricRoles" )
+      metricUnit = convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricUnit" )
+    
+      feedbackString = feedbackString + SkillAssessmentLogic.GetTranslatedMetric( translationTable, metricName, metricRoles, metricUnit )
+      convertedMetricsTable.GetValueByName( feedbackElements[ feedbackIndex ][ 0 ], "MetricName" ).ToString()
 
       feedbackString = feedbackString + " during "
       feedbackString = feedbackString + convertedMetricsTable.GetColumnName( feedbackElements[ feedbackIndex ][ 1 ] )
@@ -1025,12 +1134,8 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       return
     
     metricValues = []
-    for rowIndex in range( metricsTable.GetNumberOfRows() ):
-      nameMatch = ( metricsTable.GetValueByName( rowIndex, "MetricName" ) == metricName or metricName is None )
-      rolesMatch = ( metricsTable.GetValueByName( rowIndex, "MetricRoles" ) == metricRoles or metricRoles is None )
-      unitMatch = ( metricsTable.GetValueByName( rowIndex, "MetricUnit" ) == metricUnit or metricUnit is None ) # Unit should always match if the names match
-      if ( not nameMatch or not rolesMatch or not unitMatch ):
-        continue
+    rowMatches = SkillAssessmentLogic.FindMetricsTableRows( metricsTable, metricName, metricRoles, metricUnit )
+    for rowIndex in rowMatches:
       for columnIndex in range( metricsTable.GetNumberOfColumns() ):
         if ( SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, ignoreMetricValue ) ):
           continue
@@ -1041,6 +1146,24 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         metricValues.append( metricsTable.GetValue( rowIndex, columnIndex ).ToDouble() ) 
         
     return metricValues
+    
+    
+  @staticmethod
+  def FindMetricsTableRows( metricsTable, metricName, metricRoles, metricUnit ):
+    if ( metricsTable is None ):
+      logging.info( "SkillAssessmentLogic::FindMetricsTableRow: Table of metrics is empty." )
+      return []
+      
+    rowMatches = []
+    for rowIndex in range( metricsTable.GetNumberOfRows() ):
+      nameMatch = ( metricsTable.GetValueByName( rowIndex, "MetricName" ) == metricName or metricName is None )
+      rolesMatch = ( metricsTable.GetValueByName( rowIndex, "MetricRoles" ) == metricRoles or metricRoles is None )
+      unitMatch = ( metricsTable.GetValueByName( rowIndex, "MetricUnit" ) == metricUnit or metricUnit is None ) # Unit should always match if the names match
+      if ( nameMatch and rolesMatch and unitMatch ):
+        rowMatches.append( rowIndex )
+        
+    return rowMatches
+      
     
     
   # Convenience method for checking if a column in a metrics table is a header columns
@@ -1069,6 +1192,46 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         nonHeaderColumns = nonHeaderColumns + 1
 
     return nonHeaderColumns
+    
+    
+  @staticmethod
+  def AddTranslationsFromMetrics( metricsTable, translationTable ):
+    if ( metricsTable is None or translationTable is None ):
+      logging.info( "SkillAssessmentLogic::AddTranslationsFromMetrics: Metrics table and/or translation table is None." )
+      return
+      
+    for rowIndex in range( metricsTable.GetNumberOfRows() ):
+      metricName = metricsTable.GetValueByName( rowIndex, "MetricName" )
+      metricRoles = metricsTable.GetValueByName( rowIndex, "MetricRoles" )
+      metricUnit = metricsTable.GetValueByName( rowIndex, "MetricUnit" )
+      rowMatches = SkillAssessmentLogic.FindMetricsTableRows( translationTable, metricName, metricRoles, metricUnit )
+      if ( len( rowMatches ) == 0 ):
+        newRowIndex = translationTable.InsertNextBlankRow()
+        translationTable.SetValueByName( newRowIndex, "MetricName", metricName )
+        translationTable.SetValueByName( newRowIndex, "MetricRoles", metricRoles )
+        translationTable.SetValueByName( newRowIndex, "MetricUnit", metricUnit )
+        
+        
+  @staticmethod
+  def GetTranslatedMetric( translationTable, metricName, metricRoles, metricUnit ):
+    rowIndices = SkillAssessmentLogic.FindMetricsTableRows( translationTable, metricName, metricRoles, metricUnit )
+    if ( len( rowIndices ) > 0 ):
+      translatedMetric = translationTable.GetValueByName( rowIndices[ 0 ], "Translation" ).ToString()
+      if ( not translatedMetric == "" ):
+        return translatedMetric
+    
+    # If we cannot find the metric in the translation table, just proceed with the regular metric in full
+    metricString = metricName.ToString()
+
+    metricString = metricString + " ["
+    metricString = metricString + metricRoles.ToString()
+    metricString = metricString + "] "
+
+    metricString = metricString + "("
+    metricString = metricString + metricUnit.ToString()
+    metricString = metricString + ")"
+    
+    return metricString
     
     
   @staticmethod
