@@ -14,6 +14,7 @@ import AssessmentMethods
 ASSESSMENT_METHOD_LINEARCOMBINATION = "LinearCombination"
 ASSESSMENT_METHOD_NEARESTNEIGHBOR = "NearestNeighbor"
 ASSESSMENT_METHOD_FUZZY = "Fuzzy"
+ASSESSMENT_METHOD_REGRESSION = "Regression"
 
 OUTPUT_PRECISION = 3
 
@@ -213,6 +214,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.fuzzyRadioButton.setText( "Fuzzy" )
     self.assessmentMethodLayout.addWidget( self.fuzzyRadioButton )
     
+    self.regressionRadioButton = qt.QRadioButton( self.assessmentMethodGroupBox )
+    self.regressionRadioButton.setText( "Regression" )
+    self.assessmentMethodLayout.addWidget( self.regressionRadioButton )
+    
 
     #
     # Parameters area
@@ -233,6 +238,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.fuzzyParametersFrame = AssessmentMethods.FuzzyParametersWidget( self.parametersGroupBox )
     self.fuzzyParametersFrame.hide()
     self.parametersLayout.addWidget( self.fuzzyParametersFrame )
+    
+    self.regressionParametersFrame = AssessmentMethods.RegressionParametersWidget( self.parametersGroupBox )
+    self.regressionParametersFrame.hide()
+    self.parametersLayout.addWidget( self.regressionParametersFrame )
     
     
         
@@ -305,6 +314,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.linearCombinationRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_LINEARCOMBINATION ) )
     self.nearestNeighborRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_NEARESTNEIGHBOR ) )
     self.fuzzyRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FUZZY ) )
+    self.regressionRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_REGRESSION ) )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
     
@@ -608,7 +618,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     
     self.linearCombinationParametersFrame.setParameterNode( parameterNode )
     self.nearestNeighborParametersFrame.setParameterNode( parameterNode )
-    self.fuzzyParametersFrame.setParameterNode( parameterNode )    
+    self.fuzzyParametersFrame.setParameterNode( parameterNode )
+    self.regressionParametersFrame.setParameterNode( parameterNode )
 
     # Deal with observing the parameter node
     for tag in self.parameterNodeObserverTags:
@@ -788,6 +799,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     linearCombinationBlockState = self.linearCombinationRadioButton.blockSignals( True )
     nearestNeighborBlockState = self.nearestNeighborRadioButton.blockSignals( True )
     fuzzyBlockState = self.fuzzyRadioButton.blockSignals( True )
+    regressionBlockState = self.regressionRadioButton.blockSignals( True )
     self.linearCombinationParametersFrame.hide()
     self.nearestNeighborParametersFrame.hide()
     self.fuzzyParametersFrame.hide()
@@ -800,9 +812,13 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     if ( assessmentMethod == ASSESSMENT_METHOD_FUZZY ):
       self.fuzzyRadioButton.setChecked( True )
       self.fuzzyParametersFrame.show()
+    if ( assessmentMethod == ASSESSMENT_METHOD_REGRESSION ):
+      self.regressionRadioButton.setChecked( True )
+      self.regressionParametersFrame.show()
     self.linearCombinationRadioButton.blockSignals( linearCombinationBlockState)
     self.nearestNeighborRadioButton.blockSignals( nearestNeighborBlockState )
     self.fuzzyRadioButton.blockSignals( fuzzyBlockState )
+    self.regressionRadioButton.blockSignals( regressionBlockState )    
 
     self.resultsLabel.setText( parameterNode.GetAttribute( "OverallScore" ) )
 
@@ -906,6 +922,8 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       Assessor = AssessmentMethods.NearestNeighborAssessment
     if ( assessmentMethod == ASSESSMENT_METHOD_FUZZY ):
       Assessor = AssessmentMethods.FuzzyAssessment
+    if ( assessmentMethod == ASSESSMENT_METHOD_REGRESSION ):
+      Assessor = AssessmentMethods.RegressionAssessment
 
     # Compute the metric/task pair skill values
     convertedMetricsTable = SkillAssessmentLogic.CreateTableFromMetricsNode( metricsNode, 0 )
@@ -1151,7 +1169,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
   @staticmethod
   def FindMetricsTableRows( metricsTable, metricName, metricRoles, metricUnit ):
     if ( metricsTable is None ):
-      logging.info( "SkillAssessmentLogic::FindMetricsTableRow: Table of metrics is empty." )
+      logging.info( "SkillAssessmentLogic::FindMetricsTableRows: Table of metrics is empty." )
       return []
       
     rowMatches = []
