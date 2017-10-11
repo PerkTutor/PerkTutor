@@ -110,18 +110,37 @@ class NearestNeighborAssessment():
   def __init__( self ):
     pass
       
+      
+  @staticmethod
+  def GetGenericDescription():
+    descriptionString = "This assessment method looks at the most similar metrics table to the input. Each of the similar metrics tables votes on what skill level they think it is. The result of the vote is taken as the overall skill level." + "\n\n"
+    return descriptionString
+    
+    
+  @staticmethod
+  def GetSpecificDescription( nameLabels, skillLabels ):
+    descriptionString = "In this case, the most similar metrics tables were: " + "\n\n"
+    for labelIndex in range( len( nameLabels ) ):
+      descriptionString = descriptionString + nameLabels[ labelIndex ] +  " (skill level = " + str( skillLabels[ labelIndex ] ) + ")" + "\n"
+      
+    return descriptionString
+      
     
   @staticmethod 
-  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, labels ):
+  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels ):
     numberOfNeighbors = parameterNode.GetAttribute( "NumberOfNeighbors" )
     neighborWeight = parameterNode.GetAttribute( "NeighborWeight" )
   
-    labels = labels[:] # Deep copy
-    distances = NearestNeighborAssessment.ComputeWeightedDistances( testRecord, trainingRecords, weights )
-    NearestNeighborAssessment.CutoffNeighbors( distances, labels, numberOfNeighbors )
-    vote = NearestNeighborAssessment.CastVotes( distances, labels, neighborWeight )
+    skillLabels = skillLabels[:] # Deep copy
+    nameLabels = nameLabels[:] # Deep copy
     
-    return vote
+    distances = NearestNeighborAssessment.ComputeWeightedDistances( testRecord, trainingRecords, weights )
+    NearestNeighborAssessment.CutoffNeighbors( distances, skillLabels, nameLabels, numberOfNeighbors )
+    vote = NearestNeighborAssessment.CastVotes( distances, skillLabels, neighborWeight )
+    
+    descriptionString = NearestNeighborAssessment.GetGenericDescription() + NearestNeighborAssessment.GetSpecificDescription( nameLabels, skillLabels )
+    
+    return vote, descriptionString
     
     
   # Computed the weighted distance from the record values in the test metric to the record values in the training set
@@ -139,7 +158,7 @@ class NearestNeighborAssessment():
 
   # Remove the neighbors with largest distance until we have only the selected number of neighbors left
   @staticmethod
-  def CutoffNeighbors( distances, labels, numberOfNeighbors ):
+  def CutoffNeighbors( distances, skillLabels, nameLabels, numberOfNeighbors ):
     try:
       numberOfNeighbors = int( numberOfNeighbors )
     except:
@@ -148,43 +167,44 @@ class NearestNeighborAssessment():
     while ( len( distances ) > numberOfNeighbors ):
       maxIndex = distances.index( max( distances ) )
       distances.pop( maxIndex )
-      labels.pop( maxIndex )
+      skillLabels.pop( maxIndex )
+      nameLabels.pop( maxIndex )
 
 
   # Cast votes using the specified neighbor weighting scheme
   @staticmethod
-  def CastVotes( distances, labels, neighborWeight ):
+  def CastVotes( distances, skillLabels, neighborWeight ):
     if ( neighborWeight == NEIGHBOR_WEIGHT_EQUAL ):
-      return NearestNeighborAssessment.CastEqualWeightedVotes( distances, labels )
+      return NearestNeighborAssessment.CastEqualWeightedVotes( distances, skillLabels )
     if ( neighborWeight == NEIGHBOR_WEIGHT_DISTANCE ):
-      return NearestNeighborAssessment.CastDistanceWeightedVotes( distances, labels )
+      return NearestNeighborAssessment.CastDistanceWeightedVotes( distances, skillLabels )
     if ( neighborWeight == NEIGHBOR_WEIGHT_RANK ):
-      return NearestNeighborAssessment.CastRankWeightedVotes( distances, labels )
+      return NearestNeighborAssessment.CastRankWeightedVotes( distances, skillLabels )
       
     return 0
       
       
   @staticmethod
-  def CastEqualWeightedVotes( distances, labels ):
-    labelArray = numpy.array( labels )
+  def CastEqualWeightedVotes( distances, skillLabels ):
+    labelArray = numpy.array( skillLabels )
     equalWeights = numpy.ones( len( distances ) )
     equalWeights = equalWeights / sum( equalWeights )
     return numpy.dot( equalWeights, labelArray )
     
     
   @staticmethod
-  def CastDistanceWeightedVotes( distances, labels ):
+  def CastDistanceWeightedVotes( distances, skillLabels ):
     distanceArray = numpy.array( distances )
-    labelArray = numpy.array( labels )
+    labelArray = numpy.array( skillLabels )
     distanceWeights = 1.0 / ( distanceArray ** 2 )
     distanceWeights = distanceWeights / sum( distanceWeights )
     return numpy.dot( distanceWeights, labelArray )
     
     
   @staticmethod
-  def CastRankWeightedVotes( distances, labels ):
+  def CastRankWeightedVotes( distances, skillLabels ):
     distanceArray = numpy.array( distances )
-    labelArray = numpy.array( labels )
+    labelArray = numpy.array( skillLabels )
     rankedIndices = distanceArray.argsort() # TODO: Deal with ties
 
     rankWeights = 1.0 / ( rankedIndices + 1 )

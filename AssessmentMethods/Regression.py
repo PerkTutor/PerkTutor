@@ -80,18 +80,35 @@ class RegressionAssessment():
 
   def __init__( self ):
     pass
+
+
+  @staticmethod
+  def GetGenericDescription():
+    descriptionString = "This assessment method finds the optimal linear or polynomial regression to best fit the data." + "\n\n"
+    return descriptionString
+    
+    
+  @staticmethod
+  def GetSpecificDescription( coeff, regressionOrder, nameRecord ):
+    descriptionString = "In this case, the largest coefficients in the regression were (in descending order): " + "\n\n"
+    coeffOrders = range( regressionOrder + 1 ) * len( nameRecord )
+    coeffNames = [ name for name in nameRecord for repetitions in range( regressionOrder + 1 ) ]
+    coeffNamesOrders = zip( coeffNames, coeffOrders )
+    sortedCoeff = sorted( zip( coeff, coeffNamesOrders ), reverse = True )
+    for currCoeff, currCoeffNameOrder in sortedCoeff:
+      descriptionString = descriptionString + currCoeffNameOrder[ 0 ] + " (order = " + str( currCoeffNameOrder[ 1 ] ) +  "; coefficient = " + str( currCoeff ) + ")" + "\n"
       
+    return descriptionString
+    
     
   @staticmethod 
-  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, labels ):
+  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels ):
     regressionOrder = int( parameterNode.GetAttribute( "RegressionOrder" ) )
   
-    labels = labels[:] # Deep copy    
+    skillLabels = skillLabels[:] # Deep copy    
     vandermondeMatrix = RegressionAssessment.ComputeVandermondeMatrix( testRecord, trainingRecords, regressionOrder )
-    print vandermondeMatrix
     # The inputted weights are ignored, as the individual metric weights have no effect on the coefficients
-    coeff = RegressionAssessment.ComputeLeastSquaresCoefficients( vandermondeMatrix, labels )
-    print coeff
+    coeff = RegressionAssessment.ComputeLeastSquaresCoefficients( vandermondeMatrix, skillLabels )
     
     testVandermondeMatrix = RegressionAssessment.ComputeVandermondeMatrix( testRecord, [ testRecord ], regressionOrder )
     score = numpy.dot( testVandermondeMatrix, coeff )
@@ -100,7 +117,9 @@ class RegressionAssessment():
     score = max( 0, score )
     score = min( 1, score )
     
-    return score
+    descriptionString = RegressionAssessment.GetGenericDescription() + RegressionAssessment.GetSpecificDescription( coeff, regressionOrder, nameRecord )
+    
+    return score, descriptionString
 
     
   @staticmethod
@@ -116,9 +135,9 @@ class RegressionAssessment():
 
     
   @staticmethod
-  def ComputeLeastSquaresCoefficients( vandermondeMatrix, labels ):
+  def ComputeLeastSquaresCoefficients( vandermondeMatrix, skillLabels ):
     leftMatrix = numpy.dot( numpy.transpose( vandermondeMatrix ), vandermondeMatrix )
-    rightVector = numpy.dot( numpy.transpose( vandermondeMatrix ), labels )
+    rightVector = numpy.dot( numpy.transpose( vandermondeMatrix ), skillLabels )
     coeff, _, _, _ = numpy.linalg.lstsq( leftMatrix, rightVector ) # Returns: solution, error, rank, singular values
     return coeff
     

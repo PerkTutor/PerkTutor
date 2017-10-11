@@ -158,8 +158,38 @@ class FuzzyAssessment():
     pass
 
     
+  @staticmethod
+  def GetGenericDescription():
+    descriptionString = "This assessment method uses rules of the form: IF the metric value looks like it is of a particular skill class THEN operator is from that skill class. These rules are combined to come up with an overall assessment." + "\n\n"
+    return descriptionString
+    
+    
+  @staticmethod
+  def GetSpecificDescription( testRecord, nameRecord, metricMembershipFunctions, skillLabels ):
+    descriptionString = "In this case, the rules with the most influence were (in descending order): " + "\n\n"
+    ruleSkillClasses = []
+    ruleMetricNames = []
+    ruleMemberships = []
+    for skillClassIndex in metricMembershipFunctions:
+      for metricIndex in metricMembershipFunctions[ skillClassIndex ]:
+        ruleSkillClasses.append( skillClassIndex )
+        ruleMetricNames.append( nameRecord[ metricIndex ] )
+        ruleMemberships.append( metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Evaluate( testRecord[ metricIndex ] ) )
+        print metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Parameters
+        print testRecord[ metricIndex ]
+        
+    print ruleMemberships
+        
+    ruleMetricNameSkillClass = zip( ruleMetricNames, ruleSkillClasses )
+    sortedRules = sorted( zip( ruleMemberships, ruleMetricNameSkillClass ), reverse = True )
+    for currRuleMembership, currRuleMetricNameSkillClass in sortedRules:
+      descriptionString = descriptionString + "IF " + currRuleMetricNameSkillClass[ 0 ] + " looks like skill class " + str( currRuleMetricNameSkillClass[ 1 ] ) + " THEN operator is from skill class " + str( currRuleMetricNameSkillClass[ 1 ] ) +" (membership = " + str( currRuleMembership ) + ")" + "\n"
+      
+    return descriptionString
+    
+    
   @staticmethod 
-  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, skillLabels ):
+  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels ):
     defuzzifier = FuzzyAssessment.GetDefuzzifier( parameterNode.GetAttribute( "Defuzzifier" ) )
     shrinker = FuzzyAssessment.GetShrinker( parameterNode.GetAttribute( "Shrink" ) )
     
@@ -176,7 +206,10 @@ class FuzzyAssessment():
     consequence = FuzzyAssessment.ComputeFuzzyOutput( fuzzyRules, testRecord, weights, shrinker )
     
     fuzzySkill = defuzzifier.Evaluate( consequence, minSkill, maxSkill, stepSize )
-    return fuzzySkill
+    
+    descriptionString = FuzzyAssessment.GetGenericDescription() + FuzzyAssessment.GetSpecificDescription( testRecord, nameRecord, metricMembershipFunctions, skillLabels )
+    
+    return fuzzySkill, descriptionString
     
     
   @staticmethod
@@ -258,6 +291,9 @@ class FuzzyAssessment():
   def CreateMetricMembershipFunction( trainingData, memberships ):
     # Make sure the memberships add to one
     totalMembership = sum( memberships )
+    if ( totalMembership == 0 ):
+      logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: No membership in skill class." )
+      return FuzzyLogic.MembershipFunction.GaussianMembershipFunction()
     for i in range( len( memberships ) ):
       memberships[ i ] = memberships[ i ] / totalMembership
 

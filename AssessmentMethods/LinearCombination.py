@@ -117,15 +117,33 @@ class LinearCombinationAssessment():
     pass
 
     
+  @staticmethod
+  def GetGenericDescription():
+    descriptionString = "This assessment method scales the metric values relative to the training data and takes a weighted sum of these scaled metric values." + "\n\n"
+    return descriptionString
+    
+    
+  @staticmethod
+  def GetSpecificDescription( scaledTestRecord, nameRecord ):
+    descriptionString = "In this case, most outlying metrics were (in descending order): " + "\n\n"
+    sortedRecord = sorted( zip( scaledTestRecord, nameRecord ), reverse = True )
+    for currScaledTestRecord, currNameRecord in sortedRecord:
+      descriptionString = descriptionString + currNameRecord +  " (scaled value = " + str( currScaledTestRecord ) + ")" + "\n"
+      
+    return descriptionString
+
+    
   @staticmethod 
-  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, labels ):
+  def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels ):
     scalingMethod = parameterNode.GetAttribute( "ScalingMethod" )
     aggregationMethod = parameterNode.GetAttribute( "AggregationMethod" )
   
     scaledTestRecord = LinearCombinationAssessment.GetScaledRecord( testRecord, trainingRecords, scalingMethod )
     combination = LinearCombinationAssessment.GetAggregatedSkillScore( scaledTestRecord, weights, aggregationMethod )
     
-    return combination
+    descriptionString = LinearCombinationAssessment.GetGenericDescription() + LinearCombinationAssessment.GetSpecificDescription( scaledTestRecord, nameRecord )
+    
+    return combination, descriptionString
     
   @staticmethod
   def GetAggregatedSkillScore( scaledRecord, weights, method ):
