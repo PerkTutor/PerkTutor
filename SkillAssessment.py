@@ -749,7 +749,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       logging.info( "SkillAssessmentWidget::populateTranslationTableFromMetrics: Metrics node and/or translation node are None." )
       return
     
-    SkillAssessmentLogic.AddTranslationsFromMetrics( metricsNode.GetTable(), translationTableNode.GetTable() )
+    SkillAssessmentLogic.AddTranslationsFromMetricsTable( metricsNode.GetTable(), translationTableNode.GetTable() )
     translationTableNode.Modified() # Cue table refresh
     
     
@@ -1208,10 +1208,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
   @staticmethod
   def GetTranslatedMetricTaskString( translationTable, metricTuple, taskName ):
     # Try to translate the metric
-    metricString = SkillAssessmentLogic.GetValueByMetricTask( translationTable, metricTuple, "Translation" )    
+    metricString = SkillAssessmentLogic.GetValueByMetricTask( translationTable, metricTuple, "Translation" )
     # If we cannot translate the metric, fall back to the regular name in full
     if ( metricString is None or metricString == "" ):
       metricString = SkillAssessmentLogic.GetMetricString( metricTuple )
+    else:
+      metricString = metricString.ToString()
     
     taskString = SkillAssessmentLogic.GetTaskString( taskName )
     metricTaskString = SkillAssessmentLogic.GetMetricTaskString( metricString, taskString )    
