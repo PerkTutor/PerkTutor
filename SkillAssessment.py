@@ -367,51 +367,40 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       translationTable = translationNode.GetTable()
       
     numMetrics = metricsTable.GetNumberOfRows()
-    numTasks = SkillAssessmentLogic.GetNumberOfNonHeaderColumns( metricsTable, ignoreMetricValue ) # Ignore "MetricName", "MetricRoles", "MetricUnit"
+    numTasks = SkillAssessmentLogic.GetNumberOfNonHeaderColumns( metricsTable, ignoreMetricValue ) # Ignore "MetricName", "MetricRoles", "MetricUnit" and optionally "MetricValue"
     
     self.assessmentTable.setRowCount( numMetrics + 4 )
     self.assessmentTable.setColumnCount( numTasks + 4 )
     
     # Task headers
-    taskColumnCount = 0
-    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
-      if ( SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, ignoreMetricValue ) ):
-        continue
-      
-      columnName = metricsTable.GetColumnName( columnIndex )
-      taskHeaderLabel = qt.QLabel( columnName )
+    allTaskNames = SkillAssessmentLogic.GetAllTaskNames( metricsTable, ignoreMetricValue )
+    for taskIndex in range( len( allTaskNames ) ):
+      taskHeaderLabel = qt.QLabel( allTaskNames[ taskIndex ] )
       taskHeaderLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignCenter }" )
-      self.assessmentTable.setCellWidget( 0, taskColumnCount + 2, taskHeaderLabel )
-      taskColumnCount = taskColumnCount + 1
+      self.assessmentTable.setCellWidget( 0, taskIndex + 2, taskHeaderLabel )
         
     # Metric headers
-    for rowIndex in range( metricsTable.GetNumberOfRows() ):
-      metricName, metricRoles, metricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricsTable, rowIndex )
-      translatedMetricString = SkillAssessmentLogic.GetTranslatedMetricTaskString( translationTable, metricName, metricRoles, metricUnit, None )
-      
+    allMetricTuples = SkillAssessmentLogic.GetAllMetricTuples( metricsTable )
+    for metricIndex in range( len( allMetricTuples ) ):
+      translatedMetricString = SkillAssessmentLogic.GetTranslatedMetricTaskString( translationTable, allMetricTuples[ metricIndex ], None )      
       metricHeaderLabel = qt.QLabel( translatedMetricString )
       metricHeaderLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignVCenter }" )
-      self.assessmentTable.setCellWidget( rowIndex + 2, 0, metricHeaderLabel )
+      self.assessmentTable.setCellWidget( metricIndex + 2, 0, metricHeaderLabel )
       
     # Metrics and metric weights
     taskColumnCount = 0
-    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
-      if ( SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, ignoreMetricValue ) ):
-        continue
-    
-      for rowIndex in range( metricsTable.GetNumberOfRows() ):
-        metric = metricsTable.GetValue( rowIndex, columnIndex )
-        weight = weightsTable.GetValue( rowIndex, columnIndex )
+    for taskIndex in range( len( allTaskNames ) ):
+      for metricIndex in range( len( allMetricTuples ) ):
+        metricTaskValue = SkillAssessmentLogic.GetValueByMetricTask( metricsTable, allMetricTuples[ metricIndex ], allTaskNames[ taskIndex ] )
+        metricTaskWeight = SkillAssessmentLogic.GetValueByMetricTask( weightsTable, allMetricTuples[ metricIndex ], allTaskNames[ taskIndex ] )
         
         try:
-          metricWeightWidget = self.assessmentTable.cellWidget( rowIndex + 2, taskColumnCount + 2 )
-          metricWeightWidget.findChild( qt.QLabel ).setText( metric.ToString() )
-          metricWeightWidget.findChild( ctk.ctkSliderWidget ).value = weight.ToDouble()
+          metricWeightWidget = self.assessmentTable.cellWidget( metricIndex + 2, taskIndex + 2 )
+          metricWeightWidget.findChild( qt.QLabel ).setText( metricTaskValue.ToString() )
+          metricWeightWidget.findChild( ctk.ctkSliderWidget ).value = metricTaskWeight.ToDouble()
         except:
-          metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metric.ToString(), weight.ToDouble(), rowIndex, columnIndex )
-          self.assessmentTable.setCellWidget( rowIndex + 2, taskColumnCount + 2, metricWeightWidget )
-        
-      taskColumnCount = taskColumnCount + 1
+          metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metricTaskValue.ToString(), metricTaskWeight.ToDouble(), allMetricTuples[ metricIndex ], allTaskNames[ taskIndex ] )
+          self.assessmentTable.setCellWidget( metricIndex + 2, taskIndex + 2, metricWeightWidget )
       
     # Get the scores nodes    
     metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
@@ -436,30 +425,27 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
       
     # Metric scores
-    for rowIndex in range( metricScoresTable.GetNumberOfRows() ):
-      metric = metricScoresTable.GetValueByName( rowIndex, "MetricScore" )
+    for metricIndex in range( len( allMetricTuples ) ):
+      metricScoreValue = SkillAssessmentLogic.GetValueByMetricTask( metricScoresTable, allMetricTuples[ metricIndex ], "MetricScore" )
+      
       try:
-        metricWeightWidget = self.assessmentTable.cellWidget( rowIndex + 2, self.assessmentTable.columnCount - 1 )
-        metricWeightWidget.findChild( qt.QLabel ).setText( metric.ToString() )
+        metricWeightWidget = self.assessmentTable.cellWidget( metricIndex + 2, self.assessmentTable.columnCount - 1 )
+        metricWeightWidget.findChild( qt.QLabel ).setText( metricScoreValue.ToString() )
       except:
-        metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metric.ToString(), 1.0, rowIndex, None )
-        self.assessmentTable.setCellWidget( rowIndex + 2, self.assessmentTable.columnCount - 1, metricWeightWidget )
+        metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metricScoreValue.ToString(), 1.0, allMetricTuples[ metricIndex ], None )
+        self.assessmentTable.setCellWidget( metricIndex + 2, self.assessmentTable.columnCount - 1, metricWeightWidget )
       
     # Task scores
-    taskColumnCount = 0
-    for columnIndex in range( taskScoresTable.GetNumberOfColumns() ):
-      if ( SkillAssessmentLogic.IsHeaderColumn( taskScoresTable, columnIndex, ignoreMetricValue ) ):
-        continue
-        
-      metric = taskScoresTable.GetValue( 0, columnIndex )
+    for taskIndex in range( len( allTaskNames ) ):
+      taskScoreValue = SkillAssessmentLogic.GetValueByRowIndexTask( taskScoresTable, 0, allTaskNames[ taskIndex ] )
+      
       try:
-        metricWeightWidget = self.assessmentTable.cellWidget( self.assessmentTable.rowCount - 1, taskColumnCount + 2 )
-        metricWeightWidget.findChild( qt.QLabel ).setText( metric.ToString() )
+        metricWeightWidget = self.assessmentTable.cellWidget( self.assessmentTable.rowCount - 1, taskIndex + 2 )
+        metricWeightWidget.findChild( qt.QLabel ).setText( taskScoreValue.ToString() )
       except:
-        metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, metric.ToString(), 1.0, None, columnIndex )
-        self.assessmentTable.setCellWidget( self.assessmentTable.rowCount - 1, taskColumnCount + 2, metricWeightWidget )
-        
-      taskColumnCount = taskColumnCount + 1
+        metricWeightWidget = self.createMetricWeightWidget( self.assessmentTable, taskScoreValue.ToString(), 1.0, None, allTaskNames[ taskIndex ] )
+        self.assessmentTable.setCellWidget( self.assessmentTable.rowCount - 1, taskIndex + 2, metricWeightWidget )
+
       
     # Overall score
     overallScore = parameterNode.GetAttribute( "OverallScore" )
@@ -547,7 +533,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
         continue
 
   
-  def createMetricWeightWidget( self, parent, metric, weight, rowIndex = None, columnIndex = None ):
+  def createMetricWeightWidget( self, parent, score, weight, metric, task ):
     # Establish the container widget and layout
     metricWeightWidget = slicer.qSlicerWidget( parent )
     metricWeightLayout = qt.QVBoxLayout( metricWeightWidget )
@@ -562,17 +548,17 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     weightSlider.value = weight
     metricWeightLayout.addWidget( weightSlider )
     
-    weightSlider.connect( 'valueChanged(double)', partial( self.onWeightSliderChanged, rowIndex, columnIndex ) )
+    weightSlider.connect( 'valueChanged(double)', partial( self.onWeightSliderChanged, metric, task ) )
     
-    # Add the metric value
-    metricLabel = qt.QLabel( metric, metricWeightWidget )
+    # Add the metric-task value
+    metricLabel = qt.QLabel( score, metricWeightWidget )
     metricLabel.setStyleSheet( "QLabel{ qproperty-alignment: AlignCenter }" )
     metricWeightLayout.addWidget( metricLabel )
     
     return metricWeightWidget
     
     
-  def onWeightSliderChanged( self, rowIndex, columnIndex, weight ):
+  def onWeightSliderChanged( self, metric, task, weight ):
     parameterNode = self.parameterNodeSelector.currentNode()
     if ( parameterNode is None ):
       return
@@ -581,22 +567,23 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
     weightsTable = weightsNode.GetTable()
     if ( weightsTable is None ):
-      return      
+      return
+      
+    ignoreMetricValue = parameterNode.GetAttribute( "IgnoreMetricValue" )
       
     # If the row or column index is none, that means apply to all rows or columns
-    if ( rowIndex is None ):
-      rowIndex = range( weightsTable.GetNumberOfRows() )
+    if ( metric is None ):
+      setMetrics = SkillAssessmentLogic.GetAllMetricTuples( weightsTable )
     else:
-      rowIndex = [ rowIndex ]
-    if ( columnIndex is None ):
-      columnIndex = range( weightsTable.GetNumberOfColumns() ) # Ignore header columns
+      setMetrics = [ metric ]
+    if ( task is None ):
+      setTasks = SkillAssessmentLogic.GetAllTaskNames( weightsTable, ignoreMetricValue )
     else:
-      columnIndex = [ columnIndex ]
+      setTasks = [ task ]
       
-    for row in rowIndex:
-      for column in columnIndex:
-        if ( not SkillAssessmentLogic.IsHeaderColumn( weightsTable, column, False ) ): # If the MetricValue column is changed, then we should changed the weight (but by default it isn't displayed)
-          weightsTable.SetValue( row, column, weight )
+    for currMetric in setMetrics:
+      for currTask in setTasks:
+        SkillAssessmentLogic.SetValueByMetricTask( weightsTable, currMetric, currTask, weight )
         
     SkillAssessmentLogic.Assess( parameterNode )
     self.updateAssessmentTable( parameterNode )
@@ -861,6 +848,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     if ( metricsNode is None ):
       logging.info( "SkillAssessmentLogic::Assess: Metrics table is empty. Could not assess." )
       return 0
+    metricsTable = metricsNode.GetTable()
       
     trainingNodes = []
     for i in range( parameterNode.GetNumberOfNodeReferences( "Training" ) ):
@@ -925,114 +913,120 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       Assessor = AssessmentMethods.FuzzyAssessment
     if ( assessmentMethod == ASSESSMENT_METHOD_REGRESSION ):
       Assessor = AssessmentMethods.RegressionAssessment
+      
+    # Get all metrics and tasks
+    allMetricTuples = SkillAssessmentLogic.GetAllMetricTuples( metricsTable )
+    allTaskNames = SkillAssessmentLogic.GetAllTaskNames( metricsTable, ignoreMetricValue )
 
+    #
     # Compute the metric/task pair skill values
+    #
     metricTaskScoresTable = SkillAssessmentLogic.CreateBlankMetricsTable( metricsNode, 0 )
     
-    for rowIndex in range( metricTaskScoresTable.GetNumberOfRows() ):
-      metricName, metricRoles, metricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricTaskScoresTable, rowIndex )      
-      for columnIndex in range( metricTaskScoresTable.GetNumberOfColumns() ):
-        if ( SkillAssessmentLogic.IsHeaderColumn( metricTaskScoresTable, columnIndex, ignoreMetricValue ) ):
-          continue        
-        columnName = metricTaskScoresTable.GetColumnName( columnIndex )
+    for metricTuple in allMetricTuples:
+      for taskName in allTaskNames:       
+        metricTaskList = SkillAssessmentLogic.GetMetricTaskList( metricsTable, metricTuple, taskName, ignoreMetricValue )
+        metricTaskStringList = SkillAssessmentLogic.TranslateMetricTaskList( translationTable, metricTaskList )
         
-        trainingRecords, _ = SkillAssessmentLogic.GetMetricRecordsFromNodes( trainingNodes, metricName, metricRoles, metricUnit, columnName, ignoreMetricValue )
-        testRecord, nameRecord = SkillAssessmentLogic.GetMetricRecordFromNode( metricsNode, metricName, metricRoles, metricUnit, columnName, ignoreMetricValue )
-        weights, _ = SkillAssessmentLogic.GetMetricRecordFromNode( weightsNode, metricName, metricRoles, metricUnit, columnName, ignoreMetricValue )
+        trainingRecords = SkillAssessmentLogic.GetMetricTaskRecordsFromNodes( trainingNodes, metricTaskList )
+        testRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( metricsNode, metricTaskList )
+        weightsRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( weightsNode, metricTaskList )
 
-        currMetricTaskScore, _ = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels )
-        metricTaskScoresTable.SetValue( rowIndex, columnIndex, round( currMetricTaskScore, OUTPUT_PRECISION ) )
+        currMetricTaskScore, _ = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weightsRecord, metricTaskStringList, nameLabels, skillLabels )
+        SkillAssessmentLogic.SetValueByMetricTask( metricTaskScoresTable, metricTuple, taskName, round( currMetricTaskScore, OUTPUT_PRECISION ) )
 
     metricTaskScoresNode = parameterNode.GetNodeReference( "MetricTaskScores" )
     metricTaskScoresNode.SetAndObserveTable( metricTaskScoresTable )    
     
+    #
     # Compute the metric scores
+    #
     metricScoresTable = SkillAssessmentLogic.CreateMetricScoresTable( metricsNode, 0 )
     
-    for rowIndex in range( metricScoresTable.GetNumberOfRows() ):
-      metricName, metricRoles, metricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricScoresTable, rowIndex )
+    for metricTuple in allMetricTuples:
+      metricTaskList = SkillAssessmentLogic.GetMetricTaskList( metricsTable, metricTuple, None, ignoreMetricValue )
+      metricTaskStringList = SkillAssessmentLogic.TranslateMetricTaskList( translationTable, metricTaskList )
 
-      trainingRecords, _ = SkillAssessmentLogic.GetMetricRecordsFromNodes( trainingNodes, metricName, metricRoles, metricUnit, None, ignoreMetricValue )
-      testRecord, nameRecord = SkillAssessmentLogic.GetMetricRecordFromNode( metricsNode, metricName, metricRoles, metricUnit, None, ignoreMetricValue )
-      weights, _ = SkillAssessmentLogic.GetMetricRecordFromNode( weightsNode, metricName, metricRoles, metricUnit, None, ignoreMetricValue )
+      trainingRecords = SkillAssessmentLogic.GetMetricTaskRecordsFromNodes( trainingNodes, metricTaskList )
+      testRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( metricsNode, metricTaskList )
+      weightsRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( weightsNode, metricTaskList )
 
-      currMetricScore, _ = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels )
-      metricScoresTable.SetValueByName( rowIndex, "MetricScore", round( currMetricScore, OUTPUT_PRECISION ) )
+      currMetricScore, _ = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weightsRecord, metricTaskStringList, nameLabels, skillLabels )
+      SkillAssessmentLogic.SetValueByMetricTask( metricScoresTable, metricTuple, "MetricScore", round( currMetricScore, OUTPUT_PRECISION ) )
       
     metricScoresNode = parameterNode.GetNodeReference( "MetricScores" )
     metricScoresNode.SetAndObserveTable( metricScoresTable )
-      
+    
+    #    
     # Compute the task scores
+    #
     taskScoresTable = SkillAssessmentLogic.CreateTaskScoresTable( metricsNode, 0 )
     
-    for columnIndex in range( taskScoresTable.GetNumberOfColumns() ):
-      if ( SkillAssessmentLogic.IsHeaderColumn( taskScoresTable, columnIndex, ignoreMetricValue ) ):
-        continue
-      columnName = taskScoresTable.GetColumnName( columnIndex )
+    for taskName in allTaskNames:      
+      metricTaskList = SkillAssessmentLogic.GetMetricTaskList( metricsTable, None, taskName, ignoreMetricValue )
+      metricTaskStringList = SkillAssessmentLogic.TranslateMetricTaskList( translationTable, metricTaskList )
       
-      trainingRecords, _ = SkillAssessmentLogic.GetMetricRecordsFromNodes( trainingNodes, None, None, None, columnName, ignoreMetricValue )
-      testRecord, nameRecord = SkillAssessmentLogic.GetMetricRecordFromNode( metricsNode, None, None, None, columnName, ignoreMetricValue )
-      weights, _ = SkillAssessmentLogic.GetMetricRecordFromNode( weightsNode, None, None, None, columnName, ignoreMetricValue )
+      trainingRecords = SkillAssessmentLogic.GetMetricTaskRecordsFromNodes( trainingNodes, metricTaskList )
+      testRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( metricsNode, metricTaskList )
+      weightsRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( weightsNode, metricTaskList )
 
-      currTaskScore, _ = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels )
-      taskScoresTable.SetValueByName( 0, columnName, round( currTaskScore, OUTPUT_PRECISION ) )
+      currTaskScore, _ = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weightsRecord, metricTaskStringList, nameLabels, skillLabels )
+      SkillAssessmentLogic.SetValueByRowIndexTask( taskScoresTable, 0, taskName, round( currTaskScore, OUTPUT_PRECISION ) )
       
     taskScoresNode = parameterNode.GetNodeReference( "TaskScores" )
     taskScoresNode.SetAndObserveTable( taskScoresTable )
-      
+    
+    #    
     # Compute the overall score
-    trainingRecords, _ = SkillAssessmentLogic.GetMetricRecordsFromNodes( trainingNodes, None, None, None, None, ignoreMetricValue )
-    testRecord, nameRecord = SkillAssessmentLogic.GetMetricRecordFromNode( metricsNode, None, None, None, None, ignoreMetricValue )
-    weights, _ = SkillAssessmentLogic.GetMetricRecordFromNode( weightsNode, None, None, None, None, ignoreMetricValue )
+    #
+    metricTaskList = SkillAssessmentLogic.GetMetricTaskList( metricsTable, None, None, ignoreMetricValue )
+    metricTaskStringList = SkillAssessmentLogic.TranslateMetricTaskList( translationTable, metricTaskList )
+    
+    trainingRecords = SkillAssessmentLogic.GetMetricTaskRecordsFromNodes( trainingNodes, metricTaskList )
+    testRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( metricsNode, metricTaskList )
+    weightsRecord = SkillAssessmentLogic.GetMetricTaskRecordFromNode( weightsNode, metricTaskList )
 
-    overallScore, description = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels )
+    metricTaskStringList = SkillAssessmentLogic.TranslateMetricTaskList( translationTable, metricTaskList )
+    overallScore, description = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weightsRecord, metricTaskStringList, nameLabels, skillLabels )
     parameterNode.SetAttribute( "OverallScore", str( round( overallScore, OUTPUT_PRECISION ) ) )
     parameterNode.SetAttribute( "AssessmentDescription", description )
 
+    #
     # Produce the feedback strings
+    #
     criticalValue = Assessor.GetCriticalValue( parameterNode, skillLabels )
-    strengthsString = SkillAssessmentLogic.GetFeedbackString( metricTaskScoresTable, translationTable, criticalValue, operator.lt, "good", ignoreMetricValue, 3 )
+    strengthsString = SkillAssessmentLogic.GetFeedbackString( metricTaskScoresTable, translationTable, criticalValue, False, "good", ignoreMetricValue, 3 )
     parameterNode.SetAttribute( "Strengths", strengthsString )
-    weaknessesString = SkillAssessmentLogic.GetFeedbackString( metricTaskScoresTable, translationTable, criticalValue, operator.gt, "poor", ignoreMetricValue, 3 )
+    weaknessesString = SkillAssessmentLogic.GetFeedbackString( metricTaskScoresTable, translationTable, criticalValue, True, "poor", ignoreMetricValue, 3 )
     parameterNode.SetAttribute( "Weaknesses", weaknessesString )
 
     parameterNode.EndModify( modifyState )
     
 
   @staticmethod
-  def GetFeedbackString( metricTaskScoresTable, translationTable, criticalValue, operator, noteString, ignoreMetricValue, maxNumberOfFeedbacks = 3 ):
+  def GetFeedbackString( metricTaskScoresTable, translationTable, criticalValue, descendingOrder, noteString, ignoreMetricValue, maxNumberOfFeedbacks = 3 ):
     if ( metricTaskScoresTable is None ):
       logging.info( "SkillAssessmentLogic::GetFeedbackString: Metric-task scores table is empty. Could not provide feedback." )
       return ""
   
-    # Get a list of row/column indices sorted by the metric value
-    feedbackElements = []
-    for rowIndex in range( metricTaskScoresTable.GetNumberOfRows() ):
-      for columnIndex in range( metricTaskScoresTable.GetNumberOfColumns() ):
-        if ( SkillAssessmentLogic.IsHeaderColumn( metricTaskScoresTable, columnIndex, ignoreMetricValue ) ):
-          continue
-
-        currMetricValue = metricTaskScoresTable.GetValue( rowIndex, columnIndex ).ToDouble()
-        if ( operator( criticalValue, currMetricValue ) ):
-          continue # The metric did not satisfy the cutoff
-
-        newElementInserted = False
-        for feedbackIndex in range( len( feedbackElements ) ):
-          feedbackValue = metricTaskScoresTable.GetValue( feedbackElements[ feedbackIndex ][ 0 ], feedbackElements[ feedbackIndex ][ 1 ] ).ToDouble()
-          if ( operator( currMetricValue, feedbackValue ) ):
-            feedbackElements.insert( feedbackIndex, [ rowIndex, columnIndex ] )
-            newElementInserted = True
-            break
-        if ( not newElementInserted ):
-          feedbackElements.append( [ rowIndex, columnIndex ] )
-
-    # Reconstruct the list of row/column indices into feedback strings
-    feedbackString = ""
-    for feedbackIndex in range( min( maxNumberOfFeedbacks, len( feedbackElements ) ) ):
-      metricName, metricRoles, metricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricTaskScoresTable, feedbackElements[ feedbackIndex ][ 0 ] )
-      taskName = metricTaskScoresTable.GetColumnName( feedbackElements[ feedbackIndex ][ 1 ] )
+    # Create a record from the metricTaskScores
+    metricTaskList = SkillAssessmentLogic.GetMetricTaskList( metricTaskScoresTable, None, None, ignoreMetricValue )
+    metricTaskRecord = SkillAssessmentLogic.GetMetricTaskRecord( metricTaskScoresTable, metricTaskList )
     
-      feedbackString = feedbackString + SkillAssessmentLogic.GetTranslatedMetricTaskString( translationTable, metricName, metricRoles, metricUnit, taskName )
+    # Sort based on size of the metricTaskValue
+    metricTaskRecordNameSorted = sorted( zip( metricTaskRecord, metricTaskList ), reverse = descendingOrder )
+    
+    maxNumberOfFeedbacks = min( maxNumberOfFeedbacks, len( metricTaskRecordNameSorted ) )
+    feedbackString = ""
+    for feedbackIndex in range( maxNumberOfFeedbacks ):
+      currMetricTaskScore = metricTaskRecordNameSorted[ feedbackIndex ][ 0 ]
+      if ( ( currMetricTaskScore < criticalValue ) == descendingOrder ): # That is, the score is not extreme enough for feedback
+        break
+        
+      currMetricTuple = metricTaskRecordNameSorted[ feedbackIndex ][ 1 ][ 0 ]
+      currTaskName = metricTaskRecordNameSorted[ feedbackIndex ][ 1 ][ 1 ]
+      
+      feedbackString = feedbackString + SkillAssessmentLogic.GetTranslatedMetricTaskString( translationTable, currMetricTuple, currTaskName )
 
       feedbackString = feedbackString + " is "
       feedbackString = feedbackString + noteString
@@ -1041,15 +1035,12 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
 
     return feedbackString
 
-
     
   @staticmethod
   def CreateTaskScoresTable( metricsNode, value ):
     table = vtk.vtkTable()
     
-    # Constructive approach
-    metricsTable = metricsNode.GetTable()
-    
+    # Constructive approach    
     metricNameColumn = vtk.vtkStringArray()
     metricNameColumn.SetName( "MetricName" )
     metricNameColumn.InsertNextValue( "TaskScore" )
@@ -1057,21 +1048,22 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     
     metricRolesColumn = vtk.vtkStringArray()
     metricRolesColumn.SetName( "MetricRoles" )
-    metricRolesColumn.InsertNextValue( "[]" )
+    metricRolesColumn.InsertNextValue( "" )
     table.AddColumn( metricRolesColumn )
     
     metricUnitColumn = vtk.vtkStringArray()
     metricUnitColumn.SetName( "MetricUnit" )
-    metricUnitColumn.InsertNextValue( "-" )
+    metricUnitColumn.InsertNextValue( "" )
     table.AddColumn( metricUnitColumn )
     
-    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
-      currColumnName = metricsTable.GetColumnName( columnIndex )
+    metricsTable = metricsNode.GetTable()
+    allTaskNames = SkillAssessmentLogic.GetAllTaskNames( metricsTable, False )
+    for taskName in allTaskNames:
       newColumn = vtk.vtkStringArray()
-      newColumn.SetName( currColumnName )
+      newColumn.SetName( taskName )
       newColumn.InsertNextValue( str( value ) )
       table.AddColumn( newColumn )
-
+    
     return table
     
  
@@ -1081,7 +1073,9 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
 
     # Constructive approach
     metricsTable = metricsNode.GetTable()
+    allTaskNames = SkillAssessmentLogic.GetAllTaskNames( metricsTable, False )
     for columnIndex in range( metricsTable.GetNumberOfColumns() ):
+      # Iterate over only the MetricName, MetricRoles, MetricUnit columns
       if ( not SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, False ) ):
         continue
 
@@ -1118,156 +1112,111 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
 
     
   @staticmethod
-  def GetMetricRecordsFromNodes( metricNodes, metricName, metricRoles, metricUnit, taskName, ignoreMetricValue = True ):
-    metricRecords = []
-    nameRecord = []
-    
-    for currMetricNode in metricNodes:
-      currMetricRecord, currNameRecord = SkillAssessmentLogic.GetMetricRecordFromNode( currMetricNode, metricName, metricRoles, metricUnit, taskName, ignoreMetricValue )
-      if ( not nameRecord ):
-        nameRecord = currNameRecord[:]
-      if ( not currNameRecord == nameRecord ):
-        logging.info( "SkillAssessmentLogic::GetMetricRecordsFromNodes: Metric tables are not ordered identically - cannot append new records." )
-      metricRecords.append( currMetricRecord )
-
-    return metricRecords, nameRecord
-      
-
-  @staticmethod
-  def GetMetricRecordFromNode( metricsNode, metricName, metricRoles, metricUnit, taskName, ignoreMetricValue = True ):
-    if ( metricsNode is None or metricsNode.GetTable() is None ):
-      logging.info( "SkillAssessmentLogic::GetMetricRecordFromNode: Table of metrics is empty." )
-      return
-
-    metricRecord, nameRecord = SkillAssessmentLogic.GetMetricRecordFromTable( metricsNode.GetTable(), metricName, metricRoles, metricUnit, taskName, ignoreMetricValue )
-    return metricRecord, nameRecord
-    
-    
-  @staticmethod
-  def GetMetricRecordFromTable( metricsTable, metricName, metricRoles, metricUnit, taskName, ignoreMetricValue = True ):
+  def GetMetricTaskList( metricsTable, metricTuple, taskName, ignoreMetricValue ):
+    # Note: The outputted record is a list of all the metric/task combination we want for analysis
     if ( metricsTable is None ):
-      logging.info( "SkillAssessmentLogic::GetMetricRecordFromTable: Table of metrics is empty." )
-      return
-    
-    metricRecord = []
-    nameRecord = []
-    rowMatches = SkillAssessmentLogic.FindMetricsTableRows( metricsTable, metricName, metricRoles, metricUnit )
-    for rowIndex in rowMatches:
-      for columnIndex in range( metricsTable.GetNumberOfColumns() ):
-        if ( SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, ignoreMetricValue ) ):
-          continue
-        taskMatch = ( metricsTable.GetColumnName( columnIndex ) == taskName or taskName is None )
-        if ( not taskMatch ):
-          continue
-        # Add to the metric record
-        metricRecord.append( metricsTable.GetValue( rowIndex, columnIndex ).ToDouble() )
-        # We should also keep a corresponding vector of metric-task names
-        # We need to look into the table because the inputs might be None
-        metricName, metricRoles, metricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricsTable, rowIndex )
-        taskName = metricsTable.GetColumnName( columnIndex )
-        nameRecord.append( SkillAssessmentLogic.GetTranslatedMetricTaskString( None, metricName, metricRoles, metricUnit, taskName ) )
-        
-    return metricRecord, nameRecord
-    
-    
-  @staticmethod
-  def FindMetricsTableRows( metricsTable, metricName, metricRoles, metricUnit ):
-    if ( metricsTable is None ):
-      logging.info( "SkillAssessmentLogic::FindMetricsTableRows: Table of metrics is empty." )
+      logging.info( "SkillAssessmentLogic::GetMetricTaskList: Table of metrics is empty." )
       return []
       
-    rowMatches = []
-    for rowIndex in range( metricsTable.GetNumberOfRows() ):
-      tableMetricName, tableMetricRoles, tableMetricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricsTable, rowIndex )
-      nameMatch = ( metricName is None or metricName == tableMetricName )
-      rolesMatch = ( metricRoles is None or metricRoles == tableMetricRoles )
-      unitMatch = ( metricUnit is None or metricUnit == tableMetricUnit ) # Unit should always match if the names match
-      if ( nameMatch and rolesMatch and unitMatch ):
-        rowMatches.append( rowIndex )
+    # If any of the inputs are None, that means we want everything
+    # That is, if metricName is None, we want all metrics
+    # Likewise, if taskName is None, we want all tasks
+    if ( metricTuple is None ):
+      searchMetrics = SkillAssessmentLogic.GetAllMetricTuples( metricsTable )
+    else:
+      searchMetrics = [ metricTuple ]
+    if ( taskName is None ):
+      searchTasks = SkillAssessmentLogic.GetAllTaskNames( metricsTable, ignoreMetricValue )
+    else:
+      searchTasks = [ taskName ]
+    
+    metricTaskList = []
+    for currMetric in searchMetrics:
+      for currTask in searchTasks:
+        metricTaskList.append( ( currMetric, currTask ) )
         
-    return rowMatches
-      
+    return metricTaskList
     
     
-  # Convenience method for checking if a column in a metrics table is a header columns
   @staticmethod
-  def IsHeaderColumn( metricsTable, index, metricValueIsHeader = True ):
-    columnName = metricsTable.GetColumnName( index )
-    if ( columnName == "MetricName"
-      or columnName == "MetricRoles"
-      or columnName == "MetricUnit" ):
-      return True
-    if ( columnName == "MetricValue"
-      and metricsTable.GetNumberOfColumns() > 4 
-      and ( metricValueIsHeader == None or metricValueIsHeader == "" or metricValueIsHeader == True ) ):
-      return True
+  def TranslateMetricTaskList( translationTable, metricTaskList ):
+    metricTaskStringList = []
+    for currMetricTask in metricTaskList:
+      currMetricTaskString = SkillAssessmentLogic.GetTranslatedMetricTaskString( translationTable, currMetricTask[ 0 ], currMetricTask[ 1 ] )
+      metricTaskStringList.append( currMetricTaskString )
       
-    return False
+    return metricTaskStringList
+
+ 
+  @staticmethod
+  def GetMetricTaskRecordFromNode( metricsNode, metricTaskList ):
+    if ( metricsNode is None ):
+      return None
+      
+    return SkillAssessmentLogic.GetMetricTaskRecord( metricsNode.GetTable(), metricTaskList )
+    
+ 
+  @staticmethod
+  def GetMetricTaskRecordsFromNodes( metricsNodes, metricTaskList ):
+    metricTaskRecords = []
+    
+    for currMetricsNode in metricsNodes:
+      if ( currMetricsNode is None ):
+        continue
+      currMetricsTable = currMetricsNode.GetTable()
+      if ( currMetricsTable is None ):
+        continue
+      currMetricTaskRecord = SkillAssessmentLogic.GetMetricTaskRecord( currMetricsTable, metricTaskList )
+      metricTaskRecords.append( currMetricTaskRecord )
+
+    return metricTaskRecords
 
     
-  # Convenience method for getting the name/roles/unit of a given row
   @staticmethod
-  def GetMetricNameRolesUnit( metricsTable, rowIndex ):
-    metricName = metricsTable.GetValueByName( rowIndex, "MetricName" )
-    metricRoles = metricsTable.GetValueByName( rowIndex, "MetricRoles" ) 
-    metricUnit = metricsTable.GetValueByName( rowIndex, "MetricUnit" )
+  def GetMetricTaskRecord( metricsTable, metricTaskList ):
+    # Note: The outputted record is necessarily ordered in the same way as the metricTaskList
+    if ( metricsTable is None ):
+      logging.info( "SkillAssessmentLogic::GetMetricTaskRecord: Table of metrics is empty." )
+      return
     
-    return metricName, metricRoles, metricUnit
-    
-    
-  # Convenience method for getting the number of tasks
-  @staticmethod
-  def GetNumberOfNonHeaderColumns( metricsTable, metricValueIsHeader = True ):
-    nonHeaderColumns = 0
-    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
-      isHeaderColumn = SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, metricValueIsHeader )
-      if ( not isHeaderColumn ):
-        nonHeaderColumns = nonHeaderColumns + 1
-
-    return nonHeaderColumns
+    metricTaskRecord = []
+    for currMetricTaskName in metricTaskList:
+      currMetricTuple = currMetricTaskName[ 0 ]
+      currTaskName = currMetricTaskName[ 1 ]
+      currMetricTaskValue = SkillAssessmentLogic.GetValueByMetricTask( metricsTable, currMetricTuple, currTaskName )
+      metricTaskRecord.append( currMetricTaskValue.ToDouble() )
+        
+    return metricTaskRecord
     
     
   @staticmethod
-  def AddTranslationsFromMetrics( metricsTable, translationTable ):
+  def AddTranslationsFromMetricsTable( metricsTable, translationTable ):
     if ( metricsTable is None or translationTable is None ):
       logging.info( "SkillAssessmentLogic::AddTranslationsFromMetrics: Metrics table and/or translation table is None." )
       return
       
     for rowIndex in range( metricsTable.GetNumberOfRows() ):
-      metricName, metricRoles, metricUnit = SkillAssessmentLogic.GetMetricNameRolesUnit( metricsTable, rowIndex )
-      rowMatches = SkillAssessmentLogic.FindMetricsTableRows( translationTable, metricName, metricRoles, metricUnit )
-      if ( len( rowMatches ) == 0 ):
+      metricTuple = SkillAssessmentLogic.GetMetricByRowIndex( metricsTable, rowIndex )
+      rowIndex = SkillAssessmentLogic.GetRowIndexByMetric( translationTable, metricTuple )
+      if ( rowIndex is None ):
         newRowIndex = translationTable.InsertNextBlankRow()
-        translationTable.SetValueByName( newRowIndex, "MetricName", metricName )
-        translationTable.SetValueByName( newRowIndex, "MetricRoles", metricRoles )
-        translationTable.SetValueByName( newRowIndex, "MetricUnit", metricUnit )
+        translationTable.SetValueByName( newRowIndex, "MetricName", metricTuple[ 0 ] )
+        translationTable.SetValueByName( newRowIndex, "MetricRoles", metricTuple[ 1 ] )
+        translationTable.SetValueByName( newRowIndex, "MetricUnit", metricTuple[ 2 ] )
         
         
   @staticmethod
-  def GetTranslatedMetricTaskString( translationTable, metricName, metricRoles, metricUnit, taskName = None ):
-    metricString = ""
-    
+  def GetTranslatedMetricTaskString( translationTable, metricTuple, taskName ):
     # Try to translate the metric
-    rowIndices = SkillAssessmentLogic.FindMetricsTableRows( translationTable, metricName, metricRoles, metricUnit )
-    if ( len( rowIndices ) > 0 ):
-      metricString = translationTable.GetValueByName( rowIndices[ 0 ], "Translation" ).ToString()
-    
+    metricString = SkillAssessmentLogic.GetValueByMetricTask( translationTable, metricTuple, "Translation" )    
     # If we cannot translate the metric, fall back to the regular name in full
-    if ( metricString == "" ):
-      metricString = metricName.ToString()
-      metricString = metricString + " ["
-      metricString = metricString + metricRoles.ToString()
-      metricString = metricString + "] "
-      metricString = metricString + "("
-      metricString = metricString + metricUnit.ToString()
-      metricString = metricString + ")"
+    if ( metricString is None or metricString == "" ):
+      metricString = SkillAssessmentLogic.GetMetricString( metricTuple )
     
-    # If a task name is specified, add it
-    if ( taskName is not None and not taskName == "" ):
-      metricString = metricString + " during "
-      metricString = metricString + taskName
+    taskString = SkillAssessmentLogic.GetTaskString( taskName )
+    metricTaskString = SkillAssessmentLogic.GetMetricTaskString( metricString, taskString )    
     
-    return metricString
+    return metricTaskString
     
     
   @staticmethod
@@ -1284,6 +1233,226 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
         skillLabels.append( 0 )
         
     return nameLabels, skillLabels
+    
+    
+  # Various convenience methods for working with metrics tables
+  @staticmethod
+  def IsHeaderColumn( metricsTable, columnIndex, overallMetricValueIsHeader ):
+    columnName = metricsTable.GetColumnName( columnIndex )
+    if ( columnName == "MetricName"
+      or columnName == "MetricRoles"
+      or columnName == "MetricUnit" ):
+      return True
+    if ( columnName == "MetricValue"
+      and ( overallMetricValueIsHeader == None or overallMetricValueIsHeader == "" or overallMetricValueIsHeader == True ) ):
+      return True
+      
+    return False
+    
+    
+  @staticmethod
+  def GetNumberOfNonHeaderColumns( metricsTable, overallMetricValueIsHeader ):
+    nonHeaderColumns = 0
+    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
+      isHeaderColumn = SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, overallMetricValueIsHeader )
+      if ( not isHeaderColumn ):
+        nonHeaderColumns = nonHeaderColumns + 1
+
+    return nonHeaderColumns
+    
+    
+  @staticmethod
+  def GetMetricByRowIndex( metricsTable, rowIndex ):
+    if ( metricsTable is None ):
+      return ( None, None, None )
+
+    metricName = metricsTable.GetValueByName( rowIndex, "MetricName" )
+    metricRoles = metricsTable.GetValueByName( rowIndex, "MetricRoles" )
+    metricUnit = metricsTable.GetValueByName( rowIndex, "MetricUnit" )
+
+    return ( metricName, metricRoles, metricUnit )
+      
+      
+  @staticmethod
+  def GetRowIndexByMetric( metricsTable, metricTuple ):
+    if ( metricsTable is None ):
+      return None
+       
+    for rowIndex in range( metricsTable.GetNumberOfRows() ):
+      currMetricTuple = SkillAssessmentLogic.GetMetricByRowIndex( metricsTable, rowIndex )
+      if ( currMetricTuple == metricTuple ):
+        return rowIndex
+          
+    return None
+    
+    
+  @staticmethod
+  def GetTaskByColumIndex( metricsTable, columnIndex, overallMetricValueIsHeader ):
+    if ( metricsTable is None ):
+      return None
+    isHeaderColumn = SkillAssessmentLogic.IsHeaderColumn( metricsTable, columnIndex, overallMetricValueIsHeader )
+    if ( isHeaderColumn ):
+      return None
+        
+    return metricsTable.GetColumnName( columnIndex )
+      
+      
+  @staticmethod
+  def GetColumnIndexByTask( metricsTable, taskName ):
+    if ( metricsTable is None ):
+      return None
+        
+    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
+      currTaskName = metricsTable.GetColumnName( columnIndex )
+      if ( currTaskName == taskName ):
+        return columnIndex
+          
+    return None
+    
+    
+  @staticmethod
+  def GetValueByMetricTask( metricsTable, metricTuple, taskName ):
+    if ( metricsTable is None ):
+      return None
+
+    rowIndex = SkillAssessmentLogic.GetRowIndexByMetric( metricsTable, metricTuple )
+    columnIndex = SkillAssessmentLogic.GetColumnIndexByTask( metricsTable, taskName )
+      
+    return SkillAssessmentLogic.GetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex )
+
+      
+  @staticmethod
+  def GetValueByMetricColumnIndex( metricsTable, metricTuple, columnIndex ):
+    if ( metricsTable is None ):
+      return None
+
+    rowIndex = SkillAssessmentLogic.GetRowIndexByMetric( metricsTable, metricTuple )
+      
+    return SkillAssessmentLogic.GetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex )
+      
+      
+  @staticmethod
+  def GetValueByRowIndexTask( metricsTable, rowIndex, taskName ):
+    if ( metricsTable is None ):
+      return None
+
+    columnIndex = SkillAssessmentLogic.GetColumnIndexByTask( metricsTable, taskName )
+      
+    return SkillAssessmentLogic.GetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex )
+    
+    
+  @staticmethod
+  def GetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex ):
+    if ( metricsTable is None ):
+      return None
+    if ( rowIndex is None or columnIndex is None ):
+      return None
+        
+    return metricsTable.GetValue( rowIndex, columnIndex )
+    
+    
+  @staticmethod
+  def SetValueByMetricTask( metricsTable, metricTuple, taskName, value ):
+    if ( metricsTable is None ):
+      return
+
+    rowIndex = SkillAssessmentLogic.GetRowIndexByMetric( metricsTable, metricTuple )
+    columnIndex = SkillAssessmentLogic.GetColumnIndexByTask( metricsTable, taskName )
+      
+    SkillAssessmentLogic.SetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex, value )
+
+      
+  @staticmethod
+  def SetValueByMetricColumnIndex( metricsTable, metricTuple, columnIndex, value ):
+    if ( metricsTable is None ):
+      return
+
+    rowIndex = SkillAssessmentLogic.GetRowIndexByMetric( metricsTable, metricTuple )
+      
+    SkillAssessmentLogic.SetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex, value )
+      
+      
+  @staticmethod
+  def SetValueByRowIndexTask( metricsTable, rowIndex, taskName, value ):
+    if ( metricsTable is None ):
+      return
+
+    columnIndex = SkillAssessmentLogic.GetColumnIndexByTask( metricsTable, taskName )
+      
+    SkillAssessmentLogic.SetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex, value )
+    
+    
+  @staticmethod
+  def SetValueByRowIndexColumnIndex( metricsTable, rowIndex, columnIndex, value ):
+    if ( metricsTable is None ):
+      return None
+    if ( rowIndex is None or columnIndex is None ):
+      return None
+        
+    metricsTable.SetValue( rowIndex, columnIndex, value )
+    
+    
+  @staticmethod
+  def GetAllMetricTuples( metricsTable ):
+    if ( metricsTable is None ):
+      return []
+      
+    allMetricTuples = []
+    for rowIndex in range( metricsTable.GetNumberOfRows() ):
+      currMetric = SkillAssessmentLogic.GetMetricByRowIndex( metricsTable, rowIndex )
+      if ( currMetric is not None ):
+        allMetricTuples.append( currMetric )
+      
+    return allMetricTuples
+    
+  
+  @staticmethod
+  def GetAllTaskNames( metricsTable, overallMetricValueIsHeader ):
+    if ( metricsTable is None ):
+      return []
+      
+    allTaskNames = []
+    for columnIndex in range( metricsTable.GetNumberOfColumns() ):
+      currTask = SkillAssessmentLogic.GetTaskByColumIndex( metricsTable, columnIndex, overallMetricValueIsHeader )
+      if ( currTask is not None ):
+        allTaskNames.append( currTask )
+      
+    return allTaskNames
+    
+    
+  @staticmethod
+  def GetMetricString( metricTuple ):
+    if ( metricTuple is None ):
+      return ""
+    
+    metricString = metricTuple[ 0 ].ToString()
+    metricString = metricString + " ["
+    metricString = metricString + metricTuple[ 1 ].ToString()
+    metricString = metricString + "] "
+    metricString = metricString + "("
+    metricString = metricString + metricTuple[ 2 ].ToString()
+    metricString = metricString + ")"
+    
+    return metricString
+
+  
+  @staticmethod
+  def GetTaskString( taskName ):
+    if ( taskName is None ):
+      return ""
+      
+    return taskName # Do not need ToString method here because we are not picking from the table, we are picking from the column names.
+    
+    
+  @staticmethod
+  def GetMetricTaskString( metricString, taskString ):
+    if ( metricString is None or metricString == "" ):
+      return ""
+    if ( taskString is None or taskString == "" ):
+      return metricString
+      
+    return ( metricString + " during " + taskString )
+    
     
     
 

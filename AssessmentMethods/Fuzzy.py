@@ -175,10 +175,6 @@ class FuzzyAssessment():
         ruleSkillClasses.append( skillClassIndex )
         ruleMetricNames.append( nameRecord[ metricIndex ] )
         ruleMemberships.append( metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Evaluate( testRecord[ metricIndex ] ) )
-        print metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Parameters
-        print testRecord[ metricIndex ]
-        
-    print ruleMemberships
         
     ruleMetricNameSkillClass = zip( ruleMetricNames, ruleSkillClasses )
     sortedRules = sorted( zip( ruleMemberships, ruleMetricNameSkillClass ), reverse = True )
