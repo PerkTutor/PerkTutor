@@ -777,6 +777,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     blockState = self.weightsSelector.blockSignals( True )
     self.weightsSelector.setCurrentNode( parameterNode.GetNodeReference( "Weights" ) )
     self.weightsSelector.blockSignals( blockState )
+    
+    self.assessButton.setToolTip( parameterNode.GetAttribute( "AssessmentDescription" ) )
 
     blockState = self.trainingSetSelector.blockSignals( True )
     for node in self.trainingSetSelector.checkedNodes():
@@ -801,6 +803,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.linearCombinationParametersFrame.hide()
     self.nearestNeighborParametersFrame.hide()
     self.fuzzyParametersFrame.hide()
+    self.regressionParametersFrame.hide()
     if ( assessmentMethod == ASSESSMENT_METHOD_LINEARCOMBINATION ):
       self.linearCombinationRadioButton.setChecked( True )
       self.linearCombinationParametersFrame.show()
@@ -984,7 +987,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
 
     overallScore, description = Assessor.ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels )
     parameterNode.SetAttribute( "OverallScore", str( round( overallScore, OUTPUT_PRECISION ) ) )
-    print description
+    parameterNode.SetAttribute( "AssessmentDescription", description )
 
     # Produce the feedback strings
     criticalValue = Assessor.GetCriticalValue( parameterNode, skillLabels )

@@ -128,7 +128,7 @@ class LinearCombinationAssessment():
     descriptionString = "In this case, most outlying metrics were (in descending order): " + "\n\n"
     sortedRecord = sorted( zip( scaledTestRecord, nameRecord ), reverse = True )
     for currScaledTestRecord, currNameRecord in sortedRecord:
-      descriptionString = descriptionString + currNameRecord +  " (scaled value = " + str( currScaledTestRecord ) + ")" + "\n"
+      descriptionString = descriptionString + currNameRecord + " (scaled value = " + str( currScaledTestRecord ) + ")" + "\n"
       
     return descriptionString
 
