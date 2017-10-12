@@ -1225,14 +1225,18 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
   def GetNameSkillLabels( trainingNodes ):
     nameLabels = []
     skillLabels = []
+    unlabelledNodes = []
     for currTrainingNode in trainingNodes:
       nameLabels.append( currTrainingNode.GetName() )
       currSkill = currTrainingNode.GetAttribute( "Skill" )
       try:
         skillLabels.append( float( currSkill ) )
-      except:
-        logging.info( "SkillAssessmentLogic::GetSkillLabels: Training node " + currTrainingNode.GetName() + " has no skill label. Using zero as presumed skill." )
+      except:        
         skillLabels.append( 0 )
+        unlabelledNodes.append( currTrainingNode.GetName() )
+        
+    if ( unlabelledNodes ):
+      logging.info( "SkillAssessmentLogic::GetSkillLabels: The following training nodes have no skill label, and thus, zero was presumed as the skill: " + str( unlabelledNodes ) )
         
     return nameLabels, skillLabels
     
