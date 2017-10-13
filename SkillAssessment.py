@@ -1094,7 +1094,9 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
     feedbackString = ""
     for feedbackIndex in range( maxNumberOfFeedbacks ):
       currMetricTaskScore = metricTaskRecordNameSorted[ feedbackIndex ][ 0 ]
-      if ( ( currMetricTaskScore < criticalValue ) == descendingOrder ): # That is, the score is not extreme enough for feedback
+      if ( descendingOrder and ( currMetricTaskScore <= criticalValue ) ):
+        break
+      if ( not descendingOrder and ( currMetricTaskScore >= criticalValue ) ): # That is, the score is not extreme enough for feedback
         break
         
       currMetricTuple = metricTaskRecordNameSorted[ feedbackIndex ][ 1 ][ 0 ]
