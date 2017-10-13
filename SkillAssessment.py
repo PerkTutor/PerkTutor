@@ -54,8 +54,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
 
     # Instantiate and connect widgets ...
     self.saLogic = SkillAssessmentLogic()
-
-    self.parameterNodeObserverTags = []
+    
+    self.parameterNodeObserverTags = []    
 
     #
     # Assessment Area
@@ -102,17 +102,34 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
 
     #
     # Assess Button
-    #
+    #    
     self.assessButton = qt.QPushButton( "Assess" )
     self.assessButton.toolTip = "Assess proficiency."
-    assessmentFormLayout.addRow( self.assessButton )
+    self.assessButton.setSizePolicy( qt.QSizePolicy.Expanding, qt.QSizePolicy.Expanding )
+    
+    self.showTableButton = qt.QPushButton()
+    self.showTableButton.setIcon( qt.QApplication.style().standardIcon( qt.QStyle.SP_FileDialogDetailedView ) )
+    self.showTableButton.toolTip = "Show the full assessment table scoresheet."
+    self.showTableButton.setSizePolicy( qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed )
+    
+    self.assessmentDescriptionButton = qt.QPushButton()
+    self.assessmentDescriptionButton.setIcon( qt.QApplication.style().standardIcon( qt.QStyle.SP_MessageBoxQuestion ) )
+    self.assessmentDescriptionButton.toolTip = "Show details on the calculation method."
+    self.assessmentDescriptionButton.setSizePolicy( qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed )
+    
+    
+    self.assessmentButtonsLayout = qt.QHBoxLayout()
+    self.assessmentButtonsLayout.addWidget( self.assessButton )
+    self.assessmentButtonsLayout.addWidget( self.showTableButton )
+    self.assessmentButtonsLayout.addWidget( self.assessmentDescriptionButton )
+    assessmentFormLayout.addRow( self.assessmentButtonsLayout )
     
     #
     # Results Label
     #
     self.resultsLabel = qt.QLabel( "" )
-    self.resultsLabel.toolTip = "The overall proficiency score."
-    assessmentFormLayout.addRow( "Result: ", self.resultsLabel )
+    self.resultsLabel.toolTip = "The overall proficiency level."
+    assessmentFormLayout.addRow( "Skill level", self.resultsLabel )
 
 
     #
@@ -317,6 +334,8 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.regressionRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_REGRESSION ) )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
+    self.showTableButton.connect( 'clicked(bool)', self.onShowTableButtonClicked )
+    self.assessmentDescriptionButton.connect( 'clicked(bool)', self.onAssessmentDescriptionButtonClicked )
     
     self.translationTableSelector.connect( 'nodeAddedByUser(vtkMRMLNode*)', self.onTranslationTableAdded )
     self.translationTableSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onTranslationTableChanged )
@@ -696,7 +715,21 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.updateWidgetFromParameterNode( parameterNode )
     self.assessmentTable.clear()
     self.updateAssessmentTable( parameterNode )
+
+    
+  def onShowTableButtonClicked( self ):
+    self.onAssessButtonClicked()
+    
     self.assessmentTable.show()
+    
+    
+  def onAssessmentDescriptionButtonClicked( self ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+      
+    # Displays a simple information message box
+    qt.QMessageBox.about( None, "Assessment Description", parameterNode.GetAttribute( "AssessmentDescription" ) )
     
     
   def onTranslationTableAdded( self, translationTableNode ):
