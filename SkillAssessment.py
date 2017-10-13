@@ -213,6 +213,16 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.ignoreMetricValuesCheckBox.setToolTip( "Ignore the overall metric values when task-spoecific metric values are available." )
     self.optionsFormLayout.addRow( self.ignoreMetricValuesCheckBox )
     
+    #
+    # Show raw metric-task values or scores
+    #
+    self.showMetricTaskScoresCheckBox = qt.QCheckBox()
+    self.showMetricTaskScoresCheckBox.setCheckState( 2 ) # This is checked
+    self.showMetricTaskScoresCheckBox.setText( "Show metric scores" )
+    self.showMetricTaskScoresCheckBox.setToolTip( "Show the computed score for each metric-task pair in the table." )
+    self.optionsFormLayout.addRow( self.showMetricTaskScoresCheckBox )
+    
+    
     # Assessment method selection
     self.assessmentMethodGroupBox = qt.QGroupBox( "Assessment Method" )
     self.assessmentMethodLayout = qt.QVBoxLayout( self.assessmentMethodGroupBox )
@@ -327,6 +337,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.weightsSelector.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onWeightsChanged )
     
     self.ignoreMetricValuesCheckBox.connect( 'toggled(bool)', self.onIgnoreMetricValuesChanged )
+    self.showMetricTaskScoresCheckBox.connect( 'toggled(bool)', self.onShowMetricTaskScoresChanged )
     
     self.linearCombinationRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_LINEARCOMBINATION ) )
     self.nearestNeighborRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_NEARESTNEIGHBOR ) )
@@ -358,8 +369,15 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
   def updateAssessmentTable( self, parameterNode ):
     if ( parameterNode is None ):
       return
+      
+    ignoreMetricValue = parameterNode.GetAttribute( "IgnoreMetricValue" )  
+    showMetricTaskScores = parameterNode.GetAttribute( "ShowMetricTaskScores" )
     
-    metricsNode = parameterNode.GetNodeReference( "Metrics" )
+    if ( showMetricTaskScores is None or showMetricTaskScores == "True" ):
+      metricsNode = parameterNode.GetNodeReference( "MetricTaskScores" )
+    else:
+      metricsNode = parameterNode.GetNodeReference( "Metrics" )
+      
     weightsNode = parameterNode.GetNodeReference( "Weights" )      
     
     if ( metricsNode is None or weightsNode is None ):
@@ -379,7 +397,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       logging.info( "SkillAssessmentWidget::updateAssessmentTableWidget: Metrics and weights tables incompatible." )
       return
       
-    ignoreMetricValue = parameterNode.GetAttribute( "IgnoreMetricValue" )  
+    
     translationNode = parameterNode.GetNodeReference( "TranslationTable" )
     translationTable = None
     if ( translationNode is not None ):
@@ -613,10 +631,15 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       return
       
     # Set the default values
-    parameterNode.SetAttribute( "AssessmentMethod", "LinearCombination" )
-      
+    if ( parameterNode.GetAttribute( "AssessmentMethod" ) is None or parameterNode.GetAttribute( "AssessmentMethod" ) == "" ): # Special case - this is set by the widget during creation
+      parameterNode.SetAttribute( "AssessmentMethod", "LinearCombination" )      
     if ( parameterNode.GetAttribute( "OverallScore" ) is None ):
       parameterNode.SetAttribute( "OverallScore", "0" )
+    if ( parameterNode.GetAttribute( "IgnoreMetricValue" ) is None ):
+      parameterNode.SetAttribute( "IgnoreMetricValue", "True" )
+    if ( parameterNode.GetAttribute( "ShowMetricTaskScores" ) is None ):
+      parameterNode.SetAttribute( "ShowMetricTaskScores", "True" )      
+    
 
     self.updateWidgetFromParameterNode( parameterNode )
     
@@ -691,9 +714,21 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
       
     self.assessmentTable.clear()
     if ( toggled ):
-      parameterNode.SetAttribute( "IgnoreMetricValue", "" )
+      parameterNode.SetAttribute( "IgnoreMetricValue", "True" )
     else:
       parameterNode.SetAttribute( "IgnoreMetricValue", "False" )
+      
+      
+  def onShowMetricTaskScoresChanged( self, toggled ):
+    parameterNode = self.parameterNodeSelector.currentNode()
+    if ( parameterNode is None ):
+      return
+      
+    self.assessmentTable.clear()
+    if ( toggled ):
+      parameterNode.SetAttribute( "ShowMetricTaskScores", "True" )
+    else:
+      parameterNode.SetAttribute( "ShowMetricTaskScores", "False" )
     
     
   def onAssessmentMethodRadioButtonToggled( self, assessmentMethod, toggled ):
@@ -810,10 +845,16 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.trainingSetSelector.blockSignals( blockState )
     
     ignoreMetricValues = parameterNode.GetAttribute( "IgnoreMetricValue" )
-    if ( ignoreMetricValues == None or ignoreMetricValues == "" ):
+    if ( ignoreMetricValues == None or ignoreMetricValues == "True" ):
       self.ignoreMetricValuesCheckBox.setCheckState( 2 )
     else:
       self.ignoreMetricValuesCheckBox.setCheckState( 0 )
+      
+    showMetricTaskScores = parameterNode.GetAttribute( "ShowMetricTaskScores" )
+    if ( showMetricTaskScores == None or showMetricTaskScores == "True" ):
+      self.showMetricTaskScoresCheckBox.setCheckState( 2 )
+    else:
+      self.showMetricTaskScoresCheckBox.setCheckState( 0 )
       
     assessmentMethod = parameterNode.GetAttribute( "AssessmentMethod" )
     linearCombinationBlockState = self.linearCombinationRadioButton.blockSignals( True )
@@ -1283,7 +1324,7 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       or columnName == "MetricUnit" ):
       return True
     if ( columnName == "MetricValue"
-      and ( overallMetricValueIsHeader == None or overallMetricValueIsHeader == "" or overallMetricValueIsHeader == True ) ):
+      and ( overallMetricValueIsHeader == None or overallMetricValueIsHeader == "True" ) ):
       return True
       
     return False
