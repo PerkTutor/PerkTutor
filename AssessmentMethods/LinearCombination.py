@@ -240,7 +240,7 @@ class LinearCombinationAssessment():
       if ( testMetric == dataPoint ):
         tiedRank = tiedRank + 0.5
         
-    return tiedRank / len( trainingMetrics )
+    return float( tiedRank ) / len( trainingMetrics )
 
 
   # This computes the z-score
