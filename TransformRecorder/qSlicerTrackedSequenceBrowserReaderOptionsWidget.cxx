@@ -53,6 +53,8 @@ qSlicerTrackedSequenceBrowserReaderOptionsWidget::qSlicerTrackedSequenceBrowserR
   d->setupUi( this );
 
   connect( d->UseSceneProxyNodesCheckBox, SIGNAL( toggled( bool ) ), this, SLOT( updateProperties() ) );
+  
+  this->updateProperties(); // set default properties as specified in GUI defaults
 }
 
 //-----------------------------------------------------------------------------
