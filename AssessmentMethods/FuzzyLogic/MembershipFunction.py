@@ -110,3 +110,28 @@ class FlatMembershipFunction( MembershipFunction ):
       return 0
     
     return self.Parameters[ 0 ]
+    
+    
+class GaussianKDEMembershipFunction( MembershipFunction ):
+  
+  def Evaluate( self, value ):
+    if ( len( self.Parameters ) % 2 != 1 ):
+      logging.warning( "GaussianKDEMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
+    if ( self.Parameters[ 0 ] == 0 ):
+      logging.warning( "GaussianKDEMembershipFunction::Evaluate: Bandwidth is zero." )
+      return 0    
+    # The zeroth parameter should be 'h'
+    # All odd number parameters are datapoints, all even number parameters are weights
+    
+    h = float( self.Parameters[ 0 ] )
+    n = float( ( len( self.Parameters ) - 1 ) / 2 ) # number of datapoints
+    parameterIndex = 1
+    value = 0
+    while ( parameterIndex < len( self.Parameters ) ):
+      dataPoint = self.Parameters[ parameterIndex ]
+      weight = self.Parameters[ parameterIndex + 1 ]
+      value = value + weight * math.exp( - math.pow( ( value - dataPoint ) / h, 2 ) )
+      parameterIndex = parameterIndex + 2
+      
+    return value / n

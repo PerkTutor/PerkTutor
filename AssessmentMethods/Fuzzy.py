@@ -32,6 +32,9 @@ DEFUZZIFIER_CMMOM = "ClosestMaxToMeanOfMax"
 SHRINK_SCALE = "Scale"
 SHRINK_CLIP = "Clip"
 
+METRIC_MEMBERSHIP_GAUSSIANKDE = "Non-parametric"
+METRIC_MEMBERSHIP_GAUSSIAN = "Gaussian"
+
 NUMBER_OF_STEPS = 1e3
 
 
@@ -75,6 +78,15 @@ class FuzzyParametersWidget( qt.QFrame ):
     self.shrinkComboBox.addItem( SHRINK_CLIP )
     self.shrinkComboBox.setToolTip( "Choose the aggregation method." )
     self.parametersLayout.addRow( "Shrink ", self.shrinkComboBox )
+    
+    #
+    # Metric membership combo box
+    #    
+    self.metricMembershipComboBox = qt.QComboBox()
+    self.metricMembershipComboBox.addItem( METRIC_MEMBERSHIP_GAUSSIANKDE )
+    self.metricMembershipComboBox.addItem( METRIC_MEMBERSHIP_GAUSSIAN )
+    self.metricMembershipComboBox.setToolTip( "Choose the aggregation method." )
+    self.parametersLayout.addRow( "Metric membership ", self.metricMembershipComboBox )
         
     #
     # Number of skill classes
@@ -88,6 +100,7 @@ class FuzzyParametersWidget( qt.QFrame ):
     # connections
     self.defuzzifierComboBox.connect( 'currentIndexChanged(QString)', self.onDefuzzifierChanged )
     self.shrinkComboBox.connect( 'currentIndexChanged(QString)', self.onShrinkChanged )
+    self.metricMembershipComboBox.connect( 'currentIndexChanged(QString)', self.onMetricMembershipChanged )
     self.skillClassesSpinBox.connect( 'valueChanged(int)', self.onSkillClassesChanged )
     
     
@@ -102,6 +115,8 @@ class FuzzyParametersWidget( qt.QFrame ):
       self.parameterNode.SetAttribute( "Defuzzifier", DEFUZZIFIER_COM )
     if ( self.parameterNode.GetAttribute( "Shrink" ) is None ):
       self.parameterNode.SetAttribute( "Shrink", SHRINK_SCALE )
+    if ( self.parameterNode.GetAttribute( "MetricMembership" ) is None ):
+      self.parameterNode.SetAttribute( "MetricMembership", METRIC_MEMBERSHIP_GAUSSIANKDE )
     if ( self.parameterNode.GetAttribute( "SkillClasses" ) is None ):
       self.parameterNode.SetAttribute( "SkillClasses", str( 2 ) ) # Default 2 (i.e. Novice and Expert)
 
@@ -125,6 +140,12 @@ class FuzzyParametersWidget( qt.QFrame ):
       return      
     self.parameterNode.SetAttribute( "Shrink", text )
     
+
+  def onMetricMembershipChanged( self, text ):
+    if ( self.parameterNode is None ):
+      return      
+    self.parameterNode.SetAttribute( "MetricMembership", text )
+    
     
   def onSkillClassesChanged( self, number ):
     if ( self.parameterNode is None ):
@@ -143,6 +164,10 @@ class FuzzyParametersWidget( qt.QFrame ):
     shrinkIndex = self.shrinkComboBox.findText( self.parameterNode.GetAttribute( "Shrink" ) )
     if ( shrinkIndex >= 0 ):
       self.shrinkComboBox.setCurrentIndex( shrinkIndex )
+      
+    metricMembershipIndex = self.metricMembershipComboBox.findText( self.parameterNode.GetAttribute( "MetricMembership" ) )
+    if ( metricMembershipIndex >= 0 ):
+      self.metricMembershipComboBox.setCurrentIndex( metricMembershipIndex )
       
     self.skillClassesSpinBox.setValue( int( self.parameterNode.GetAttribute( "SkillClasses" ) ) )
     
@@ -188,6 +213,7 @@ class FuzzyAssessment():
   def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels ):
     defuzzifier = FuzzyAssessment.GetDefuzzifier( parameterNode.GetAttribute( "Defuzzifier" ) )
     shrinker = FuzzyAssessment.GetShrinker( parameterNode.GetAttribute( "Shrink" ) )
+    metricMembershipDistribution = parameterNode.GetAttribute( "MetricMembership" )
     
     skillClasses = int( parameterNode.GetAttribute( "SkillClasses" ) )
     minSkill = min( skillLabels )
@@ -195,7 +221,7 @@ class FuzzyAssessment():
     stepSize = ( maxSkill - minSkill ) / NUMBER_OF_STEPS
 
     skillMembershipFunctions = FuzzyAssessment.CreateAllSkillMembershipFunctions( skillClasses, minSkill, maxSkill )
-    metricMembershipFunctions = FuzzyAssessment.CreateAllMetricMembershipFunctions( testRecord, trainingRecords, skillLabels, skillMembershipFunctions )
+    metricMembershipFunctions = FuzzyAssessment.CreateAllMetricMembershipFunctions( testRecord, trainingRecords, skillLabels, skillMembershipFunctions, metricMembershipDistribution )
     
     fuzzyRules = FuzzyAssessment.CreateAllFuzzyRules( metricMembershipFunctions, skillMembershipFunctions )
     
@@ -261,7 +287,7 @@ class FuzzyAssessment():
   # Compute the membership functions
   # Weight based on the training data's degree of membership
   @staticmethod
-  def CreateAllMetricMembershipFunctions( testRecord, trainingRecords, skillLabels, skillMembershipFunctions ):
+  def CreateAllMetricMembershipFunctions( testRecord, trainingRecords, skillLabels, skillMembershipFunctions, metricMembershipDistribution ):
     # Assume that all records are the same length
     # Need an input membership function for each skill class for each metric
     metricMembershipFunctions = dict()
@@ -276,7 +302,7 @@ class FuzzyAssessment():
         for currTrainingRecord in trainingRecords:
           currTrainingVector.append( currTrainingRecord[ metricIndex ] )
           
-        currMetricMembershipFunction = FuzzyAssessment.CreateMetricMembershipFunction( currTrainingVector, memberships )
+        currMetricMembershipFunction = FuzzyAssessment.CreateMetricMembershipFunction( currTrainingVector, memberships , metricMembershipDistribution )
         metricMembershipFunctions[ skillClassIndex ][ metricIndex ] = currMetricMembershipFunction
         
     return metricMembershipFunctions
@@ -284,14 +310,14 @@ class FuzzyAssessment():
 
   # Create a Gaussian membership function, using the weighted inputs to estimate the mean and stdev
   @staticmethod
-  def CreateMetricMembershipFunction( trainingData, memberships ):
+  def CreateMetricMembershipFunction( trainingData, memberships, metricMembershipDistribution ):
     # Make sure the memberships add to one
     totalMembership = sum( memberships )
     if ( totalMembership == 0 ):
       logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: No membership in skill class." )
-      return FuzzyLogic.MembershipFunction.GaussianMembershipFunction()
+      
     for i in range( len( memberships ) ):
-      memberships[ i ] = memberships[ i ] / totalMembership
+      memberships[ i ] = memberships[ i ] / float( totalMembership )
 
     mean = 0
     stdev = 0
@@ -300,14 +326,39 @@ class FuzzyAssessment():
       stdev += memberships[ i ] * math.pow( trainingData[ i ], 2 )
     
     stdev = math.sqrt( stdev - math.pow( mean, 2 ) )
-
+    
     if ( stdev == 0 ):
-      logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: Cannot create a Gaussian membership function from the provided input. Input requires more instances or more variance." )
+      logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: Cannot create a Gaussian KDE membership function from the provided input. Input requires more instances or more variance." )
+    
+    if ( metricMembershipDistribution == METRIC_MEMBERSHIP_GAUSSIANKDE ):
+      return FuzzyAssessment.CreateGaussianKDEMetricMembershipFunction( trainingData, memberships, stdev )
+    if ( metricMembershipDistribution == METRIC_MEMBERSHIP_GAUSSIAN ):
+      return FuzzyAssessment.CreateGaussianMetricMembershipFunction( mean, stdev )
+      
+    logging.info( "FuzzyAssessment::CreateMetricMembershipFunction: Metric membership distribution improperly specified." )    
+    return FuzzyLogic.MembershipFunction.MembershipFunction()
 
+    
+  @staticmethod
+  def CreateGaussianKDEMetricMembershipFunction( trainingData, memberships, stdev ):
+    # Use the stdev to compute the Silverman rule of thumb for the bandwith
+    parameters = [ math.pow( 4 * math.pow( stdev, 5 ) / ( 3 * len( trainingData ) ), 0.2 ) ]
+    for i in range( len( trainingData ) ):
+      parameters.append( trainingData[ i ] )
+      parameters.append( memberships[ i ] )
+      
+    membershipFunction = FuzzyLogic.MembershipFunction.GaussianKDEMembershipFunction()
+    membershipFunction.SetParameters( parameters )
+    return membershipFunction
+    
+    
+  @staticmethod
+  def CreateGaussianMetricMembershipFunction( mean, stdev ):
     membershipFunction = FuzzyLogic.MembershipFunction.GaussianMembershipFunction()
     membershipFunction.SetParameters( [ mean, stdev ] )
     return membershipFunction
-      
+
+    
   # Use the approach from Riojas et al. 2011
   # Whatever the metric is, a particular group for that metric points to the same group overall
   # IF metric is group THEN skill is group
