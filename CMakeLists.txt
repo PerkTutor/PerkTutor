@@ -33,6 +33,7 @@ add_subdirectory(TransformRecorder)
 add_subdirectory(PerkEvaluator)
 add_subdirectory(PythonMetricsCalculator)
 add_subdirectory(WorkflowSegmentation)
+add_subdirectory(SkillAssessment)
 
 OPTION(PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES "Enable the building of work-in-progress, experimental modules." OFF)
 if (PERKTUTOR_ENABLE_EXPERIMENTAL_MODULES)
