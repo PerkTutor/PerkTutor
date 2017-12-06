@@ -115,7 +115,7 @@ void qSlicerPerkEvaluatorModule::setup()
   
   // Register the IO
   app->coreIOManager()->registerIO( new qSlicerMetricScriptReader( PerkEvaluatorLogic, this ) );
-  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Python Metric Script", QString( "Python MetricScript" ), QStringList() << "vtkMRMLMetricScriptNode", true, this ) );
+  app->coreIOManager()->registerIO( new qSlicerNodeWriter( "Python Metric Script", QString( "Python Metric Script" ), QStringList() << "vtkMRMLMetricScriptNode", true, this ) );
 
 }
 
