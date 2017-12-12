@@ -8,12 +8,15 @@ import sys
 import couchdb
 from functools import partial
 import re
+import subprocess
 
 PERK_TUTOR_DATABASE_NAME = "perk_tutor"
 REPLICATOR_DATABASE_NAME = "_replicator"
 DESIGN_DOC_VIEW_PATH = "_design/docs/_view/"
 
 LOCAL_SERVER_ADDRESS = "http://127.0.0.1:5984/"
+
+MAX_CONNECT_ATTEMPTS = 5
 
 SKILL_LEVEL_SELECTIONS = ( "Trainee", "Novice", "Intermediate", "Advanced", "Expert", "Unknown" )
 SESSION_COMPLETION_SELECTIONS = ( "Complete", "Incomplete" )
@@ -48,7 +51,11 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     #
     # Logic
     #
+    self.modulePath = os.path.dirname( slicer.modules.perktutorcouchdb.path )
+    
     self.ptcLogic = PerkTutorCouchDBLogic()
+    self.ptcLogic.moduleName = self.moduleName
+    self.ptcLogic.modulePath = self.modulePath
     
     #
     # Save Area
@@ -56,8 +63,7 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     saveCollapsibleButton = ctk.ctkCollapsibleButton()
     saveCollapsibleButton.text = "Save Session"
     self.layout.addWidget( saveCollapsibleButton )
-
-    # Layout within the dummy collapsible button
+    # Layout within the collapsible button
     saveFormLayout = qt.QFormLayout( saveCollapsibleButton )
 
     # User ID input
@@ -102,8 +108,7 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     searchCollapsibleButton = ctk.ctkCollapsibleButton()
     searchCollapsibleButton.text = "Search For Session"
     self.layout.addWidget( searchCollapsibleButton )
-
-    # Layout within the dummy collapsible button
+    # Layout within the collapsible button
     searchFormLayout = qt.QFormLayout( searchCollapsibleButton )
 
     # Search user ID field
@@ -132,38 +137,100 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     # Configuration
     #
     configurationCollapsibleButton = ctk.ctkCollapsibleButton()
-    configurationCollapsibleButton.text = "Remote Configuration"
+    configurationCollapsibleButton.text = "Configuration"
     configurationCollapsibleButton.collapsed = True
     self.layout.addWidget( configurationCollapsibleButton )
-
-    # Layout within the dummy collapsible button
-    configurationFormLayout = qt.QFormLayout( configurationCollapsibleButton )
+    # Layout within the collapsible button
+    configurationVBoxLayout = qt.QVBoxLayout( configurationCollapsibleButton )
     
     settings = slicer.app.userSettings()
+    
+    
+    #
+    # Database
+    #
+    databaseCollapsibleGroupBox = ctk.ctkCollapsibleGroupBox()
+    databaseCollapsibleGroupBox.setTitle( "Database" )
+    databaseCollapsibleGroupBox.collapsed = True
+    configurationVBoxLayout.addWidget( databaseCollapsibleGroupBox )
+    # Layout within the group box
+    databaseFormLayout = qt.QFormLayout( databaseCollapsibleGroupBox )    
 
     # Database username field
-    self.usernameLineEdit = qt.QLineEdit()
-    self.usernameLineEdit.setText( settings.value( self.moduleName + "/Username" ) )
-    configurationFormLayout.addRow( "Username", self.usernameLineEdit )
+    self.databaseUsernameLineEdit = qt.QLineEdit()
+    self.databaseUsernameLineEdit.setText( settings.value( self.moduleName + "/DatabaseUsername" ) )
+    databaseFormLayout.addRow( "Username", self.databaseUsernameLineEdit )
 
     # Database password field
-    self.passwordLineEdit = qt.QLineEdit()
-    self.passwordLineEdit.setText( settings.value( self.moduleName + "/Password" ) )
-    configurationFormLayout.addRow( "Password", self.passwordLineEdit )
+    self.databasePasswordLineEdit = qt.QLineEdit()
+    self.databasePasswordLineEdit.setEchoMode( qt.QLineEdit.Password )
+    self.databasePasswordLineEdit.setText( settings.value( self.moduleName + "/DatabasePassword" ) )    
+    databaseFormLayout.addRow( "Password", self.databasePasswordLineEdit )
 
     # Remote database address
-    self.addressLineEdit = qt.QLineEdit()
-    self.addressLineEdit.setText( settings.value( self.moduleName + "/Address" ) )
-    configurationFormLayout.addRow( "Address", self.addressLineEdit )
+    self.databaseAddressLineEdit = qt.QLineEdit()
+    self.databaseAddressLineEdit.setText( settings.value( self.moduleName + "/DatabaseAddress" ) )
+    databaseFormLayout.addRow( "Address", self.databaseAddressLineEdit )
+    
+    
+    #
+    # File Server
+    #
+    fileServerCollapsibleGroupBox = ctk.ctkCollapsibleGroupBox()
+    fileServerCollapsibleGroupBox.setTitle( "File Server" )
+    fileServerCollapsibleGroupBox.collapsed = True
+    configurationVBoxLayout.addWidget( fileServerCollapsibleGroupBox )
+    # Layout within the group box
+    fileServerFormLayout = qt.QFormLayout( fileServerCollapsibleGroupBox )    
+
+    # File server username field
+    self.fileServerUsernameLineEdit = qt.QLineEdit()
+    self.fileServerUsernameLineEdit.setText( settings.value( self.moduleName + "/FileServerUsername" ) )
+    fileServerFormLayout.addRow( "Username", self.fileServerUsernameLineEdit )
+
+    # File server password field
+    self.fileServerPasswordLineEdit = qt.QLineEdit()
+    self.fileServerPasswordLineEdit.setEchoMode( qt.QLineEdit.Password )
+    self.fileServerPasswordLineEdit.setText( settings.value( self.moduleName + "/FileServerPassword" ) )    
+    fileServerFormLayout.addRow( "Password", self.fileServerPasswordLineEdit )
+
+    # File server address
+    self.fileServerAddressLineEdit = qt.QLineEdit()
+    self.fileServerAddressLineEdit.setText( settings.value( self.moduleName + "/FileServerAddress" ) )
+    fileServerFormLayout.addRow( "Address", self.fileServerAddressLineEdit )
+    
+    # Remote storage directory
+    self.fileServerRemoteDirectoryLineEdit = qt.QLineEdit()
+    self.fileServerRemoteDirectoryLineEdit.setText( settings.value( self.moduleName + "/FileServerRemoteDirectory" ) )
+    fileServerFormLayout.addRow( "Remote path", self.fileServerRemoteDirectoryLineEdit )    
+    
+    # Local storage directory
+    self.fileServerLocalDirectoryLineEdit = qt.QLineEdit()
+    self.fileServerLocalDirectoryLineEdit.setText( settings.value( self.moduleName + "/FileServerLocalDirectory" ) )
+    fileServerFormLayout.addRow( "Local path", self.fileServerLocalDirectoryLineEdit )
+
+    # FTP client
+    self.ftpClientDirectoryLineEdit = qt.QLineEdit()
+    self.ftpClientDirectoryLineEdit.setText( settings.value( self.moduleName + "/FileServerClient" ) )
+    fileServerFormLayout.addRow( "FTP client", self.ftpClientDirectoryLineEdit )
+        
     
     # Update Button
     self.updateButton = qt.QPushButton( "Update" )
     self.updateButton.enabled = True
-    configurationFormLayout.addRow( self.updateButton )
+    configurationVBoxLayout.addWidget( self.updateButton )
     
+    
+    #
+    # Stretcher
+    #
+    self.layout.addStretch( 1 )
+    
+    #
     # Initialize the remote database from the settings at outset (if the settings are already specified)
+    #
     try:
-      self.ptcLogic.initializeDatabaseFromSettings( self.moduleName )
+      self.ptcLogic.initializeDatabaseFromSettings()
     except Exception as e:
       logging.warning( e )
     
@@ -201,12 +268,20 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     
   def onUpdateButton( self ):
     settings = slicer.app.userSettings()
-    settings.setValue( self.moduleName + "/Username", self.usernameLineEdit.text )
-    settings.setValue( self.moduleName + "/Password", self.passwordLineEdit.text )
-    settings.setValue( self.moduleName + "/Address", self.addressLineEdit.text )
+    
+    settings.setValue( self.moduleName + "/DatabaseUsername", self.databaseUsernameLineEdit.text )
+    settings.setValue( self.moduleName + "/DatabasePassword", self.databasePasswordLineEdit.text )
+    settings.setValue( self.moduleName + "/DatabaseAddress", self.databaseAddressLineEdit.text )
+    
+    settings.setValue( self.moduleName + "/FileServerUsername", self.fileServerUsernameLineEdit.text )
+    settings.setValue( self.moduleName + "/FileServerPassword", self.fileServerPasswordLineEdit.text )
+    settings.setValue( self.moduleName + "/FileServerAddress", self.fileServerAddressLineEdit.text )
+    settings.setValue( self.moduleName + "/FileServerRemoteDirectory", self.fileServerRemoteDirectoryLineEdit.text )
+    settings.setValue( self.moduleName + "/FileServerLocalDirectory", self.fileServerLocalDirectoryLineEdit.text )
+    settings.setValue( self.moduleName + "/FileServerClient", self.ftpClientDirectoryLineEdit.text )
     
     try:
-      self.ptcLogic.initializeDatabaseFromSettings( self.moduleName )
+      self.ptcLogic.initializeDatabaseFromSettings()
     except Exception as e:
       logging.warning( e )
 
@@ -242,8 +317,10 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
   def onLoadSession( self, sender, searchResults, row, column ):
     sessionFileName = searchResults[ row ][ -2 ]
     sessionFileType = searchResults[ row ][ -1 ]
-    self.ptcLogic.loadSession( sessionFileName, sessionFileType )
-    logging.info( "Session " + sessionFileName + " loaded." )
+    
+    success = self.ptcLogic.loadSession( sessionFileName, sessionFileType )    
+    if ( success ):
+      logging.info( "Session " + sessionFileName + " loaded." )
 
     sender.close()
 
@@ -256,13 +333,13 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
 
   def __init__( self ):
     self.database = None
-    
-    
-  def initializeDatabaseFromSettings( self, moduleName ):
+      
+
+  def initializeDatabaseFromSettings( self ):
     settings = slicer.app.userSettings()
-    username = str( settings.value( moduleName + "/Username" ) )
-    password = str( settings.value( moduleName + "/Password" ) )
-    address = str( settings.value( moduleName + "/Address" ) )
+    username = str( settings.value( self.moduleName + "/DatabaseUsername" ) )
+    password = str( settings.value( self.moduleName + "/DatabasePassword" ) )
+    address = str( settings.value( self.moduleName + "/DatabaseAddress" ) )
     
     remoteAddress = username + ":" + password + "@" + address
     self.initializeDatabase( PERK_TUTOR_DATABASE_NAME, remoteAddress )
@@ -325,31 +402,40 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     return pushDoc, pullDoc
 
   
-  def uploadSession( self, dataFields, sessionFileObject ):
+  def uploadSession( self, dataFields, sessionFileObject ):    
     # Most importantly, save a copy locally (this will also be used to upload attachment)
+    settings = slicer.app.userSettings()   
     if ( sessionFileObject is None ): # We are saving the entire scene
       sessionFileType = "SceneFile"
       sessionFileBaseName = "Scene-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + ".mrb"
-      tempSessionFileFullPath = slicer.app.temporaryPath + "/" + sessionFileBaseName
-      slicer.util.saveScene( tempSessionFileFullPath )
+      sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionFileBaseName )
+      slicer.util.saveScene( sessionFileFullName )
     else: # The session contains a node (e.g. tracked sequence browser)
       sessionFileType, sessionFileExtension = PerkTutorCouchDBLogic.getNodeDefaultWriteTypeExtension( sessionFileObject )
-      sessionFileBaseName = sessionFileObject.GetName() + "-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + sessionFileExtension
-      tempSessionFileFullPath = slicer.app.temporaryPath + "/" + sessionFileBaseName
-      slicer.util.saveNode( sessionFileObject, tempSessionFileFullPath )
+      sessionFileBaseName = sessionFileObject.GetName() + "-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + sessionFileExtension     
+      sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionFileBaseName )
+      slicer.util.saveNode( sessionFileObject, sessionFileFullName )
 
+    # Now save it to the database
     if ( self.database is None ):
       logging.warning( "PerkTutorCouchDBLogic::uploadSession: Aborting due to unspecified database." )
       return
-    
-    # Now save it to the database
+        
     dataFields[ "SessionFileName" ] = sessionFileBaseName
     dataFields[ "SessionFileType" ] = sessionFileType
-    self.database.save( dataFields )
     
-    with open( tempSessionFileFullPath, "rb" ) as file:
-      self.database.put_attachment( dataFields, file )
-    logging.info( "Session " + sessionFileBaseName + " saved." )
+    connectAttempts = MAX_CONNECT_ATTEMPTS
+    while ( connectAttempts > 0 ):
+      try:
+        self.database.save( dataFields )
+        break
+      except:
+        logging.warning( "PerkTutorCouchDBLogic::uploadSession: Attempt to connect to database failed. Attempts remaining: " + str( connectAttempts ) )
+        connectAttempts = connectAttempts - 1
+        
+    # Try to sync (copy new local files to remote)
+    self.syncToFileServer()
+    
 
   
   def searchForSession( self, searchFieldsDict ):
@@ -357,8 +443,14 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
       logging.warning( "PerkTutorCouchDBLogic::searchForSession: Aborting due to unspecified database" )
       return []
 
-    viewPath = DESIGN_DOC_VIEW_PATH + "trial"
-    allSessions = self.database.view( viewPath, include_docs = True )
+    connectAttempts = MAX_CONNECT_ATTEMPTS
+    while ( connectAttempts > 0 ):
+      try:
+        allSessions = self.database.view( DESIGN_DOC_VIEW_PATH + "trial", include_docs = True )
+        break
+      except:
+        logging.warning( "PerkTutorCouchDBLogic::loadSession: Attempt to connect to database failed. Attempts remaining: " + str( connectAttempts ) )
+        connectAttempts = connectAttempts - 1
     
     # Convert data in view into list of lists for displaying results
     # This manually filters out sessions that don't match the criteria
@@ -383,22 +475,61 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     if ( self.database is None ):
       logging.warning( "PerkTutorCouchDBLogic::loadSession: Aborting due to unspecified database." )
       return
-      
-    queryResults = self.database.view( DESIGN_DOC_VIEW_PATH + "session", include_docs = True, key = [ sessionFileName, sessionFileType ] )
-    savedSessionDoc = queryResults.rows[ 0 ].doc
-    sessionAttachmentFileName = savedSessionDoc[ "SessionFileName" ]
-    sessionAttachmentFile = self.database.get_attachment( savedSessionDoc, sessionAttachmentFileName )
-    tempSessionLoadFileName = slicer.app.temporaryPath + "/" + sessionAttachmentFileName
     
-    with open( tempSessionLoadFileName, "wb" ) as file:
-      file.write( sessionAttachmentFile.read() )
-    success = slicer.util.loadNodeFromFile( tempSessionLoadFileName, savedSessionDoc[ "SessionFileType" ] )
-
+    connectAttempts = MAX_CONNECT_ATTEMPTS
+    while ( connectAttempts > 0 ):
+      try:
+        queryResults = self.database.view( DESIGN_DOC_VIEW_PATH + "session", include_docs = True, key = [ sessionFileName, sessionFileType ] )
+        break
+      except:
+        logging.warning( "PerkTutorCouchDBLogic::loadSession: Attempt to connect to database failed. Attempts remaining: " + str( connectAttempts ) )
+        connectAttempts = connectAttempts - 1
+        
+    settings = slicer.app.userSettings()   
+    sessionDoc = queryResults.rows[ 0 ].doc
+    sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionDoc[ "SessionFileName" ] )
+    
+    if ( not os.path.isfile( sessionFileFullName ) ):
+      self.getFromFileServer( sessionDoc[ "SessionFileName" ] )
+    
+    success = slicer.util.loadNodeFromFile( sessionFileFullName, sessionDoc[ "SessionFileType" ] )
     return success
 
+    
+  def getFromFileServer( self, fileBaseName ):
+    settings = slicer.app.userSettings()
+    
+    getCommand = os.path.join( self.modulePath, "Resources", "GetPerkTutorData.bat" ) + " "
+    getCommand += str( settings.value( self.moduleName + "/FileServerUsername" ) ) + " "
+    getCommand += str( settings.value( self.moduleName + "/FileServerPassword" ) ) + " "
+    getCommand += str( settings.value( self.moduleName + "/FileServerAddress" ) ) + " "
+    getCommand += str( settings.value( self.moduleName + "/FileServerRemoteDirectory" ) ) + " "
+    getCommand += str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
+    getCommand += fileBaseName + " "
+    getCommand += str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
+    
+    getter = subprocess.Popen( getCommand, shell = True, stderr = subprocess.PIPE )
+    logging.info( getter.communicate() )
+    
+    
+  def syncToFileServer( self ):
+    settings = slicer.app.userSettings()
+    
+    syncCommand = os.path.join( self.modulePath, "Resources", "SyncPerkTutorData.bat" ) + " "
+    syncCommand += str( settings.value( self.moduleName + "/FileServerUsername" ) ) + " "
+    syncCommand += str( settings.value( self.moduleName + "/FileServerPassword" ) ) + " "
+    syncCommand += str( settings.value( self.moduleName + "/FileServerAddress" ) ) + " "
+    syncCommand += str( settings.value( self.moduleName + "/FileServerRemoteDirectory" ) ) + " "
+    syncCommand += str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
+    syncCommand += "Placeholder" + " "
+    syncCommand += str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
+    
+    syncer = subprocess.Popen( syncCommand, shell = True, stderr = subprocess.PIPE )
+    logging.info( syncer.communicate() )
+    
 
   @staticmethod
-  # The problem is that some nodes have writers, but do not have storage nodes
+  # The problem is that some nodes have writers, but do not have storage nodes (e.g. Sequence Browser node)
   def getNodeDefaultWriteTypeExtension( node ):
     ioManager = slicer.app.coreIOManager()
     fileWriterFileType = ioManager.fileWriterFileType( node )
@@ -409,6 +540,7 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     extension = fileWriterDefaultExtension[ extensionSpan[ 0 ]:extensionSpan[ 1 ] ]
 
     return fileWriterFileType, extension
+    
 
 
 

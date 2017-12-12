@@ -8,6 +8,8 @@ set(MODULE_PYTHON_SCRIPTS
 
 set(MODULE_PYTHON_RESOURCES
   Resources/${MODULE_NAME}.qrc
+  GetPerkTutorData.bat
+  SyncPerkTutorData.bat
   )
 
 #-----------------------------------------------------------------------------
