@@ -150,7 +150,7 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     # Database
     #
     databaseCollapsibleGroupBox = ctk.ctkCollapsibleGroupBox()
-    databaseCollapsibleGroupBox.setTitle( "Database" )
+    databaseCollapsibleGroupBox.setTitle( "Remote Database" )
     databaseCollapsibleGroupBox.collapsed = True
     configurationVBoxLayout.addWidget( databaseCollapsibleGroupBox )
     # Layout within the group box
@@ -361,7 +361,7 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
       pushDoc, pullDoc = PerkTutorCouchDBLogic.createDefaultReplicatorDocs( databaseName, remoteAddress )
       replicatorDatabase.save( pushDoc )
       replicatorDatabase.save( pullDoc )
-
+      
     
   @staticmethod  
   def createDefaultViewDoc():
@@ -409,12 +409,17 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
       sessionFileType = "SceneFile"
       sessionFileBaseName = "Scene-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + ".mrb"
       sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionFileBaseName )
-      slicer.util.saveScene( sessionFileFullName )
+      saveSuccess = slicer.util.saveScene( sessionFileFullName )
     else: # The session contains a node (e.g. tracked sequence browser)
       sessionFileType, sessionFileExtension = PerkTutorCouchDBLogic.getNodeDefaultWriteTypeExtension( sessionFileObject )
       sessionFileBaseName = sessionFileObject.GetName() + "-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + sessionFileExtension     
       sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionFileBaseName )
-      slicer.util.saveNode( sessionFileObject, sessionFileFullName )
+      saveSuccess = slicer.util.saveNode( sessionFileObject, sessionFileFullName )
+
+    # Abort with critical error if scene/node could not be saved at all
+    if ( not saveSuccess ):
+      logging.error( "PerkTutorCouchDBLogic::uploadSession: Could not save file to specified local path." )
+      return
 
     # Now save it to the database
     if ( self.database is None ):
