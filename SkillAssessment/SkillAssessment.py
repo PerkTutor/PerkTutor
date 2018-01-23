@@ -493,20 +493,33 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     # More options
     self.addOptionsMenuToAssessmentTable()
     
-    # Do some strechting to make the table look nice
-    self.assessmentTable.horizontalHeader().setResizeMode( qt.QHeaderView.Stretch )
-    self.assessmentTable.verticalHeader().setResizeMode( qt.QHeaderView.Stretch )
-    
-    if ( self.assessmentTable.columnCount > 1 ):
-      self.assessmentTable.horizontalHeader().setResizeMode( 0, qt.QHeaderView.ResizeToContents )
-      self.assessmentTable.horizontalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
-      self.assessmentTable.horizontalHeader().setResizeMode( self.assessmentTable.columnCount - 2, qt.QHeaderView.ResizeToContents )
-    
-    if ( self.assessmentTable.rowCount > 1 ):
-      self.assessmentTable.verticalHeader().setResizeMode( 0, qt.QHeaderView.ResizeToContents )
-      self.assessmentTable.verticalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
-      self.assessmentTable.verticalHeader().setResizeMode( self.assessmentTable.rowCount - 2, qt.QHeaderView.ResizeToContents )
-      
+    # Do some stretching to make the table look nice
+    if (qt.qVersion()[0] == '5'): # used instead of SLICER_HAVE_QT5
+      self.assessmentTable.horizontalHeader().setSectionResizeMode( qt.QHeaderView.Stretch )
+      self.assessmentTable.verticalHeader().setSectionResizeMode( qt.QHeaderView.Stretch )
+
+      if ( self.assessmentTable.columnCount > 1 ):
+        self.assessmentTable.horizontalHeader().setSectionResizeMode( 0, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.horizontalHeader().setSectionResizeMode( 1, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.horizontalHeader().setSectionResizeMode( self.assessmentTable.columnCount - 2, qt.QHeaderView.ResizeToContents )
+
+      if ( self.assessmentTable.rowCount > 1 ):
+        self.assessmentTable.verticalHeader().setSectionResizeMode( 0, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.verticalHeader().setSectionResizeMode( 1, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.verticalHeader().setSectionResizeMode( self.assessmentTable.rowCount - 2, qt.QHeaderView.ResizeToContents )
+    else:
+      self.assessmentTable.horizontalHeader().setResizeMode( qt.QHeaderView.Stretch )
+      self.assessmentTable.verticalHeader().setResizeMode( qt.QHeaderView.Stretch )
+
+      if ( self.assessmentTable.columnCount > 1 ):
+        self.assessmentTable.horizontalHeader().setResizeMode( 0, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.horizontalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.horizontalHeader().setResizeMode( self.assessmentTable.columnCount - 2, qt.QHeaderView.ResizeToContents )
+
+      if ( self.assessmentTable.rowCount > 1 ):
+        self.assessmentTable.verticalHeader().setResizeMode( 0, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.verticalHeader().setResizeMode( 1, qt.QHeaderView.ResizeToContents )
+        self.assessmentTable.verticalHeader().setResizeMode( self.assessmentTable.rowCount - 2, qt.QHeaderView.ResizeToContents )
 
   def addOptionsMenuToAssessmentTable( self ):
     moreOptionsWidget = slicer.qSlicerWidget( self.assessmentTable )

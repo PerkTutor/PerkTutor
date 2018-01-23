@@ -22,7 +22,9 @@
 #include "qSlicerWorkflowToolSummaryWidget.h"
 
 #include <QtGui>
+#include <QProgressDialog>
 
+#include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT5
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
@@ -205,7 +207,11 @@ void qSlicerWorkflowToolSummaryWidget
   d->WorkflowToolsTable->setRowCount( toolStatusStrings.size() );
   d->WorkflowToolsTable->setColumnCount( 1 );
   d->WorkflowToolsTable->setHorizontalHeaderLabels( WorkflowToolsTableHeaders );
-  d->WorkflowToolsTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+#ifdef Slicer_HAVE_QT5
+  d->WorkflowToolsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+#else
+  d->WorkflowToolsTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+#endif
   
   // Add the computed values to the table
   for ( int i = 0; i < toolStatusStrings.size(); i++ )

@@ -28,6 +28,7 @@
 
 #include <sstream>
 
+#include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT5
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
@@ -169,7 +170,11 @@ void qSlicerWorkflowGuideDisplayWidget
   d->WorkflowDisplayTable->setRowCount( orderedTaskStrings.size() );
   d->WorkflowDisplayTable->setColumnCount( 1 );
   d->WorkflowDisplayTable->setHorizontalHeaderLabels( WorkflowDisplayTableHeaders );
-  d->WorkflowDisplayTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+#ifdef Slicer_HAVE_QT5
+  d->WorkflowDisplayTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+#else
+  d->WorkflowDisplayTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+#endif
   
   // Add the computed values to the table
   for ( int i = 0; i < orderedTaskStrings.size(); i++ )

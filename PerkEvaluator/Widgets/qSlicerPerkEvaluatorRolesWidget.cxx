@@ -22,7 +22,9 @@
 #include "qSlicerPerkEvaluatorRolesWidget.h"
 
 #include <QtGui>
+#include <QScrollBar>
 
+#include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT5
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
@@ -155,7 +157,11 @@ void qSlicerPerkEvaluatorRolesWidget
   QStringList RolesTableHeaders;
   RolesTableHeaders << this->getRolesHeader().c_str() << this->getCandidateHeader().c_str();
   d->RolesTable->setHorizontalHeaderLabels( RolesTableHeaders ); 
-  d->RolesTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+#ifdef Slicer_HAVE_QT5
+  d->RolesTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+#else
+  d->RolesTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+#endif
 
   // Set the roles in the table
   for ( int i = 0; i < roles.size(); i++ )
