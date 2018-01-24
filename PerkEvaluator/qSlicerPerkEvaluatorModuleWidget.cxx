@@ -10,6 +10,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <QTimer>
+#include <QProgressDialog>
 
 // VTK includes
 #include "vtkCommand.h"

@@ -26,7 +26,11 @@
 #include "qSlicerTargetFiducialsModuleWidget.h"
 
 //-----------------------------------------------------------------------------
+#include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT5
+#ifndef Slicer_HAVE_QT5
+#include <QtPlugin>
 Q_EXPORT_PLUGIN2(qSlicerTargetFiducialsModule, qSlicerTargetFiducialsModule);
+#endif
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_TargetFiducials

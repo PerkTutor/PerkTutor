@@ -338,7 +338,7 @@ bool qSlicerTrackedSequenceBrowserWriter
 
   // TODO: Use Qt mkpath and Qt removeRecursively from Qt5 when available
   // Need to try to create a temporary directory to facilitate saving
-  if ( ! vtkDirectory::MakeDirectory( tempPath.toAscii() ) )
+  if ( ! vtkDirectory::MakeDirectory( tempPath.toLatin1() ) )
   {
     qWarning() << "Could not make a temporary directory for storing the sequence browser.";
     return false;
@@ -357,7 +357,7 @@ bool qSlicerTrackedSequenceBrowserWriter
   }
 
   // Delete the temporary directory
-  if ( ! vtkDirectory::DeleteDirectory( tempPath.toAscii() ) )
+  if ( ! vtkDirectory::DeleteDirectory( tempPath.toLatin1() ) )
   {
     qWarning() << "Could not remove the temporary directory for storing the sequence browser.";
     return false;

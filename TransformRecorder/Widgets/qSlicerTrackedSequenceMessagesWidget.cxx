@@ -22,9 +22,12 @@
 #include "qSlicerTrackedSequenceMessagesWidget.h"
 
 #include <QtGui>
+#include <QInputDialog>
+#include <QScrollBar>
 
 #include "vtkMRMLAnnotationTextNode.h"
 
+#include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT
 
 
 //-----------------------------------------------------------------------------
@@ -242,7 +245,11 @@ void qSlicerTrackedSequenceMessagesWidget
   d->MessagesTableWidget->setRowCount( 0 );
   d->MessagesTableWidget->setColumnCount( 2 );
   d->MessagesTableWidget->setHorizontalHeaderLabels( MessagesTableHeaders ); 
-  d->MessagesTableWidget->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+#ifdef Slicer_HAVE_QT5
+  d->MessagesTableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+#else
+  d->MessagesTableWidget->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+#endif
 
   if ( this->TrackedSequenceBrowserNode == NULL )
   {

@@ -22,7 +22,9 @@
 #include "qSlicerMetricsTableWidget.h"
 
 #include <QtGui>
+#include <QScrollBar>
 
+#include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT5
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_CreateModels
@@ -334,7 +336,11 @@ void qSlicerMetricsTableWidget
   d->MetricsTable->setRowCount( this->MetricsTableNode->GetTable()->GetNumberOfRows() );
   d->MetricsTable->setColumnCount( 2 );
   d->MetricsTable->setHorizontalHeaderLabels( MetricsTableHeaders );
-  d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::Stretch );
+#ifdef Slicer_HAVE_QT5
+  d->MetricsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+#else
+  d->MetricsTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+#endif
   
   // Add the computed values to the table
   for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )

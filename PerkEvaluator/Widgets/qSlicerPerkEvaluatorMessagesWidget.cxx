@@ -22,6 +22,7 @@
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
 
 #include <QtGui>
+#include <QInputDialog>
 
 
 //-----------------------------------------------------------------------------
