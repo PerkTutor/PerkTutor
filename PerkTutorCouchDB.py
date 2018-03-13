@@ -183,26 +183,10 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     # Layout within the group box
     fileServerFormLayout = qt.QFormLayout( fileServerCollapsibleGroupBox )    
 
-    # File server username field
-    self.fileServerUsernameLineEdit = qt.QLineEdit()
-    self.fileServerUsernameLineEdit.setText( settings.value( self.moduleName + "/FileServerUsername" ) )
-    fileServerFormLayout.addRow( "Username", self.fileServerUsernameLineEdit )
-
-    # File server password field
-    self.fileServerPasswordLineEdit = qt.QLineEdit()
-    self.fileServerPasswordLineEdit.setEchoMode( qt.QLineEdit.Password )
-    self.fileServerPasswordLineEdit.setText( settings.value( self.moduleName + "/FileServerPassword" ) )    
-    fileServerFormLayout.addRow( "Password", self.fileServerPasswordLineEdit )
-
-    # File server address
-    self.fileServerAddressLineEdit = qt.QLineEdit()
-    self.fileServerAddressLineEdit.setText( settings.value( self.moduleName + "/FileServerAddress" ) )
-    fileServerFormLayout.addRow( "Address", self.fileServerAddressLineEdit )
-    
-    # Remote storage directory
-    self.fileServerRemoteDirectoryLineEdit = qt.QLineEdit()
-    self.fileServerRemoteDirectoryLineEdit.setText( settings.value( self.moduleName + "/FileServerRemoteDirectory" ) )
-    fileServerFormLayout.addRow( "Remote path", self.fileServerRemoteDirectoryLineEdit )    
+    # File server session field
+    self.fileServerSessionLineEdit = qt.QLineEdit()
+    self.fileServerSessionLineEdit.setText( settings.value( self.moduleName + "/FileServerSession" ) )
+    fileServerFormLayout.addRow( "Session", self.fileServerSessionLineEdit )
     
     # Local storage directory
     self.fileServerLocalDirectoryLineEdit = qt.QLineEdit()
@@ -273,10 +257,7 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     settings.setValue( self.moduleName + "/DatabasePassword", self.databasePasswordLineEdit.text )
     settings.setValue( self.moduleName + "/DatabaseAddress", self.databaseAddressLineEdit.text )
     
-    settings.setValue( self.moduleName + "/FileServerUsername", self.fileServerUsernameLineEdit.text )
-    settings.setValue( self.moduleName + "/FileServerPassword", self.fileServerPasswordLineEdit.text )
-    settings.setValue( self.moduleName + "/FileServerAddress", self.fileServerAddressLineEdit.text )
-    settings.setValue( self.moduleName + "/FileServerRemoteDirectory", self.fileServerRemoteDirectoryLineEdit.text )
+    settings.setValue( self.moduleName + "/FileServerSession", self.fileServerSessionLineEdit.text )
     settings.setValue( self.moduleName + "/FileServerLocalDirectory", self.fileServerLocalDirectoryLineEdit.text )
     settings.setValue( self.moduleName + "/FileServerClient", self.ftpClientDirectoryLineEdit.text )
     
@@ -504,14 +485,10 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
   def getFromFileServer( self, fileBaseName ):
     settings = slicer.app.userSettings()
     
-    getCommand = os.path.join( self.modulePath, "Resources", "GetPerkTutorData.bat" ) + " "
-    getCommand += str( settings.value( self.moduleName + "/FileServerUsername" ) ) + " "
-    getCommand += str( settings.value( self.moduleName + "/FileServerPassword" ) ) + " "
-    getCommand += str( settings.value( self.moduleName + "/FileServerAddress" ) ) + " "
-    getCommand += str( settings.value( self.moduleName + "/FileServerRemoteDirectory" ) ) + " "
-    getCommand += str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
-    getCommand += fileBaseName + " "
-    getCommand += str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
+    sessionName = str( settings.value( self.moduleName + "/FileServerSession" ) ) + " "
+    localDirectory = str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
+    ftpClientName = str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
+    getCommand = ftpClientName + " " + sessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"get \"\"" + fileBaseName + "\"\"\"" + " \"exit\""
     
     getter = subprocess.Popen( getCommand, shell = True, stderr = subprocess.PIPE )
     logging.info( getter.communicate() )
@@ -520,14 +497,11 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
   def syncToFileServer( self ):
     settings = slicer.app.userSettings()
     
-    syncCommand = os.path.join( self.modulePath, "Resources", "SyncPerkTutorData.bat" ) + " "
-    syncCommand += str( settings.value( self.moduleName + "/FileServerUsername" ) ) + " "
-    syncCommand += str( settings.value( self.moduleName + "/FileServerPassword" ) ) + " "
-    syncCommand += str( settings.value( self.moduleName + "/FileServerAddress" ) ) + " "
-    syncCommand += str( settings.value( self.moduleName + "/FileServerRemoteDirectory" ) ) + " "
-    syncCommand += str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
-    syncCommand += "Placeholder" + " "
-    syncCommand += str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
+    sessionName = str( settings.value( self.moduleName + "/FileServerSession" ) ) + " "
+    localDirectory = str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
+    ftpClientName = str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
+    syncCommand = ftpClientName + " " + sessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"synchronize remote\"" + " \"exit\""
+    print syncCommand
     
     syncer = subprocess.Popen( syncCommand, shell = True, stderr = subprocess.PIPE )
     logging.info( syncer.communicate() )
