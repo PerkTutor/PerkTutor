@@ -385,16 +385,20 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
   
   def uploadSession( self, dataFields, sessionFileObject ):    
     # Most importantly, save a copy locally (this will also be used to upload attachment)
-    settings = slicer.app.userSettings()   
+    settings = slicer.app.userSettings()
+    fileServerLocalDirectory = settings.value( self.moduleName + "/FileServerLocalDirectory" )
+    if ( not os.path.exists( fileServerLocalDirectory ) ):
+      os.makedirs( fileServerLocalDirectory ) # Make the directory if it doesn't already exist
+      
     if ( sessionFileObject is None ): # We are saving the entire scene
       sessionFileType = "SceneFile"
       sessionFileBaseName = "Scene-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + ".mrb"
-      sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionFileBaseName )
+      sessionFileFullName = os.path.join( fileServerLocalDirectory, sessionFileBaseName )
       saveSuccess = slicer.util.saveScene( sessionFileFullName )
     else: # The session contains a node (e.g. tracked sequence browser)
       sessionFileType, sessionFileExtension = PerkTutorCouchDBLogic.getNodeDefaultWriteTypeExtension( sessionFileObject )
       sessionFileBaseName = sessionFileObject.GetName() + "-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + sessionFileExtension     
-      sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionFileBaseName )
+      sessionFileFullName = os.path.join( fileServerLocalDirectory, sessionFileBaseName )
       saveSuccess = slicer.util.saveNode( sessionFileObject, sessionFileFullName )
 
     # Abort with critical error if scene/node could not be saved at all
@@ -501,7 +505,6 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     localDirectory = str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
     ftpClientName = str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
     syncCommand = ftpClientName + " " + sessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"synchronize remote\"" + " \"exit\""
-    print syncCommand
     
     syncer = subprocess.Popen( syncCommand, shell = True, stderr = subprocess.PIPE )
     logging.info( syncer.communicate() )
