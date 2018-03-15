@@ -51,11 +51,7 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     #
     # Logic
     #
-    self.modulePath = os.path.dirname( slicer.modules.perktutorcouchdb.path )
-    
     self.ptcLogic = PerkTutorCouchDBLogic()
-    self.ptcLogic.moduleName = self.moduleName
-    self.ptcLogic.modulePath = self.modulePath
     
     #
     # Save Area
@@ -214,7 +210,7 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     # Initialize the remote database from the settings at outset (if the settings are already specified)
     #
     try:
-      self.ptcLogic.initializeDatabaseFromSettings()
+      self.ptcLogic.updateDatabase( PERK_TUTOR_DATABASE_NAME )
     except Exception as e:
       logging.warning( e )
     
@@ -235,8 +231,13 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     date = ( "Date", time.strftime( "%Y/%m/%d-%H:%M:%S" ) )
     metricsComputed = ( "MetricsComputed", False )
     dataFields = dict( [ userID, studyID, trialID, skillLevel, status, date, metricsComputed ] ) #creates dict from list of tuples, format for saving
+
+    settings = slicer.app.userSettings()
+    localDirectory = settings.value( self.moduleName + "/FileServerSession" )
+    serverSessionName = settings.value( self.moduleName + "/FileServerLocalDirectory" )
+    serverFtpClient = settings.value( self.moduleName + "/FileServerClient" )
     
-    self.ptcLogic.uploadSession( dataFields, self.saveNodeSelector.currentNode() )
+    self.ptcLogic.uploadSession( dataFields, self.saveNodeSelector.currentNode(), sessionFileType, localDirectory, serverSessionName, serverFtpClient )
 
     
   def onSearchButton( self ):
@@ -260,9 +261,14 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     settings.setValue( self.moduleName + "/FileServerSession", self.fileServerSessionLineEdit.text )
     settings.setValue( self.moduleName + "/FileServerLocalDirectory", self.fileServerLocalDirectoryLineEdit.text )
     settings.setValue( self.moduleName + "/FileServerClient", self.ftpClientDirectoryLineEdit.text )
+
+    username = settings.value( self.moduleName + "/DatabaseUsername" )
+    password = settings.value( self.moduleName + "/DatabasePassword" )
+    address = settings.value( self.moduleName + "/DatabaseAddress" )
+    fullRemoteAddress = username + ":" + password + "@" + address
     
     try:
-      self.ptcLogic.initializeDatabaseFromSettings()
+      self.ptcLogic.updateDatabase( PERK_TUTOR_DATABASE_NAME, fullRemoteAddress )
     except Exception as e:
       logging.warning( e )
 
@@ -298,8 +304,13 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
   def onLoadSession( self, sender, searchResults, row, column ):
     sessionFileName = searchResults[ row ][ -2 ]
     sessionFileType = searchResults[ row ][ -1 ]
+
+    settings = slicer.app.userSettings()
+    localDirectory = settings.value( self.moduleName + "/FileServerSession" )
+    serverSessionName = settings.value( self.moduleName + "/FileServerLocalDirectory" )
+    serverFtpClient = settings.value( self.moduleName + "/FileServerClient" )
     
-    success = self.ptcLogic.loadSession( sessionFileName, sessionFileType )    
+    success = self.ptcLogic.loadSession( sessionFileName, sessionFileType, localDirectory, serverSessionName, serverFtpClient )
     if ( success ):
       logging.info( "Session " + sessionFileName + " loaded." )
 
@@ -314,34 +325,31 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
 
   def __init__( self ):
     self.database = None
-      
-
-  def initializeDatabaseFromSettings( self ):
-    settings = slicer.app.userSettings()
-    username = str( settings.value( self.moduleName + "/DatabaseUsername" ) )
-    password = str( settings.value( self.moduleName + "/DatabasePassword" ) )
-    address = str( settings.value( self.moduleName + "/DatabaseAddress" ) )
-    
-    remoteAddress = username + ":" + password + "@" + address
-    self.initializeDatabase( PERK_TUTOR_DATABASE_NAME, remoteAddress )
+    self.replicatorDatabase = None
 
     
-  def initializeDatabase( self, databaseName, remoteAddress ):
+  def updateDatabase( self, databaseName, fullRemoteAddress = None ):
     # Create the database
     couchServer = couchdb.Server( LOCAL_SERVER_ADDRESS ) # uploads to localhost, replace with hostname
     if ( REPLICATOR_DATABASE_NAME in couchServer ):
-      replicatorDatabase = couchServer[ REPLICATOR_DATABASE_NAME ]
+      self.replicatorDatabase = couchServer[ REPLICATOR_DATABASE_NAME ]
     else:
-      replicatorDatabase = couchServer.create( REPLICATOR_DATABASE_NAME )
+      self.replicatorDatabase = couchServer.create( REPLICATOR_DATABASE_NAME )
 
     if ( databaseName in couchServer ):
       self.database = couchServer[ databaseName ]
     else:
       self.database = couchServer.create( databaseName )
-      self.database.save( PerkTutorCouchDBLogic.createDefaultViewDoc() )
-      pushDoc, pullDoc = PerkTutorCouchDBLogic.createDefaultReplicatorDocs( databaseName, remoteAddress )
-      replicatorDatabase.save( pushDoc )
-      replicatorDatabase.save( pullDoc )
+      viewDoc = PerkTutorCouchDBLogic.createDefaultViewDoc()
+      self.database.save( viewDoc )
+      pushDoc, pullDoc = PerkTutorCouchDBLogic.createDefaultReplicatorDocs( self.database.name )
+      self.replicatorDatabase.save( pushDoc )
+      self.replicatorDatabase.save( pullDoc )
+
+    if ( fullRemoteAddress ):
+      self.updateReplicatorDocs( databaseName, fullRemoteAddress )
+
+
       
     
   @staticmethod  
@@ -363,11 +371,11 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
 
     
   @staticmethod  
-  def createDefaultReplicatorDocs( databaseName, remoteAddress ):
+  def createDefaultReplicatorDocs( databaseName ):
     pushDoc = {
       "_id": databaseName + "_push",
       "source": LOCAL_SERVER_ADDRESS + databaseName,
-      "target": "http://" + remoteAddress + "/" + databaseName,
+      "target": "",
       "continuous": True,
       "owner": "admin"
     }
@@ -375,30 +383,41 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     pullDoc = {
       "_id": databaseName + "_pull",
       "target": LOCAL_SERVER_ADDRESS + databaseName,
-      "source": "http://" + remoteAddress + "/" + databaseName,
+      "source": "",
       "continuous": True,
       "owner": "admin"
     }
 
     return pushDoc, pullDoc
 
-  
-  def uploadSession( self, dataFields, sessionFileObject ):    
+
+  def updateReplicatorDocs( self, databaseName, remoteAddress ):
+    pushDocID = self.database.name + "_push"
+    pushDoc = self.replicatorDatabase[ pushDocID ]
+    pushDoc[ "target" ] = "http://" + remoteAddress + "/" + self.database.name
+    self.replicatorDatabase[ pushDocID ] = pushDoc
+
+    pullDocID = self.database.name + "_pull"
+    pullDoc = self.replicatorDatabase[ pullDocID ]
+    pullDoc[ "source" ] = "http://" + remoteAddress + "/" + self.database.name
+    self.replicatorDatabase[ pullDocID ] = pullDoc
+
+
+  def uploadSession( self, dataFields, sessionFileObject, localDirectory, serverSessionName, serverFtpClient ):
     # Most importantly, save a copy locally (this will also be used to upload attachment)
     settings = slicer.app.userSettings()
-    fileServerLocalDirectory = settings.value( self.moduleName + "/FileServerLocalDirectory" )
-    if ( not os.path.exists( fileServerLocalDirectory ) ):
-      os.makedirs( fileServerLocalDirectory ) # Make the directory if it doesn't already exist
+    if ( not os.path.exists( localDirectory ) ):
+      os.makedirs( localDirectory ) # Make the directory if it doesn't already exist
       
     if ( sessionFileObject is None ): # We are saving the entire scene
       sessionFileType = "SceneFile"
       sessionFileBaseName = "Scene-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + ".mrb"
-      sessionFileFullName = os.path.join( fileServerLocalDirectory, sessionFileBaseName )
+      sessionFileFullName = os.path.join( localDirectory, sessionFileBaseName )
       saveSuccess = slicer.util.saveScene( sessionFileFullName )
     else: # The session contains a node (e.g. tracked sequence browser)
       sessionFileType, sessionFileExtension = PerkTutorCouchDBLogic.getNodeDefaultWriteTypeExtension( sessionFileObject )
       sessionFileBaseName = sessionFileObject.GetName() + "-" + time.strftime( "%Y-%m-%d-%H-%M-%S" ) + sessionFileExtension     
-      sessionFileFullName = os.path.join( fileServerLocalDirectory, sessionFileBaseName )
+      sessionFileFullName = os.path.join( localDirectory, sessionFileBaseName )
       saveSuccess = slicer.util.saveNode( sessionFileObject, sessionFileFullName )
 
     # Abort with critical error if scene/node could not be saved at all
@@ -424,7 +443,7 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
         connectAttempts = connectAttempts - 1
         
     # Try to sync (copy new local files to remote)
-    self.syncToFileServer()
+    self.syncToFileServer( localDirectory, serverSessionName, serverFtpClient )
     
 
   
@@ -461,7 +480,7 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     return sessionData
     
 
-  def loadSession( self, sessionFileName, sessionFileType ):
+  def loadSession( self, sessionFileName, sessionFileType, localDirectory, serverSessionName, serverFtpClient ):
     if ( self.database is None ):
       logging.warning( "PerkTutorCouchDBLogic::loadSession: Aborting due to unspecified database." )
       return
@@ -477,34 +496,28 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
         
     settings = slicer.app.userSettings()   
     sessionDoc = queryResults.rows[ 0 ].doc
-    sessionFileFullName = os.path.join( settings.value( self.moduleName + "/FileServerLocalDirectory" ), sessionDoc[ "SessionFileName" ] )
+    sessionFileFullName = os.path.join( localDirectory, sessionDoc[ "SessionFileName" ] )
     
     if ( not os.path.isfile( sessionFileFullName ) ):
-      self.getFromFileServer( sessionDoc[ "SessionFileName" ] )
+      self.getFromFileServer( sessionDoc[ "SessionFileName" ], localDirectory, serverSessionName, serverFtpClient )
     
     success = slicer.util.loadNodeFromFile( sessionFileFullName, sessionDoc[ "SessionFileType" ] )
     return success
 
     
-  def getFromFileServer( self, fileBaseName ):
+  def getFromFileServer( self, fileBaseName, localDirectory, serverSessionName, serverFtpClient ):
     settings = slicer.app.userSettings()
     
-    sessionName = str( settings.value( self.moduleName + "/FileServerSession" ) ) + " "
-    localDirectory = str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
-    ftpClientName = str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
-    getCommand = ftpClientName + " " + sessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"get \"\"" + fileBaseName + "\"\"\"" + " \"exit\""
+    getCommand = serverFtpClient + " " + serverSessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"get \"\"" + fileBaseName + "\"\"\"" + " \"exit\""
     
     getter = subprocess.Popen( getCommand, shell = True, stderr = subprocess.PIPE )
     logging.info( getter.communicate() )
     
     
-  def syncToFileServer( self ):
+  def syncToFileServer( self, localDirectory, serverSessionName, serverFtpClient ):
     settings = slicer.app.userSettings()
     
-    sessionName = str( settings.value( self.moduleName + "/FileServerSession" ) ) + " "
-    localDirectory = str( settings.value( self.moduleName + "/FileServerLocalDirectory" ) ) + " "
-    ftpClientName = str( settings.value( self.moduleName + "/FileServerClient" ) ) + " "
-    syncCommand = ftpClientName + " " + sessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"synchronize remote\"" + " \"exit\""
+    syncCommand = serverFtpClient + " " + serverSessionName + " /command " + "\"lcd \"\"" + localDirectory + "\"\"\"" + " \"synchronize remote\"" + " \"exit\""
     
     syncer = subprocess.Popen( syncCommand, shell = True, stderr = subprocess.PIPE )
     logging.info( syncer.communicate() )
