@@ -233,11 +233,11 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     dataFields = dict( [ userID, studyID, trialID, skillLevel, status, date, metricsComputed ] ) #creates dict from list of tuples, format for saving
 
     settings = slicer.app.userSettings()
-    localDirectory = settings.value( self.moduleName + "/FileServerSession" )
-    serverSessionName = settings.value( self.moduleName + "/FileServerLocalDirectory" )
+    serverSessionName = settings.value( self.moduleName + "/FileServerSession" )
+    localDirectory = settings.value( self.moduleName + "/FileServerLocalDirectory" )
     serverFtpClient = settings.value( self.moduleName + "/FileServerClient" )
     
-    self.ptcLogic.uploadSession( dataFields, self.saveNodeSelector.currentNode(), sessionFileType, localDirectory, serverSessionName, serverFtpClient )
+    self.ptcLogic.uploadSession( dataFields, self.saveNodeSelector.currentNode(), localDirectory, serverSessionName, serverFtpClient )
 
     
   def onSearchButton( self ):
@@ -306,8 +306,8 @@ class PerkTutorCouchDBWidget(ScriptedLoadableModuleWidget):
     sessionFileType = searchResults[ row ][ -1 ]
 
     settings = slicer.app.userSettings()
-    localDirectory = settings.value( self.moduleName + "/FileServerSession" )
-    serverSessionName = settings.value( self.moduleName + "/FileServerLocalDirectory" )
+    serverSessionName = settings.value( self.moduleName + "/FileServerSession" )
+    localDirectory = settings.value( self.moduleName + "/FileServerLocalDirectory" )
     serverFtpClient = settings.value( self.moduleName + "/FileServerClient" )
     
     success = self.ptcLogic.loadSession( sessionFileName, sessionFileType, localDirectory, serverSessionName, serverFtpClient )
