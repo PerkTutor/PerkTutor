@@ -15,6 +15,7 @@ include(ExternalProject)
 #-----------------------------------------------------------------------------
 set(ASSESSMENT_METHODS_SCRIPTS
   AssessmentMethods/__init__.py
+  AssessmentMethods/DecisionTree.py
   AssessmentMethods/Fuzzy.py
   AssessmentMethods/LinearCombination.py
   AssessmentMethods/NearestNeighbor.py
