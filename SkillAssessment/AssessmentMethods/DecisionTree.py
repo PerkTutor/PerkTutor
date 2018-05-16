@@ -32,9 +32,9 @@ class DecisionTreeParametersWidget( qt.QFrame ):
     self.stopCriteriaSpinBox = qt.QDoubleSpinBox()
     self.stopCriteriaSpinBox.setRange( 0, 1 )
     self.stopCriteriaSpinBox.setSingleStep( 0.01 )
-    self.stopCriteriaSpinBox.setToolTip( "Choose the stop criteria for splitting." )
+    self.stopCriteriaSpinBox.setToolTip( "Choose the stop criteria for splitting. Maximum variance for leaf." )
     self.parametersLayout.addRow( "Stop criteria ", self.stopCriteriaSpinBox )
-    
+
     # connections
     self.stopCriteriaSpinBox.connect( 'valueChanged(double)', self.onStopCriteriaChanged )
     
@@ -119,9 +119,9 @@ class DecisionTreeAssessment():
   @staticmethod 
   def ComputeSkill( parameterNode, testRecord, trainingRecords, weights, nameRecord, nameLabels, skillLabels ):
     stopCriteria = float( parameterNode.GetAttribute( "StopCriteria" ) )
-  
+
     # Build the tree
-    decisionTree = DecisionTreeAssessment.BuildDecisionTree( trainingRecords, skillLabels, stopCriteria )
+    decisionTree = DecisionTreeAssessment.BuildDecisionTree( trainingRecords, skillLabels, weights, len( trainingRecords ), stopCriteria )
     
     # Run the test record through the decision tree
     path = []
@@ -145,13 +145,13 @@ class DecisionTreeAssessment():
       
     
   @staticmethod
-  def BuildDecisionTree( trainingRecords, skillLabels, stopCriteria ):
+  def BuildDecisionTree( trainingRecords, skillLabels, weights, totalNumRecords, stopCriteria ):
     currentNode = DecisionTreeNode()
     currentNode.Center = numpy.mean( skillLabels )
     # This is the stopping criteria
     if ( numpy.var( skillLabels ) <= stopCriteria ):
       return currentNode
-    
+
     candidateSplits = [ None ] * len( trainingRecords[ 0 ] )
     for attributeIndex in range( len( trainingRecords[ 0 ] ) ):
       currAttributes = [ None ] * len( trainingRecords )
@@ -160,7 +160,8 @@ class DecisionTreeAssessment():
         
       # Find the best splitting point for the current attribute
       splitPoint, splitValue = DecisionTreeAssessment.FindAttributeBestSplitPoint( currAttributes, skillLabels )
-      splitValue = splitValue # TODO: Compute weighted split value
+      p = 1 - len( trainingRecords ) / ( totalNumRecords )
+      splitValue = ( 1 - p ) * splitValue + p * ( 1 - weights[ attributeIndex ] ) # Smaller split value is more influential # Based on Al Iqbal et al., ICECE, 2012.
       candidateSplits[ attributeIndex ] = ( splitPoint, splitValue )
     
     # Now find the best attribute to split on
@@ -195,12 +196,12 @@ class DecisionTreeAssessment():
       currentNode.LeftChild = DecisionTreeNode()
       currentNode.LeftChild.Center = currentNode.Center
     else:
-      currentNode.LeftChild = DecisionTreeAssessment.BuildDecisionTree( leftTrainingRecords, leftSkillLabels, stopCriteria )
+      currentNode.LeftChild = DecisionTreeAssessment.BuildDecisionTree( leftTrainingRecords, leftSkillLabels, weights, totalNumRecords, stopCriteria )
     if ( not rightTrainingRecords or not rightSkillLabels ): # In case the splitting point caused their to be no values in right child
       currentNode.RightChild = DecisionTreeNode()
       currentNode.RightChild.Center = currentNode.Center
     else:
-      currentNode.RightChild = DecisionTreeAssessment.BuildDecisionTree( rightTrainingRecords, rightSkillLabels, stopCriteria )
+      currentNode.RightChild = DecisionTreeAssessment.BuildDecisionTree( rightTrainingRecords, rightSkillLabels, weights, totalNumRecords, stopCriteria )
     
     return currentNode
 
