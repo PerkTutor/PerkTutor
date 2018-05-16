@@ -31,6 +31,7 @@ set(Sequences_ADDITIONAL_MODULE_PATHS
 # Extension modules
 add_subdirectory(TransformRecorder)
 add_subdirectory(PerkEvaluator)
+add_subdirectory(PerkTutorCouchDB)
 add_subdirectory(PythonMetricsCalculator)
 add_subdirectory(WorkflowSegmentation)
 add_subdirectory(SkillAssessment)
