@@ -711,7 +711,10 @@ void vtkSlicerPerkEvaluatorLogic
     }
     // Call the metrics update function
     std::string timeString = masterSequenceNode->GetNthIndexValue( masterSequenceNode->GetNumberOfDataNodes() - 1 );
-    this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics( %1 )" ).arg( timeString.c_str() ) );
+    if ( ! timeString.empty() ) // Time string would be empty if there are no nodes in the sequence
+    {
+      this->PythonManager->executeString( QString( "PythonMetricsCalculatorLogicRealTimeInstance.UpdateRealTimeMetrics( %1 )" ).arg( timeString.c_str() ) );
+    }
     // Make sure the widget is updated to reflect the updated metric values
     peNode->GetMetricsTableNode()->Modified();
   }

@@ -597,16 +597,17 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     if ( peNode == None or peNode.GetMetricsTableNode() == None or peNode.GetTrackedSequenceBrowserNode() == None ):
       return
       
-    self.realTimeMetrics = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
+    self.realTimeMetrics = collections.OrderedDict()
+    self.realTimeMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ] = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID ) # Cannot tompute task-specific metrics in real-time
     self.realTimeMetricsTable = peNode.GetMetricsTableNode()
     peNode.GetTrackedSequenceBrowserNode().GetAllProxyNodes( self.realTimeProxyNodeCollection )
     
     
   def UpdateRealTimeMetrics( self, time ):
-    PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics, self.realTimeProxyNodeCollection, time )
+    PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( self.realTimeMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ], self.realTimeProxyNodeCollection, time )
     
     if ( self.realTimeMetricsTable is not None ):
-      PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( metricsTable, self.realTimeMetrics )
+      PythonMetricsCalculatorLogic.OutputAllMetricsToMetricsTable( self.realTimeMetricsTable, self.realTimeMetrics )
     
       
 #	

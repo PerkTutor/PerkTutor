@@ -364,7 +364,6 @@ void vtkMRMLPerkEvaluatorNode
   if ( newRealTimeProcessing != this->RealTimeProcessing )
   {
     this->RealTimeProcessing = newRealTimeProcessing;
-    this->Modified();
     if ( newRealTimeProcessing )
     {
       this->InvokeEvent( RealTimeProcessingStartedEvent );
@@ -373,6 +372,7 @@ void vtkMRMLPerkEvaluatorNode
     {
       this->UpdateMeasurementRange();
     }
+    this->Modified();
   }
 }
 
