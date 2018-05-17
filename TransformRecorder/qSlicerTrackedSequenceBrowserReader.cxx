@@ -109,7 +109,11 @@ bool qSlicerTrackedSequenceBrowserReader::load(const IOProperties& properties)
   Q_D(qSlicerTrackedSequenceBrowserReader);
   Q_ASSERT( properties.contains( "fileName" ) );
   QString fileName = properties[ "fileName" ].toString();
-  bool useSceneProxyNodes = properties[ "UseSceneProxyNodes" ].toBool();
+  bool useSceneProxyNodes = true;
+  if ( properties.contains( "UseSceneProxyNodes" ) )
+  {
+    useSceneProxyNodes = properties[ "UseSceneProxyNodes" ].toBool();
+  }
 
   QFileInfo fileInfo( fileName );
   QString extension = fileInfo.suffix();
