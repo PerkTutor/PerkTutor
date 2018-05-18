@@ -561,7 +561,7 @@ void vtkMRMLPerkEvaluatorNode
 void vtkMRMLPerkEvaluatorNode
 ::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
 {
-  this->vtkMRMLTransformableNode::ProcessMRMLEvents( caller, event, callData );
+  this->vtkMRMLNode::ProcessMRMLEvents( caller, event, callData );
 
   // The caller will be the node that was modified
   vtkMRMLSequenceBrowserNode* trackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( caller );

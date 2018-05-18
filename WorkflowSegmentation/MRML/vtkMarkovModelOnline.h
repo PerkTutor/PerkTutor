@@ -24,7 +24,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
 vtkMarkovModelOnline : public vtkMarkovModel
 {
 public:
-  vtkTypeMacro( vtkMarkovModelOnline, vtkObject );
+  vtkTypeMacro( vtkMarkovModelOnline, vtkMarkovModel );
 
   // Standard MRML methods
   static vtkMarkovModelOnline* New();

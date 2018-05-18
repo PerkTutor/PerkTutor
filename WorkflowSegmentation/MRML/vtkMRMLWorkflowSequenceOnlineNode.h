@@ -25,7 +25,7 @@ class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
 vtkMRMLWorkflowSequenceOnlineNode : public vtkMRMLWorkflowSequenceNode
 {
 public:
-  vtkTypeMacro( vtkMRMLWorkflowSequenceOnlineNode, vtkMRMLNode );
+  vtkTypeMacro( vtkMRMLWorkflowSequenceOnlineNode, vtkMRMLWorkflowSequenceNode );
 
   // Standard MRML node methods  
   static vtkMRMLWorkflowSequenceOnlineNode* New();  

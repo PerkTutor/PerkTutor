@@ -246,7 +246,7 @@ void vtkMRMLWorkflowSegmentationNode
 ::ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData )
 {
   // This will propagate the ReferenceNodeModifiedEvent
-  this->vtkMRMLTransformableNode::ProcessMRMLEvents( caller, event, callData );
+  this->vtkMRMLNode::ProcessMRMLEvents( caller, event, callData );
   
   // Propagate ModifiedEvent
   if ( event == vtkCommand::ModifiedEvent )

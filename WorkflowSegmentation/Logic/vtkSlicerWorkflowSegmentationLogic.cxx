@@ -103,13 +103,17 @@ void vtkSlicerWorkflowSegmentationLogic
   this->GetMRMLScene()->RegisterNodeClass( wtsNode );
   wtsNode->Delete();
 
+  vtkMRMLWorkflowSequenceNode* workflowSequenceNode = vtkMRMLWorkflowSequenceNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( workflowSequenceNode );
+  workflowSequenceNode->Delete();
+
+  vtkMRMLWorkflowSequenceOnlineNode* workflowSequenceOnlineNode = vtkMRMLWorkflowSequenceOnlineNode::New();
+  this->GetMRMLScene()->RegisterNodeClass( workflowSequenceOnlineNode );
+  workflowSequenceOnlineNode->Delete();
+
   vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::New();
   this->GetMRMLScene()->RegisterNodeClass( toolNode );
   toolNode->Delete();
-
-  vtkMRMLWorkflowSequenceNode* workflowSequenceNode = vtkMRMLWorkflowSequenceNode::New();
-  this->GetMRMLScene()->RegisterNodeClass( workflowSequenceNode );
-  workflowSequenceNode->Delete(); 
 }
 
 

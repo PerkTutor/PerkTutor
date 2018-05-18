@@ -47,10 +47,10 @@
 
 
 class VTK_SLICER_PERKEVALUATOR_MODULE_MRML_EXPORT
-vtkMRMLPerkEvaluatorNode : public vtkMRMLTransformableNode
+vtkMRMLPerkEvaluatorNode : public vtkMRMLNode
 {
 public:
-  vtkTypeMacro( vtkMRMLPerkEvaluatorNode, vtkMRMLTransformableNode );
+  vtkTypeMacro( vtkMRMLPerkEvaluatorNode, vtkMRMLNode );
 
   // Standard MRML node methods  
   static vtkMRMLPerkEvaluatorNode* New();  

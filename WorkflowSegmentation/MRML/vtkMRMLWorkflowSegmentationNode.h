@@ -35,7 +35,7 @@
 
 class
 VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
-vtkMRMLWorkflowSegmentationNode : public vtkMRMLTransformableNode
+vtkMRMLWorkflowSegmentationNode : public vtkMRMLNode
 {
 public:
   vtkTypeMacro( vtkMRMLWorkflowSegmentationNode, vtkMRMLNode );
