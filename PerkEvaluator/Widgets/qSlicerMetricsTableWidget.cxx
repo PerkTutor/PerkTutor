@@ -157,6 +157,7 @@ int qSlicerMetricsTableWidget
   {
     contentHeight += d->MetricsTable->rowHeight( i );
   }
+  contentHeight += d->MetricsTable->horizontalScrollBar()->height();
   return contentHeight;
 }
 
@@ -221,43 +222,41 @@ void qSlicerMetricsTableWidget
 ::onClipboardButtonClicked()
 {
   Q_D( qSlicerMetricsTableWidget );
-
-  if ( this->MetricsTableNode == NULL )
-  {
-    return;
-  }
   
   // Add all rows to the clipboard vector
-  std::vector<bool> copyRow = std::vector<bool>( this->MetricsTableNode->GetTable()->GetNumberOfRows(), true );
-  this->copyMetricsTableToClipboard( copyRow );
+  std::vector<bool> copyRow = std::vector<bool>( d->MetricsTable->rowCount(), true );
+  std::vector<bool> copyColumn = std::vector<bool>( d->MetricsTable->columnCount(), true );
+  this->copyMetricsTableToClipboard( copyRow, copyColumn );
 }
 
 
 void qSlicerMetricsTableWidget
-::copyMetricsTableToClipboard( std::vector<bool> copyRow )
+::copyMetricsTableToClipboard( std::vector<bool> copyRow, std::vector<bool> copyColumn )
 {
   Q_D( qSlicerMetricsTableWidget );
-
-  if ( this->MetricsTableNode == NULL )
-  {
-    return;
-  }
 
   // Grab all of the contents of the selected rows from whatever is currently on the metrics table
   // Note that we copy from the table widget, not directly from the table node
   // This is because the user expects what they copied to be what was on the table widget
   // In the case of sorting the table widget, the underlying table node would have different order than the user, causing the copied text to be unexpectedly different from what is displayed on the table widget
   QString clipString = QString( "" );
-  for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
+  for ( int i = 0; i < d->MetricsTable->rowCount(); i++ )
   {
     if ( ! copyRow.at( i ) )
     {
       continue;
     }
+    for ( int j = 0; j < d->MetricsTable->columnCount(); j++ )
+    {
+      if ( ! copyColumn.at( j ) )
+      {
+        continue;
+      }
 
-    clipString.append( d->MetricsTable->item( i, 0 )->text() ); // The metric name column
-    clipString.append( "\t" );
-    clipString.append( d->MetricsTable->item( i, 1 )->text() ); // The metric value column
+      clipString.append( d->MetricsTable->item( i, j )->text() );
+      clipString.append( "\t" );
+    }
+    clipString.chop( 1 ); // Remove the last tab from the line
     clipString.append( "\n" );
   }
 
@@ -282,13 +281,15 @@ bool qSlicerMetricsTableWidget
   }
   
   QModelIndexList modelIndexList = d->MetricsTable->selectionModel()->selectedIndexes();
-  std::vector<bool> copyRow = std::vector<bool>( this->MetricsTableNode->GetTable()->GetNumberOfRows(), false );
+  std::vector<bool> copyRow = std::vector<bool>( d->MetricsTable->rowCount(), false );
+  std::vector<bool> copyColumn = std::vector<bool>( d->MetricsTable->columnCount(), false );
   for ( QModelIndexList::iterator index = modelIndexList.begin(); index != modelIndexList.end(); index++ )
   {
     copyRow.at( ( *index ).row() ) = true;
+    copyColumn.at( ( *index ).column() ) = true;
   }
   // Add all rows to the clipboard vector
-  this->copyMetricsTableToClipboard( copyRow );
+  this->copyMetricsTableToClipboard( copyRow, copyColumn );
 
   return true;
 }
@@ -330,41 +331,70 @@ void qSlicerMetricsTableWidget
   {
     return;
   }
+  vtkTable* metricsTableTable = this->MetricsTableNode->GetTable();
+  if ( metricsTableTable == NULL )
+  {
+    return;
+  }
 
-  QStringList MetricsTableHeaders;
-  MetricsTableHeaders << "Metric" << "Value";
-  d->MetricsTable->setRowCount( this->MetricsTableNode->GetTable()->GetNumberOfRows() );
-  d->MetricsTable->setColumnCount( 2 );
-  d->MetricsTable->setHorizontalHeaderLabels( MetricsTableHeaders );
+  // Get the names of all tasks present on the table
+  QStringList taskNames;
+  for ( int i = 0; i < metricsTableTable->GetNumberOfColumns(); i++ )
+  {
+    std::string currentColumnName = metricsTableTable->GetColumnName( i );
+    if ( currentColumnName.compare( "MetricName" ) == 0 || currentColumnName.compare( "MetricRoles" ) == 0 || currentColumnName.compare( "MetricUnit" ) == 0 || currentColumnName.compare( "MetricValue" ) == 0 )
+    {
+      continue;
+    }
+    taskNames << currentColumnName.c_str();
+  }
+
+  QStringList metricsTableHeaders;
+  metricsTableHeaders << "Metric" << "Value" << taskNames;
+  d->MetricsTable->setRowCount( metricsTableTable->GetNumberOfRows() );
+  d->MetricsTable->setColumnCount( metricsTableHeaders.count() );
+  d->MetricsTable->setHorizontalHeaderLabels( metricsTableHeaders );
+
 #ifdef Slicer_HAVE_QT5
-  d->MetricsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  d->MetricsTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeToContents );
+  d->MetricsTable->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Interactive );
 #else
-  d->MetricsTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+  d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::ResizeToContents );
+  d->MetricsTable->horizontalHeader()->setResizeMode( 0, QHeaderView::Interactive );
 #endif
   
   // Add the computed values to the table
-  for ( int i = 0; i < this->MetricsTableNode->GetTable()->GetNumberOfRows(); i++ )
+  for ( int i = 0; i < metricsTableTable->GetNumberOfRows(); i++ )
   {
     QString nameString;
-    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricName" ).ToString() );
+    nameString.append( metricsTableTable->GetValueByName( i, "MetricName" ).ToString() );
     
     if ( this->ShowMetricRoles )
     {
       nameString.append( " [" );
-      nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricRoles" ).ToString() );
+      nameString.append( metricsTableTable->GetValueByName( i, "MetricRoles" ).ToString() );
       nameString.append( "]" );
     }
 
     nameString.append( " (" );
-    nameString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricUnit" ).ToString() );
+    nameString.append( metricsTableTable->GetValueByName( i, "MetricUnit" ).ToString() );
     nameString.append( ")" );
     QTableWidgetItem* nameItem = new QTableWidgetItem( nameString );
-    d->MetricsTable->setItem( i, 0, nameItem );
+    d->MetricsTable->setItem( i, metricsTableHeaders.indexOf( "Metric" ), nameItem );
 
     QString valueString;
-    valueString.append( this->MetricsTableNode->GetTable()->GetValueByName( i, "MetricValue" ).ToString() );
+    valueString.append( metricsTableTable->GetValueByName( i, "MetricValue" ).ToString() );
     QTableWidgetItem* valueItem = new QTableWidgetItem( valueString );    
-    d->MetricsTable->setItem( i, 1, valueItem );
+    d->MetricsTable->setItem( i, metricsTableHeaders.indexOf( "Value" ), valueItem );
+
+    // Add the task-specific metrics
+    for ( int j = 0; j < taskNames.count(); j++ )
+    {
+      QString taskValueString;
+      taskValueString.append( metricsTableTable->GetValueByName( i, taskNames.at( j ).toAscii() ).ToString() );
+      QTableWidgetItem* taskValueItem = new QTableWidgetItem( taskValueString );
+      d->MetricsTable->setItem( i, metricsTableHeaders.indexOf( taskNames.at( j ) ), taskValueItem );
+    }
   }
 
   d->MetricsTable->sortItems( 0 ); // Sort by metric name to ensure we always have consistent ordering (no matter what order the metrics were imported into the scene)

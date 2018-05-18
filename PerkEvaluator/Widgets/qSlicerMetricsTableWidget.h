@@ -67,7 +67,7 @@ protected slots:
   void onMetricsTableNodeModified();
   
   void onClipboardButtonClicked();
-  void copyMetricsTableToClipboard( std::vector<bool> copyRow );
+  void copyMetricsTableToClipboard( std::vector<bool> copyRow, std::vector<bool> copyColumn );
 
   void onHeaderDoubleClicked( int column );
 
