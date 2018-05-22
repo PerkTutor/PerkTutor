@@ -391,7 +391,7 @@ void qSlicerMetricsTableWidget
     for ( int j = 0; j < taskNames.count(); j++ )
     {
       QString taskValueString;
-      taskValueString.append( metricsTableTable->GetValueByName( i, taskNames.at( j ).toAscii() ).ToString() );
+      taskValueString.append( metricsTableTable->GetValueByName( i, taskNames.at( j ).toLatin1() ).ToString() );
       QTableWidgetItem* taskValueItem = new QTableWidgetItem( taskValueString );
       d->MetricsTable->setItem( i, metricsTableHeaders.indexOf( taskNames.at( j ) ), taskValueItem );
     }
