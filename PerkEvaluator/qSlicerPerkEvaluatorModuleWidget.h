@@ -7,6 +7,7 @@
 #include <QtGui>
 #include "qSlicerTrackedSequenceBrowserWidget.h"
 #include "qSlicerPerkEvaluatorMessagesWidget.h"
+#include "qSlicerPerkEvaluatorAnalysisDialogWidget.h"
 #include "qSlicerMetricsTableWidget.h"
 #include "qSlicerPerkEvaluatorRecorderControlsWidget.h"
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
@@ -34,9 +35,6 @@ public:
 public slots:
 
   void OnAnalyzeClicked();
-
-  void OnAnalysisStateUpdated( vtkObject* caller, void* value );
-  void OnAnalysisCanceled();
 
   void OnBatchProcessButtonClicked();
 

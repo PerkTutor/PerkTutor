@@ -17,6 +17,8 @@ set(${KIT}_SRCS
   qSlicerPerkEvaluatorMessagesWidget.h
   qSlicerMetricsTableWidget.cxx
   qSlicerMetricsTableWidget.h
+  qSlicerPerkEvaluatorAnalysisDialogWidget.cxx
+  qSlicerPerkEvaluatorAnalysisDialogWidget.h
   qSlicerPerkEvaluatorRecorderControlsWidget.cxx
   qSlicerPerkEvaluatorRecorderControlsWidget.h
   qSlicerPerkEvaluatorRolesWidget.cxx
@@ -31,6 +33,7 @@ set(${KIT}_MOC_SRCS
   qSlicerPerkEvaluatorRolesWidget.h
   qSlicerPerkEvaluatorMessagesWidget.h
   qSlicerMetricsTableWidget.h
+  qSlicerPerkEvaluatorAnalysisDialogWidget.h
   qSlicerPerkEvaluatorRecorderControlsWidget.h
   qSlicerPerkEvaluatorTransformRolesWidget.h
   qSlicerPerkEvaluatorAnatomyRolesWidget.h
@@ -39,6 +42,7 @@ set(${KIT}_MOC_SRCS
 set(${KIT}_UI_SRCS
   Resources/UI/qSlicerPerkEvaluatorRolesWidget.ui
   Resources/UI/qSlicerMetricsTableWidget.ui
+  Resources/UI/qSlicerPerkEvaluatorAnalysisDialogWidget.ui
   )
 
 set(${KIT}_RESOURCES

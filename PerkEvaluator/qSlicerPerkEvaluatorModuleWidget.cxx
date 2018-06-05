@@ -58,12 +58,11 @@ public:
   qMRMLSequenceBrowserPlayWidget* PlayWidget;
   qMRMLSequenceBrowserSeekWidget* SeekWidget;
   qSlicerPerkEvaluatorMessagesWidget* MessagesWidget;
+  qSlicerPerkEvaluatorAnalysisDialogWidget* AnalysisDialogWidget;
   qSlicerMetricsTableWidget* MetricsTableWidget;
   qSlicerPerkEvaluatorRecorderControlsWidget* RecorderControlsWidget;
   qSlicerPerkEvaluatorTransformRolesWidget* TransformRolesWidget;
   qSlicerPerkEvaluatorAnatomyRolesWidget* AnatomyRolesWidget;
-
-  QProgressDialog* AnalysisStateDialog;
 };
 
 
@@ -121,54 +120,19 @@ void qSlicerPerkEvaluatorModuleWidget
   {
     return;
   }
-
-  // Metrics table
   vtkMRMLTableNode* metricsTableNode = peNode->GetMetricsTableNode();
   if ( metricsTableNode == NULL )
   {
     return;
   }
 
-  d->AnalysisStateDialog->setLabelText( "Please wait while analyzing procedure..." );
-  d->AnalysisStateDialog->show();
-  d->AnalysisStateDialog->setValue( 0 );
-  this->qvtkConnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
+  d->AnalysisDialogWidget->setLabelText( "Please wait while analyzing..." );
+  d->AnalysisDialogWidget->setPerkEvaluatorNode( peNode );
+  d->AnalysisDialogWidget->show();
 
   d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
 
-  this->qvtkDisconnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
-  d->AnalysisStateDialog->close();
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnAnalysisStateUpdated( vtkObject* caller, void* value )
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  // Check we can downcast
-  int* progressValue = reinterpret_cast< int* >( value );
-  d->AnalysisStateDialog->setValue( *progressValue );
-}
-
-
-void qSlicerPerkEvaluatorModuleWidget
-::OnAnalysisCanceled()
-{
-  Q_D( qSlicerPerkEvaluatorModuleWidget );
-  
-  // Cancel all analyses (even though only one should be going on at a given time)
-  vtkCollection* nodes = d->logic()->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
-  for ( int i = 0; i < nodes->GetNumberOfItems(); i++ )
-  {
-    vtkMRMLPerkEvaluatorNode* peNode = vtkMRMLPerkEvaluatorNode::SafeDownCast( nodes->GetItemAsObject( i ) );
-    if ( peNode == NULL )
-    {
-      return;
-    }
-    peNode->SetAnalysisState( -1 ); // This will halt the analysis
-  }
-
+  d->AnalysisDialogWidget->hide();
 }
 
 
@@ -203,16 +167,14 @@ void qSlicerPerkEvaluatorModuleWidget
     }
 
     std::stringstream labelText;
-    labelText << "Please wait while analyzing procedure (" << i + 1 << "/" << peNodeBatch.size() << ")..."; // Use i + 1 to be human-readable
-    d->AnalysisStateDialog->setLabelText( labelText.str().c_str() );
-    d->AnalysisStateDialog->setValue( 0 );
-    d->AnalysisStateDialog->show();
-    this->qvtkConnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
+    labelText << "Please wait while analyzing (" << i + 1 << "/" << peNodeBatch.size() << ")..."; // Use i + 1 to be human-readable
+    d->AnalysisDialogWidget->setLabelText( labelText.str() );
+    d->AnalysisDialogWidget->setPerkEvaluatorNode( peNode );
+    d->AnalysisDialogWidget->show();
 
     d->logic()->ComputeMetrics( peNode ); // This will populate the metrics table node with computed metrics
 
-    this->qvtkDisconnect( peNode, vtkMRMLPerkEvaluatorNode::AnalysisStateUpdatedEvent, this, SLOT( OnAnalysisStateUpdated( vtkObject*, void* ) ) );
-    d->AnalysisStateDialog->close();
+    d->AnalysisDialogWidget->hide();
   }
 
   d->PerkEvaluatorNodeComboBox->setCurrentNode( originalPerkEvaluatorNode );
@@ -523,7 +485,9 @@ qSlicerPerkEvaluatorModuleWidget
   d->MessagesWidget = new qSlicerPerkEvaluatorMessagesWidget();
   d->MessagesGroupBox->layout()->addWidget( d->MessagesWidget );
   d->MessagesWidget->setMRMLScene( NULL ); 
-  d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() ); 
+  d->MessagesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
+
+  d->AnalysisDialogWidget = new qSlicerPerkEvaluatorAnalysisDialogWidget();
 
   d->MetricsTableWidget = new qSlicerMetricsTableWidget();
   d->MetricsTableWidget->setExpandHeightToContents( true );
@@ -547,10 +511,7 @@ qSlicerPerkEvaluatorModuleWidget
   d->AnatomyRolesWidget->setMRMLScene( NULL ); 
   d->AnatomyRolesWidget->setMRMLScene( d->logic()->GetMRMLScene() );
 
-  d->AnalysisStateDialog = new QProgressDialog();
-  d->AnalysisStateDialog->setModal( true );
-  d->AnalysisStateDialog->setValue( 0 );
-  d->AnalysisStateDialog->close();
+
 
   // Setting up connections for embedded widgets
   // Connect the child widget to the transform buffer node change event (they already observe the modified event)
@@ -596,8 +557,6 @@ qSlicerPerkEvaluatorModuleWidget
 
   connect( d->BatchProcessButton, SIGNAL( clicked() ), this, SLOT( OnBatchProcessButtonClicked() ) );
   d->BatchProcessButton->setIcon( QIcon( ":/Icons/Go.png" ) );
-
-  connect( d->AnalysisStateDialog, SIGNAL( canceled() ), this, SLOT( OnAnalysisCanceled() ) );
 
   // Update the recorder controls widget when the transform buffer is changed
   connect( d->BrowserWidget, SIGNAL( trackedSequenceBrowserNodeChanged( vtkMRMLNode* ) ), d->RecorderControlsWidget, SLOT( setTrackedSequenceBrowserNode( vtkMRMLNode* ) ) );
