@@ -355,12 +355,13 @@ void qSlicerMetricsTableWidget
   d->MetricsTable->setColumnCount( metricsTableHeaders.count() );
   d->MetricsTable->setHorizontalHeaderLabels( metricsTableHeaders );
 
+  // Stretch the metrics name column, and fit the contents on all other columns
 #ifdef Slicer_HAVE_QT5
   d->MetricsTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeToContents );
-  d->MetricsTable->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Interactive );
+  d->MetricsTable->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
 #else
   d->MetricsTable->horizontalHeader()->setResizeMode( QHeaderView::ResizeToContents );
-  d->MetricsTable->horizontalHeader()->setResizeMode( 0, QHeaderView::Interactive );
+  d->MetricsTable->horizontalHeader()->setResizeMode( 0, QHeaderView::Stretch );
 #endif
   
   // Add the computed values to the table
@@ -405,6 +406,13 @@ void qSlicerMetricsTableWidget
   {
     d->MetricsTable->setMinimumHeight( this->getContentHeight() );
   }
+
+  // Allow the metrics name column to be resized by the user, but maintaining the default stretch by default
+#ifdef Slicer_HAVE_QT5
+  d->MetricsTable->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Interactive );
+#else
+  d->MetricsTable->horizontalHeader()->setResizeMode( 0, QHeaderView::Interactive );
+#endif
 
   // Reset the current row and column to what they were
   d->MetricsTable->setCurrentCell( currentRow, currentColumn );
