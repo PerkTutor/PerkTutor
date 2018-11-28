@@ -41,6 +41,9 @@
 #include <vtkMRMLNode.h>
 #include <vtkMRMLLinearTransformNode.h>
 
+// SequenceMRML includes
+#include <vtkMRMLNodeSequencer.h>
+
 // VTK includes
 #include <vtkCollection.h>
 #include <vtkCollectionIterator.h>
@@ -302,6 +305,11 @@ bool qSlicerTrackedSequenceBrowserWriter
     currTempSequenceNode->Copy( currSequenceNode );
     currTempSequenceNode->SetScene( tempScene.GetPointer() );
     tempScene->AddNode( currTempSequenceNode );
+    if (currTempSequenceNode->GetNumberOfDataNodes() > 0)
+    {
+      // Use the content-specific sequence storage node specified by the NodeSequencer
+      vtkMRMLNodeSequencer::GetInstance()->GetNodeSequencer(currTempSequenceNode->GetNthDataNode(0))->AddDefaultSequenceStorageNode(currTempSequenceNode);
+    }
     tempTrackedSequenceBrowserNode->AddSynchronizedSequenceNode( currTempSequenceNode );
 
     tempTrackedSequenceBrowserNode->SetPlayback( currTempSequenceNode, trackedSequenceBrowserNode->GetPlayback( currSequenceNode ) );
