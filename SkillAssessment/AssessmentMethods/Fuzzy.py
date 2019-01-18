@@ -216,19 +216,23 @@ class FuzzyAssessment():
     metricMembershipDistribution = parameterNode.GetAttribute( "MetricMembership" )
     
     skillClasses = int( parameterNode.GetAttribute( "SkillClasses" ) )
-    minSkill = min( skillLabels )
-    maxSkill = max( skillLabels )
-    stepSize = ( maxSkill - minSkill ) / NUMBER_OF_STEPS
+    minSkill = 0 #min( skillLabels )
+    maxSkill = 1 #max( skillLabels )
 
-    skillMembershipFunctions = FuzzyAssessment.CreateAllSkillMembershipFunctions( skillClasses, minSkill, maxSkill )
+    skillMembershipFunctions, triangleWidth = FuzzyAssessment.CreateAllSkillMembershipFunctions( skillClasses, minSkill, maxSkill )
     metricMembershipFunctions = FuzzyAssessment.CreateAllMetricMembershipFunctions( testRecord, trainingRecords, skillLabels, skillMembershipFunctions, metricMembershipDistribution )
     
     fuzzyRules = FuzzyAssessment.CreateAllFuzzyRules( metricMembershipFunctions, skillMembershipFunctions )
     
     consequence = FuzzyAssessment.ComputeFuzzyOutput( fuzzyRules, testRecord, weights, shrinker )
-    
-    fuzzySkill = defuzzifier.Evaluate( consequence, minSkill, maxSkill, stepSize )
-    
+
+    minSkillMembership = minSkill - triangleWidth
+    maxSkillMembership = maxSkill + triangleWidth
+    stepSize = ( maxSkillMembership - minSkillMembership ) / NUMBER_OF_STEPS
+    fuzzySkill = defuzzifier.Evaluate( consequence, minSkillMembership, maxSkillMembership, stepSize )
+
+    if ( len( consequence.BaseFunctions ) > 2 ):
+      FuzzyAssessment.PlotMembershipFunctions( [ consequence ], minSkillMembership, maxSkillMembership, NUMBER_OF_STEPS ) # For visualization
     descriptionString = FuzzyAssessment.GetGenericDescription() + FuzzyAssessment.GetSpecificDescription( testRecord, nameRecord, metricMembershipFunctions, skillLabels )
     
     return fuzzySkill, descriptionString
@@ -281,7 +285,7 @@ class FuzzyAssessment():
     
       skillMembershipFunctions[ skillClassIndex ] = membershipFunction
       
-    return skillMembershipFunctions
+    return skillMembershipFunctions, triangleWidth
     
     
   # Compute the membership functions
@@ -291,6 +295,7 @@ class FuzzyAssessment():
     # Assume that all records are the same length
     # Need an input membership function for each skill class for each metric
     metricMembershipFunctions = dict()
+    metricMembershipMax = 0
     for skillClassIndex in skillMembershipFunctions:
       memberships = []
       for currSkillLabel in skillLabels:
@@ -304,8 +309,18 @@ class FuzzyAssessment():
           
         currMetricMembershipFunction = FuzzyAssessment.CreateMetricMembershipFunction( currTrainingVector, memberships , metricMembershipDistribution )
         metricMembershipFunctions[ skillClassIndex ][ metricIndex ] = currMetricMembershipFunction
+
+        currMetricMembershipMax = FuzzyLogic.Defuzzifier.Defuzzifier().MaximumValue( currMetricMembershipFunction, min( currTrainingVector ), max( currTrainingVector ), NUMBER_OF_STEPS )
+        metricMembershipMax = max( metricMembershipMax, currMetricMembershipMax )
+
+    # Scale the metric membership functions such that for each metric, the AUC is the same for all skill classes and the maximum value is one
+    for skillClassIndex in metricMembershipFunctions:
+      for metricIndex in metricMembershipFunctions[ skillClassIndex ]:
+        metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Parameters[ 0 ] = 1 / float( metricMembershipMax )
         
     return metricMembershipFunctions
+
+
 
 
   # Create a Gaussian membership function, using the weighted inputs to estimate the mean and stdev
@@ -315,7 +330,8 @@ class FuzzyAssessment():
     totalMembership = sum( memberships )
     if ( totalMembership == 0 ):
       logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: No membership in skill class." )
-      
+      return FuzzyLogic.MembershipFunction.MembershipFunction()
+
     for i in range( len( memberships ) ):
       memberships[ i ] = memberships[ i ] / float( totalMembership )
 
@@ -341,21 +357,22 @@ class FuzzyAssessment():
     
   @staticmethod
   def CreateGaussianKDEMetricMembershipFunction( trainingData, memberships, stdev ):
-    # Use the stdev to compute the Silverman rule of thumb for the bandwith
-    parameters = [ math.pow( 4 * math.pow( stdev, 5 ) / ( 3 * len( trainingData ) ), 0.2 ) ]
+    parameters = [ 1 ] # default scaling one
+    parameters.append( math.pow( 4 * math.pow( stdev, 5 ) / ( 3 * sum( memberships ) ), 0.2 ) ) # Use the stdev to compute the Silverman rule of thumb for the bandwith
     for i in range( len( trainingData ) ):
       parameters.append( trainingData[ i ] )
       parameters.append( memberships[ i ] )
       
     membershipFunction = FuzzyLogic.MembershipFunction.GaussianKDEMembershipFunction()
     membershipFunction.SetParameters( parameters )
+
     return membershipFunction
     
     
   @staticmethod
   def CreateGaussianMetricMembershipFunction( mean, stdev ):
     membershipFunction = FuzzyLogic.MembershipFunction.GaussianMembershipFunction()
-    membershipFunction.SetParameters( [ mean, stdev ] )
+    membershipFunction.SetParameters( [ 1, mean, stdev ] ) # default scaling one
     return membershipFunction
 
     
@@ -408,8 +425,8 @@ class FuzzyAssessment():
   @staticmethod
   def GetCriticalValue( parameterNode, skillLabels ):
     # Should be half the range of the labels      
-    maxSkill = max( skillLabels )
-    minSkill = min( skillLabels )
+    maxSkill = 1 #max( skillLabels )
+    minSkill = 0 #min( skillLabels )
     criticalValue = minSkill + ( maxSkill - minSkill ) / 2.0
 
     return criticalValue

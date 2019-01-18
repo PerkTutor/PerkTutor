@@ -88,20 +88,7 @@ class TrapezoidMembershipFunction( MembershipFunction ):
       
     return 0
     
-    
-class GaussianMembershipFunction( MembershipFunction ):
 
-  def Evaluate( self, value ):
-    if ( len( self.Parameters ) != 2 ):
-      logging.warning( "GaussianMembershipFunction::Evaluate: Improperly specified parameters." )
-      return 0
-    if ( self.Parameters[ 1 ] == 0 ):
-      logging.warning( "GaussianMembershipFunction::Evaluate: Gaussian has standard deviation zero." )
-      return 0
-    
-    return math.exp( - math.pow( value - self.Parameters[ 0 ], 2 ) / float( 2 * math.pow( self.Parameters[ 1 ], 2 ) ) )
-    
-    
 class FlatMembershipFunction( MembershipFunction ):
 
   def Evaluate( self, value ):
@@ -110,28 +97,50 @@ class FlatMembershipFunction( MembershipFunction ):
       return 0
     
     return self.Parameters[ 0 ]
-    
-    
+
+
+class GaussianMembershipFunction( MembershipFunction ):
+
+  def Evaluate( self, value ):
+    if ( len( self.Parameters ) != 3 ):
+      logging.warning( "GaussianMembershipFunction::Evaluate: Improperly specified parameters." )
+      return 0
+    if ( self.Parameters[ 2 ] == 0 ):
+      logging.warning( "GaussianMembershipFunction::Evaluate: Gaussian has standard deviation zero." )
+      return 0
+    # The zeroth parameter is 'scale'
+    # The first parameter is mean
+    # The second parameter is standard deviation
+
+    result = math.exp( - math.pow( value - self.Parameters[ 1 ], 2 ) / float( 2 * math.pow( self.Parameters[ 2 ], 2 ) ) )
+    result = result / ( self.Parameters[ 2 ] * math.sqrt( 2 * math.pi ) ) # Necessarily integrates to one
+    result = result * scale
+    return result
+
+
 class GaussianKDEMembershipFunction( MembershipFunction ):
   
   def Evaluate( self, value ):
-    if ( len( self.Parameters ) % 2 != 1 ):
+    if ( len( self.Parameters ) % 2 != 0 ):
       logging.warning( "GaussianKDEMembershipFunction::Evaluate: Improperly specified parameters." )
       return 0
-    if ( self.Parameters[ 0 ] == 0 ):
+    if ( self.Parameters[ 1 ] == 0 ):
       logging.warning( "GaussianKDEMembershipFunction::Evaluate: Bandwidth is zero." )
-      return 0    
-    # The zeroth parameter should be 'h'
-    # All odd number parameters are datapoints, all even number parameters are weights
+      return 0
+    # The zeroth parameter should be 'scale'
+    # The first parameter should be 'h'
+    # All even number parameters are datapoints, all odd number parameters are weights
     
-    h = float( self.Parameters[ 0 ] )
-    n = float( ( len( self.Parameters ) - 1 ) / 2 ) # number of datapoints
-    parameterIndex = 1
-    value = 0
-    while ( parameterIndex < len( self.Parameters ) ):
-      dataPoint = self.Parameters[ parameterIndex ]
-      weight = self.Parameters[ parameterIndex + 1 ]
-      value = value + weight * math.exp( - math.pow( ( value - dataPoint ) / h, 2 ) )
-      parameterIndex = parameterIndex + 2
-      
-    return value / n
+    scale = float( self.Parameters[ 0 ] )
+    h = float( self.Parameters[ 1 ] )
+    dataPoints = self.Parameters[2::2] # every other parameter, skipping the 0th element (because it is bandwidth h)
+    weights = self.Parameters[3::2] # every other parameter, skipping the 0th element (because it is bandwidth h)
+    result = 0
+    for i in range( len( dataPoints ) ):
+      currDataPoint = dataPoints[ i ]
+      currWeight = weights[ i ]
+      result = result + currWeight * math.exp( - math.pow( ( value - currDataPoint ) / h, 2 ) )
+
+    result = result / ( h * math.sqrt( math.pi ) ) # This makes it integrate to one. Note that the sum of weights is normalized to one already
+    result = result * scale # Scale it
+    return result

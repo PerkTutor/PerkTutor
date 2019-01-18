@@ -149,7 +149,7 @@ class DecisionTreeAssessment():
     currentNode = DecisionTreeNode()
     currentNode.Center = numpy.mean( skillLabels )
     # This is the stopping criteria
-    if ( numpy.var( skillLabels ) <= stopCriteria ):
+    if ( numpy.std( skillLabels ) <= stopCriteria ):
       return currentNode
 
     candidateSplits = [ None ] * len( trainingRecords[ 0 ] )
@@ -160,7 +160,7 @@ class DecisionTreeAssessment():
         
       # Find the best splitting point for the current attribute
       splitPoint, splitValue = DecisionTreeAssessment.FindAttributeBestSplitPoint( currAttributes, skillLabels )
-      p = 1 - len( trainingRecords ) / ( totalNumRecords )
+      p = 1 - len( trainingRecords ) / float( totalNumRecords )
       splitValue = ( 1 - p ) * splitValue + p * ( 1 - weights[ attributeIndex ] ) # Smaller split value is more influential # Based on Al Iqbal et al., ICECE, 2012.
       candidateSplits[ attributeIndex ] = ( splitPoint, splitValue )
     
@@ -214,7 +214,7 @@ class DecisionTreeAssessment():
     
     numAll = float( len( skillLabels ) )
     sumAll = numpy.sum( skillLabels )
-    sumSquaresAll = numpy.linalg.norm( skillLabels )
+    sumSquaresAll = numpy.linalg.norm( skillLabels ) ** 2
     
     numLeft = float( 0 )
     sumLeft = 0

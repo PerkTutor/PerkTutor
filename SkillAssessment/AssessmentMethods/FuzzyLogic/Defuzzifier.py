@@ -126,7 +126,7 @@ class DefuzzifierMOM( Defuzzifier ):
   
   def Evaluate( self, membershipFunction, min, max, step ):
   
-    membershipFunction.SetComposeFunction( BinaryFunction.GodelSNorm() )
+    membershipFunction.SetComposeFunction( AddBinaryFunction() )
   
     # Find the maximum value of the membership function
     flatMaxFunction = MembershipFunction.FlatMembershipFunction()
@@ -184,7 +184,7 @@ class DefuzzifierCMMOM( Defuzzifier ):
     mom = momDefuzzifier.Evaluate( membershipFunction, min, max, step )
     
     return self.ClosestMaximum( membershipFunction, mom, min, max, step )
-    
+
 
   
 # Create some new membership functions specifically for defuzzification purposes
