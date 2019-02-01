@@ -316,7 +316,8 @@ class FuzzyAssessment():
     # Scale the metric membership functions such that for each metric, the AUC is the same for all skill classes and the maximum value is one
     for skillClassIndex in metricMembershipFunctions:
       for metricIndex in metricMembershipFunctions[ skillClassIndex ]:
-        metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Parameters[ 0 ] = 1 / float( metricMembershipMax )
+        if metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Parameters: # Make sure parameters exist (their is some membership)
+          metricMembershipFunctions[ skillClassIndex ][ metricIndex ].Parameters[ 0 ] = 1 / float( metricMembershipMax )
         
     return metricMembershipFunctions
 
