@@ -4,7 +4,7 @@ import vtk, qt, ctk, slicer
 import math
 import numpy
 import logging
-import FuzzyLogic
+from .FuzzyLogic import *
 
 #
 # Fuzzy Skill Assessment
@@ -241,17 +241,17 @@ class FuzzyAssessment():
   @staticmethod
   def GetDefuzzifier( defuzzifierName ):
     if ( defuzzifierName == DEFUZZIFIER_COA ):
-      return FuzzyLogic.Defuzzifier.DefuzzifierCOA()
+      return DefuzzifierCOA()
     if ( defuzzifierName == DEFUZZIFIER_COM ):
-      return FuzzyLogic.Defuzzifier.DefuzzifierCOM()
+      return DefuzzifierCOM()
     if ( defuzzifierName == DEFUZZIFIER_MOM ):
-      return FuzzyLogic.Defuzzifier.DefuzzifierMOM()
+      return DefuzzifierMOM()
     if ( defuzzifierName == DEFUZZIFIER_CMCOA ):
-      return FuzzyLogic.Defuzzifier.DefuzzifierCMCOA()
+      return DefuzzifierCMCOA()
     if ( defuzzifierName == DEFUZZIFIER_CMCOM ):
-      return FuzzyLogic.Defuzzifier.DefuzzifierCMCOM()
+      return DefuzzifierCMCOM()
     if ( defuzzifierName == DEFUZZIFIER_CMMOM ):
-      return FuzzyLogic.Defuzzifier.DefuzzifierCMMOM()      
+      return DefuzzifierCMMOM()      
     
     return None
 
@@ -259,9 +259,9 @@ class FuzzyAssessment():
   @staticmethod
   def GetShrinker( shrinkerName ):
     if ( shrinkerName == SHRINK_CLIP ):
-      return FuzzyLogic.BinaryFunction.GodelTNorm()
+      return GodelTNorm()
     if ( shrinkerName == SHRINK_SCALE ):
-      return FuzzyLogic.BinaryFunction.GoguenTNorm()
+      return GoguenTNorm()
       
     return None
     
@@ -280,7 +280,7 @@ class FuzzyAssessment():
       leftFoot = peak - triangleWidth
       rightFoot = peak + triangleWidth
     
-      membershipFunction = FuzzyLogic.MembershipFunction.TriangleMembershipFunction()
+      membershipFunction = TriangleMembershipFunction()
       membershipFunction.SetParameters( [ leftFoot, peak, rightFoot ] )
     
       skillMembershipFunctions[ skillClassIndex ] = membershipFunction
@@ -310,7 +310,7 @@ class FuzzyAssessment():
         currMetricMembershipFunction = FuzzyAssessment.CreateMetricMembershipFunction( currTrainingVector, memberships , metricMembershipDistribution )
         metricMembershipFunctions[ skillClassIndex ][ metricIndex ] = currMetricMembershipFunction
 
-        currMetricMembershipMax = FuzzyLogic.Defuzzifier.Defuzzifier().MaximumValue( currMetricMembershipFunction, min( currTrainingVector ), max( currTrainingVector ), NUMBER_OF_STEPS )
+        currMetricMembershipMax = Defuzzifier().MaximumValue( currMetricMembershipFunction, min( currTrainingVector ), max( currTrainingVector ), NUMBER_OF_STEPS )
         metricMembershipMax = max( metricMembershipMax, currMetricMembershipMax )
 
     # Scale the metric membership functions such that for each metric, the AUC is the same for all skill classes and the maximum value is one
@@ -331,7 +331,7 @@ class FuzzyAssessment():
     totalMembership = sum( memberships )
     if ( totalMembership == 0 ):
       logging.warning( "FuzzyAssessment::CreateMetricMembershipFunction: No membership in skill class." )
-      return FuzzyLogic.MembershipFunction.MembershipFunction()
+      return MembershipFunction()
 
     for i in range( len( memberships ) ):
       memberships[ i ] = memberships[ i ] / float( totalMembership )
@@ -353,7 +353,7 @@ class FuzzyAssessment():
       return FuzzyAssessment.CreateGaussianMetricMembershipFunction( mean, stdev )
       
     logging.info( "FuzzyAssessment::CreateMetricMembershipFunction: Metric membership distribution improperly specified." )    
-    return FuzzyLogic.MembershipFunction.MembershipFunction()
+    return MembershipFunction()
 
     
   @staticmethod
@@ -364,7 +364,7 @@ class FuzzyAssessment():
       parameters.append( trainingData[ i ] )
       parameters.append( memberships[ i ] )
       
-    membershipFunction = FuzzyLogic.MembershipFunction.GaussianKDEMembershipFunction()
+    membershipFunction = GaussianKDEMembershipFunction()
     membershipFunction.SetParameters( parameters )
 
     return membershipFunction
@@ -372,7 +372,7 @@ class FuzzyAssessment():
     
   @staticmethod
   def CreateGaussianMetricMembershipFunction( mean, stdev ):
-    membershipFunction = FuzzyLogic.MembershipFunction.GaussianMembershipFunction()
+    membershipFunction = GaussianMembershipFunction()
     membershipFunction.SetParameters( [ 1, mean, stdev ] ) # default scaling one
     return membershipFunction
 
@@ -389,8 +389,8 @@ class FuzzyAssessment():
       skillMembership = skillMembershipFunctions[ skillClassIndex ]
       fuzzyRules[ skillClassIndex ] = dict()
       for metricIndex in metricMembershipFunctions[ skillClassIndex ]:
-        currFuzzyRule = FuzzyLogic.FuzzyRule.FuzzyRule()
-        currFuzzyRule.SetComposeFunction( FuzzyLogic.BinaryFunction.GodelTNorm() ) #TODO: This compose function is not actually used. In the future, the rule should not require a compose function unless multiple input membership functions are specified for the rule.
+        currFuzzyRule = FuzzyRule()
+        currFuzzyRule.SetComposeFunction( GodelTNorm() ) #TODO: This compose function is not actually used. In the future, the rule should not require a compose function unless multiple input membership functions are specified for the rule.
         currFuzzyRule.SetOutputMembershipFunction( skillMembership )
         currFuzzyRule.AddInputMembershipFunction( metricMembershipFunctions[ skillClassIndex ][ metricIndex ], "Metric" )
       
@@ -403,14 +403,14 @@ class FuzzyAssessment():
   @staticmethod
   def ComputeFuzzyOutput( fuzzyRules, testRecord, weights, shrinker ):
     # Turn the test record into a dictionary
-    totalConsequence = FuzzyLogic.MembershipFunction.MembershipFunction()
+    totalConsequence = MembershipFunction()
     for skillClassIndex in fuzzyRules:
       for metricIndex in fuzzyRules[ skillClassIndex ]:
         currFuzzyRule = fuzzyRules[ skillClassIndex ][ metricIndex ]
         currInputValue = { "Metric": testRecord[ metricIndex ] }
         currConsequence = currFuzzyRule.Evaluate( currInputValue, shrinker )
         # Use the weighting (with the same shrink method)
-        weightMembershipFunction = FuzzyLogic.MembershipFunction.FlatMembershipFunction()
+        weightMembershipFunction = FlatMembershipFunction()
         weightMembershipFunction.SetParameters( [ weights[ metricIndex ] ] )
         currConsequence.AddBaseFunction( weightMembershipFunction )
         # Add the current consequence function to the total consequence function

@@ -1,5 +1,4 @@
-import BinaryFunction
-import MembershipFunction
+from .MembershipFunction import *
 
 # Class for membership functions
 class FuzzyRule:
@@ -12,15 +11,15 @@ class FuzzyRule:
     
   def Copy( self, other ):
     if ( other.OutputMembershipFunction != None ):
-      copyOutputMembershipFunction = MembershipFunction.MembershipFunction()
+      copyOutputMembershipFunction = MembershipFunction()
       copyOutputMembershipFunction.Copy( other.OutputMembershipFunction )
       self.OutputMembershipFunction = copyOutputMembershipFunction
     for name in other.InputMembershipFunctions:
-      copyInputMembershipFunction = MembershipFunction.MembershipFunction()
+      copyInputMembershipFunction = MembershipFunction()
       copyInputMembershipFunction.Copy( other.InputMembershipFunctions[ name ] )
       self.InputMembershipFunctions[ name ] = copyInputMembershipFunction
     if ( other.ComposeFunction != None ):
-      copyComposeFunction = MembershipFunction.MembershipFunction()
+      copyComposeFunction = MembershipFunction()
       copyComposeFunction.Copy( other.ComposeFunction )
       self.ComposeFunction = copyComposeFunction
 
@@ -29,7 +28,7 @@ class FuzzyRule:
   # This will be of the form "IF inputName is inputGroup THEN ..."
   def AddInputMembershipFunction( self, newInputMembershipFunction, inputName ):
     if ( inputName not in self.InputMembershipFunctions ):
-      self.InputMembershipFunctions[ inputName ] = MembershipFunction.MembershipFunction()
+      self.InputMembershipFunctions[ inputName ] = MembershipFunction()
       self.InputMembershipFunctions[ inputName ].SetComposeFunction( self.ComposeFunction )
       
     self.InputMembershipFunctions[ inputName ].AddBaseFunction( newInputMembershipFunction )
@@ -47,7 +46,7 @@ class FuzzyRule:
   # Input is a dict with keys being function names and values being specific values
   def Evaluate( self, inputValues, transformOutputFunction ):
     if ( self.ComposeFunction == None or self.OutputMembershipFunction == None ):
-      emptyMembershipFunction = MembershipFunction.FlatMembershipFunction()
+      emptyMembershipFunction = FlatMembershipFunction()
       emptyMembershipFunction.SetParameters( [ 0 ] )
       return emptyMembershipFunction
       
@@ -68,11 +67,11 @@ class FuzzyRule:
       totalMembership = 0
       
     # Compose the flat membership function
-    flatMembershipFunction = MembershipFunction.FlatMembershipFunction()
+    flatMembershipFunction = FlatMembershipFunction()
     flatMembershipFunction.SetParameters( [ totalMembership ] )
       
     # Apply clipping or scaling to output membership function
-    transformedOutputMembershipFunction = MembershipFunction.MembershipFunction()
+    transformedOutputMembershipFunction = MembershipFunction()
     transformedOutputMembershipFunction.AddBaseFunction( self.OutputMembershipFunction )
     transformedOutputMembershipFunction.AddBaseFunction( flatMembershipFunction )
     transformedOutputMembershipFunction.SetComposeFunction( transformOutputFunction )

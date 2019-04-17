@@ -1,4 +1,4 @@
-import MembershipFunction
-import FuzzyRule
-import Defuzzifier
-import BinaryFunction
+from .BinaryFunction import *
+from .MembershipFunction import *
+from .FuzzyRule import *
+from .Defuzzifier import *

@@ -91,7 +91,7 @@ class RegressionAssessment():
   @staticmethod
   def GetSpecificDescription( coeff, regressionOrder, nameRecord ):
     descriptionString = "In this case, the largest coefficients in the regression were (in descending order): " + "\n\n"
-    coeffOrders = range( regressionOrder + 1 ) * len( nameRecord )
+    coeffOrders = list( range( regressionOrder + 1 ) ) * len( nameRecord )
     coeffNames = [ name for name in nameRecord for repetitions in range( regressionOrder + 1 ) ]
     coeffNamesOrders = zip( coeffNames, coeffOrders )
     sortedCoeff = sorted( zip( coeff, coeffNamesOrders ), reverse = True )
@@ -111,14 +111,14 @@ class RegressionAssessment():
     coeff = RegressionAssessment.ComputeLeastSquaresCoefficients( vandermondeMatrix, skillLabels )
     
     testVandermondeMatrix = RegressionAssessment.ComputeVandermondeMatrix( testRecord, [ testRecord ], regressionOrder )
-    score = numpy.dot( testVandermondeMatrix, coeff )
+    score = numpy.dot( testVandermondeMatrix.squeeze(), coeff )
     
     # Enforce the score to be between 0 and 1
     score = max( 0, score )
     score = min( 1, score )
     
     descriptionString = RegressionAssessment.GetGenericDescription() + RegressionAssessment.GetSpecificDescription( coeff, regressionOrder, nameRecord )
-    
+
     return score, descriptionString
 
     

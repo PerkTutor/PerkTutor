@@ -181,10 +181,10 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
 
     # Hold off on modified events until we are finished modifying
     modifyFlag = metricsTable.StartModify()  
-    PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable, allMetrics.keys() )
+    PythonMetricsCalculatorLogic.InitializeMetricsTable( metricsTable, list( allMetrics.keys() ) )
     
     visibleIDs = []
-    for id, metric in allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ].iteritems():
+    for id, metric in allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ].items():
       try:
         if ( not metric.IsHidden() ):
           visibleIDs.append( id )
@@ -194,7 +194,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricsTable.GetTable().SetNumberOfRows( len( visibleIDs ) )
     insertRow = 0
     for id in visibleIDs:
-      for taskName, taskMetrics in allMetrics.iteritems():
+      for taskName, taskMetrics in allMetrics.items():
         currMetric = taskMetrics[ id ]
         if ( taskName is PythonMetricsCalculatorLogic.METRIC_VALUE ):
           metricsTable.GetTable().SetValueByName( insertRow, "MetricName", currMetric.GetMetricName() )
@@ -224,7 +224,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     for i in range( metricScriptNodes.GetNumberOfItems() ):
       execVars = dict()
       currentMetricScriptNode = metricScriptNodes.GetItemAsObject( i )
-      exec currentMetricScriptNode.GetPythonSourceCode() in execVars
+      exec( currentMetricScriptNode.GetPythonSourceCode(), execVars )
       # Find the metric module in the locals dict
       currMetricModule = None
       for localVar in execVars.values():
@@ -402,7 +402,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     if ( roleType == slicer.vtkMRMLMetricInstanceNode.TransformRole ):
       return PythonMetricsCalculatorLogic.GetTransformRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] )
     elif ( roleType == slicer.vtkMRMLMetricInstanceNode.AnatomyRole ):
-      return PythonMetricsCalculatorLogic.GetAnatomyRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] ).keys()
+      return list( PythonMetricsCalculatorLogic.GetAnatomyRoles( PythonMetricsCalculatorLogic.AllMetricModules[ metricScriptID ] ).keys() )
     else:
       return []
     
@@ -631,19 +631,19 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     
     try:
       self.test_PythonMetricsCalculatorLumbar()
-    except Exception, e:
+    except Exception as e:
       self.delayDisplay( "Lumbar test caused exception!\n" + str(e) )
     
     try:
       self.test_PythonMetricsCalculatorInPlane()
-    except Exception, e:
+    except Exception as e:
       self.delayDisplay( "In-plane test caused exception!\n" + str(e) )
       
       
   def compareMetricsTables( self, trueMetricsTableNode, testMetricsTableNode ):
     # Check both tables to make sure they have the same number of rows    
     if ( trueMetricsTableNode.GetTable().GetNumberOfRows() != testMetricsTableNode.GetTable().GetNumberOfRows() ):
-      print "True number of metrics:", trueMetricsTableNode.GetTable().GetNumberOfRows(), ", calculated number of metrics:", testMetricsTableNode.GetTable().GetNumberOfRows()
+      print( "True number of metrics:" + str( trueMetricsTableNode.GetTable().GetNumberOfRows() ) + ", calculated number of metrics:" + str( testMetricsTableNode.GetTable().GetNumberOfRows() ) )
       raise Exception( "A different number of metrics was computed."  )
 
     # Compare the metrics to the expected results
@@ -668,10 +668,10 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
           
       # If we could not find a row in the true table that matches the row in the test table, report an incorrect metric
       if ( not rowMatch ):
-        print "Incorrect metric.",
+        print( "Incorrect metric.", end = " " )
         for k in range( testMetricsTableNode.GetTable().GetNumberOfColumns() ):
-          print testMetricsTableNode.GetTable().GetColumnName( k ), testMetricsTableNode.GetTable().GetValue( i, k ),
-        print ""          
+          print( testMetricsTableNode.GetTable().GetColumnName( k ) + testMetricsTableNode.GetTable().GetValue( i, k ), end = " " )
+        print( "" )
         metricsMatch = False
         
     return metricsMatch
@@ -757,7 +757,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     else:
       self.delayDisplay( "Test passed! Calculated metrics match results!" )
       
-    print "Lumbar test completed."
+    print( "Lumbar test completed." )
     self.assertTrue( metricsMatch )
 
     
@@ -840,7 +840,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     else:
       self.delayDisplay( "Test passed! Calculated metrics match results!" )
       
-    print "In-plane test completed."
+    print( "In-plane test completed." )
     self.assertTrue( metricsMatch )
 
     

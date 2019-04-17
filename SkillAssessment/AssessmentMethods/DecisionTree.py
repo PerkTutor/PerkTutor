@@ -208,9 +208,9 @@ class DecisionTreeAssessment():
     
   @staticmethod
   def FindAttributeBestSplitPoint( attributes, skillLabels ):
-    attributesSkills = sorted( zip( attributes, skillLabels ) )
-    attributes = numpy.array( zip( *attributesSkills )[ 0 ] ) # Clever trick for unzipping
-    skillLabels = numpy.array( zip( *attributesSkills )[ 1 ] ) # Clever trick for unzipping
+    attributesSkills = sorted( list( zip( attributes, skillLabels ) ) )
+    attributes = numpy.array( list( zip( *attributesSkills ) )[ 0 ] ) # Clever trick for unzipping
+    skillLabels = numpy.array( list( zip( *attributesSkills ) )[ 1 ] ) # Clever trick for unzipping
     
     numAll = float( len( skillLabels ) )
     sumAll = numpy.sum( skillLabels )

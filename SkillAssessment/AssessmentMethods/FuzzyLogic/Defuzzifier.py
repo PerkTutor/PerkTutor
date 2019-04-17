@@ -1,5 +1,5 @@
-import MembershipFunction
-import BinaryFunction
+from .BinaryFunction import *
+from .MembershipFunction import *
 import math
 import logging
 
@@ -77,14 +77,14 @@ class DefuzzifierCOA( Defuzzifier ):
   
   def Evaluate( self, membershipFunction, min, max, step ):
   
-    membershipFunction.SetComposeFunction( BinaryFunction.GodelSNorm() )
+    membershipFunction.SetComposeFunction( GodelSNorm() )
   
-    numeratorFunction = MembershipFunction.MembershipFunction()
+    numeratorFunction = MembershipFunction()
     numeratorFunction.AddBaseFunction( membershipFunction )
     numeratorFunction.AddBaseFunction( XMembershipFunction() )
-    numeratorFunction.SetComposeFunction( BinaryFunction.GoguenTNorm() ) # Multiply x * func and integrate
+    numeratorFunction.SetComposeFunction( GoguenTNorm() ) # Multiply x * func and integrate
   
-    denominatorFunction = MembershipFunction.MembershipFunction()
+    denominatorFunction = MembershipFunction()
     denominatorFunction.AddBaseFunction( membershipFunction )
   
     num = self.Integrate( numeratorFunction, min, max, step )  
@@ -104,12 +104,12 @@ class DefuzzifierCOM( Defuzzifier ):
   
     membershipFunction.SetComposeFunction( AddBinaryFunction() )
   
-    numeratorFunction = MembershipFunction.MembershipFunction()
+    numeratorFunction = MembershipFunction()
     numeratorFunction.AddBaseFunction( membershipFunction )
     numeratorFunction.AddBaseFunction( XMembershipFunction() )
-    numeratorFunction.SetComposeFunction( BinaryFunction.GoguenTNorm() ) # Multiply x * func and integrate
+    numeratorFunction.SetComposeFunction( GoguenTNorm() ) # Multiply x * func and integrate
   
-    denominatorFunction = MembershipFunction.MembershipFunction()
+    denominatorFunction = MembershipFunction()
     denominatorFunction.AddBaseFunction( membershipFunction )
   
     num = self.Integrate( numeratorFunction, min, max, step )  
@@ -129,21 +129,21 @@ class DefuzzifierMOM( Defuzzifier ):
     membershipFunction.SetComposeFunction( AddBinaryFunction() )
   
     # Find the maximum value of the membership function
-    flatMaxFunction = MembershipFunction.FlatMembershipFunction()
+    flatMaxFunction = FlatMembershipFunction()
     flatMaxFunction.SetParameters( [ self.MaximumValue( membershipFunction, min, max, step ) ] )
   
     # This function is the max value when the original membership function achieves its max, and is zero otherwise
-    maxFunction = MembershipFunction.MembershipFunction()
+    maxFunction = MembershipFunction()
     maxFunction.AddBaseFunction( flatMaxFunction )
     maxFunction.AddBaseFunction( membershipFunction )
     maxFunction.SetComposeFunction( EqualBinaryFunction() )
   
-    numeratorFunction = MembershipFunction.MembershipFunction()
+    numeratorFunction = MembershipFunction()
     numeratorFunction.AddBaseFunction( maxFunction )
     numeratorFunction.AddBaseFunction( XMembershipFunction() )
-    numeratorFunction.SetComposeFunction( BinaryFunction.GoguenTNorm() ) # Multiply x * func and integrate
+    numeratorFunction.SetComposeFunction( GoguenTNorm() ) # Multiply x * func and integrate
   
-    denominatorFunction = MembershipFunction.MembershipFunction()
+    denominatorFunction = MembershipFunction()
     denominatorFunction.AddBaseFunction( maxFunction )
   
     num = self.Integrate( numeratorFunction, min, max, step )  
@@ -188,7 +188,7 @@ class DefuzzifierCMMOM( Defuzzifier ):
 
   
 # Create some new membership functions specifically for defuzzification purposes
-class XMembershipFunction( MembershipFunction.MembershipFunction ):
+class XMembershipFunction( MembershipFunction ):
 
   def Evaluate( self, value ):
     if ( len( self.Parameters ) != 0 ):
@@ -200,13 +200,13 @@ class XMembershipFunction( MembershipFunction.MembershipFunction ):
     
 # Create some new binary function for centre of area calculation
 # Note: This is not a t-norm nor s-norm
-class AddBinaryFunction( BinaryFunction.BinaryFunction ):
+class AddBinaryFunction( BinaryFunction ):
   def Evaluate( self, x, y ):
     return x + y
     
 # Create some new binary function for mean of max
 # Note: This is not a t-norm nor s-norm
-class EqualBinaryFunction( BinaryFunction.BinaryFunction ):
+class EqualBinaryFunction( BinaryFunction ):
   def Evaluate( self, x, y ):
     if ( round( x - y, 4 ) == 0 ):
       return ( x + y ) / float( 2 )
