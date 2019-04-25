@@ -468,7 +468,7 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     for session in allSessions:
     
       invalidSession = False
-      for ( key, value ) in searchFieldsDict.iteritems():
+      for key, value in searchFieldsDict.items():
         if ( ( key not in session.doc ) or ( value != "" and session.doc[ key ] != value ) ):
           invalidSession = True
       if invalidSession:
