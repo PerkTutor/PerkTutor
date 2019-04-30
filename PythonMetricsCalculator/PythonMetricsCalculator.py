@@ -643,7 +643,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
   def compareMetricsTables( self, trueMetricsTableNode, testMetricsTableNode ):
     # Check both tables to make sure they have the same number of rows    
     if ( trueMetricsTableNode.GetTable().GetNumberOfRows() != testMetricsTableNode.GetTable().GetNumberOfRows() ):
-      print( "True number of metrics:" + str( trueMetricsTableNode.GetTable().GetNumberOfRows() ) + ", calculated number of metrics:" + str( testMetricsTableNode.GetTable().GetNumberOfRows() ) )
+      logging.warning( "True number of metrics:" + str( trueMetricsTableNode.GetTable().GetNumberOfRows() ) + ", calculated number of metrics:" + str( testMetricsTableNode.GetTable().GetNumberOfRows() ) )
       raise Exception( "A different number of metrics was computed."  )
 
     # Compare the metrics to the expected results
@@ -668,10 +668,10 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
           
       # If we could not find a row in the true table that matches the row in the test table, report an incorrect metric
       if ( not rowMatch ):
-        print( "Incorrect metric.", end = " " )
+        warningString = "Incorrect metric."
         for k in range( testMetricsTableNode.GetTable().GetNumberOfColumns() ):
-          print( testMetricsTableNode.GetTable().GetColumnName( k ) + testMetricsTableNode.GetTable().GetValue( i, k ), end = " " )
-        print( "" )
+          warningString = warningString + " " + testMetricsTableNode.GetTable().GetColumnName( k ) + " " + testMetricsTableNode.GetTable().GetValue( i, k )
+        logging.warning( warningString )
         metricsMatch = False
         
     return metricsMatch
@@ -757,7 +757,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     else:
       self.delayDisplay( "Test passed! Calculated metrics match results!" )
       
-    print( "Lumbar test completed." )
+    logging.debug( "Lumbar test completed." )
     self.assertTrue( metricsMatch )
 
     
@@ -840,7 +840,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     else:
       self.delayDisplay( "Test passed! Calculated metrics match results!" )
       
-    print( "In-plane test completed." )
+    logging.debug( "In-plane test completed." )
     self.assertTrue( metricsMatch )
 
     
