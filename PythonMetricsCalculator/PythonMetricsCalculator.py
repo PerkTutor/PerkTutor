@@ -1,5 +1,6 @@
 import os, imp, glob, sys
 import urllib, zipfile
+import urllib.request
 import unittest
 import logging
 import collections
@@ -100,7 +101,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricsFullZipFileName = os.path.join( metricsDownloadDirectory, PythonMetricsCalculatorLogic.METRICS_ZIP_FILE_NAME )
 
     # Download the zip file
-    urllib.urlretrieve( PythonMetricsCalculatorLogic.ADDITIONAL_METRICS_URL, metricsFullZipFileName )
+    urllib.request.urlretrieve( PythonMetricsCalculatorLogic.ADDITIONAL_METRICS_URL, metricsFullZipFileName )
 
     # Extract the zip file
     metricsZipFile = zipfile.ZipFile( metricsFullZipFileName )
