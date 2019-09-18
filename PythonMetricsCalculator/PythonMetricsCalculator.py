@@ -1,5 +1,9 @@
 import os, imp, glob, sys
 import urllib, zipfile
+try:
+  from urllib.request import urlretrieve # Python 3
+except ImportError:
+  from urllib import urlretrieve # Python 2
 import unittest
 import logging
 import collections
@@ -100,7 +104,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricsFullZipFileName = os.path.join( metricsDownloadDirectory, PythonMetricsCalculatorLogic.METRICS_ZIP_FILE_NAME )
 
     # Download the zip file
-    urllib.urlretrieve( PythonMetricsCalculatorLogic.ADDITIONAL_METRICS_URL, metricsFullZipFileName )
+    urlretrieve( PythonMetricsCalculatorLogic.ADDITIONAL_METRICS_URL, metricsFullZipFileName )
 
     # Extract the zip file
     metricsZipFile = zipfile.ZipFile( metricsFullZipFileName )
