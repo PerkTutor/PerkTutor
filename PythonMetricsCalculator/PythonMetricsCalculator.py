@@ -226,7 +226,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     metricScriptNodes = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodesByClass( "vtkMRMLMetricScriptNode" )
     
     for i in range( metricScriptNodes.GetNumberOfItems() ):
-      execVars = dict()
+      execVars = collections.OrderedDict() # force the defined metric to be the last variable in the dictionary
       currentMetricScriptNode = metricScriptNodes.GetItemAsObject( i )
       exec( currentMetricScriptNode.GetPythonSourceCode(), execVars )
       # Find the metric module in the locals dict
