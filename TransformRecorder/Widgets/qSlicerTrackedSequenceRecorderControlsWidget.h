@@ -25,7 +25,7 @@
 #include "qSlicerWidget.h"
 
 #include "vtkMRMLSequenceBrowserNode.h"
-#include "vtkSlicerSequenceBrowserLogic.h"
+#include "vtkSlicerSequencesLogic.h"
 #include "vtkSlicerTransformRecorderLogic.h"
 
 // FooBar Widgets includes
@@ -64,7 +64,7 @@ protected:
   QScopedPointer<qSlicerTrackedSequenceRecorderControlsWidgetPrivate> d_ptr;
 
   vtkWeakPointer< vtkMRMLSequenceBrowserNode > TrackedSequenceBrowserNode;
-  vtkWeakPointer< vtkSlicerSequenceBrowserLogic > SequenceBrowserLogic;
+  vtkWeakPointer< vtkSlicerSequencesLogic > SequencesLogic;
 
   virtual void setup();
 

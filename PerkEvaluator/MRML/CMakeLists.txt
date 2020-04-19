@@ -6,7 +6,7 @@ set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_MRML_EXPORT"
 
 set(${KIT}_INCLUDE_DIRECTORIES
   ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
-  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
+  ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}
   )
 
 # --------------------------------------------------------------------------
@@ -31,7 +31,6 @@ SET (${KIT}_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "" FORCE)
 set(${KIT}_TARGET_LIBRARIES
   vtkIOInfovis
   vtkSlicerSequencesModuleMRML
-  vtkSlicerSequenceBrowserModuleMRML
   )
 
 SlicerMacroBuildModuleMRML(

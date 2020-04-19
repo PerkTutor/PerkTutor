@@ -11,22 +11,12 @@ set( EXTENSION_CONTRIBUTORS "Tamas Ungi, Matthew S. Holden (Queen's University)"
 set( EXTENSION_DESCRIPTION "This extension holds modules for training of needle interventions and analysis of operator performance." )
 set( EXTENSION_ICONURL "http://www.slicer.org/slicerWiki/images/2/21/PerkTutorLogo.png" )
 set( EXTENSION_SCREENSHOTURLS "http://www.slicer.org/slicerWiki/images/2/28/PerkTutorScreenshot.png" )
-set( EXTENSION_DEPENDS "Sequences" ) # Specified as a space separated list or 'NA' if any
+set( EXTENSION_DEPENDS "NA" ) # Specified as a space separated list or 'NA' if any
 
 
 # Extension dependencies
 find_package( Slicer REQUIRED )
 include( ${Slicer_USE_FILE} )
-
-find_package( Sequences REQUIRED )
-
-set(Sequences_ADDITIONAL_MODULE_PATHS
-  ${Sequences_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}
-  ${Sequences_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Debug
-  ${Sequences_DIR}/${Slicer_QTLOADABLEMODULES_LIB_DIR}/Release
-  ${Sequences_DIR}/${Slicer_QTSCRIPTEDMODULES_LIB_DIR}
-  )
-
   
 # Extension modules
 add_subdirectory(TransformRecorder)

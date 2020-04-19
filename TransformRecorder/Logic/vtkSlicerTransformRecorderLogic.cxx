@@ -38,7 +38,7 @@
 #include "qSlicerModuleManager.h"
 #include "qSlicerAbstractCoreModule.h"
 
-#include "vtkSlicerSequenceBrowserLogic.h"
+#include "vtkSlicerSequencesLogic.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 
 
@@ -146,7 +146,7 @@ vtkMRMLSequenceNode* vtkSlicerTransformRecorderLogic
   }
 
   // If not, create one and add it to the sequence browser
-  vtkSlicerSequenceBrowserLogic* sbLogic = vtkSlicerSequenceBrowserLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "SequenceBrowser" ) );
+  vtkSlicerSequencesLogic* sbLogic = vtkSlicerSequencesLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "Sequences" ) );
   if ( sbLogic == NULL )
   {
     return NULL;

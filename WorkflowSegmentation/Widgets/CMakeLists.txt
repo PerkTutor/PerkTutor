@@ -6,9 +6,7 @@ set(${KIT}_EXPORT_DIRECTIVE "Q_SLICER_MODULE_${MODULE_NAME_UPPER}_WIDGETS_EXPORT
 
 set(${KIT}_INCLUDE_DIRECTORIES
   ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
-  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
   ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
-  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
   )
 
 set(${KIT}_SRCS
@@ -44,9 +42,7 @@ set(${KIT}_TARGET_LIBRARIES
   vtkSlicerTransformRecorderModuleLogic 
   qSlicerTransformRecorderModuleWidgets
   vtkSlicerSequencesModuleMRML
-  vtkSlicerSequenceBrowserModuleMRML
   vtkSlicerSequencesModuleLogic
-  vtkSlicerSequenceBrowserModuleLogic
   )
 
 #-----------------------------------------------------------------------------

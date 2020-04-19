@@ -82,7 +82,7 @@ QStringList qSlicerTransformRecorderModule::categories() const
  //-----------------------------------------------------------------------------
  QStringList qSlicerTransformRecorderModule::dependencies()const
  {
-   return QStringList() << "Sequences" << "SequenceBrowser";
+   return QStringList() << "Sequences";
  }
 
 //-----------------------------------------------------------------------------

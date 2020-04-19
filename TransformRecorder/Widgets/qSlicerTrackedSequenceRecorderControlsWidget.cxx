@@ -66,7 +66,7 @@ qSlicerTrackedSequenceRecorderControlsWidget
 ::qSlicerTrackedSequenceRecorderControlsWidget(QWidget* parentWidget) : qSlicerWidget( parentWidget ) , d_ptr( new qSlicerTrackedSequenceRecorderControlsWidgetPrivate(*this) )
 {
   this->TrackedSequenceBrowserNode = NULL;
-  this->SequenceBrowserLogic = vtkSlicerSequenceBrowserLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "SequenceBrowser" ) );
+  this->SequencesLogic = vtkSlicerSequencesLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "Sequences" ) );
   this->setup();
 }
 
@@ -183,7 +183,7 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 
     if( currProxyNodeChecked && currSequenceNode == NULL )
     {
-      currSequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, currProxyNode, this->TrackedSequenceBrowserNode );
+      currSequenceNode = this->SequencesLogic->AddSynchronizedNode( NULL, currProxyNode, this->TrackedSequenceBrowserNode );
       this->TrackedSequenceBrowserNode->SetOverwriteProxyName( currSequenceNode, false );
       this->TrackedSequenceBrowserNode->SetSaveChanges( currSequenceNode, false );
     }
@@ -220,7 +220,7 @@ void qSlicerTrackedSequenceRecorderControlsWidget
 
     if( currProxyNodeChecked && currSequenceNode == NULL )
     {
-      currSequenceNode = this->SequenceBrowserLogic->AddSynchronizedNode( NULL, currProxyNode, this->TrackedSequenceBrowserNode );
+      currSequenceNode = this->SequencesLogic->AddSynchronizedNode( NULL, currProxyNode, this->TrackedSequenceBrowserNode );
       this->TrackedSequenceBrowserNode->SetOverwriteProxyName( currSequenceNode, false );
       this->TrackedSequenceBrowserNode->SetSaveChanges( currSequenceNode, false );
     }

@@ -30,7 +30,6 @@ class qSlicerTrackedSequenceBrowserWriterPrivate;
 #include "vtkSlicerTransformRecorderLogic.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 #include "vtkMRMLSequenceNode.h"
-#include "vtkSlicerSequenceBrowserLogic.h"
 #include "vtkMRMLScriptedModuleNode.h"
 
 

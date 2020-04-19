@@ -22,9 +22,7 @@ set(MODULE_INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
   ${vtkSlicerSequencesModuleMRML_INCLUDE_DIRS}  
-  ${vtkSlicerSequenceBrowserModuleMRML_INCLUDE_DIRS}
   ${vtkSlicerSequencesModuleLogic_INCLUDE_DIRS}  
-  ${vtkSlicerSequenceBrowserModuleLogic_INCLUDE_DIRS}
   )
 
 # Source files
@@ -61,9 +59,7 @@ set(MODULE_TARGET_LIBRARIES
   qSlicer${MODULE_NAME}ModuleWidgets
   vtkSlicer${MODULE_NAME}ModuleLogic
   vtkSlicerSequencesModuleMRML
-  vtkSlicerSequenceBrowserModuleMRML
   vtkSlicerSequencesModuleLogic
-  vtkSlicerSequenceBrowserModuleLogic
   )
 
 # Resources

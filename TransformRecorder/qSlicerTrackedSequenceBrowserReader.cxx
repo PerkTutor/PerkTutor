@@ -153,7 +153,7 @@ bool qSlicerTrackedSequenceBrowserReader
   Q_D(qSlicerTrackedSequenceBrowserReader);
 
   // Nedd access to the sequence browser logic for putting the sequences in the sequence browser
-  vtkSlicerSequenceBrowserLogic* sbLogic = vtkSlicerSequenceBrowserLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "SequenceBrowser" ) );
+  vtkSlicerSequencesLogic* sbLogic = vtkSlicerSequencesLogic::SafeDownCast( vtkSlicerTransformRecorderLogic::GetSlicerModuleLogic( "Sequences" ) );
   if ( sbLogic == NULL )
   {
     return NULL;

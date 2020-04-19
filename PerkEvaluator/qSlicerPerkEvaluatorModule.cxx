@@ -106,7 +106,7 @@ QStringList qSlicerPerkEvaluatorModule::categories() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerPerkEvaluatorModule::dependencies() const
 {
-  return QStringList() << "Sequences" << "SequenceBrowser" << "TransformRecorder";
+  return QStringList() << "Sequences" << "TransformRecorder";
 }
 
 //-----------------------------------------------------------------------------
