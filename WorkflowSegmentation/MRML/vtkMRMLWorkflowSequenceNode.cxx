@@ -133,7 +133,7 @@ int vtkMRMLWorkflowSequenceNode
 vtkDoubleArray* vtkMRMLWorkflowSequenceNode
 ::GetNthDoubleArray( int itemNumber )
 {
-  vtkMRMLDoubleArrayNode* doubleArrayNode = vtkMRMLDoubleArrayNode::SafeDownCast( this->GetNthDataNode( itemNumber ) );
+  vtkMRMLWorkflowDoubleArrayNode* doubleArrayNode = vtkMRMLWorkflowDoubleArrayNode::SafeDownCast( this->GetNthDataNode( itemNumber ) );
   if ( doubleArrayNode == NULL )
   {
     return NULL;
@@ -178,7 +178,7 @@ void vtkMRMLWorkflowSequenceNode
   }
 
   // Add the transform nodes to this workflow sequence as double array nodes
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > doubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > doubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   for ( int i = 0; i < sequenceNode->GetNumberOfDataNodes(); i++ )
   {    
     this->LinearTransformToDoubleArray( vtkMRMLLinearTransformNode::SafeDownCast( sequenceNode->GetNthDataNode( i ) ), doubleArrayNode, QUATERNION_ARRAY ); // Use quaternions
@@ -691,7 +691,7 @@ void vtkMRMLWorkflowSequenceNode
         tempUnintegratedDoubleArray->SetComponent( 0, d, currentDoubleArray->GetComponent( 0, d ) * legendrePolynomial );
 	    }
 
-      vtkSmartPointer< vtkMRMLDoubleArrayNode > unintegratedDataNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+      vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > unintegratedDataNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
       vtkDoubleArray* unintegratedDoubleArray = unintegratedDataNode->GetArray();
       if ( unintegratedDoubleArray == NULL )
       {
@@ -1298,7 +1298,7 @@ void vtkMRMLWorkflowSequenceNode
     }
     currDataNode->SetAttribute( "MarkovState", currDataNode->GetAttribute( "Message" ) );
 
-    vtkMRMLDoubleArrayNode* currDoubleArrayNode = vtkMRMLDoubleArrayNode::SafeDownCast( currDataNode );
+    vtkMRMLWorkflowDoubleArrayNode* currDoubleArrayNode = vtkMRMLWorkflowDoubleArrayNode::SafeDownCast( currDataNode );
     if ( currDoubleArrayNode == NULL || currDoubleArrayNode->GetArray() == NULL )
     {
       return;
@@ -1311,7 +1311,7 @@ void vtkMRMLWorkflowSequenceNode
 
 
 void vtkMRMLWorkflowSequenceNode
-::LinearTransformFromDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type )
+::LinearTransformFromDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLWorkflowDoubleArrayNode* doubleArrayNode, ArrayType type )
 {
   vtkDoubleArray* doubleArray = doubleArrayNode->GetArray();
   if ( doubleArray == NULL || doubleArray->GetNumberOfTuples() != 1 )
@@ -1370,7 +1370,7 @@ void vtkMRMLWorkflowSequenceNode
 
 
 void vtkMRMLWorkflowSequenceNode
-::LinearTransformToDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type )
+::LinearTransformToDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLWorkflowDoubleArrayNode* doubleArrayNode, ArrayType type )
 {
   vtkDoubleArray* doubleArray = doubleArrayNode->GetArray();
 

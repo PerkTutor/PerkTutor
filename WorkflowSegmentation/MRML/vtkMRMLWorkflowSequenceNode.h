@@ -29,12 +29,12 @@
 
 #include "vtkMRMLSequenceNode.h"
 #include "vtkMRMLSequenceBrowserNode.h"
-#include "vtkMRMLDoubleArrayNode.h"
+#include "vtkMRMLWorkflowDoubleArrayNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLScene.h"
 
 
-// This is a sequence node which only takes vtkMRMLDoubleArrayNodes
+// This is a sequence node which only takes vtkMRMLWorkflowDoubleArrayNodes
 // But it allows us to do special computations on these nodes
 class VTK_SLICER_WORKFLOWSEGMENTATION_MODULE_MRML_EXPORT
 vtkMRMLWorkflowSequenceNode : public vtkMRMLSequenceNode
@@ -112,8 +112,8 @@ public:
   };
     
   // Convert between linear transforms and double arrays
-  static void LinearTransformFromDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type );
-  static void LinearTransformToDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLDoubleArrayNode* doubleArrayNode, ArrayType type );
+  static void LinearTransformFromDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLWorkflowDoubleArrayNode* doubleArrayNode, ArrayType type );
+  static void LinearTransformToDoubleArray( vtkMRMLLinearTransformNode* transformNode, vtkMRMLWorkflowDoubleArrayNode* doubleArrayNode, ArrayType type );
 
   // Helper method (since this isn't implemented in the version of VTK that Slicer uses)
   static void FillDoubleArray( vtkDoubleArray* doubleArray, double fillValue );

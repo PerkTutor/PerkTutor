@@ -312,7 +312,7 @@ void vtkMRMLWorkflowSequenceOnlineNode
   // We will assume that: label -> state, values[0] -> symbol
   node->SetAttribute( "MarkovState", node->GetAttribute( "Message" ) );
   
-  vtkMRMLDoubleArrayNode* doubleArrayNode = vtkMRMLDoubleArrayNode::SafeDownCast( node );
+  vtkMRMLWorkflowDoubleArrayNode* doubleArrayNode = vtkMRMLWorkflowDoubleArrayNode::SafeDownCast( node );
   if ( doubleArrayNode == NULL || doubleArrayNode->GetArray() == NULL )
   {
     return;
