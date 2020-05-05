@@ -440,33 +440,47 @@ class FuzzyAssessment():
 
     step = float( max - min ) / steps
     # Setting up the array of values
-    chartNode = slicer.vtkMRMLChartNode()
-    chartNode.SetScene( slicer.mrmlScene )
-    slicer.mrmlScene.AddNode( chartNode )
+    plotChartNode = slicer.vtkMRMLPlotChartNode()
+    plotChartNode.SetScene( slicer.mrmlScene )
+    slicer.mrmlScene.AddNode( plotChartNode )
 
+    tableNode = slicer.vtkMRMLTableNode()
+    tableNode.SetScene( slicer.mrmlScene )
+    slicer.mrmlScene.AddNode( tableNode )
+
+    # Array of x values
+    xArray = vtk.vtkDoubleArray()
+    xArray.SetName( "x" )
+    xArray.SetNumberOfComponents( 1 )
+    xArray.SetNumberOfTuples( int( ( max - min ) / step ) )
+    for j in range( xArray.GetNumberOfTuples() ):
+      xArray.SetComponent( j, 0, min + j * step )
+    tableNode.AddColumn( xArray )
+
+    # Array of y values
     for i in range( len( membershipFunctions ) ):
-      arrayNode = slicer.vtkMRMLDoubleArrayNode()
-      arrayNode.SetScene( slicer.mrmlScene )
-      slicer.mrmlScene.AddNode( arrayNode )
-      array = arrayNode.GetArray()
-      array.SetNumberOfTuples( int( ( max - min ) / step ) )
+      yArray = vtk.vtkDoubleArray()
+      yArray.SetName( str( i ) )
+      yArray.SetNumberOfComponents( 1 )
+      yArray.SetNumberOfTuples( int( ( max - min ) / step ) )
+      for j in range( yArray.GetNumberOfTuples() ):
+        yArray.SetComponent( j, 0, membershipFunctions[ i ].Evaluate( min + j * step ) )
+      tableNode.AddColumn( yArray )
 
-      for j in range( array.GetNumberOfTuples() ):
-        array.SetComponent( j, 0, min + j * step )
-        array.SetComponent( j, 1, membershipFunctions[ i ].Evaluate( min + j * step ) )
-        array.SetComponent( j, 2, 0 )
-
-      # Add array into a chart node
-      chartNode.AddArray( "Membership Function " + str( i ), arrayNode.GetID() )
-
-    chartNode.SetProperty( 'default', 'title', 'Membership Functions' )
-    chartNode.SetProperty( 'default', 'xAxisLabel', 'Membership Value' )
-    chartNode.SetProperty( 'default', 'yAxisLabel', 'Element' )
+    # Setup the plot series
+    for i in range( len( membershipFunctions ) ):        
+      plotSeriesNode = slicer.vtkMRMLPlotSeriesNode()
+      plotSeriesNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( plotSeriesNode )
+      plotSeriesNode.SetAndObserveTableNodeID(tableNode.GetID())
+      plotSeriesNode.SetXColumnName( str( 0 ) )
+      plotSeriesNode.SetYColumnName( str( i ) )
+      plotChartNode.AddAndObservePlotSeriesNodeID(plotSeriesNode.GetID())
 
     # Set the chart in the chart view node
-    chartViewNode = slicer.mrmlScene.GetNthNodeByClass( 0, "vtkMRMLChartViewNode" )
-    if ( chartViewNode is None ):
-      chartViewNode = slicer.vtkMRMLChartViewNode()
-      chartViewNode.SetScene( slicer.mrmlScene )
-      slicer.mrmlScene.AddNode( chartViewNode )
-    chartViewNode.SetChartNodeID( chartNode.GetID() )
+    plotViewNode = slicer.mrmlScene.GetNthNodeByClass( 0, "vtkMRMLPlotViewNode" )
+    if ( plotViewNode is None ):
+      plotViewNode = slicer.vtkMRMLPlotViewNode()
+      plotViewNode.SetScene( slicer.mrmlScene )
+      slicer.mrmlScene.AddNode( plotViewNode )
+    plotViewNode.SetPlotChartNodeID( plotChartNode.GetID() )
