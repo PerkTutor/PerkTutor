@@ -33,7 +33,7 @@
 // Debug
 void PrintToFile( std::string str )
 {
-  ofstream o( "PerkEvaluatorLog.txt", std::ios_base::app );
+  std::ofstream o( "PerkEvaluatorLog.txt", std::ios_base::app );
   int c = clock();
   o << std::fixed << setprecision( 2 ) << ( c / (double)CLOCKS_PER_SEC ) << " : " << str << std::endl;
   o.close();

@@ -29,7 +29,6 @@ SET (${KIT}_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "" FORCE)
 # Build the library
 
 set(${KIT}_TARGET_LIBRARIES
-  vtkIOInfovis
   vtkSlicerSequencesModuleMRML
   )
 
