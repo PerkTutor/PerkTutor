@@ -301,7 +301,7 @@ void vtkMRMLWorkflowSequenceNode
   // Need to check that the size of the double array nodes are the same...
   if ( this->GetNthNumberOfComponents() != sequence->GetNthNumberOfComponents() )
   {
-    vtkWarningMacro( "vtkMRMLWorkflowSequenceNode::Concatenate: Sequences are incompatible, could not concatenate." )
+    vtkWarningMacro("vtkMRMLWorkflowSequenceNode::Concatenate: Sequences are incompatible, could not concatenate.");
     return;
   }
 
@@ -641,7 +641,7 @@ void vtkMRMLWorkflowSequenceNode
     vtkDoubleArray* upperDoubleArray = this->GetNthDoubleArray( i );
     if ( lowerDoubleArray == NULL || upperDoubleArray == NULL || lowerDoubleArray->GetNumberOfComponents() != upperDoubleArray->GetNumberOfComponents() )
     {
-      vtkWarningMacro( "vtkMRMLWorkflowSequenceNode::Differentiate: Cannot perform computation - sequence data nodes are incompatible.")
+      vtkWarningMacro("vtkMRMLWorkflowSequenceNode::Differentiate: Cannot perform computation - sequence data nodes are incompatible.");
     }
 
     double deltaTime = this->GetNthIndexValueAsDouble( i ) - this->GetNthIndexValueAsDouble( i - 1 );
