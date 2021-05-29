@@ -20,6 +20,9 @@ set(${KIT}_SRCS
   vtkMarkovModelOnline.cxx
   vtkMarkovModelOnline.h
   
+  vtkMRMLWorkflowDoubleArrayNode.cxx
+  vtkMRMLWorkflowDoubleArrayNode.h
+  
   vtkMRMLWorkflowSequenceNode.cxx
   vtkMRMLWorkflowSequenceNode.h
   vtkMRMLWorkflowSequenceOnlineNode.cxx

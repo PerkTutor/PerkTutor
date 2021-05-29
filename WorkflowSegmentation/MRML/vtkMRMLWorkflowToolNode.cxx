@@ -499,12 +499,12 @@ bool vtkMRMLWorkflowToolNode
 void vtkMRMLWorkflowToolNode
 ::AddAndSegmentTransform( vtkMRMLLinearTransformNode* newTransformNode, std::string newTimeString )
 {
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > rawDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > rawDoubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   vtkMRMLWorkflowSequenceNode::LinearTransformToDoubleArray( newTransformNode, rawDoubleArrayNode, vtkMRMLWorkflowSequenceNode::QUATERNION_ARRAY );
   this->RawWorkflowSequence->SetDataNodeAtValue( rawDoubleArrayNode, newTimeString );
 
   // Apply Gaussian filtering to each previous records
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > gaussDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > gaussDoubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   this->RawWorkflowSequence->GaussianFilterOnline( this->GetWorkflowInputNode()->GetFilterWidth(), gaussDoubleArrayNode->GetArray() );
   this->FilterWorkflowSequence->SetDataNodeAtValue( gaussDoubleArrayNode, newTimeString );
   
@@ -522,22 +522,22 @@ void vtkMRMLWorkflowToolNode
 
     vtkMRMLWorkflowSequenceNode::ConcatenateDoubleArrays( tempDerivativeDoubleArray, currDerivativeDoubleArray, derivativeDoubleArray.GetPointer() );
   }
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > derivativeDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > derivativeDoubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   derivativeDoubleArrayNode->GetArray()->DeepCopy( derivativeDoubleArray.GetPointer() );
   this->DerivativeWorkflowSequence->SetDataNodeAtValue( derivativeDoubleArrayNode, newTimeString );
 
   // Apply orthogonal transformation
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > orthogonalDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > orthogonalDoubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   this->DerivativeWorkflowSequence->OrthogonalTransformationOnline( this->GetWorkflowInputNode()->GetOrthogonalWindow(), this->GetWorkflowInputNode()->GetOrthogonalOrder(), orthogonalDoubleArrayNode->GetArray() );
   this->OrthogonalWorkflowSequence->SetDataNodeAtValue( orthogonalDoubleArrayNode, newTimeString );
 
   // Apply PCA transformation
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > pcaDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > pcaDoubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   this->OrthogonalWorkflowSequence->TransformByPrincipalComponentsOnline( this->GetWorkflowTrainingNode()->GetPrinComps(), this->GetWorkflowTrainingNode()->GetMean(), pcaDoubleArrayNode->GetArray() );
   this->PcaWorkflowSequence->SetDataNodeAtValue( pcaDoubleArrayNode, newTimeString );
 
   // Apply centroid transformation
-  vtkSmartPointer< vtkMRMLDoubleArrayNode > fwdkmeansDoubleArrayNode = vtkSmartPointer< vtkMRMLDoubleArrayNode >::New();
+  vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode > fwdkmeansDoubleArrayNode = vtkSmartPointer< vtkMRMLWorkflowDoubleArrayNode >::New();
   this->PcaWorkflowSequence->fwdkmeansTransformOnline( this->GetWorkflowTrainingNode()->GetCentroids(), fwdkmeansDoubleArrayNode->GetArray() );
   this->CentroidWorkflowSequence->SetDataNodeAtValue( fwdkmeansDoubleArrayNode, newTimeString );
 
@@ -600,7 +600,7 @@ std::map< std::string, double > vtkMRMLWorkflowToolNode
     
     for ( int j = 0; j < currWorkflowSequence->GetNumberOfDataNodes(); j++ )
 	  {
-      vtkMRMLDoubleArrayNode* currDoubleArrayNode = vtkMRMLDoubleArrayNode::SafeDownCast( currWorkflowSequence->GetNthDataNode( j ) );
+      vtkMRMLWorkflowDoubleArrayNode* currDoubleArrayNode = vtkMRMLWorkflowDoubleArrayNode::SafeDownCast( currWorkflowSequence->GetNthDataNode( j ) );
       if ( currDoubleArrayNode == NULL )
       {
         continue;

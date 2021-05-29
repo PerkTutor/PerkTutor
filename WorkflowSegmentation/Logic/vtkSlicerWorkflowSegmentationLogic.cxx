@@ -114,6 +114,10 @@ void vtkSlicerWorkflowSegmentationLogic
   vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::New();
   this->GetMRMLScene()->RegisterNodeClass( toolNode );
   toolNode->Delete();
+
+  vtkMRMLWorkflowDoubleArrayNode* arrayNode = vtkMRMLWorkflowDoubleArrayNode::New();
+  this->GetMRMLScene()->RegisterNodeClass(arrayNode);
+  arrayNode->Delete();
 }
 
 
