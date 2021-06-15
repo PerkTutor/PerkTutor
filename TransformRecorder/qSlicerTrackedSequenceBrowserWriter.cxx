@@ -118,7 +118,7 @@ bool qSlicerTrackedSequenceBrowserWriter::write(const qSlicerIO::IOProperties& p
   QFileInfo fileInfo( fileName );
   QString extension = fileInfo.suffix();
   QString baseName = fileInfo.baseName();
-  
+
   Q_ASSERT( properties.contains( "nodeID" ) );
   QString nodeID = properties[ "nodeID" ].toString();
 
@@ -153,7 +153,7 @@ bool qSlicerTrackedSequenceBrowserWriter
 {
   Q_D(qSlicerTrackedSequenceBrowserWriter);
   // Check whether the file can be opened at all
-  std::ofstream output( fileName.c_str() );  
+  std::ofstream output( fileName.c_str() );
   if ( ! output.is_open() )
   {
     return false;
@@ -191,7 +191,7 @@ bool qSlicerTrackedSequenceBrowserWriter
       std::string transformString = vtkAddonMathUtilities::ToString( transformMatrix.GetPointer() );
 
       std::string timeXMLString = this->getXMLStringFromTimeString( currSequenceNode->GetNthIndexValue( i ) );
-    
+
       // Finally write it to XML
       xmlStream << indent.GetNextIndent();
       xmlStream << "<log";
@@ -201,7 +201,7 @@ bool qSlicerTrackedSequenceBrowserWriter
       xmlStream << " transform=\"" << transformString << "\"";
       xmlStream << " />" << std::endl;
     }
-  
+
   }
 
   // Need a special case for messages because they are written differently than transforms
@@ -223,7 +223,7 @@ bool qSlicerTrackedSequenceBrowserWriter
       }
 
       std::string timeXMLString = this->getXMLStringFromTimeString( messagesSequenceNode->GetNthIndexValue( i ) );
-  
+
       // Finally write it to XML
       xmlStream << indent.GetNextIndent();
       xmlStream << "<log";
@@ -271,11 +271,11 @@ bool qSlicerTrackedSequenceBrowserWriter
   // The idea is to create a new empty scene, put the sequence browser (and associated sequence and proxy nodes in it)
   // This can be saved and reloaded
 
-  // Create a new scene to house the tracked sequence browser node in 
+  // Create a new scene to house the tracked sequence browser node in
   vtkNew< vtkMRMLScene > tempScene;
   this->mrmlScene()->CopyRegisteredNodesToScene( tempScene.GetPointer() ); // This registers node classes into the sequence browser scene
   tempScene->Clear( true );
-  
+
   vtkMRMLSequenceBrowserNode* tempTrackedSequenceBrowserNode = vtkMRMLSequenceBrowserNode::SafeDownCast( tempScene->CopyNode( trackedSequenceBrowserNode ) );
   if ( tempTrackedSequenceBrowserNode == NULL )
   {
@@ -285,7 +285,6 @@ bool qSlicerTrackedSequenceBrowserWriter
   tempTrackedSequenceBrowserNode->SetScene( this->mrmlScene() ); // Allows removing node references properly
   tempTrackedSequenceBrowserNode->RemoveAllSequenceNodes(); // Deletes references to sequence from main scene. We will re-add references to nodes in the saving scene.
   tempTrackedSequenceBrowserNode->SetScene( tempScene.GetPointer() ); // Will allow proxy nodes to be added to the scene
-  
 
   // Now copy and add the sequence and proxy nodes to the new scene
   vtkNew< vtkCollection > sequenceNodes;
@@ -315,7 +314,7 @@ bool qSlicerTrackedSequenceBrowserWriter
     {
       continue;
     }
-    vtkSmartPointer< vtkMRMLNode > currTempProxyNode = currProxyNode->CreateNodeInstance();
+    vtkSmartPointer<vtkMRMLNode> currTempProxyNode = vtkSmartPointer<vtkMRMLNode>::Take(currProxyNode->CreateNodeInstance());
     currTempProxyNode->Copy( currProxyNode );
     currTempProxyNode->SetScene( tempScene.GetPointer() );
     tempScene->AddNode( currTempProxyNode );
@@ -323,6 +322,17 @@ bool qSlicerTrackedSequenceBrowserWriter
 
     this->copyNodeAttributes( currProxyNode, currTempProxyNode );
     currTempProxyNode->UpdateReferences();
+
+    if (currSequenceNode->GetStorageNode())
+    {
+      // Use the same class of sequence storage node that is used in the scene
+      vtkSmartPointer<vtkMRMLStorageNode> currSequenceStorageNode = currSequenceNode->GetStorageNode();
+      vtkSmartPointer<vtkMRMLStorageNode> currTempSequenceStorageNode = vtkSmartPointer<vtkMRMLStorageNode>::Take(vtkMRMLStorageNode::SafeDownCast(currSequenceStorageNode->CreateNodeInstance()));
+      currTempSequenceStorageNode->Copy(currSequenceStorageNode);
+      tempScene->AddNode(currTempSequenceStorageNode);
+      currTempSequenceStorageNode->UpdateReferences();
+      currTempSequenceNode->SetAndObserveStorageNodeID(currTempSequenceStorageNode->GetID());
+    }
   }
 
   // Remove references to all other nodes
