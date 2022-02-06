@@ -530,7 +530,7 @@ class PerkTutorCouchDBLogic(ScriptedLoadableModuleLogic):
     fileWriterFileType = ioManager.fileWriterFileType( node )
     fileWriterDefaultExtension = ioManager.fileWriterExtensions( node )[ 0 ]
 
-    extensionRegex = "\.\\w+\\b" # Search for everything after the first . until the next non-alphanumeric character
+    extensionRegex = "\\.\\w+\\b" # Search for everything after the first . until the next non-alphanumeric character
     extensionSpan = re.search( extensionRegex, fileWriterDefaultExtension ).span()
     extension = fileWriterDefaultExtension[ extensionSpan[ 0 ]:extensionSpan[ 1 ] ]
 
