@@ -534,7 +534,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       if ( peNode.GetComputeTaskSpecificMetrics() ):
         if ( trLogic is not None ):
           messageString = trLogic.GetPriorMessageString( peNode.GetTrackedSequenceBrowserNode(), str( time ) )
-          if ( messageString is not "" ):
+          if ( messageString != "" ):
             PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ messageString ], proxyNodes, time )
         else:
           logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Cannot determine task at index value " + str( time ) + "." )
