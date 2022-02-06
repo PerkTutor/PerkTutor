@@ -700,7 +700,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     trueTableID = "vtkMRMLTableNode1"
     
     # Load the scene
-    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
+    sceneFile = os.path.join( os.path.dirname(  __file__  ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
@@ -709,7 +709,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
 
       
     # Manually load the sequence browser node from the transform buffer xml file
-    transformBufferFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "TransformBuffer_Lumbar_Anonymous.xml" )
+    transformBufferFile = os.path.join( os.path.dirname(  __file__  ), "Data", "Lumbar", "TransformBuffer_Lumbar_Anonymous.xml" )
     success, trackedSequenceBrowserNode = slicer.util.loadNodeFromFile( transformBufferFile, "Tracked Sequence Browser", {}, True ) # This will load into activeScene, since activeScene == slicer.mrmlScene
     if ( not success or trackedSequenceBrowserNode is None ):
       raise Exception( "Could not load tracked sequence browser from: " + transformBufferFile )
@@ -786,7 +786,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     
     
     # Load the scene
-    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "InPlane", "Scene_InPlane.mrml" )
+    sceneFile = os.path.join( os.path.dirname(  __file__  ), "Data", "InPlane", "Scene_InPlane.mrml" )
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
