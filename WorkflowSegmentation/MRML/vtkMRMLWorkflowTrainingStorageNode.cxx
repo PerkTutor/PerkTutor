@@ -103,7 +103,7 @@ int vtkMRMLWorkflowTrainingStorageNode
     return 0;
   }
 
-  vtkSmartPointer< vtkXMLDataParser > parser = vtkXMLDataParser::New();
+  vtkNew<vtkXMLDataParser> parser;
   parser->SetFileName( fullName.c_str() );
   parser->Parse();
 

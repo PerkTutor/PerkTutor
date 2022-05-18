@@ -195,8 +195,8 @@ bool qSlicerTrackedSequenceBrowserReader
       // If the device name has never been previously encountered, create a sequence and proxy for it
       if ( deviceSequenceMap.find( deviceName ) == deviceSequenceMap.end() )
       {
-        vtkSmartPointer< vtkMRMLLinearTransformNode > proxyTransformNode;
-        proxyTransformNode = vtkMRMLLinearTransformNode::SafeDownCast( this->mrmlScene()->GetFirstNode( deviceName.c_str(), "vtkMRMLLinearTransformNode" ) );
+        vtkSmartPointer< vtkMRMLLinearTransformNode > proxyTransformNode =
+          vtkMRMLLinearTransformNode::SafeDownCast( this->mrmlScene()->GetFirstNode( deviceName.c_str(), "vtkMRMLLinearTransformNode" ) );
         if ( proxyTransformNode == NULL )
         {
           proxyTransformNode.TakeReference( vtkMRMLLinearTransformNode::SafeDownCast( this->mrmlScene()->CreateNodeByClass( "vtkMRMLLinearTransformNode" ) ) );
@@ -214,7 +214,7 @@ bool qSlicerTrackedSequenceBrowserReader
       }
 
       // Set the transform in the sequence node
-      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::New();
+      vtkNew<vtkMRMLLinearTransformNode> transformNode;
       vtkNew< vtkMatrix4x4 > transformMatrix;
       vtkAddonMathUtilities::FromString( transformMatrix.GetPointer(), transformString );
       transformNode->SetMatrixTransformToParent( transformMatrix.GetPointer() );

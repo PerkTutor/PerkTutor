@@ -271,7 +271,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Check it doesn't already exist in the scene
-  vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
+  vtkSmartPointer<vtkCollection> metricInstanceNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" ));
 
   for ( int i = 0; i < metricInstanceNodes->GetNumberOfItems(); i++ )
   {
@@ -300,7 +300,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Grab all metric scripts
-  vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+  vtkSmartPointer<vtkCollection> metricScriptNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" ));
 
   for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
   {
@@ -329,7 +329,7 @@ void vtkSlicerPerkEvaluatorLogic
   std::vector< std::string > transformRoles = this->GetAllRoles( msNode->GetID(), vtkMRMLMetricInstanceNode::TransformRole );
 
   // Grab all transforms
-  vtkSmartPointer< vtkCollection > transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkSmartPointer< vtkCollection > transformNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" ));
 
   for ( int i = 0; i < transformNodes->GetNumberOfItems(); i++ )
   {
@@ -376,7 +376,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Grab all metric instances
-  vtkCollection* metricInstanceNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" );
+  vtkSmartPointer<vtkCollection> metricInstanceNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricInstanceNode" ));
 
   for ( int i = 0; i < metricInstanceNodes->GetNumberOfItems(); i++ )
   {
@@ -401,7 +401,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Grab all Perk Evaluator nodes
-  vtkSmartPointer< vtkCollection > perkEvaluatorNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+  vtkSmartPointer<vtkCollection> perkEvaluatorNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" ));
 
   for ( int i = 0; i < perkEvaluatorNodes->GetNumberOfItems(); i++ )
   {
@@ -422,7 +422,7 @@ void vtkSlicerPerkEvaluatorLogic
     return;
   }
 
-  vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+  vtkSmartPointer<vtkCollection> metricScriptNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" ));
 
   for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
   {
@@ -453,7 +453,7 @@ void vtkSlicerPerkEvaluatorLogic
 void vtkSlicerPerkEvaluatorLogic
 ::MergeAllMetricScripts()
 {
-  vtkCollection* metricScriptNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" );
+  vtkSmartPointer<vtkCollection> metricScriptNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLMetricScriptNode" ));
 
   for ( int i = 0; i < metricScriptNodes->GetNumberOfItems(); i++ )
   {
@@ -490,7 +490,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
 
   // Get all transform nodes which are a proxy node or a child of a proxy node
-  vtkSmartPointer< vtkCollection > sceneTransformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkSmartPointer< vtkCollection > sceneTransformNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" ));
   vtkNew< vtkCollectionIterator > sceneTransformNodesIt;
   sceneTransformNodesIt->SetCollection( sceneTransformNodes );
 
@@ -790,7 +790,7 @@ void vtkSlicerPerkEvaluatorLogic
 {
   bool isOldStyleScene = false;
   // Add all metrics from the directories from all Perk Evaluator nodes
-  vtkSmartPointer< vtkCollection > peNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" );
+  vtkSmartPointer< vtkCollection > peNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLPerkEvaluatorNode" ));
   vtkSmartPointer< vtkCollectionIterator > peNodeItr = vtkSmartPointer< vtkCollectionIterator >::New();
   peNodeItr->SetCollection( peNodes );
   for ( peNodeItr->InitTraversal(); ! peNodeItr->IsDoneWithTraversal(); peNodeItr->GoToNextItem() )
@@ -831,7 +831,7 @@ void vtkSlicerPerkEvaluatorLogic
   }
   // Pervade all the metrics - they are not automatically pervaded during scene load (since the nodes should already exist)
   // But the nodes do not already exist in old-style scenes
-  vtkSmartPointer< vtkCollection > transformNodes = this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" );
+  vtkSmartPointer< vtkCollection > transformNodes = vtkSmartPointer<vtkCollection>::Take(this->GetMRMLScene()->GetNodesByClass( "vtkMRMLLinearTransformNode" ));
   vtkSmartPointer< vtkCollectionIterator > transformNodeItr = vtkSmartPointer< vtkCollectionIterator >::New();
   transformNodeItr->SetCollection( transformNodes );
   for ( transformNodeItr->InitTraversal(); ! transformNodeItr->IsDoneWithTraversal(); transformNodeItr->GoToNextItem() )

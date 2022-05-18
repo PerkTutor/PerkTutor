@@ -69,55 +69,43 @@ void vtkSlicerWorkflowSegmentationLogic
 void vtkSlicerWorkflowSegmentationLogic
 ::RegisterNodes()
 {
-  //assert(this->GetMRMLScene() != 0);  
-  if( ! this->GetMRMLScene() )
+  if(!this->GetMRMLScene())
   {
     return;
   }
 
-  vtkMRMLWorkflowSegmentationNode* wsNode = vtkMRMLWorkflowSegmentationNode::New();
+  vtkNew<vtkMRMLWorkflowSegmentationNode> wsNode;
   this->GetMRMLScene()->RegisterNodeClass( wsNode );
-  wsNode->Delete();
 
-  vtkMRMLWorkflowProcedureNode* wpNode = vtkMRMLWorkflowProcedureNode::New();
+  vtkNew<vtkMRMLWorkflowProcedureNode> wpNode;
   this->GetMRMLScene()->RegisterNodeClass( wpNode );
-  wpNode->Delete();
   
-  vtkMRMLWorkflowProcedureStorageNode* wpsNode = vtkMRMLWorkflowProcedureStorageNode::New();
+  vtkNew<vtkMRMLWorkflowProcedureStorageNode> wpsNode;
   this->GetMRMLScene()->RegisterNodeClass( wpsNode );
-  wpsNode->Delete();
 
-  vtkMRMLWorkflowInputNode* wiNode = vtkMRMLWorkflowInputNode::New();
+  vtkNew<vtkMRMLWorkflowInputNode> wiNode;
   this->GetMRMLScene()->RegisterNodeClass( wiNode );
-  wiNode->Delete();
   
-  vtkMRMLWorkflowInputStorageNode* wisNode = vtkMRMLWorkflowInputStorageNode::New();
+  vtkNew<vtkMRMLWorkflowInputStorageNode> wisNode;
   this->GetMRMLScene()->RegisterNodeClass( wisNode );
-  wisNode->Delete();
 
-  vtkMRMLWorkflowTrainingNode* wtNode = vtkMRMLWorkflowTrainingNode::New();
+  vtkNew<vtkMRMLWorkflowTrainingNode> wtNode;
   this->GetMRMLScene()->RegisterNodeClass( wtNode );
-  wtNode->Delete();
   
-  vtkMRMLWorkflowTrainingStorageNode* wtsNode = vtkMRMLWorkflowTrainingStorageNode::New();
+  vtkNew<vtkMRMLWorkflowTrainingStorageNode> wtsNode;
   this->GetMRMLScene()->RegisterNodeClass( wtsNode );
-  wtsNode->Delete();
 
-  vtkMRMLWorkflowSequenceNode* workflowSequenceNode = vtkMRMLWorkflowSequenceNode::New();
+  vtkNew<vtkMRMLWorkflowSequenceNode> workflowSequenceNode;
   this->GetMRMLScene()->RegisterNodeClass( workflowSequenceNode );
-  workflowSequenceNode->Delete();
 
-  vtkMRMLWorkflowSequenceOnlineNode* workflowSequenceOnlineNode = vtkMRMLWorkflowSequenceOnlineNode::New();
+  vtkNew<vtkMRMLWorkflowSequenceOnlineNode> workflowSequenceOnlineNode;
   this->GetMRMLScene()->RegisterNodeClass( workflowSequenceOnlineNode );
-  workflowSequenceOnlineNode->Delete();
 
-  vtkMRMLWorkflowToolNode* toolNode = vtkMRMLWorkflowToolNode::New();
+  vtkNew<vtkMRMLWorkflowToolNode> toolNode;
   this->GetMRMLScene()->RegisterNodeClass( toolNode );
-  toolNode->Delete();
 
-  vtkMRMLWorkflowDoubleArrayNode* arrayNode = vtkMRMLWorkflowDoubleArrayNode::New();
+  vtkNew<vtkMRMLWorkflowDoubleArrayNode> arrayNode;
   this->GetMRMLScene()->RegisterNodeClass(arrayNode);
-  arrayNode->Delete();
 }
 
 
