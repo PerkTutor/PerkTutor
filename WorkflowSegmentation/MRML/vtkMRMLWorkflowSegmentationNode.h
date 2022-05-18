@@ -43,12 +43,12 @@ public:
   // Standard MRML node methods  
   static vtkMRMLWorkflowSegmentationNode *New();  
 
-  virtual vtkMRMLNode* CreateNodeInstance();
-  virtual const char* GetNodeTagName() { return "WorkflowSegmentation"; };
+  vtkMRMLNode* CreateNodeInstance() override;
+  const char* GetNodeTagName() override { return "WorkflowSegmentation"; };
   void PrintSelf( ostream& os, vtkIndent indent );
-  virtual void ReadXMLAttributes( const char** atts );
-  virtual void WriteXML( ostream& of, int indent );
-  virtual void Copy( vtkMRMLNode *node );
+  void ReadXMLAttributes( const char** atts ) override;
+  void WriteXML( ostream& of, int indent ) override;
+  void Copy( vtkMRMLNode *node ) override;
   
 protected:
 
@@ -79,7 +79,7 @@ public:
   void SetToolIDs( std::vector< std::string > toolIDs );
 
   // Propagate the modified event from any of the tools
-  virtual void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData );
+  void ProcessMRMLEvents( vtkObject *caller, unsigned long event, void *callData ) override;
   enum
   {
     TransformRealTimeAddedEvent = vtkCommand::UserEvent + 1,

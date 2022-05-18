@@ -48,7 +48,7 @@ public:
 
 public slots:
 
-  virtual void setMRMLScene( vtkMRMLScene* newScene );
+  void setMRMLScene( vtkMRMLScene* newScene ) override;
   void setMetricInstanceNode( vtkMRMLNode* node );
 
 protected slots:

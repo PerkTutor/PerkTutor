@@ -41,18 +41,18 @@ public:
 
   // Standard MRML node methods  
   static vtkMRMLWorkflowProcedureStorageNode* New();
-  virtual vtkMRMLNode* CreateNodeInstance();
-  virtual const char* GetNodeTagName()  { return "WorkflowProcedureStorage"; };
+  vtkMRMLNode* CreateNodeInstance() override;
+  const char* GetNodeTagName() override { return "WorkflowProcedureStorage"; };
   void PrintSelf(ostream& os, vtkIndent indent);
   // No need for special read/write/copy
 
   // Initialize all the supported write file types
-  virtual void InitializeSupportedWriteFileTypes();
+  void InitializeSupportedWriteFileTypes() override;
   // Return a default file extension for writting
-  virtual const char* GetDefaultWriteFileExtension();
+  const char* GetDefaultWriteFileExtension() override;
 
   /// Support only transform buffer nodes
-  virtual bool CanReadInReferenceNode(vtkMRMLNode* refNode);
+  bool CanReadInReferenceNode(vtkMRMLNode* refNode) override;
 
 protected:
   // Constructor/deconstructor
@@ -63,10 +63,10 @@ protected:
 
 
   /// Read data and set it in the referenced node
-  virtual int ReadDataInternal(vtkMRMLNode *refNode);
+  int ReadDataInternal(vtkMRMLNode *refNode) override;
 
   /// Write data from a referenced node
-  virtual int WriteDataInternal(vtkMRMLNode *refNode);
+  int WriteDataInternal(vtkMRMLNode *refNode) override;
   
 };
 

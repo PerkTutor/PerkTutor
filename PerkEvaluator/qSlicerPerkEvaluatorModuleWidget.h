@@ -67,9 +67,9 @@ public slots:
 protected:
   QScopedPointer<qSlicerPerkEvaluatorModuleWidgetPrivate> d_ptr;
   
-  virtual void setup();
+  void setup() override;
   virtual void setupEmbeddedWidgets();
-  virtual void enter();
+  void enter() override;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPerkEvaluatorModuleWidget);

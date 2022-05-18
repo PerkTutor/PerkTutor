@@ -51,8 +51,7 @@ protected slots:
 protected:
   QScopedPointer<qSlicerTargetFiducialsModuleWidgetPrivate> d_ptr;
   
-  virtual void setup();
-  //virtual void enter();
+  void setup() override;
 
 private:
   Q_DECLARE_PRIVATE(qSlicerTargetFiducialsModuleWidget);

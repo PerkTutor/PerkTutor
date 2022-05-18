@@ -35,7 +35,7 @@ public:
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModuleWidgetPrivate> d_ptr;
   
-  virtual void setup();
+  void setup() override;
   virtual void setupEmbeddedWidgets();
 
 

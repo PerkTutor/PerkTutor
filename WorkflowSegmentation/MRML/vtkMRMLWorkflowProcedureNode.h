@@ -30,17 +30,17 @@ public:
 
   // Standard MRML node methods  
   static vtkMRMLWorkflowProcedureNode* New();  
-  virtual vtkMRMLNode* CreateNodeInstance();
-  virtual const char* GetNodeTagName() { return "WorkflowProcedure"; };
+  vtkMRMLNode* CreateNodeInstance() override;
+  const char* GetNodeTagName() override { return "WorkflowProcedure"; };
   void PrintSelf( ostream& os, vtkIndent indent );
-  virtual void ReadXMLAttributes( const char** atts );
-  virtual void WriteXML( ostream& of, int indent );
-  virtual void Copy( vtkMRMLNode *node );
+  void ReadXMLAttributes( const char** atts ) override;
+  void WriteXML( ostream& of, int indent ) override;
+  void Copy( vtkMRMLNode *node ) override;
 
   // To use the storage node
-  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() { return vtkMRMLWorkflowProcedureStorageNode::New(); };
+  vtkMRMLStorageNode* CreateDefaultStorageNode() override { return vtkMRMLWorkflowProcedureStorageNode::New(); };
   bool GetModifiedSinceRead() { return ( this->GetMTime() > this->GetStoredTime() ); };
-  virtual void UpdateScene( vtkMRMLScene *scene ) { Superclass::UpdateScene(scene); };
+  void UpdateScene( vtkMRMLScene *scene ) override { Superclass::UpdateScene(scene); };
   
 protected:
 

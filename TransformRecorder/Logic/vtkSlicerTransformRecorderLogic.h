@@ -60,10 +60,10 @@ protected:
   virtual ~vtkSlicerTransformRecorderLogic();
 
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
-  virtual void RegisterNodes();
-  virtual void UpdateFromMRMLScene();
-  virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
-  virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
+  void RegisterNodes() override;
+  void UpdateFromMRMLScene() override;
+  void OnMRMLSceneNodeAdded(vtkMRMLNode* node) override;
+  void OnMRMLSceneNodeRemoved(vtkMRMLNode* node) override;
   
 public:
   /// Initialize listening to MRML events

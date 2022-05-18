@@ -48,30 +48,29 @@ public:
   qSlicerGetTitleMacro(QTMODULE_TITLE);
   
   /// Help to use the module
-  virtual QString helpText()const;
+  QString helpText() const override;
 
   /// Return acknowledgements
-  virtual QString acknowledgementText()const;
-  virtual QStringList contributors()const;
+  QString acknowledgementText() const override;
+  QStringList contributors() const override;
   
   /// Return a custom icon for the module
-  virtual QIcon icon()const;
+  QIcon icon()const override;
 
   /// Return the category for the module
-  virtual QString category()const;
-  virtual QStringList categories()const;
-  virtual QStringList dependencies()const;
+  QStringList categories() const override;
+  QStringList dependencies() const override;
 
 protected:
 
   /// Initialize the module. Register the volumes reader/writer
-  virtual void setup();
+  void setup() override;
 
   /// Create and return the widget representation associated to this module
-  virtual qSlicerAbstractModuleRepresentation * createWidgetRepresentation();
+  qSlicerAbstractModuleRepresentation * createWidgetRepresentation() override;
 
   /// Create and return the logic associated to this module
-  virtual vtkMRMLAbstractLogic* createLogic();
+  vtkMRMLAbstractLogic* createLogic() override;
 
 protected:
   QScopedPointer<qSlicerWorkflowSegmentationModulePrivate> d_ptr;

@@ -68,13 +68,6 @@ qSlicerWorkflowSegmentationModule::qSlicerWorkflowSegmentationModule(QObject* _p
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerWorkflowSegmentationModule::category()const
-{
-  // return "Developer Tools";
-  return "";
-}
-
-//-----------------------------------------------------------------------------
 
 QStringList qSlicerWorkflowSegmentationModule::categories() const
 {

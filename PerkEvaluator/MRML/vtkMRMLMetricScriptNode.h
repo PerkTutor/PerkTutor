@@ -47,17 +47,17 @@ public:
 
   // Standard MRML node methods  
   static vtkMRMLMetricScriptNode* New();  
-  virtual vtkMRMLNode* CreateNodeInstance();
-  virtual const char* GetNodeTagName() { return "MetricScript"; };
+  vtkMRMLNode* CreateNodeInstance() override;
+  const char* GetNodeTagName() override { return "MetricScript"; };
   void PrintSelf( ostream& os, vtkIndent indent );
-  virtual void ReadXMLAttributes( const char** atts );
-  virtual void WriteXML( ostream& of, int indent );
-  virtual void Copy( vtkMRMLNode *node );
+  void ReadXMLAttributes( const char** atts ) override;
+  void WriteXML( ostream& of, int indent ) override;
+  void Copy( vtkMRMLNode *node ) override;
 
   // To use the storage node
-  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() { return vtkMRMLMetricScriptStorageNode::New(); };
+  vtkMRMLStorageNode* CreateDefaultStorageNode() override { return vtkMRMLMetricScriptStorageNode::New(); };
   bool GetModifiedSinceRead() { return ( this->GetMTime() > this->GetStoredTime() ); };
-  virtual void UpdateScene( vtkMRMLScene *scene ) { vtkMRMLStorableNode::UpdateScene(scene); };
+  void UpdateScene( vtkMRMLScene *scene ) override { vtkMRMLStorableNode::UpdateScene(scene); };
 
   
 protected:

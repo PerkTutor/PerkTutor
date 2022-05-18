@@ -73,7 +73,7 @@ protected slots:
 
   void updateWidget();
 
-  virtual bool eventFilter( QObject * watched, QEvent * event );
+  bool eventFilter( QObject * watched, QEvent * event ) override;
 
 signals:
 

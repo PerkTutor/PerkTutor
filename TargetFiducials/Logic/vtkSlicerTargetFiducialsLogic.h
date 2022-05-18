@@ -72,12 +72,12 @@ protected:
   vtkSlicerTargetFiducialsLogic();
   virtual ~vtkSlicerTargetFiducialsLogic();
 
-  virtual void SetMRMLSceneInternal(vtkMRMLScene * newScene);
+  void SetMRMLSceneInternal(vtkMRMLScene * newScene) override;
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
-  virtual void RegisterNodes();
-  virtual void UpdateFromMRMLScene();
-  virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
-  virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
+  void RegisterNodes() override;
+  void UpdateFromMRMLScene() override;
+  void OnMRMLSceneNodeAdded(vtkMRMLNode* node) override;
+  void OnMRMLSceneNodeRemoved(vtkMRMLNode* node) override;
 private:
 
   vtkSlicerTargetFiducialsLogic(const vtkSlicerTargetFiducialsLogic&); // Not implemented

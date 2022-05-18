@@ -41,11 +41,11 @@ public:
   void setPerkEvaluatorLogic( vtkSlicerPerkEvaluatorLogic* newPerkEvaluatorLogic);
   vtkSlicerPerkEvaluatorLogic* PerkEvaluatorLogic() const;
 
-  virtual QString description() const;
-  virtual IOFileType fileType() const;
-  virtual QStringList extensions() const;
+  QString description() const override;
+  IOFileType fileType() const override;
+  QStringList extensions() const override;
 
-  virtual bool load( const IOProperties& properties );
+  bool load( const IOProperties& properties ) override;
   
 protected:
   QScopedPointer< qSlicerMetricScriptReaderPrivate > d_ptr;

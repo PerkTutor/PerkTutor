@@ -66,14 +66,6 @@ qSlicerTransformRecorderModule::qSlicerTransformRecorderModule(QObject* _parent)
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerTransformRecorderModule::category()const
-{
-  // return "Developer Tools";
-  return "";
-}
-
-//-----------------------------------------------------------------------------
-
 QStringList qSlicerTransformRecorderModule::categories() const
 {
   return QStringList() << "Perk Tutor";

@@ -32,7 +32,7 @@ public:
 protected:
   QScopedPointer<qSlicerTransformRecorderModuleWidgetPrivate> d_ptr;
   
-  virtual void setup();
+  void setup() override;
   virtual void setupEmbeddedWidgets();
 
 protected slots:

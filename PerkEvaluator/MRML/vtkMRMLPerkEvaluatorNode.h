@@ -54,12 +54,12 @@ public:
 
   // Standard MRML node methods  
   static vtkMRMLPerkEvaluatorNode* New();  
-  virtual vtkMRMLNode* CreateNodeInstance();
-  virtual const char* GetNodeTagName() { return "PerkEvaluator"; };
+  vtkMRMLNode* CreateNodeInstance() override;
+  const char* GetNodeTagName() override { return "PerkEvaluator"; };
   void PrintSelf( ostream& os, vtkIndent indent );
-  virtual void ReadXMLAttributes( const char** atts );
-  virtual void WriteXML( ostream& of, int indent );
-  virtual void Copy( vtkMRMLNode *node );
+  void ReadXMLAttributes( const char** atts ) override;
+  void WriteXML( ostream& of, int indent ) override;
+  void Copy( vtkMRMLNode *node ) override;
 
   
 protected:

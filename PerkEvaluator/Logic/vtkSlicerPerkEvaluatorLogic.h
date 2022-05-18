@@ -44,24 +44,22 @@ vtkSlicerPerkEvaluatorLogic
  : public vtkSlicerModuleLogic
 {
 public:
-
   static vtkSlicerPerkEvaluatorLogic *New();
   vtkTypeMacro(vtkSlicerPerkEvaluatorLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
   
-  virtual void OnMRMLSceneEndClose();
-
 protected:
   
   vtkSlicerPerkEvaluatorLogic();
   virtual ~vtkSlicerPerkEvaluatorLogic();
   
   // Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
-  virtual void SetMRMLSceneInternal( vtkMRMLScene* newScene );
-  virtual void RegisterNodes();
-  virtual void UpdateFromMRMLScene();
-  virtual void OnMRMLSceneNodeAdded( vtkMRMLNode* node );
-  virtual void OnMRMLSceneNodeRemoved( vtkMRMLNode* node );
+  void SetMRMLSceneInternal( vtkMRMLScene* newScene) override;
+  void RegisterNodes() override;
+  void UpdateFromMRMLScene() override;
+  void OnMRMLSceneNodeAdded( vtkMRMLNode* node ) override;
+  void OnMRMLSceneNodeRemoved( vtkMRMLNode* node ) override;
+  void OnMRMLSceneEndClose() override;
 
   qSlicerPythonManager* PythonManager;
 
