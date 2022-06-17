@@ -289,6 +289,8 @@ bool qSlicerTrackedSequenceBrowserReader
 
   // Create a new scene to house the tracked sequence browser node in 
   vtkNew< vtkMRMLScene > tempScene;
+  tempScene->SetDataIOManager( vtkNew< vtkDataIOManager >() ); // Needed to read sequences saved in mrb format
+  tempScene->GetDataIOManager()->SetCacheManager( vtkNew< vtkCacheManager >() ); // Needed to read sequences saved in mrb format
   this->mrmlScene()->CopyRegisteredNodesToScene( tempScene.GetPointer() ); // This registers node classes into the sequence browser scene
   tempScene->Clear( true );
 
