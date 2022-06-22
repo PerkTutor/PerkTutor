@@ -26,6 +26,8 @@
 // SlicerQt includes
 #include "qSlicerCoreApplication.h"
 #include "vtkSlicerApplicationLogic.h"
+#include "vtkCacheManager.h"
+#include "vtkDataIOManager.h"
 #include "qSlicerTrackedSequenceBrowserReader.h"
 #include "qSlicerTrackedSequenceBrowserReaderOptionsWidget.h"
 
