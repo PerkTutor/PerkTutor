@@ -208,6 +208,64 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       insertRow += 1
 
     metricsTable.EndModify( modifyFlag )
+
+
+  @staticmethod
+  def InitializeCumulativeMetricsTable( cumMetricsTable, allMetrics ):
+    if ( cumMetricsTable == None ):
+      return
+  
+    cumMetricsTable.GetTable().Initialize()
+
+    visibleIDs = []
+    for id, metric in allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ].items():
+      try:
+        if ( not metric.IsHidden() ):
+          visibleIDs.append( id )
+      except: #TODO: Keep for backwards compataibility
+        visibleIDs.append( id )
+
+    cumMetricsTableColumnNames = ["Index", "Time"]
+    for id in visibleIDs:
+      for taskName, taskMetrics in allMetrics.items():
+        currMetric = taskMetrics[ id ]
+        currColumnName = currMetric.GetMetricName() + " [" + currMetric.CombinedRoleString + "] (" + currMetric.GetMetricUnit() + ") " + taskName
+        cumMetricsTableColumnNames.append(currColumnName)
+
+    for columnName in cumMetricsTableColumnNames:
+      column = vtk.vtkStringArray()
+      column.SetName( columnName )
+      cumMetricsTable.GetTable().AddColumn( column )
+      
+      
+  @staticmethod   
+  def OutputAllMetricsToCumulativeTable( cumMetricsTable, allMetrics, time ):
+    if ( cumMetricsTable == None ):
+      return
+
+    # Hold off on modified events until we are finished modifying
+    modifyFlag = cumMetricsTable.StartModify()  
+
+    visibleIDs = []
+    for id, metric in allMetrics[ PythonMetricsCalculatorLogic.METRIC_VALUE ].items():
+      try:
+        if ( not metric.IsHidden() ):
+          visibleIDs.append( id )
+      except: #TODO: Keep for backwards compataibility
+        visibleIDs.append( id )
+
+    cumMetricsTable.GetTable().InsertNextBlankRow()
+    insertRow = cumMetricsTable.GetTable().GetNumberOfRows() - 1
+    cumMetricsTable.GetTable().SetValueByName( insertRow, "Index", insertRow )
+    cumMetricsTable.GetTable().SetValueByName( insertRow, "Time", time )
+    for id in visibleIDs:
+      for taskName, taskMetrics in allMetrics.items():
+        currMetric = taskMetrics[ id ]
+        currColumnName = currMetric.GetMetricName() + " [" + currMetric.CombinedRoleString + "] (" + currMetric.GetMetricUnit() + ") " + taskName
+
+        cumMetricsTable.GetTable().SetValueByName( insertRow, currColumnName, currMetric.GetMetric() )
+
+    cumMetricsTable.EndModify( modifyFlag )
     
 
   @staticmethod
@@ -224,6 +282,7 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
     
     # Grab all of the metric script nodes in the scene
     metricScriptNodes = PythonMetricsCalculatorLogic.GetMRMLScene().GetNodesByClass( "vtkMRMLMetricScriptNode" )
+    metricScriptNodes.UnRegister(PythonMetricsCalculatorLogic.GetMRMLScene())
     
     for i in range( metricScriptNodes.GetNumberOfItems() ):
       execVars = collections.OrderedDict() # force the defined metric to be the last variable in the dictionary
@@ -505,6 +564,10 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
         messageString = messageSequenceNode.GetNthDataNode( itemNumber ).GetAttribute( "Message" )
         allMetrics[ messageString ] = PythonMetricsCalculatorLogic.GetFreshMetrics( peNodeID )
 
+    # Cumulative metrics table
+    cumMetricsTable = peNode.GetNodeReference("CumulativeMetricsTable")
+    PythonMetricsCalculatorLogic.InitializeCumulativeMetricsTable( cumMetricsTable, allMetrics )
+    
 
     # Start at the beginning (but remember where we were)
     originalItemNumber = peNode.GetTrackedSequenceBrowserNode().GetSelectedItemNumber()
@@ -534,11 +597,14 @@ class PythonMetricsCalculatorLogic( ScriptedLoadableModuleLogic ):
       if ( peNode.GetComputeTaskSpecificMetrics() ):
         if ( trLogic is not None ):
           messageString = trLogic.GetPriorMessageString( peNode.GetTrackedSequenceBrowserNode(), str( time ) )
-          if ( messageString is not "" ):
+          if ( messageString != "" ):
             PythonMetricsCalculatorLogic.UpdateProxyNodeMetrics( allMetrics[ messageString ], proxyNodes, time )
         else:
           logging.warning( "PythonMetricsCalculatorLogic::CalculateAllMetrics: Cannot determine task at index value " + str( time ) + "." )
       
+      # Update cumulative metrics
+      PythonMetricsCalculatorLogic.OutputAllMetricsToCumulativeTable( cumMetricsTable, allMetrics, time )
+
       # Update the progress
       progressPercent = 100 * ( time - peNode.GetMarkBegin() ) / ( peNode.GetMarkEnd() - peNode.GetMarkBegin() )
       peNode.SetAnalysisState( int( progressPercent ) )
@@ -700,7 +766,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     trueTableID = "vtkMRMLTableNode1"
     
     # Load the scene
-    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
+    sceneFile = os.path.join( os.path.dirname(  __file__  ), "Data", "Lumbar", "Scene_Lumbar.mrml" )
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
@@ -709,7 +775,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
 
       
     # Manually load the sequence browser node from the transform buffer xml file
-    transformBufferFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "Lumbar", "TransformBuffer_Lumbar_Anonymous.xml" )
+    transformBufferFile = os.path.join( os.path.dirname(  __file__  ), "Data", "Lumbar", "TransformBuffer_Lumbar_Anonymous.xml" )
     success, trackedSequenceBrowserNode = slicer.util.loadNodeFromFile( transformBufferFile, "Tracked Sequence Browser", {}, True ) # This will load into activeScene, since activeScene == slicer.mrmlScene
     if ( not success or trackedSequenceBrowserNode is None ):
       raise Exception( "Could not load tracked sequence browser from: " + transformBufferFile )
@@ -786,7 +852,7 @@ class PythonMetricsCalculatorTest( ScriptedLoadableModuleTest ):
     
     
     # Load the scene
-    sceneFile = os.path.join( os.path.dirname( os.path.abspath( __file__ ) ), "Data", "InPlane", "Scene_InPlane.mrml" )
+    sceneFile = os.path.join( os.path.dirname(  __file__  ), "Data", "InPlane", "Scene_InPlane.mrml" )
     activeScene = slicer.mrmlScene
     activeScene.Clear( 0 )
     activeScene.SetURL( sceneFile )
