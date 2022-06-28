@@ -17,6 +17,7 @@ ASSESSMENT_METHOD_FUZZY = "Fuzzy"
 ASSESSMENT_METHOD_REGRESSION = "Regression"
 ASSESSMENT_METHOD_DECISIONTREE = "DecisionTree"
 ASSESSMENT_METHOD_BENCHMARK = "Benchmark"
+ASSESSMENT_METHOD_FEEDFORWARD = "Feedforward"
 
 OUTPUT_PRECISION = 3
 
@@ -254,6 +255,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.benchmarkRadioButton = qt.QRadioButton( self.assessmentMethodGroupBox )
     self.benchmarkRadioButton.setText( "Benchmark" )
     self.assessmentMethodLayout.addWidget( self.benchmarkRadioButton )
+
+    self.feedforwardRadioButton = qt.QRadioButton( self.assessmentMethodGroupBox )
+    self.feedforwardRadioButton.setText( "Feedforward" )
+    self.assessmentMethodLayout.addWidget( self.feedforwardRadioButton )
     
 
     #
@@ -287,6 +292,10 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.benchmarkParametersFrame = AssessmentMethods.BenchmarkParametersWidget( self.parametersGroupBox )
     self.benchmarkParametersFrame.hide()
     self.parametersLayout.addWidget( self.benchmarkParametersFrame )
+
+    self.feedforwardParametersFrame = AssessmentMethods.FeedforwardParametersWidget( self.parametersGroupBox )
+    self.feedforwardParametersFrame.hide()
+    self.parametersLayout.addWidget( self.feedforwardParametersFrame )
     
         
     #
@@ -362,6 +371,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.regressionRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_REGRESSION ) )
     self.decisionTreeRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_DECISIONTREE ) )
     self.benchmarkRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_BENCHMARK ) )
+    self.feedforwardRadioButton.connect( 'toggled(bool)', partial( self.onAssessmentMethodRadioButtonToggled, ASSESSMENT_METHOD_FEEDFORWARD ) )
     
     self.assessButton.connect( 'clicked(bool)', self.onAssessButtonClicked )
     self.showTableButton.connect( 'clicked(bool)', self.onShowTableButtonClicked )
@@ -681,6 +691,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.regressionParametersFrame.setParameterNode( parameterNode )
     self.decisionTreeParametersFrame.setParameterNode( parameterNode )
     self.benchmarkParametersFrame.setParameterNode( parameterNode )
+    self.feedforwardParametersFrame.setParameterNode( parameterNode )
 
     # Deal with observing the parameter node
     for tag in self.parameterNodeObserverTags:
@@ -897,6 +908,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     regressionBlockState = self.regressionRadioButton.blockSignals( True )
     decisionTreeBlockState = self.decisionTreeRadioButton.blockSignals( True )
     benchmarkBlockState = self.benchmarkRadioButton.blockSignals( True )
+    feedforwardBlockState = self.feedforwardRadioButton.blockSignals( True )
     
     self.linearCombinationParametersFrame.hide()
     self.nearestNeighborParametersFrame.hide()
@@ -904,6 +916,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.regressionParametersFrame.hide()
     self.decisionTreeParametersFrame.hide()
     self.benchmarkParametersFrame.hide()
+    self.feedforwardParametersFrame.hide()
     
     if ( assessmentMethod == ASSESSMENT_METHOD_LINEARCOMBINATION ):
       self.linearCombinationRadioButton.setChecked( True )
@@ -923,6 +936,9 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     if ( assessmentMethod == ASSESSMENT_METHOD_BENCHMARK ):
       self.benchmarkRadioButton.setChecked( True )
       self.benchmarkParametersFrame.show()
+    if ( assessmentMethod == ASSESSMENT_METHOD_FEEDFORWARD ):
+      self.feedforwardRadioButton.setChecked( True )
+      self.feedforwardParametersFrame.show()
       
     self.linearCombinationRadioButton.blockSignals( linearCombinationBlockState)
     self.nearestNeighborRadioButton.blockSignals( nearestNeighborBlockState )
@@ -930,6 +946,7 @@ class SkillAssessmentWidget( ScriptedLoadableModuleWidget ):
     self.regressionRadioButton.blockSignals( regressionBlockState )
     self.decisionTreeRadioButton.blockSignals( decisionTreeBlockState )
     self.benchmarkRadioButton.blockSignals( benchmarkBlockState )
+    self.feedforwardRadioButton.blockSignals( feedforwardBlockState )
 
     self.resultsLabel.setText( parameterNode.GetAttribute( "OverallScore" ) )
 
@@ -1040,6 +1057,8 @@ class SkillAssessmentLogic( ScriptedLoadableModuleLogic ):
       Assessor = AssessmentMethods.DecisionTreeAssessment
     if ( assessmentMethod == ASSESSMENT_METHOD_BENCHMARK ):
       Assessor = AssessmentMethods.BenchmarkAssessment
+    if ( assessmentMethod == ASSESSMENT_METHOD_FEEDFORWARD ):
+      Assessor = AssessmentMethods.FeedforwardAssessment
       
     # Get all metrics and tasks
     allMetricTuples = SkillAssessmentLogic.GetAllMetricTuples( metricsTable )
