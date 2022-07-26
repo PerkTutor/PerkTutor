@@ -17,35 +17,7 @@ Version:   $Revision: 1.2 $
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLWorkflowTrainingStorageNode* vtkMRMLWorkflowTrainingStorageNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowTrainingStorageNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowTrainingStorageNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowTrainingStorageNode();
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowTrainingStorageNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowTrainingStorageNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowTrainingStorageNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowTrainingStorageNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowTrainingStorageNode);
 
 void vtkMRMLWorkflowTrainingStorageNode
 ::PrintSelf(ostream& os, vtkIndent indent)

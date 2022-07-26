@@ -2,52 +2,22 @@
 #include "vtkMRMLWorkflowSequenceOnlineNode.h"
 
 // Standard MRML Node Methods ------------------------------------------------------------
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowSequenceOnlineNode);
 
-vtkMRMLWorkflowSequenceOnlineNode* vtkMRMLWorkflowSequenceOnlineNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowSequenceOnlineNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowSequenceOnlineNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowSequenceOnlineNode();
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowSequenceOnlineNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowSequenceOnlineNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowSequenceOnlineNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowSequenceOnlineNode();
-}
-
-
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::PrintSelf( ostream& os, vtkIndent indent )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::PrintSelf( ostream& os, vtkIndent indent )
 {
   vtkMRMLNode::PrintSelf(os,indent);
 }
 
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::WriteXML( ostream& of, int nIndent )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::WriteXML( ostream& of, int nIndent )
 {
   this->vtkMRMLWorkflowSequenceNode::WriteXML(of, nIndent);
 }
 
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::ReadXMLAttributes( const char** atts )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::ReadXMLAttributes( const char** atts )
 {
   this->vtkMRMLWorkflowSequenceNode::ReadXMLAttributes(atts);
 
@@ -62,37 +32,31 @@ void vtkMRMLWorkflowSequenceOnlineNode
 
     // do something...
   }
-
 }
 
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::Copy( vtkMRMLNode* anode )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::Copy( vtkMRMLNode* anode )
 {
   this->vtkMRMLWorkflowSequenceNode::Copy( anode );
   // Copying is already taken care of my the superclass
 }
 
-
-
 // Constructors and Destructors --------------------------------------------------------------------
 
-vtkMRMLWorkflowSequenceOnlineNode
-::vtkMRMLWorkflowSequenceOnlineNode()
+//----------------------------------------------------------------------------
+vtkMRMLWorkflowSequenceOnlineNode::vtkMRMLWorkflowSequenceOnlineNode()
 {
 }
 
-
-vtkMRMLWorkflowSequenceOnlineNode
-::~vtkMRMLWorkflowSequenceOnlineNode()
+//----------------------------------------------------------------------------
+vtkMRMLWorkflowSequenceOnlineNode::~vtkMRMLWorkflowSequenceOnlineNode()
 {
 }
-
 
 // Online methods ----------------------------------------------------------------------------------
 
-void vtkMRMLWorkflowSequenceOnlineNode
-::DistancesOnline( vtkDoubleArray* testPoints, vtkDoubleArray* distances )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::DistancesOnline( vtkDoubleArray* testPoints, vtkDoubleArray* distances )
 {
   distances->SetNumberOfComponents( testPoints->GetNumberOfTuples() );
   distances->SetNumberOfTuples( 1 );
@@ -125,12 +89,10 @@ void vtkMRMLWorkflowSequenceOnlineNode
     // Add to the component
 	  distances->SetComponent( 0, i, sqrt( currSum ) );
   }
-
 }
 
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::DifferentiateOnline( int order, vtkDoubleArray* derivative )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::DifferentiateOnline( int order, vtkDoubleArray* derivative )
 {
   derivative->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
   derivative->SetNumberOfTuples( 1 );
@@ -162,10 +124,8 @@ void vtkMRMLWorkflowSequenceOnlineNode
   derivative->SetTuple( 0, 0, endDoubleArray );
 }
 
-
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::GaussianFilterOnline( double width, vtkDoubleArray* gauss )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::GaussianFilterOnline( double width, vtkDoubleArray* gauss )
 {
   gauss->SetNumberOfComponents( this->GetNthNumberOfComponents( this->GetNumberOfDataNodes() - 1 ) );
   gauss->SetNumberOfTuples( 1 );
@@ -210,10 +170,8 @@ void vtkMRMLWorkflowSequenceOnlineNode
 
 }
 
-
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::OrthogonalTransformationOnline( int window, int order, vtkDoubleArray* orthogonal )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::OrthogonalTransformationOnline( int window, int order, vtkDoubleArray* orthogonal )
 {
   // Pad the recordlog with values at the beginning only if necessary
   vtkSmartPointer< vtkMRMLWorkflowSequenceNode > subsequence = vtkSmartPointer< vtkMRMLWorkflowSequenceNode >::New();
@@ -250,9 +208,8 @@ void vtkMRMLWorkflowSequenceOnlineNode
 
 }
 
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::TransformByPrincipalComponentsOnline( vtkDoubleArray* prinComps, vtkDoubleArray* meanArray, vtkDoubleArray* transformed )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::TransformByPrincipalComponentsOnline( vtkDoubleArray* prinComps, vtkDoubleArray* meanArray, vtkDoubleArray* transformed )
 {
   transformed->SetNumberOfComponents( prinComps->GetNumberOfTuples() );
   transformed->SetNumberOfTuples( 1 );
@@ -277,10 +234,8 @@ void vtkMRMLWorkflowSequenceOnlineNode
 
 }
 
-
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::fwdkmeansTransformOnline( vtkDoubleArray* centroids, vtkDoubleArray* cluster )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::fwdkmeansTransformOnline( vtkDoubleArray* centroids, vtkDoubleArray* cluster )
 {
   cluster->SetNumberOfComponents( 1 );
   cluster->SetNumberOfTuples( 1 );
@@ -305,9 +260,8 @@ void vtkMRMLWorkflowSequenceOnlineNode
   cluster->SetComponent( 0, 0, currMinCentroid );
 }
 
-
-void vtkMRMLWorkflowSequenceOnlineNode
-::AddMarkovModelAttributesOnline( vtkMRMLNode* node )
+//----------------------------------------------------------------------------
+void vtkMRMLWorkflowSequenceOnlineNode::AddMarkovModelAttributesOnline( vtkMRMLNode* node )
 {
   // We will assume that: label -> state, values[0] -> symbol
   node->SetAttribute( "MarkovState", node->GetAttribute( "Message" ) );

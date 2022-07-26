@@ -17,35 +17,7 @@ Version:   $Revision: 1.2 $
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLMetricScriptStorageNode* vtkMRMLMetricScriptStorageNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLMetricScriptStorageNode" );
-  if( ret )
-    {
-      return ( vtkMRMLMetricScriptStorageNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLMetricScriptStorageNode();
-}
-
-
-vtkMRMLNode* vtkMRMLMetricScriptStorageNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLMetricScriptStorageNode" );
-  if( ret )
-    {
-      return ( vtkMRMLMetricScriptStorageNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLMetricScriptStorageNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLMetricScriptStorageNode);
 
 void vtkMRMLMetricScriptStorageNode
 ::PrintSelf(ostream& os, vtkIndent indent)

@@ -9,34 +9,7 @@ static const char* TRACKED_SEQUENCE_BROWSER_REFERENCE_ROLE = "TrackedSequenceBro
 
 // Constructors and Destructors
 // ----------------------------------------------------------------------------
-
-vtkMRMLWorkflowSegmentationNode* vtkMRMLWorkflowSegmentationNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowSegmentationNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowSegmentationNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowSegmentationNode;
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowSegmentationNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowSegmentationNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowSegmentationNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowSegmentationNode;
-}
-
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowSegmentationNode);
 
 
 // Scene: Save and load

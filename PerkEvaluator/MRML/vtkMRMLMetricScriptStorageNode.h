@@ -34,10 +34,10 @@
 
 /// Storage nodes has methods to read/write workflow input to/from disk.
 class VTK_SLICER_PERKEVALUATOR_MODULE_MRML_EXPORT
-vtkMRMLMetricScriptStorageNode : public vtkMRMLStorageNode
+  vtkMRMLMetricScriptStorageNode : public vtkMRMLStorageNode
 {
 public:
-  vtkTypeMacro( vtkMRMLMetricScriptStorageNode, vtkMRMLStorageNode );
+  vtkTypeMacro(vtkMRMLMetricScriptStorageNode, vtkMRMLStorageNode);
 
   // Standard MRML node methods  
   static vtkMRMLMetricScriptStorageNode* New();
@@ -63,11 +63,11 @@ protected:
 
 
   /// Read data and set it in the referenced node
-  int ReadDataInternal(vtkMRMLNode *refNode) override;
+  int ReadDataInternal(vtkMRMLNode* refNode) override;
 
   /// Write data from a referenced node
-  int WriteDataInternal(vtkMRMLNode *refNode) override;
-  
+  int WriteDataInternal(vtkMRMLNode* refNode) override;
+
 };
 
 #endif

@@ -8,35 +8,7 @@ static const char* ASSOCIATED_METRIC_INSTANCE_REFERENCE_ROLE = "AssociatedMetric
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLMetricScriptNode* vtkMRMLMetricScriptNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLMetricScriptNode" );
-  if( ret )
-    {
-      return ( vtkMRMLMetricScriptNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLMetricScriptNode();
-}
-
-
-vtkMRMLNode* vtkMRMLMetricScriptNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLMetricScriptNode" );
-  if( ret )
-    {
-      return ( vtkMRMLMetricScriptNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLMetricScriptNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLMetricScriptNode);
 
 void vtkMRMLMetricScriptNode
 ::PrintSelf( ostream& os, vtkIndent indent )

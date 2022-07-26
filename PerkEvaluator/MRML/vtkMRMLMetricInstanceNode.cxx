@@ -8,35 +8,7 @@ static const char* ROLE_SEPARATOR = "/";
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLMetricInstanceNode* vtkMRMLMetricInstanceNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLMetricInstanceNode" );
-  if( ret )
-    {
-      return ( vtkMRMLMetricInstanceNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLMetricInstanceNode();
-}
-
-
-vtkMRMLNode* vtkMRMLMetricInstanceNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLMetricInstanceNode" );
-  if( ret )
-    {
-      return ( vtkMRMLMetricInstanceNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLMetricInstanceNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLMetricInstanceNode);
 
 void vtkMRMLMetricInstanceNode
 ::PrintSelf( ostream& os, vtkIndent indent )

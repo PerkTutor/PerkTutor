@@ -2,35 +2,7 @@
 #include "vtkMRMLWorkflowProcedureNode.h"
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLWorkflowProcedureNode* vtkMRMLWorkflowProcedureNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowProcedureNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowProcedureNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowProcedureNode();
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowProcedureNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowProcedureNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowProcedureNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowProcedureNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowProcedureNode);
 
 void vtkMRMLWorkflowProcedureNode
 ::PrintSelf( ostream& os, vtkIndent indent )

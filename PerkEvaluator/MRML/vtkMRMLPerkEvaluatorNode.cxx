@@ -11,35 +11,7 @@ static const char* METRIC_INSTANCE_REFERENCE_ROLE = "MetricInstance";
 
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLPerkEvaluatorNode* vtkMRMLPerkEvaluatorNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLPerkEvaluatorNode" );
-  if( ret )
-    {
-      return ( vtkMRMLPerkEvaluatorNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLPerkEvaluatorNode();
-}
-
-
-vtkMRMLNode* vtkMRMLPerkEvaluatorNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLPerkEvaluatorNode" );
-  if( ret )
-    {
-      return ( vtkMRMLPerkEvaluatorNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLPerkEvaluatorNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLPerkEvaluatorNode);
 
 void vtkMRMLPerkEvaluatorNode
 ::PrintSelf( ostream& os, vtkIndent indent )

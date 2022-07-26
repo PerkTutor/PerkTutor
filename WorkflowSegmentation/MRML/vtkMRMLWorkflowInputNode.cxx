@@ -2,35 +2,7 @@
 #include "vtkMRMLWorkflowInputNode.h"
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLWorkflowInputNode* vtkMRMLWorkflowInputNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowInputNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowInputNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowInputNode();
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowInputNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowInputNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowInputNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowInputNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowInputNode);
 
 void vtkMRMLWorkflowInputNode
 ::PrintSelf( ostream& os, vtkIndent indent )

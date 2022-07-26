@@ -8,35 +8,7 @@ static const char* WORKFLOW_INPUT_REFERENCE_ROLE = "ProcedureInput";
 static const char* WORKFLOW_TRAINING_REFERENCE_ROLE = "ProcedureTraining";
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLWorkflowToolNode* vtkMRMLWorkflowToolNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowToolNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowToolNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowToolNode();
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowToolNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowToolNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowToolNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowToolNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowToolNode);
 
 void vtkMRMLWorkflowToolNode
 ::PrintSelf( ostream& os, vtkIndent indent )

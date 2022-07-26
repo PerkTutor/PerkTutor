@@ -8,35 +8,7 @@
 const double vtkMRMLWorkflowSequenceNode::STDEV_CUTOFF = 5.0;
 
 // Standard MRML Node Methods ------------------------------------------------------------
-
-vtkMRMLWorkflowSequenceNode* vtkMRMLWorkflowSequenceNode
-::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowSequenceNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowSequenceNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowSequenceNode();
-}
-
-
-vtkMRMLNode* vtkMRMLWorkflowSequenceNode
-::CreateNodeInstance()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance( "vtkMRMLWorkflowSequenceNode" );
-  if( ret )
-    {
-      return ( vtkMRMLWorkflowSequenceNode* )ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLWorkflowSequenceNode();
-}
-
-
+vtkMRMLNodeNewMacro(vtkMRMLWorkflowSequenceNode);
 
 void vtkMRMLWorkflowSequenceNode
 ::PrintSelf( ostream& os, vtkIndent indent )
