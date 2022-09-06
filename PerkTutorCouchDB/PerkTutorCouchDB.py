@@ -5,10 +5,16 @@ from slicer.ScriptedLoadableModule import *
 import logging
 import time
 import sys
-import couchdb
 from functools import partial
 import re
 import subprocess
+
+# Install couchdb if not available
+try:
+  import couchdb
+except ImportError:
+  slicer.util.pip_install('couchdb')
+  import couchdb
 
 PERK_TUTOR_DATABASE_NAME = "perk_tutor"
 REPLICATOR_DATABASE_NAME = "_replicator"
