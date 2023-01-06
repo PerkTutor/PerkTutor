@@ -25,8 +25,6 @@
 #include <QInputDialog>
 #include <QScrollBar>
 
-#include "vtkMRMLAnnotationTextNode.h"
-
 #include "vtkSlicerConfigure.h" // For Slicer_HAVE_QT
 
 
