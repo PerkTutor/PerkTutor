@@ -21,6 +21,9 @@
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorTransformRolesWidget.h"
 
+// UI includes
+#include "ui_qSlicerPerkEvaluatorRolesWidget.h"
+
 #include <QtGui>
 
 

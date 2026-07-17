@@ -21,7 +21,11 @@
 // FooBar Widgets includes
 #include "qSlicerWorkflowGuideDisplayWidget.h"
 
+// Logic includes
 #include "vtkSlicerWorkflowSegmentationLogic.h"
+
+// UI includes
+#include "ui_qSlicerWorkflowGuideDisplayWidget.h"
 
 #include <QtGui>
 #include <QFont>

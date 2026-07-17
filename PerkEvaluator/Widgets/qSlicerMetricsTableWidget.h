@@ -33,7 +33,6 @@
 
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
-#include "ui_qSlicerMetricsTableWidget.h"
 
 class qSlicerMetricsTableWidgetPrivate;
 

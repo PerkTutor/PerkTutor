@@ -30,7 +30,6 @@
 
 // FooBar Widgets includes
 #include "qSlicerTransformRecorderModuleWidgetsExport.h"
-#include "ui_qSlicerTrackedSequenceRecorderControlsWidget.h"
 
 class qSlicerTrackedSequenceRecorderControlsWidgetPrivate;
 

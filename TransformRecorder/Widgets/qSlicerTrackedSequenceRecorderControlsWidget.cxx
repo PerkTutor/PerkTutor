@@ -22,6 +22,9 @@
 #include "qSlicerTrackedSequenceRecorderControlsWidget.h"
 #include "vtkMRMLSequenceBrowserNode.h"
 
+// UI includes
+#include "ui_qSlicerTrackedSequenceRecorderControlsWidget.h"
+
 #include <QtGui>
 
 //-----------------------------------------------------------------------------

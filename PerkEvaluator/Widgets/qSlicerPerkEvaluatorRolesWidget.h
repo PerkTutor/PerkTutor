@@ -28,7 +28,6 @@
 
 // FooBar Widgets includes
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
-#include "ui_qSlicerPerkEvaluatorRolesWidget.h"
 
 #include "vtkMRMLNode.h"
 #include "vtkSlicerPerkEvaluatorLogic.h"

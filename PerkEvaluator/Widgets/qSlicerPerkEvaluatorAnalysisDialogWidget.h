@@ -26,7 +26,6 @@
 #include "qSlicerWidget.h"
 
 #include "qSlicerPerkEvaluatorModuleWidgetsExport.h"
-#include "ui_qSlicerPerkEvaluatorAnalysisDialogWidget.h"
 
 #include "vtkMRMLNode.h"
 #include "vtkSlicerPerkEvaluatorLogic.h"

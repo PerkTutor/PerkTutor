@@ -29,7 +29,6 @@
 
 // FooBar Widgets includes
 #include "qSlicerWorkflowSegmentationModuleWidgetsExport.h"
-#include "ui_qSlicerWorkflowGuideDisplayWidget.h"
 
 class qSlicerWorkflowGuideDisplayWidgetPrivate;
 

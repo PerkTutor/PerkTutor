@@ -21,6 +21,9 @@
 // FooBar Widgets includes
 #include "qSlicerMetricsTableWidget.h"
 
+// UI includes
+#include "ui_qSlicerMetricsTableWidget.h"
+
 #include <QtGui>
 #include <QScrollBar>
 

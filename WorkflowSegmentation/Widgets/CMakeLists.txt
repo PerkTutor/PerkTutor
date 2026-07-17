@@ -57,3 +57,10 @@ SlicerMacroBuildModuleWidgets(
   RESOURCES ${${KIT}_RESOURCES}
   WRAP_PYTHONQT
   )
+
+# qSlicerWorkflowSegmentationRecorderControlsWidget.cxx reuses
+# ui_qSlicerTrackedSequenceRecorderControlsWidget.h from TransformRecorder/Widgets,
+# so AUTOUIC needs that module's UI directory to find the .ui file.
+set_property(TARGET ${KIT} APPEND PROPERTY AUTOUIC_SEARCH_PATHS
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../TransformRecorder/Widgets/Resources/UI"
+  )

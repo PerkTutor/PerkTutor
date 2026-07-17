@@ -21,6 +21,9 @@
 // FooBar Widgets includes
 #include "qSlicerTrackedSequenceBrowserWidget.h"
 
+// UI includes
+#include "ui_qSlicerTrackedSequenceBrowserWidget.h"
+
 #include "qSlicerIOManager.h"
 
 #include <QtGui>

@@ -21,6 +21,9 @@
 // FooBar Widgets includes
 #include "qSlicerTrackedSequenceMessagesWidget.h"
 
+// UI includes
+#include "ui_qSlicerTrackedSequenceMessagesWidget.h"
+
 #include <QtGui>
 #include <QInputDialog>
 #include <QScrollBar>

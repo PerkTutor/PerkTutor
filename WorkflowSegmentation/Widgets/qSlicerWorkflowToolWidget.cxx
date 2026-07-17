@@ -21,6 +21,9 @@
 // FooBar Widgets includes
 #include "qSlicerWorkflowToolWidget.h"
 
+// UI includes
+#include "ui_qSlicerWorkflowToolWidget.h"
+
 #include <QtGui>
 
 

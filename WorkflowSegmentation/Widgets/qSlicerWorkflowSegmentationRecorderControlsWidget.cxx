@@ -21,6 +21,9 @@
 // FooBar Widgets includes
 #include "qSlicerWorkflowSegmentationRecorderControlsWidget.h"
 
+// UI includes
+#include "ui_qSlicerTrackedSequenceRecorderControlsWidget.h"
+
 #include <QtGui>
 
 
