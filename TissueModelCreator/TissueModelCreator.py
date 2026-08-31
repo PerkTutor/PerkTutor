@@ -1,4 +1,4 @@
-import os, imp, glob, sys
+import os, glob, sys
 import urllib, zipfile
 import unittest
 import logging
